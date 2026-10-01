@@ -1,0 +1,7 @@
+# Upstream clone (git clone https://github.com/affaan-m/ECC.git); not part of this repo
+/ECC/
+# Fake HOME used to isolate ECC side effects
+/ECC-Sandbox-home/
+*.db
+node_modules/
+state.db.from-real-home
