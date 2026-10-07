@@ -1,0 +1,85 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xau-edge"
+version = "0.1.0"
+description = "Probabilistic decision-support and research platform for XAUUSD (research only, no live trading)."
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = { text = "Proprietary" }
+dependencies = [
+    "numpy>=2.0,<3",
+    "polars>=2.0,<3",
+    "pydantic>=2.13,<3",
+    "pydantic-settings>=2.10,<3",
+    "pyyaml>=6.0,<7",
+    "tzdata>=2024.1; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+# MetaTrader5 ships Windows-only wheels and talks to a locally running terminal.
+mt5 = ["MetaTrader5>=5.0.45; sys_platform == 'win32'"]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.100",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "types-PyYAML>=6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xau_edge"]
+
+[tool.ruff]
+extend-exclude = [".claude", "data", "experiments/runs"]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "UP", "B", "SIM", "N", "RUF", "C4", "PT", "PL", "S", "DTZ", "T20", "PTH",
+]
+ignore = [
+    "PLR0913",  # keyword-only config-style signatures are fine
+    "PLR2004",  # magic values are common in numeric domain code
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["MetaTrader5", "MetaTrader5.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "unit: fast isolated tests",
+    "integration: multi-module pipeline tests (no network, no MT5)",
+    "statistical: leakage / calibration / walk-forward checks",
+    "regression: pinned known results",
+    "mt5: requires a running MetaTrader 5 terminal (never run in CI)",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["src/xau_edge"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

@@ -5020,3 +5020,658 @@ Results: Passed: 6, Failed: 0
 
 
 ━━━ Running lib/claude-plugin-setup.test.js ━━━
+
+=== Claude plugin setup library tests ===
+
+  ✓ Windows command-line fallback preserves spaced paths and JSON arguments
+  ✓ provider runner times out a hung Claude command with structured context
+  ✓ marketplace provenance is validated according to its source type
+  ✓ fresh installs require an explicit scope and perform no mutation
+  ✗ an existing single-scope install defaults to its detected scope
+    Error: A fresh install requires --scope user, project, or local.
+  ✗ requesting another scope fails without the PR 2 move-scope operation
+    Error: Missing expected exception.
+  ✗ fresh install uses supported Claude arguments and follows the verification sequence
+    Error: Expected values to be strictly deep-equal:
++ actual - expected
+
++ []
+- [
+-   [
+-     'plugin',
+-     'list',
+-     '--json'
+-   ],
+-   [
+-     'plugin',
+-     'marketplace',
+-     'list',
+-     '--json'
+-   ],
+-   [
+-     'plugin',
+-     'marketplace',
+-     'add',
+-     'https://github.com/affaan-m/ECC',
+-     '--scope',
+-     'project'
+-   ],
+-   [
+-     'plugin',
+-     'marketplace',
+-     'list',
+-     '--json'
+-   ],
+-   [
+-     'plugin',
+-     'install',
+-     'ecc@ecc',
+-     '--scope',
+-     'project'
+-   ],
+-   [
+-     'plugin',
+-     'list',
+-     '--json'
+-   ]
+- ]
+
+  ✗ fresh installs support all Claude scopes while hook preferences stay user-only
+    Error: The expression evaluated to a falsy value:
+
+  assert.ok(calls.some(argv => (
+
+  ✓ same-scope repeat setup updates ECC and changes durable user hook preferences
+  ✗ repeat setup preserves the current hook preference when --hooks is omitted
+    Error: A fresh install requires --scope user, project, or local.
+  ✗ setup preserves an explicit includeCoAuthoredBy opt-in
+    Error: A fresh install requires --scope user, project, or local.
+  ✗ setup preserves an explicit attribution opt-in
+    Error: A fresh install requires --scope user, project, or local.
+  ✓ malformed user settings fail preflight without provider mutation or corruption
+  ✗ legacy plugin inventory fails closed before marketplace or plugin mutation
+    Error: Missing expected exception.
+  ✗ skills-directory ECC plugins fail closed before marketplace or plugin mutation
+    Error: Missing expected exception.
+  ✓ manual plugin layouts fail closed before provider mutation
+  ✗ duplicate ECC plugin scopes fail closed before mutation
+    Error: Missing expected exception.
+  ✗ malformed plugin JSON and malformed plugin entries fail closed
+    Error: Missing expected exception.
+  ✗ malformed marketplace JSON and marketplace name collisions fail closed
+    Error: Missing expected exception.
+  ✓ managed rules-only state is allowed but overlapping managed content is rejected
+  ✓ managed overlap detection resolves symlink aliases before classifying paths
+  ✓ dry-run reads inventory only and never writes settings
+  ✓ dry-run snapshots local-scope inventory into isolated Claude and project roots
+  ✓ missing Git reports an actionable prerequisite during dry-run before provider inventory
+  ✗ provider failures stop later operations and leave settings untouched
+    Error: Missing expected exception.
+  ✗ post-install verification rejects absent, wrong-scope, disabled, and duplicate results
+    Error: Missing expected exception.
+  ✗ marketplace verification failure prevents plugin installation
+    Error: Missing expected exception.
+  ✓ CLAUDE_CONFIG_DIR and paths containing spaces are honored
+  ✓ missing Claude executable reports an actionable recovery
+
+Results: Passed: 14, Failed: 15
+
+✗ lib/claude-plugin-setup.test.js exited with status 1
+
+━━━ Running lib/claude-scope-migration.test.js ━━━
+
+=== Claude plugin scope migration tests ===
+
+  ✗ all six directed scope pairs migrate destination-first with exact verification order
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:190:24
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:186:7
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:182:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+  ✗ a missing marketplace is added at the destination before plugin installation
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:217:5
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:216:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:215:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+  ✗ an interrupted source-plus-destination state resumes cleanup without reinstalling
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:239:20
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:235:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:234:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+  ✗ resume verifies an enabled destination before removing the source
+    Error: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'preflight'
+- 'destination-verification'
+
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:265:12
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:258:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:257:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+  ✗ destination-only state is idempotently already migrated, including same-scope input
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:277:22
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:276:5
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:274:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+  ✗ destination-only migration honors explicit hook preferences and reports dry-run writes
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:299:20
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:291:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:290:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+  ✗ destination-only state must be enabled before it is considered migrated
+    Error: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'PLUGIN_NOT_INSTALLED'
+- 'DESTINATION_VERIFICATION_FAILED'
+
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:337:12
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:333:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:332:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+  ✗ zero installs, ambiguous non-destination scopes, and invalid inventories fail closed
+    Error: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'PLUGIN_NOT_INSTALLED'
+- 'AMBIGUOUS_PLUGIN_SCOPES'
+
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:381:14
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:377:5
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:344:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+  ✗ marketplace collisions fail closed in migration dry-run and resume cleanup
+    Error: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'PLUGIN_NOT_INSTALLED'
+- 'MARKETPLACE_COLLISION'
+
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:422:14
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:418:5
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:387:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+  ✓ destination marketplace, install, and verification failures never uninstall the source
+  ✗ a concurrent non-destination install aborts before source cleanup
+    Error: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'preflight'
+- 'concurrency-check'
+
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:493:12
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:481:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:480:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+  ✗ source uninstall failure reports both scopes and exact forward recovery
+    Error: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'preflight'
+- 'source-uninstall'
+
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:513:12
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:500:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:499:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+  ✗ final verification failure is structured and leaves a resumable destination state
+    Error: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'preflight'
+- 'final-verification'
+
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:541:12
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:528:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:527:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+  ✗ dry-run returns exact ordered actions and performs no mutation
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:556:20
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:551:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:550:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+  ✗ migration preserves hook preferences unless --hooks is explicit
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:612:20
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:593:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:592:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+  ✗ migration preserves an explicit includeCoAuthoredBy opt-in
+    Error: ClaudeSetupError: ecc@ecc is not installed, so there is no source scope to migrate.
+    at migrationError (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:32:10)
+    at assertMigrationInventory (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:64:11)
+    at migrateClaudePluginScope (Z:\Coding\Projects\AI-Harness\ECC\scripts\lib\claude-scope-migration.js:268:21)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:665:5
+    at withFixture (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:107:12)
+    at Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:652:3
+    at test (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:22:5)
+    at Object.<anonymous> (Z:\Coding\Projects\AI-Harness\ECC\tests\lib\claude-scope-migration.test.js:651:1)
+    at Module._compile (node:internal/modules/cjs/loader:1812:14)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+
+Results: Passed: 1, Failed: 15
+
+✗ lib/claude-scope-migration.test.js exited with status 1
+
+━━━ Running lib/claude-settings-array.test.js ━━━
+  PASS materializes every array command without changing the source
+  PASS array argv commands execute with the exact root in a clean process
+  PASS rejects an unresolved root read in array element 0
+  PASS rejects an unresolved root read in array element 1
+  PASS rejects a remaining root read after resolving an array prologue
+  PASS retains supported root assignments in array commands
+  PASS invalid arrays still fail command validation
+
+Results: Passed: 7, Failed: 0
+
+
+━━━ Running lib/claude-settings.test.js ━━━
+
+=== Testing install/claude-settings.js ===
+
+  PASS validates and clones a managed hook map without mutating it
+  PASS strictly rejects invalid managed hook maps and globally duplicate ids
+  PASS materializes hook roots and rejects unresolved environment references
+  PASS replaces every plugin-root placeholder recursively and immutably
+  PASS parseSettings accepts an object and validates every hooks event array
+  PASS readSettings returns an empty object for ENOENT and rejects bad files
+  PASS readSettings propagates non-ENOENT read errors without converting them to empty settings
+  PASS compares file identities strictly except for missing Windows device ids
+  PASS atomic settings updates accept Windows path stats with an omitted device id
+  PASS atomic settings updates reject unequal nonzero Windows device ids
+  PASS settings snapshots request BigInt stats and reject inodes that collide as Numbers
+  PASS atomic settings updates retry after a concurrent change and preserve secure mode
+  PASS atomic settings updates reject parent replacement at open without touching its files
+  PASS atomic settings updates reject parent replacement at rename without touching its files
+  PASS atomic settings updates preserve edits made while the replacement file is staged
+  PASS atomic settings updates recover a stale invalid lock after its lease
+  PASS atomic settings updates serialize nested ECC writers and release the lock
+  PASS atomic settings updates honor an already-held lock
+  PASS settings lock release failures do not replace the primary update error
+  PASS settings lock release preserves a lock with an unequal nonzero Windows device id
+  PASS stale lock recovery preserves a lock with an unequal nonzero Windows device id
+    (file symlink support is environment-dependent on Windows; skipping)
+  PASS atomic settings updates refuse a symlinked destination
+  PASS fresh merge appends managed entries while preserving unrelated settings and hooks
+  PASS fresh merge treats a different entry with the same event and id as a conflict
+  PASS fresh merge adopts an identical existing event and id without duplicating it
+  PASS upgrade replaces an entry only while it still equals previous managed content
+  PASS upgrade fails closed when previous managed content has drifted
+  PASS upgrade is idempotent when the desired entry is already installed
+  PASS upgrade removes unchanged entries that are no longer managed
+  PASS upgrade removes multiple retired hooks without deleting their neighbor
+  PASS upgrade refuses to remove a retired entry after user drift
+  PASS merge fails closed when settings contains ambiguous duplicate event ids
+  PASS merge treats the same id under another event as a separate user entry
+  PASS repair mode overwrites a drifted same-event managed id and preserves neighbors
+  PASS inspect reports exact, missing, and drifted managed entries plus the actual subset
+  PASS inspect fails closed on duplicate matching ids in one settings event
+  PASS inspect and uninstall key ownership by event plus id
+  PASS uninstall removes exact recorded entries, retains drift, and cleans empty events
+  PASS uninstall removes consecutive managed hooks without deleting a user neighbor
+  PASS uninstall removes hooks entirely after the final managed event is emptied
+  PASS uninstall accepts structurally valid hooks from an older runtime contract
+  PASS all settings transforms reject non-array hook events before changing data
+
+Results: Passed: 42, Failed: 0
+
+
+━━━ Running lib/codex-legacy-sync.test.js ━━━
+
+=== Testing Codex legacy sync lifecycle ===
+
+  ✓ manifest uninstall restores previous files, removes owned files, markers, and hooks path
+  ✓ dry-run is non-mutating and drifted artifacts are retained
+  ✓ uninstall preserves config and AGENTS edits made after legacy sync
+  ✓ pre-manifest cleanup removes only the ECC marker block and preserves all other artifacts
+  ✗ pre-manifest cleanup preserves inline, fenced, and symlinked AGENTS markers
+    Error: EPERM: operation not permitted, symlink 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-sxIbnn\outside-agents.md' -> 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-sxIbnn\.codex\AGENTS.md'
+  ✓ interrupted sync rollback restores overwritten files and removes newly created files
+  ✗ recording refuses symlink targets before the sync can write through them
+    Error: EPERM: operation not permitted, symlink 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-ViDMOY\outside.md' -> 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-ViDMOY\.codex\prompts\ecc-plan.md'
+  ✗ recording refuses a symlinked parent directory before any managed write
+    Error: EPERM: operation not permitted, symlink 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-yHEYpY\outside' -> 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-yHEYpY\.codex\prompts'
+  ✗ uninstall preserves a managed path replaced by a symlink
+    Error: EPERM: operation not permitted, symlink 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-TaFJyY\outside.md' -> 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-TaFJyY\.codex\prompts\ecc-plan.md'
+  ✓ repeat sync preserves the original pre-ECC baseline through uninstall
+  ✓ repeat sync refuses drift instead of overwriting a post-install user edit
+  ✓ custom external hooks root is separately trusted and retains original ownership
+  ✓ repeat sync rollback remains recoverable after changing custom hooks roots
+  ✓ repeat sync uninstall restores all custom hooks roots after a root change
+  ✗ rollback preserves a managed path replaced by a dangling symlink
+    Error: EPERM: operation not permitted, symlink 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-4yN8JV\missing-outside.md' -> 'C:\Users\KIEUOA~1\AppData\Local\Temp\legacy-codex-home-4yN8JV\.codex\prompts\ecc-plan.md'
+  ✓ failed repeat sync restores the prior installed ownership manifest
+  ✓ detectLegacyCodexSync surfaces unreadable AGENTS.md instead of reporting clean
+
+Results: Passed: 12, Failed: 5
+
+✗ lib/codex-legacy-sync.test.js exited with status 1
+
+━━━ Running lib/codex-plugin-setup.test.js ━━━
+
+=== Codex native plugin setup library tests ===
+
+  ✓ parses current Codex marketplace and plugin JSON inventory shapes
+  ✓ resolves marketplace provenance with execFile and exact Git argv
+  ✓ preserves the original execFile error and attaches callback output
+  ✓ maps provider and provenance timeouts to distinct structured errors
+  ✓ rejects unverifiable Git provenance without using a shell
+  ✓ fresh install uses exact native Codex argv and verifies both mutations
+  ✓ already installed and enabled is refreshed and strongly verified
+  ✓ fails closed when native refresh does not confirm the marketplace root
+  ✓ accepts the provider root across Windows separator and case differences
+  ✓ rejects ambiguous native refresh results for a targeted upgrade
+  ✓ fails closed when post-refresh marketplace provenance changes
+  ✓ fails closed on malformed post-refresh plugin inventory
+  ✓ dry-run fresh install is inventory-only planning
+  ✓ dry-run repair is inventory-only update planning
+  ✓ dry-run keeps reconciled state unchanged without mutation
+  ✓ upgrades an existing marketplace before installing a missing plugin
+  ✓ fails closed when the ecc marketplace has untrusted provenance
+  ✓ rejects relative and insecure Git origins before marketplace mutation
+  ✓ reports a missing Codex CLI without attempting another command
+  ✓ rejects malformed marketplace and plugin JSON inventories
+  ✓ surfaces mutation command failures with phase and exact argv
+  ✓ fails when post-install verification does not find enabled ECC
+  ✓ fails when marketplace verification cannot observe ECC
+
+Passed: 23
+Failed: 0
+
+
+━━━ Running lib/command-plugin-root.test.js ━━━
+PASS sessions command uses shared inline resolver in all node scripts
+PASS skill-health command uses shared inline resolver in all shell snippets
+PASS instinct-status command uses shared inline resolver (no stale legacy fallback) (#2037)
+PASS auto-update command probes for the script it runs, not just scripts/lib
+PASS resolveEccRoot module covers current and legacy marketplace plugin roots
+Passed: 5
+Failed: 0
+
+
+━━━ Running lib/context-carrier-fixture.test.js ━━━
+✔ materialization uses unique owned temporary roots and emits only structural evidence (168.9473ms)
+✔ copies preserve full binary bytes and never execute bundled scripts (74.9599ms)
+✔ generated manifests materialize the exact declared UTF-8 bytes (63.4256ms)
+✔ verification remains relocatable after original sources are removed (68.8628ms)
+✔ source drift is rejected before entering the materialized-fixture callback (46.168ms)
+✔ source directory-link substitution is rejected before materialization (37.6138ms)
+✔ independent observation rejects missing staged files (62.1171ms)
+✔ independent observation rejects extra staged files (62.9509ms)
+✔ independent observation rejects tampered staged files (65.3759ms)
+✔ schema and carrier digest validation precede fixture writes (55.0725ms)
+✔ independent expected plan cannot be replaced with forged provenance (55.7741ms)
+✔ self-consistently hashed artifacts cannot omit selected entrypoints or bundled resources (104.8727ms)
+✔ self-consistent false source-byte claims fail against independently read sources (50.9256ms)
+✔ unsafe or colliding destinations are rejected while outside sentinels remain unchanged (71.8244ms)
+✔ case-folded directory-prefix aliases fail before the first staging write (67.3235ms)
+✔ Unicode-normalized directory-prefix aliases fail before the first staging write (67.8817ms)
+✔ unsupported carriers cannot create a staged fixture (49.7512ms)
+✔ failure cleanup removes only the helper-owned stage and preserves outside data (57.3217ms)
+✔ root-link substitution fails observation and cleanup never follows the outside link (55.2302ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1294.6145
+
+
+━━━ Running lib/context-carriers.test.js ━━━
+✔ Lean plans only the three selected whole skill trees and never activates a host (74.9706ms)
+✔ all five source-backed layouts preserve exact selected native directories (84.5557ms)
+✔ generated provider manifests contain only explicitly allowed discovery fields (54.7763ms)
+✔ Full keeps exclusions out of both discovery files and carrier storage (75.2187ms)
+✔ bundled binary resources are copied by descriptor without decoding or script execution (32.6971ms)
+✔ explicit dependencies and required-resource annotations remain bound to selected copies (21.4375ms)
+✔ canonical IDs are retained while destination folders use declared native names (82.2445ms)
+✔ recognized unsupported targets retain the proposal and plan zero files (160.5287ms)
+✔ legacy owner-target declarations are surfaced without suppressing known layouts (32.3873ms)
+✔ canonical provenance and adapter source bindings produce stable portable carrier digests (41.9323ms)
+✔ resource-only changes alter carrier provenance and file digests (35.4631ms)
+✔ registry drift between compilation and carrier inventory fails closed (20.3269ms)
+✔ missing required-resource metadata or inventory members cannot become partial carriers (60.9153ms)
+✔ duplicate native names and case-colliding destination resources are rejected (32.721ms)
+✔ case-aliased ancestor directories with different child files are rejected (20.1544ms)
+✔ Unicode-normalization-aliased ancestors with different children are rejected (18.3589ms)
+✔ nested SKILL.md resources are rejected case-insensitively (19.3222ms)
+✔ invalid native names and unsafe resource paths fail before projection (71.9995ms)
+✔ unknown targets and externally supplied plans or options are rejected (4.82ms)
+✔ read-only planning does not write files, execute processes, or inspect user homes (32.2892ms)
+✔ published carrier schema validates outputs and rejects extra or capability-bearing fields (47.8107ms)
+✔ real canonical inventory projects every selected bundled resource without relying on mirrors (3616.0259ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4651.6123
+
+
+━━━ Running lib/context-pack-registry.test.js ━━━
+✔ canonical skill inventory has one owner and stable portable resource digests (61.133ms)
+✔ resource bytes are hashed without evaluating scripts or following prose instructions (24.0077ms)
+✔ npm-excluded control files do not alter published inventory (21.4553ms)
+✔ npm-excluded Python caches do not alter source identity or become required resources (29.0704ms)
+✔ unknown and duplicate override IDs fail closed (11.4619ms)
+✔ unknown schema keys and traversal in required resources fail closed (12.949ms)
+✔ missing declared resources and unknown dependency IDs fail closed (19.2408ms)
+✔ dependency cycles and duplicate ownership fail closed (18.7896ms)
+✔ directory link fixtures choose unprivileged Windows junctions (0.7128ms)
+✔ unowned skills fail closed (12.885ms)
+✔ leaf-link detection rejects before opening source bytes without symlink privileges (6.5647ms)
+﹣ real file symlink resources fail closed when host privileges permit (5.4129ms) # Windows file-symlink privilege unavailable; mandatory leaf detection and junction cases still run
+✔ malformed skill metadata and duplicate module IDs fail closed (14.1739ms)
+✔ parsed terminal control characters are rejected and ordinary multiline metadata is normalized (56.6621ms)
+✔ explanation keeps installer declarations separate from native observation (38.1497ms)
+✔ resource limits reject oversized files and cumulative reads (33.1974ms)
+✔ symlinked skill root and manifest ancestors are rejected (10.3037ms)
+✔ ancestor replacement during open fails before reading redirected resource bytes (12.2121ms)
+✔ real repository registry covers current curated skills and every install target plus Pi (392.8317ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 787.4502
+
+
+━━━ Running lib/context-profile-auto-launch.test.js ━━━
+✔ ambiguous Auto asks for one proposal, validates it, then loads context for the task (90.8216ms)
+✔ empty proposal is valid and task proceeds without a forced workflow (34.8454ms)
+✔ invalid proposal and source drift stop before task execution (51.2755ms)
+✔ dry-run reports a pending proposal without any provider call (20.7647ms)
+✔ configured-state drift after a proposal prevents the task call (34.329ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 235.9363
+
+
+━━━ Running lib/context-profile-eval-corpus.test.js ━━━
+✔ corpus v2 header, ids and probe shapes are valid (1.1856ms)
+✔ every referenced skill ID exists in the registry (375.596ms)
+✔ tasks respect shape, size and path-safety limits (1.263ms)
+✔ hidden check fails on starter files and passes on the reference: sql-injection-query (79.5518ms)
+✔ hidden check fails on starter files and passes on the reference: path-traversal-guard (99.1425ms)
+✔ hidden check fails on starter files and passes on the reference: escape-comment-html (78.4196ms)
+✔ hidden check fails on starter files and passes on the reference: list-pagination (80.7072ms)
+✔ hidden check fails on starter files and passes on the reference: create-user-status-codes (78.6719ms)
+✔ hidden check fails on starter files and passes on the reference: retry-with-backoff (81.7629ms)
+✔ hidden check fails on starter files and passes on the reference: typed-config-errors (78.8843ms)
+✔ hidden check fails on starter files and passes on the reference: batch-partial-failures (82.3564ms)
+✔ hidden check fails on starter files and passes on the reference: access-log-parser (89.7133ms)
+✔ hidden check fails on starter files and passes on the reference: invoice-field-extraction (81.6952ms)
+✔ hidden check fails on starter files and passes on the reference: add-column-migration (81.3461ms)
+✔ hidden check fails on starter files and passes on the reference: rename-column-expand (82.9172ms)
+✔ hidden check fails on starter files and passes on the reference: keyset-feed-query (80.8608ms)
+✔ hidden check fails on starter files and passes on the reference: upsert-inventory-sql (76.0406ms)
+✔ hidden check fails on starter files and passes on the reference: slugify-regression-tests (80.5953ms)
+✔ hidden check fails on starter files and passes on the reference: content-hash-cache (81.0889ms)
+✔ hidden check fails on starter files and passes on the reference: batch-customer-lookup (80.6388ms)
+✔ hidden check fails on starter files and passes on the reference: rbac-middleware (77.4959ms)
+✔ hidden check fails on starter files and passes on the reference: immutable-cart-update (79.1065ms)
+✔ hidden check fails on starter files and passes on the reference: inject-signup-deps (83.5962ms)
+✔ hidden check fails on starter files and passes on the reference: cache-aside-user (78.8113ms)
+✔ hidden check fails on starter files and passes on the reference: token-units-bigint (83.0876ms)
+✔ hidden check fails on starter files and passes on the reference: inclusive-range (82.6358ms)
+✔ hidden check fails on starter files and passes on the reference: export-name-typo (81.8379ms)
+✔ hidden check fails on starter files and passes on the reference: default-greeting (78.1323ms)
+✔ hidden check fails on starter files and passes on the reference: sum-form-values (79.6068ms)
+✔ hidden check fails on starter files and passes on the reference: changelog-capitalize (76.3115ms)
+✔ hidden check fails on starter files and passes on the reference: test-summary-plural (78.5192ms)
+✔ hidden check fails on starter files and passes on the reference: database-label-typo (77.8536ms)
+✔ hidden check fails on starter files and passes on the reference: port-from-env (77.4186ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2813.2572
+
+
+━━━ Running lib/context-profile-eval.test.js ━━━
+✔ JSONL collects usage only from completion events and fails closed on missing/malformed usage (1.3005ms)
+✔ registration pins corpus, source, native-install design and paired order before execution (94.4823ms)
+✔ injected paired run grades hidden checks, gives Full no ECC bodies, removes workspaces and sanitizes metrics (582.4312ms)
+✔ claimed success without the required change fails the hidden check (530.8141ms)
+✔ hidden check refuses an agent-planted grader and runs read-only where Node supports it (43.2238ms)
+✔ call budget stops work without dropping scheduled failures (184.8766ms)
+✔ deadline, provider exceptions and malformed streams remain sanitized scheduled failures (994.2801ms)
+✔ source drift before and during calls invalidates evidence (251.9609ms)
+✔ a changed native install stops later calls as environment drift (204.3817ms)
+✔ prepared install config is restored after every call, including failed calls (437.0917ms)
+﹣ subscription lease copies private auth into the call home, returns refreshed tokens and always removes it (0.1131ms) # SKIP
+﹣ real provider needs opt-in, pins and a credential source, and never ignores the native install config (0.0612ms) # SKIP
+✔ confidence intervals use distinct task clusters, not repeated calls as independent samples (1.0964ms)
+✔ CLI plan is credential-free JSON and rejects unknown or incomplete flags (1494.987ms)
+✔ CLI injection runs the actual workflow using retained preregistration (542.7894ms)
+✔ invalid corpus, unsafe workspace paths, bounds and repeats fail before provider calls (13.2503ms)
+✔ Claude result JSON maps cache-corrected usage and separates provider errors from parse errors (0.3562ms)
+✔ provider family resolves from an explicit flag or the executable name, and effort stays Codex-only (29.5864ms)
+﹣ Claude provider runs tool-free selection and permissioned tasks with a sanitized isolated env (0.0466ms) # SKIP
+﹣ Claude native installs materialize managed skills and detect tampering as environment drift (0.0254ms) # SKIP
+﹣ injected Claude-family run parses Claude JSON, isolates config homes, grades checks and maps usage (0.0242ms) # SKIP
+✔ complex corpora register a scored design and keep partial credit per arm (528.1279ms)
+✔ complex corpus validation rejects wrong minimums and oversized manual picks (13.2132ms)
+✔ scored checks parse the partial-credit line and fall back to exit status (266.6601ms)
+✔ an explicit selector decline injects nothing, even when a tier-2 fallback exists (11390.2077ms)
+✔ the legacy source pin is validated before any git export (0.8581ms)
+✔ arm subsets register and run only the requested arms, paired against the last arm (244.6456ms)
+✔ stepped tasks grade each ticket in the accumulating workspace with per-step metrics (196.5401ms)
+✔ a failed step ends the chain and remaining tickets score zero (194.906ms)
+✔ step graders use distinct files and are removed after running so later tickets cannot read them (80.6175ms)
+✔ stepped corpus validation rejects bad steps before provider calls (5.3211ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 5
+ℹ todo 0
+ℹ duration_ms 18334.1037
+
+
+━━━ Running lib/context-profile-interactive.test.js ━━━
