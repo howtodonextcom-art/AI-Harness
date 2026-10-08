@@ -1,0 +1,29 @@
+# Staged rollout for the funded account (ADR-0020, T4.3).
+#
+# A tier is promoted only by the operator command (scripts/rollout.py promote) and only when its
+# exit criteria are met; the program checks them, a person decides. An UNVALIDATED strategy stays at
+# tier 2 permanently. Tier 3 needs a VALIDATED strategy and risk from the Monte Carlo filter.
+tiers:
+  - tier: 0
+    name: shadow
+    send_orders: false          # gates + the broker's order_check run, nothing is sent
+    exit:
+      min_trading_days: 5
+  - tier: 1
+    name: minimum-lot
+    send_orders: true
+    lot_cap: 0.01
+    exit:
+      min_orders: 10
+      max_rejected_or_unknown: 0
+  - tier: 2
+    name: quarter-percent
+    send_orders: true
+    risk_pct: 0.25
+    exit:
+      min_weeks: 4
+  - tier: 3
+    name: validated-sizing
+    send_orders: true
+    requires_validated: true    # risk comes from the Monte Carlo prop filter (funded_validated_risk_pct)
+    exit: {}

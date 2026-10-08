@@ -1,0 +1,72 @@
+# FTMO FUNDED account rules the bot must respect (ADR-0020, decision D6).
+#
+# Every rule has: status (verified_official | secondary | unverified), must_verify, verified_on,
+# source and an optional value. The bot REFUSES to start in funded mode while any rule with
+# must_verify: true is not "verified_official" with a verified_on date and a source.
+#
+# THE OWNER fills this in after checking FTMO's current terms (and, for the open questions, asking
+# FTMO support in writing). Nothing in this repository marks a rule verified. Values below come from
+# docs/research/ftmo-rules-from-source.md, which reads ANOTHER project's source code and applies to
+# the Challenge, not to the Funded account: they are "secondary" at best.
+name: ftmo-funded
+
+rules:
+  daily_loss_limit_pct:
+    value: 5.0
+    status: secondary
+    must_verify: true
+    source: docs/research/ftmo-rules-from-source.md (challenge rule, funded account not confirmed)
+  max_loss_limit_pct:
+    value: 10.0
+    status: secondary
+    must_verify: true
+    source: docs/research/ftmo-rules-from-source.md (challenge rule, funded account not confirmed)
+  max_loss_kind:
+    value: static
+    status: secondary
+    must_verify: true
+    note: 2-Step challenge is static; the funded account's formula must be confirmed.
+  daily_reset:
+    value: "00:00 Europe/Prague"
+    status: secondary
+    must_verify: true
+  ea_automated_trading:
+    status: unverified
+    must_verify: true
+    note: Are Expert Advisors / automated trading allowed on the funded account, and on which conditions?
+  ai_tools:
+    status: unverified
+    must_verify: true
+    note: Is an AI-assisted or statistically driven bot treated as a forbidden "AI tool"?
+  request_definition_and_limit:
+    status: unverified
+    must_verify: true
+    note: A paraphrase says "more than 2,000 requests a day is a hyperactive bot"; what counts as a request?
+  news_trading_window:
+    status: unverified
+    must_verify: true
+    note: Which events, instruments and how many minutes before and after.
+  market_close_margin:
+    status: unverified
+    must_verify: true
+    note: How close to the daily break and the weekend close may a new trade open?
+  weekend_and_overnight_holding:
+    status: unverified
+    must_verify: true
+  hedging_and_opposite_positions:
+    status: unverified
+    must_verify: true
+  funded_consistency_rule:
+    status: unverified
+    must_verify: true
+    note: Sources conflict; not implemented by the bot.
+  account_access_and_copy_trading:
+    status: unverified
+    must_verify: true
+    note: Third-party access and copy trading; the bot runs on the owner's own VPS.
+  internal_buffer_pct_of_limit:
+    value: 40.0
+    status: verified_official
+    must_verify: false
+    verified_on: 2026-10-08
+    source: our own safety margin, not an FTMO rule
