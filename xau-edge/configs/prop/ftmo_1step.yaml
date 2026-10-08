@@ -1,0 +1,31 @@
+# FTMO Challenge 1-Step. Verified 2026-10-08 against https://ftmo.com/en/trading-objectives/
+# (page dateModified 2026-09-30). Re-verify before every use and update `verified_on`.
+# Percentages are of the Initial Simulated Capital.
+name: ftmo-1step
+source: https://ftmo.com/en/trading-objectives/
+verified_on: 2026-10-08
+
+phases:
+  challenge: {profit_target_pct: 10.0}
+
+daily_loss:
+  limit_pct: 3.0
+  reset_timezone: Europe/Prague   # CE(S)T
+  reset_time: "00:00"
+  measured_on: equity
+
+# Maximum Loss: 10% below the HIGHEST END-OF-DAY BALANCE reached so far (trailing, only moves up).
+max_loss:
+  limit_pct: 10.0
+  kind: trailing_end_of_day_balance
+  measured_on: equity
+
+minimum_trading_days: null    # not stated for 1-Step on the objectives page
+best_day_rule:
+  max_share_of_positive_days_profit_pct: 50.0   # not a breach; resolved by continued trading
+
+trading_restrictions: unverified
+ea_restrictions: unverified
+execution_rules: unverified
+
+internal_buffer_pct_of_limit: 40.0

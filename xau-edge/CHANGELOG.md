@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0 - 2026-10-08 (Sprint 7: outcomes, baselines, evaluation protocol)
+
+### Added
+* `outcomes/`: outcome engine (forward move, excursions, direction, barrier trades in R) and
+  statistics with Wilson intervals.
+* `strategies/`: look-ahead-safe timeframe alignment, per-timeframe context, baselines A, B, C.
+* `experiments/registry.py`: write-once experiment records with variant counting.
+* `evaluation/`: day-block bootstrap, pre-registered periods (read-only, test-period lock),
+  protocol-as-code; `scripts/run_analogue_study.py`; `docs/evals/edge-criteria.md`; ADR-0014.
+* `configs/prop/ftmo_1step.yaml`, `ftmo_2step.yaml` (rules verified 2026-10-08).
+
+### Result
+* The pre-specified analogue study failed its pre-registered rule on Development and Validation.
+
 ## 0.6.0 - 2026-10-08 (Sprint 6: pattern similarity)
 
 ### Added

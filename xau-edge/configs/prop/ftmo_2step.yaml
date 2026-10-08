@@ -1,0 +1,37 @@
+# FTMO Challenge 2-Step. Verified 2026-10-08 against https://ftmo.com/en/trading-objectives/
+# (page dateModified 2026-09-30) and https://academy.ftmo.com/lesson/maximum-daily-loss/.
+# FTMO changes its rules from time to time: re-verify before every use and update `verified_on`.
+# Percentages are of the Initial Simulated Capital.
+name: ftmo-2step
+source: https://ftmo.com/en/trading-objectives/
+verified_on: 2026-10-08
+
+phases:
+  challenge: {profit_target_pct: 10.0}
+  verification: {profit_target_pct: 5.0}
+
+# Maximum Daily Loss: limit = balance at 00:00 CE(S)T of the day minus 5% of initial capital;
+# breached when EQUITY (closed + floating P/L, commissions and swaps) falls below it.
+daily_loss:
+  limit_pct: 5.0
+  reset_timezone: Europe/Prague   # CE(S)T
+  reset_time: "00:00"
+  measured_on: equity
+
+# Maximum Loss: static floor of initial capital minus 10%.
+max_loss:
+  limit_pct: 10.0
+  kind: static
+  measured_on: equity
+
+minimum_trading_days: 4
+best_day_rule: null          # not part of the 2-Step objectives
+
+# NOT verified from the objectives page: restrictions on Expert Advisors / automated trading,
+# news trading, hedging, copy trading and latency. Check FTMO's terms before any automation.
+trading_restrictions: unverified
+ea_restrictions: unverified
+execution_rules: unverified
+
+# Safety margin the risk engine keeps against the limits (fractions of the limit still unused).
+internal_buffer_pct_of_limit: 40.0
