@@ -12,8 +12,10 @@ from pathlib import Path
 import uvicorn
 
 from xau_edge.api.app import create_app
+from xau_edge.api.bot import BotContext
 from xau_edge.api.service import ApiContext
 from xau_edge.backtest.costs import CostModel
+from xau_edge.config import Settings
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.paper import PaperExecutionBroker
 from xau_edge.execution.safety import ExecutionSafety, assert_live_trading_disabled
@@ -45,6 +47,7 @@ def main() -> None:
         )
 
     assert_live_trading_disabled()
+    settings = Settings()
     prop = load_prop_profile(Path(args.prop))
     journal = Path("data/paper/forward-journal.jsonl")
     broker = PaperExecutionBroker(100_000.0, costs=CostModel(), journal_path=journal)
@@ -55,6 +58,12 @@ def main() -> None:
         prop=prop,
         models_dir=Path("models"),
         paper=paper,
+        bot=BotContext(
+            state_path=settings.demo_state_path,
+            status_path=Path("data/execution/status.json"),
+            cycles_path=Path("data/execution/cycles.jsonl"),
+            journal_path=settings.demo_journal_path,
+        ),
         journal_path=journal,
     )
     uvicorn.run(create_app(ctx), host="127.0.0.1", port=args.port, log_level="info")

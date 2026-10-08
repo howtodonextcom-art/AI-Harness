@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict
 
 from xau_edge import __version__ as package_version
+from xau_edge.api.bot import add_bot_routes
 from xau_edge.api.service import (
     SYMBOL,
     ApiContext,
@@ -234,6 +235,8 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
     @app.get("/models")
     def models() -> dict[str, Any]:
         return {"models": model_records(ctx.models_dir)}
+
+    add_bot_routes(app, ctx.bot, ctx.clock)
 
     @app.get("/risk/status")
     def risk_status() -> dict[str, Any]:

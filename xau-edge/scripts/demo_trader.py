@@ -39,6 +39,7 @@ from xau_edge.execution.runner import (
 )
 from xau_edge.execution.safety import ExecutionSafety, assert_live_trading_disabled
 from xau_edge.execution.state import ExecutionState, PersistentKillSwitch
+from xau_edge.execution.status import build_status, write_status
 from xau_edge.experiments.registry import ExperimentRegistry
 from xau_edge.market_data.catalog import DatasetCatalog
 from xau_edge.market_data.mt5.source import (
@@ -156,6 +157,17 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
             except DemoAccountError as exc:
                 print(f"{now:%H:%M:%S} account/positions unavailable ({exc}); cycle skipped")
                 audit.record("snapshot.failed", error=str(exc))
+                write_status(
+                    exec_dir / "status.json",
+                    build_status(
+                        now,
+                        mode="dry-run",
+                        symbol=args.symbol,
+                        snapshot=None,
+                        reconcile=None,
+                        report=None,
+                    ),
+                )
                 write_heartbeat(exec_dir / "heartbeat.json", now, "ACCOUNT_UNAVAILABLE")
                 if args.once:
                     return 5
@@ -180,6 +192,17 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
             if invalid:
                 print(f"{now:%H:%M:%S} data validation failed for {invalid}; cycle skipped")
                 write_heartbeat(exec_dir / "heartbeat.json", now, "DATA_INVALID")
+                write_status(
+                    exec_dir / "status.json",
+                    build_status(
+                        now,
+                        mode="dry-run",
+                        symbol=args.symbol,
+                        snapshot=snapshot,
+                        reconcile=reconcile,
+                        report=None,
+                    ),
+                )
             else:
                 report = cycle.run(frames, now, account, force=args.force, reconcile=reconcile)
                 print(
@@ -187,6 +210,18 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
                     f"accepted={report.accepted} reasons={list(report.reasons)}"
                 )
                 write_heartbeat(exec_dir / "heartbeat.json", now, "OK")
+                write_status(
+                    exec_dir / "status.json",
+                    build_status(
+                        now,
+                        mode="dry-run",
+                        symbol=args.symbol,
+                        snapshot=snapshot,
+                        reconcile=reconcile,
+                        report=report,
+                        bot_tickets=frozenset(r.ticket for r in state.open_positions()),
+                    ),
+                )
             if args.once:
                 return 0
             wake = next_close(datetime.now(UTC)) + timedelta(seconds=SETTLE_SECONDS)

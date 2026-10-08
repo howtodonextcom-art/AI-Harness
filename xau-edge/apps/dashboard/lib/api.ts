@@ -115,6 +115,72 @@ export interface RunSummary {
   trades: number | null;
 }
 
+export interface BotAlert {
+  code: string;
+  severity: "info" | "warning" | "critical";
+  message: string;
+}
+
+export interface BotPosition {
+  ticket: string;
+  symbol: string;
+  direction: 1 | -1;
+  lots: number;
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  opened_at: string;
+  bot_owned: boolean;
+}
+
+export interface BotStatusBody {
+  updated_at: string;
+  mode: "disabled" | "dry-run" | "demo";
+  live_trading: false;
+  symbol: string;
+  connected: boolean;
+  account_demo: boolean | null;
+  balance: number | null;
+  equity: number | null;
+  positions: BotPosition[];
+  reconcile_clean: boolean | null;
+  reconcile_codes: string[];
+  last_cycle: {
+    decision_time: string | null;
+    direction: string;
+    accepted: boolean;
+    reasons: string[];
+    data_age_minutes: number | null;
+  } | null;
+  news_status: "unknown" | "risk" | "clear";
+}
+
+export interface BotStatus {
+  configured: boolean;
+  live_trading: false;
+  status: BotStatusBody | null;
+  kill_switch: { tripped: boolean; reason: string; known: boolean };
+  alerts: BotAlert[];
+  healthy: boolean;
+}
+
+export interface BotCycle {
+  recorded_at: string;
+  decision_time: string | null;
+  direction: string;
+  accepted: boolean;
+  reasons: string[];
+  intent_id: string | null;
+  dry_run: boolean;
+  data_age_minutes: number | null;
+}
+
+export interface BotJournalEvent {
+  at: string;
+  event: string;
+  [key: string]: unknown;
+}
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, { signal, cache: "no-store" });
   if (!response.ok) {
@@ -131,6 +197,11 @@ export const api = {
     get<{ bars: Bar[] }>("/market/XAUUSD?timeframe=M15&limit=200", signal),
   risk: (signal?: AbortSignal) => get<RiskStatus>("/risk/status", signal),
   runs: (signal?: AbortSignal) => get<{ runs: RunSummary[] }>("/backtests", signal),
+  bot: (signal?: AbortSignal) => get<BotStatus>("/bot/status", signal).catch(() => null),
+  botCycles: (signal?: AbortSignal) =>
+    get<{ cycles: BotCycle[] }>("/bot/cycles?limit=12", signal).then((r) => r.cycles).catch(() => []),
+  botJournal: (signal?: AbortSignal) =>
+    get<{ events: BotJournalEvent[] }>("/bot/journal?limit=12", signal).then((r) => r.events).catch(() => []),
   paper: (signal?: AbortSignal) =>
     get<PaperAccount>("/paper/account", signal).catch(() => null),
 };

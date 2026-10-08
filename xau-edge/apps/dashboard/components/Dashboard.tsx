@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AnalogueChart } from "@/components/AnalogueChart";
+import { BotPanel } from "@/components/BotPanel";
 import { PriceChart } from "@/components/PriceChart";
 import {
   api,
   type Bar,
+  type BotCycle,
+  type BotJournalEvent,
+  type BotStatus,
   type PatternsResponse,
   type RegimeResponse,
   type PaperAccount,
@@ -22,6 +26,9 @@ interface Snapshot {
   risk: RiskStatus;
   runs: RunSummary[];
   paper: PaperAccount | null;
+  bot: BotStatus | null;
+  botCycles: BotCycle[];
+  botJournal: BotJournalEvent[];
   fetchedAt: number;
 }
 
@@ -59,7 +66,7 @@ function ProbabilityBar({ label, value, color }: { label: string; value: number 
 }
 
 async function fetchSnapshot(signal: AbortSignal): Promise<Snapshot> {
-  const [sig, regime, patterns, bars, risk, runs, paper] = await Promise.all([
+  const [sig, regime, patterns, bars, risk, runs, paper, bot, botCycles, botJournal] = await Promise.all([
     api.signal(signal),
     api.regime(signal),
     api.patterns(signal),
@@ -67,8 +74,11 @@ async function fetchSnapshot(signal: AbortSignal): Promise<Snapshot> {
     api.risk(signal),
     api.runs(signal),
     api.paper(signal),
+    api.bot(signal),
+    api.botCycles(signal),
+    api.botJournal(signal),
   ]);
-  return { signal: sig, regime, patterns, bars: bars.bars, risk, runs: runs.runs, paper, fetchedAt: Date.now() };
+  return { signal: sig, regime, patterns, bars: bars.bars, risk, runs: runs.runs, paper, bot, botCycles, botJournal, fetchedAt: Date.now() };
 }
 
 export function Dashboard() {
@@ -114,7 +124,7 @@ export function Dashboard() {
     return <main className="p-6 text-slate-500">Loading market state...</main>;
   }
 
-  const { signal, regime, patterns, bars, risk, runs, paper, fetchedAt } = data;
+  const { signal, regime, patterns, bars, risk, runs, paper, bot, botCycles, botJournal, fetchedAt } = data;
   const last = bars[bars.length - 1];
   const passedRuns = runs.filter((r) => r.passed === true).length;
   const staleHours = (fetchedAt - Date.parse(signal.data_as_of)) / 3_600_000;
@@ -147,6 +157,8 @@ export function Dashboard() {
         Data as of {new Date(signal.data_as_of).toUTCString()} ({staleLabel}).
         {staleHours > 6 ? " This dataset is not live." : ""}
       </p>
+
+      <BotPanel bot={bot} cycles={botCycles} journal={botJournal} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card title="Decision" className="lg:col-span-1">
