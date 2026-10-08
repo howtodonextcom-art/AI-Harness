@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 - 2026-10-08 (Sprint 4: feature set)
+
+### Added
+* `features/candles.py`, `volume.py`, `sessions.py`: candle geometry, tick-volume z-score and
+  change, hour / day of week / trading session from local exchange hours (ADR-0011).
+* `features/feature_set.py`: versioned feature frame (`FEATURE_SET_VERSION` 1, 40 columns) with
+  `available_at` and `gap_before`; `FeatureStore` (write-once, hash-verified) keyed by dataset id.
+* Pre-commit hooks installed (ruff, format, mypy, `.env` guard); regression pin for the feature set.
+
+### Changed
+* Indicator helper functions are public (`as_series`, `as_hlc`, `check_period`).
+
 ## 0.3.0 - 2026-10-08 (roadmap debt and indicators)
 
 ### Added

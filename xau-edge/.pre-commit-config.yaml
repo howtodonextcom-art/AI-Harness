@@ -1,26 +1,29 @@
-# Optional: install with `uv run pre-commit install` (pre-commit is not a project dependency).
-# CI remains the authoritative gate; these hooks only catch problems earlier.
+# Install from the git root (the repository root is one level above xau-edge/):
+#   pre-commit install -c xau-edge/.pre-commit-config.yaml
+# Hooks only run when files under xau-edge/ change. CI remains the authoritative gate.
 repos:
   - repo: local
     hooks:
       - id: ruff-check
         name: ruff check
-        entry: uv run ruff check
-        language: system
-        types: [python]
-      - id: ruff-format
-        name: ruff format --check
-        entry: uv run ruff format --check
-        language: system
-        types: [python]
-      - id: mypy
-        name: mypy --strict
-        entry: uv run mypy
+        entry: uv run --directory xau-edge ruff check .
         language: system
         pass_filenames: false
-        types: [python]
+        files: ^xau-edge/
+      - id: ruff-format
+        name: ruff format --check
+        entry: uv run --directory xau-edge ruff format --check .
+        language: system
+        pass_filenames: false
+        files: ^xau-edge/
+      - id: mypy
+        name: mypy --strict
+        entry: uv run --directory xau-edge mypy
+        language: system
+        pass_filenames: false
+        files: ^xau-edge/
       - id: block-env-files
         name: block .env files
-        entry: uv run python scripts/block_env_files.py
+        entry: uv run --directory xau-edge python scripts/block_env_files.py
         language: system
         types: [file]

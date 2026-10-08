@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xau-edge"
-version = "0.3.0"
+version = "0.4.0"
 description = "Probabilistic decision-support and research platform for XAUUSD (research only, no live trading)."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"

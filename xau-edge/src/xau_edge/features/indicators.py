@@ -56,7 +56,7 @@ class BollingerResult(NamedTuple):
     lower: Floats
 
 
-def _series(values: ArrayLike, name: str = "values") -> Floats:
+def as_series(values: ArrayLike, name: str = "values") -> Floats:
     arr = np.asarray(values, dtype=np.float64)
     if arr.ndim != 1:
         msg = f"{name} must be 1-D, got shape {arr.shape}"
@@ -70,8 +70,8 @@ def _series(values: ArrayLike, name: str = "values") -> Floats:
     return arr
 
 
-def _hlc(high: ArrayLike, low: ArrayLike, close: ArrayLike) -> tuple[Floats, Floats, Floats]:
-    h, lo, c = _series(high, "high"), _series(low, "low"), _series(close, "close")
+def as_hlc(high: ArrayLike, low: ArrayLike, close: ArrayLike) -> tuple[Floats, Floats, Floats]:
+    h, lo, c = as_series(high, "high"), as_series(low, "low"), as_series(close, "close")
     if not (h.shape == lo.shape == c.shape):
         msg = f"high, low and close must have the same length, got {h.size}, {lo.size}, {c.size}"
         raise ValueError(msg)
@@ -81,7 +81,7 @@ def _hlc(high: ArrayLike, low: ArrayLike, close: ArrayLike) -> tuple[Floats, Flo
     return h, lo, c
 
 
-def _period(period: int, name: str = "period", *, minimum: int = 1) -> int:
+def check_period(period: int, name: str = "period", *, minimum: int = 1) -> int:
     if isinstance(period, bool) or not isinstance(period, (int, np.integer)):
         msg = f"{name} must be an integer, got {period!r}"
         raise ValueError(msg)
@@ -133,8 +133,8 @@ def _ema_valid(
 
 def sma(values: ArrayLike, period: int) -> Floats:
     """Simple moving average. First valid index: ``period - 1``."""
-    _period(period)
-    return _sma_valid(_series(values), period)
+    check_period(period)
+    return _sma_valid(as_series(values), period)
 
 
 def ema(values: ArrayLike, period: int) -> Floats:
@@ -142,8 +142,8 @@ def ema(values: ArrayLike, period: int) -> Floats:
 
     Smoothing factor ``2 / (period + 1)``. First valid index: ``period - 1``.
     """
-    _period(period)
-    return _ema_valid(_series(values), period)
+    check_period(period)
+    return _ema_valid(as_series(values), period)
 
 
 def rsi(close: ArrayLike, period: int = 14) -> Floats:
@@ -152,8 +152,8 @@ def rsi(close: ArrayLike, period: int = 14) -> Floats:
     With no price movement in the seed window (average gain and loss both zero) the value is 0,
     matching TA-Lib.
     """
-    _period(period, minimum=2)
-    c = _series(close, "close")
+    check_period(period, minimum=2)
+    c = as_series(close, "close")
     n = c.size
     out = _empty(n)
     if n <= period:
@@ -177,7 +177,7 @@ def true_range(high: ArrayLike, low: ArrayLike, close: ArrayLike) -> Floats:
 
     Index 0 is ``NaN`` (there is no previous close).
     """
-    h, lo, c = _hlc(high, low, close)
+    h, lo, c = as_hlc(high, low, close)
     out = _empty(h.size)
     if h.size > 1:
         prev = c[:-1]
@@ -187,7 +187,7 @@ def true_range(high: ArrayLike, low: ArrayLike, close: ArrayLike) -> Floats:
 
 def atr(high: ArrayLike, low: ArrayLike, close: ArrayLike, period: int = 14) -> Floats:
     """Wilder's Average True Range. First valid index: ``period``."""
-    _period(period)
+    check_period(period)
     tr = true_range(high, low, close)
     n = tr.size
     out = _empty(n)
@@ -203,8 +203,8 @@ def atr(high: ArrayLike, low: ArrayLike, close: ArrayLike, period: int = 14) -> 
 
 def adx(high: ArrayLike, low: ArrayLike, close: ArrayLike, period: int = 14) -> AdxResult:
     """Wilder's Average Directional Index with +DI and -DI (TA-Lib compatible)."""
-    _period(period, minimum=2)
-    h, lo, c = _hlc(high, low, close)
+    check_period(period, minimum=2)
+    h, lo, c = as_hlc(high, low, close)
     n = h.size
     adx_out, plus_out, minus_out = _empty(n), _empty(n), _empty(n)
     if n <= period:
@@ -250,13 +250,13 @@ def macd(close: ArrayLike, fast: int = 12, slow: int = 26, signal: int = 9) -> M
     values, the fast EMA with the mean of the ``fast`` values ending there. The signal line is an
     EMA of the MACD line seeded with its first ``signal`` values.
     """
-    _period(fast, "fast period")
-    _period(slow, "slow period")
-    _period(signal, "signal period")
+    check_period(fast, "fast period")
+    check_period(slow, "slow period")
+    check_period(signal, "signal period")
     if fast >= slow:
         msg = f"fast period must be < slow period, got {fast} >= {slow}"
         raise ValueError(msg)
-    c = _series(close, "close")
+    c = as_series(close, "close")
     slow_ema = _ema_valid(c, slow)
     fast_ema = _ema_valid(c, fast, seed_at=slow - 1, seed_len=fast)
     line = fast_ema - slow_ema
@@ -281,10 +281,10 @@ def stochastic(  # noqa: PLR0917 - conventional oscillator signature
     (0 when the range is zero, as in TA-Lib); %K is its ``k_smooth`` SMA and %D the ``d_period``
     SMA of %K. First valid index: %K ``k_period + k_smooth - 2``, %D ``+ d_period - 1``.
     """
-    _period(k_period, "k period")
-    _period(k_smooth, "k smoothing period")
-    _period(d_period, "d period")
-    h, lo, c = _hlc(high, low, close)
+    check_period(k_period, "k period")
+    check_period(k_smooth, "k smoothing period")
+    check_period(d_period, "d period")
+    h, lo, c = as_hlc(high, low, close)
     n = h.size
     raw = _empty(n)
     if n >= k_period:
@@ -307,11 +307,11 @@ def stochastic(  # noqa: PLR0917 - conventional oscillator signature
 
 def bollinger(close: ArrayLike, period: int = 20, num_std: float = 2.0) -> BollingerResult:
     """Bollinger bands: SMA +/- ``num_std`` population standard deviations."""
-    _period(period)
+    check_period(period)
     if num_std < 0:
         msg = f"num_std must be >= 0, got {num_std}"
         raise ValueError(msg)
-    c = _series(close, "close")
+    c = as_series(close, "close")
     mid = _sma_valid(c, period)
     std = _empty(c.size)
     if c.size >= period:
@@ -326,7 +326,7 @@ def simple_returns(close: ArrayLike) -> Floats:
 
 def log_returns(close: ArrayLike) -> Floats:
     """``ln(close[i] / close[i - 1])``. Index 0 is ``NaN``. Prices must be positive."""
-    c = _series(close, "close")
+    c = as_series(close, "close")
     if (c <= 0).any():
         msg = "close must be positive to take log returns"
         raise ValueError(msg)
@@ -338,8 +338,8 @@ def log_returns(close: ArrayLike) -> Floats:
 
 def rolling_returns(close: ArrayLike, window: int) -> Floats:
     """Return over ``window`` bars: ``close[i] / close[i - window] - 1``."""
-    _period(window, "window")
-    c = _series(close, "close")
+    check_period(window, "window")
+    c = as_series(close, "close")
     out = _empty(c.size)
     if c.size > window:
         out[window:] = c[window:] / c[:-window] - 1.0
@@ -351,7 +351,7 @@ def rolling_volatility(close: ArrayLike, window: int) -> Floats:
 
     First valid index: ``window`` (the first log return exists at index 1).
     """
-    _period(window, "window")
+    check_period(window, "window")
     lr = log_returns(close)
     out = _empty(lr.size)
     if lr.size > window >= 2:
