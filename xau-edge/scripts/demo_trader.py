@@ -84,6 +84,7 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument("--once", action="store_true", help="run a single cycle and exit")
+    parser.add_argument("--max-cycles", type=int, default=0, help="stop after N cycles (0 = never)")
     parser.add_argument("--terminal-path", default=DEFAULT_TERMINAL)
     parser.add_argument("--symbol", default="XAUUSD")
     parser.add_argument("--profile", default="configs/brokers/ftmo_demo.yaml")
@@ -190,6 +191,7 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
             )
             + f"; magic={'set' if magic is not None else 'MISSING'}"
         )
+        cycles = 0
         while True:
             now = datetime.now(UTC)
             refresh_market_data(source, store, args.symbol, now, source_name=f"mt5-{profile.name}")
@@ -292,7 +294,8 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
                         bot_tickets=frozenset(r.ticket for r in state.open_positions()),
                     ),
                 )
-            if args.once:
+            cycles += 1
+            if args.once or (args.max_cycles and cycles >= args.max_cycles):
                 return 0
             wake = next_close(datetime.now(UTC)) + timedelta(seconds=SETTLE_SECONDS)
             time.sleep(max(1.0, (wake - datetime.now(UTC)).total_seconds()))

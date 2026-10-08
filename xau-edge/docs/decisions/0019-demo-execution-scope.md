@@ -76,3 +76,16 @@ must never commit account identifiers or passwords.
 
 This ADR does not authorize live trading, profitability claims, lowering the edge criteria,
 arbitrary order endpoints, or using demo fills as evidence of live profitability.
+
+## Implementation status (2026-10-08)
+
+Built and tested against a fake terminal: persistent state and kill switch (`execution/state.py`),
+bridge, order intent, reconciliation, execution journal, kill-switch CLI, read-only `/bot/*` API and
+dashboard panel, health alerts, and the demo executor under `brokers/mt5_demo/` with its allowlist
+proxies. Package boundary as decided: `execution/` stays free of terminal calls (still scanned by a
+test); the one narrowing of ADR-0018's wording is that `brokers/mt5_demo/` may import the terminal
+module and call `order_send` through a single guarded function. Live trading remains impossible.
+
+Open: the real `order_send` path has not been exercised (needs `MT5_TRADE_PASSWORD`, kept in a variable
+separate from the investor password); no economic calendar is supplied; no strategy has passed
+validation, so no signal is BUY/SELL. See `docs/operations/demo-trading.md`.

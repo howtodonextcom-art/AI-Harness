@@ -98,3 +98,10 @@ data/ models/ experiments/runs/   git-ignored local data, artifacts and run reco
 * `docs/evals/edge-criteria.md`: the pre-registered rules that decide whether anything "works"
 * `docs/architecture/`, `docs/research/`, `docs/risk/`, `docs/operations/`, `docs/decisions/`
 * `docs/reports/`: one report per sprint, `checkpoint-1.md`, `mt5-verification.md`
+
+## Demo bot (MT5 demo only)
+
+A dry-run bot runs on real MT5 demo data and journals every decision; with explicit settings it can
+send guarded orders to a DEMO account. Live trading cannot be enabled. While no strategy has passed
+validation every signal is WAIT. See `docs/operations/demo-trading.md`, `docs/architecture/demo-execution.md`
+and `docs/risk/demo-execution-risk.md`.
