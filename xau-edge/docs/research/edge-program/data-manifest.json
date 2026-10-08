@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-10-08T14:10:52.779072+00:00",
+  "end": "2025-05-01",
+  "M5": {
+    "rows": 0
+  },
+  "M15": {
+    "rows": 66720,
+    "first": "2022-07-04T22:00:00+00:00",
+    "last": "2025-04-30T23:45:00+00:00",
+    "sha256": "a3e8e085dae6943316abb4572960f512004b32dd275aed4cef4eb506e9eeaa61",
+    "dataset_id": "f1480a7251ffce51",
+    "validation_passed": true,
+    "issues": [
+      {
+        "code": "MISSING_BARS",
+        "severity": "WARNING",
+        "count": 1
+      },
+      {
+        "code": "UNSCHEDULED_CLOSURES",
+        "severity": "WARNING",
+        "count": 1091
+      }
+    ]
+  },
+  "H1": {
+    "rows": 91655,
+    "first": "2010-01-24T23:00:00+00:00",
+    "last": "2025-04-30T23:00:00+00:00",
+    "sha256": "9b521cda6648c08e5a2ff3e67c62e3345c66ae8c8e38946c076fbee431ebf93a",
+    "dataset_id": "8e64dd6561015b72",
+    "validation_passed": false,
+    "issues": [
+      {
+        "code": "MISSING_BARS",
+        "severity": "ERROR",
+        "count": 1003
+      },
+      {
+        "code": "UNSCHEDULED_CLOSURES",
+        "severity": "WARNING",
+        "count": 1179
+      },
+      {
+        "code": "WEEKEND_BARS",
+        "severity": "WARNING",
+        "count": 2226
+      },
+      {
+        "code": "INVALID_SPREAD",
+        "severity": "WARNING",
+        "count": 15
+      }
+    ]
+  },
+  "H4": {
+    "rows": 31995,
+    "first": "2004-06-11T01:00:00+00:00",
+    "last": "2025-04-30T21:00:00+00:00",
+    "sha256": "b4bbea7252a857d4dc405e7462960a29f49f4e0e2e932ff8d5df4a2a567b3bbb",
+    "dataset_id": "b438f1794bd11402",
+    "validation_passed": false,
+    "issues": [
+      {
+        "code": "MISSING_BARS",
+        "severity": "ERROR",
+        "count": 522
+      },
+      {
+        "code": "UNSCHEDULED_CLOSURES",
+        "severity": "WARNING",
+        "count": 181
+      },
+      {
+        "code": "WEEKEND_BARS",
+        "severity": "WARNING",
+        "count": 4
+      },
+      {
+        "code": "INVALID_SPREAD",
+        "severity": "WARNING",
+        "count": 3
+      }
+    ]
+  }
+}
