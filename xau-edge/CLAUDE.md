@@ -88,83 +88,85 @@ flowchart TD
 
 Kịch bản: (i) không vào được (live bị chặn), (ii) chạy 30 ngày với 0 lệnh, hoặc (iii) nếu gỡ gate thì trade một chiến lược kỳ vọng âm.
 
+Ký hiệu cột Trạng thái: ✅ đã xử lý trong code (có commit), 🟠 code xong nhưng còn việc của chủ dự án hoặc cần thời gian thực, ❌ chưa xử lý hoặc vẫn là blocker. Tổng hợp: `docs/reports/funded-readiness.md`.
+
 ### a) Edge / chiến lược
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| a1 | Chưa có edge được kiểm định; kết quả đổi dấu giữa các giai đoạn | `checkpoint-1.md:9-21`; `final-status.md:40-48` | **Blocker** | L |
-| a2 | Evidence gate & decision policy gắn cứng Baseline C (đã FAIL, PF 0.81/1.04) | `signals/engine.py:53-57, 60-69, 193-196` | **Blocker** (cấu trúc) | M |
-| a3 | Gate đòi PASS giai đoạn Test — chưa từng chạy (chủ đích) | `evidence.py:18, 40-47`; `edge-criteria.md:14` | Blocker (cố ý) | — |
-| a4 | Mẫu hẹp: 17 tháng, 1 broker, 1 symbol | `final-status.md:48` | Major | L |
-| a5 | Chi phí: slippage giả định, commission chưa xác minh, không triple swap/partial fill/latency | ADR-0015:15-29 | Major | M |
-| a6 | Xác suất là tần suất analogue chưa hiệu chỉnh | ADR-0017:17-20 | Minor | M |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| a1 | Chưa có edge được kiểm định; kết quả đổi dấu giữa các giai đoạn | `checkpoint-1.md:9-21`; `final-status.md:40-48` | **Blocker** | L | ❌ Edge program 2026-10 kết thúc (B) NO EDGE WITHIN BUDGET (`102a753`, `final-verdict.md`) |
+| a2 | Evidence gate & decision policy gắn cứng Baseline C (đã FAIL, PF 0.81/1.04) | `signals/engine.py:53-57, 60-69, 193-196` | **Blocker** (cấu trúc) | M | ✅ Strategy registry, evidence theo strategy_id (`fbc45d1`, ADR-0021) |
+| a3 | Gate đòi PASS giai đoạn Test — chưa từng chạy (chủ đích) | `evidence.py:18, 40-47`; `edge-criteria.md:14` | Blocker (cố ý) | — | 🟠 Cố ý giữ; Test-H và holdout chưa chạm vì không ứng viên nào PASS Val-H |
+| a4 | Mẫu hẹp: 17 tháng, 1 broker, 1 symbol | `final-status.md:48` | Major | L | 🟠 Mở rộng 15 năm H1/H4 read-only (`a840fe7`); vẫn 1 broker, 1 symbol |
+| a5 | Chi phí: slippage giả định, commission chưa xác minh, không triple swap/partial fill/latency | ADR-0015:15-29 | Major | M | 🟠 Spread sàn 30 pts + slippage bi quan trong edge program; commission chưa xác minh (chờ T5.3) |
+| a6 | Xác suất là tần suất analogue chưa hiệu chỉnh | ADR-0017:17-20 | Minor | M | ❌ Chưa xử lý (Minor) |
 
 ### b) Dữ liệu
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| b1 | Không có lịch tin → mọi tín hiệu `NEWS_UNKNOWN` → `WAIT`; cần quy trình cập nhật định kỳ | `news/calendar.py:104-112`; `decision.py:191-192` | **Blocker** | M |
-| b2 | Raw store phình: mỗi chu kỳ thêm 1 parquet/timeframe, catalog hash lại mọi file (giả thuyết về độ trễ, chưa đo) | `market_data/refresh.py:51-53`; `store.py:157`; `catalog.py:36-37` | Major | M |
-| b3 | Pattern search quét toàn bộ lịch sử M15 mỗi chu kỳ | `signals/engine.py:124-127` | Minor | S |
-| b4 | Broker đổi giờ server → validator fail, chu kỳ bị bỏ (an toàn) | ADR-0008 | Minor | S |
-| b5 | Bar 12:15, 12:30 được quyết định 2 lần (nghi do `--force`/phiên bản cũ — chưa xác minh) | `cycles.jsonl`; `execution/runner.py:142-144` | Minor | S |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| b1 | Không có lịch tin → mọi tín hiệu `NEWS_UNKNOWN` → `WAIT`; cần quy trình cập nhật định kỳ | `news/calendar.py:104-112`; `decision.py:191-192` | **Blocker** | M | 🟠 Lịch tin point-in-time + job hằng ngày (`b511afd`); chủ dự án cần cấp nguồn dữ liệu |
+| b2 | Raw store phình: mỗi chu kỳ thêm 1 parquet/timeframe, catalog hash lại mọi file (giả thuyết về độ trễ, chưa đo) | `market_data/refresh.py:51-53`; `store.py:157`; `catalog.py:36-37` | Major | M | ✅ Compaction theo tháng, catalog cache theo mtime/size, script benchmark (`8d78120`) |
+| b3 | Pattern search quét toàn bộ lịch sử M15 mỗi chu kỳ | `signals/engine.py:124-127` | Minor | S | ❌ Chưa xử lý (Minor) |
+| b4 | Broker đổi giờ server → validator fail, chu kỳ bị bỏ (an toàn) | ADR-0008 | Minor | S | ❌ Không đổi; hành vi vẫn an toàn (bỏ chu kỳ) |
+| b5 | Bar 12:15, 12:30 được quyết định 2 lần (nghi do `--force`/phiên bản cũ — chưa xác minh) | `cycles.jsonl`; `execution/runner.py:142-144` | Minor | S | ❌ Chưa xác minh; soak T5.2 đo tiêu chí 0 bar trùng |
 
 ### c) Thực thi
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| c1 | `order_send` thật chưa chạy; terminal dùng mật khẩu investor, thiếu `MT5_TRADE_PASSWORD` | `demo-bot-status.md:12-13, 27`; `brokers/mt5_demo/connect.py:41-43` | **Blocker** | S (chủ dự án) |
-| c2 | **BUY gần như luôn bị từ chối `ENTRY_PRICE_MOVED`**: `entry_reference` = close M15 (bid) nhưng so với **ask**, deviation 30 point < spread trung vị 31 point. Fixture test đặt entry = ask nên không phát hiện | `signals/decision.py:162-165`; `order_intent.py:149-150`; `executor.py:288-293`; `config.py:36`; `tests/unit/brokers/test_executor.py:65-66, 161` | Major | S |
-| c3 | SL/TP không làm tròn theo `digits` → có thể bị `order_check` từ chối hoặc reconcile báo `SL_MISMATCH` (tolerance 0,005) → trip kill switch | `decision.py:166-167`; `reconcile.py:118, 216-219`; `executor.py:411-417` | Major | S |
-| c4 | Mất kết nối: `refresh_market_data` ném `RuntimeError` nhưng vòng lặp chỉ bắt `DemoAccountError` → tiến trình thoát | `market_data/mt5/source.py:182-189`; `scripts/demo_trader.py:196-197, 213-233` | **Blocker** (24/5) | S |
-| c5 | Lệnh UNKNOWN → trip kill switch, không retry → bot đứng im khi không ai trực | `executor.py:427-437` | Major | M |
-| c6 | Lock file sót sau crash/reboot phải xóa tay (không kiểm PID) | `execution/runner.py:206-215` | Major | S |
-| c7 | Không kiểm `trade_stops_level`/freeze level trước khi gửi | `executor.py:49-74` | Minor | S |
-| c8 | Partial fill không xử lý phần còn lại | `executor.py:75, 346-347, 382` | Minor | S |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| c1 | `order_send` thật chưa chạy; terminal dùng mật khẩu investor, thiếu `MT5_TRADE_PASSWORD` | `demo-bot-status.md:12-13, 27`; `brokers/mt5_demo/connect.py:41-43` | **Blocker** | S (chủ dự án) | 🟠 Code sẵn; chủ dự án đặt `MT5_TRADE_PASSWORD` và tự chạy smoke (Phase E) |
+| c2 | **BUY gần như luôn bị từ chối `ENTRY_PRICE_MOVED`**: `entry_reference` = close M15 (bid) nhưng so với **ask**, deviation 30 point < spread trung vị 31 point. Fixture test đặt entry = ask nên không phát hiện | `signals/decision.py:162-165`; `order_intent.py:149-150`; `executor.py:288-293`; `config.py:36`; `tests/unit/brokers/test_executor.py:65-66, 161` | Major | S | ✅ Entry theo đúng phía ask/bid, deviation theo spread (`e5362af`, ADR-0022) |
+| c3 | SL/TP không làm tròn theo `digits` → có thể bị `order_check` từ chối hoặc reconcile báo `SL_MISMATCH` (tolerance 0,005) → trip kill switch | `decision.py:166-167`; `reconcile.py:118, 216-219`; `executor.py:411-417` | Major | S | ✅ Làm tròn SL/TP theo digits (`e5362af`) |
+| c4 | Mất kết nối: `refresh_market_data` ném `RuntimeError` nhưng vòng lặp chỉ bắt `DemoAccountError` → tiến trình thoát | `market_data/mt5/source.py:182-189`; `scripts/demo_trader.py:196-197, 213-233` | **Blocker** (24/5) | S | ✅ Phân loại lỗi, backoff, reconnect (`3ab4a6c`, `244d750`) |
+| c5 | Lệnh UNKNOWN → trip kill switch, không retry → bot đứng im khi không ai trực | `executor.py:427-437` | Major | M | ✅ Hỏi lại positions/deals trước khi kết luận UNKNOWN (`e5362af`) |
+| c6 | Lock file sót sau crash/reboot phải xóa tay (không kiểm PID) | `execution/runner.py:206-215` | Major | S | ✅ Lock ghi PID, tự giải phóng khi PID chết (`e5362af`) |
+| c7 | Không kiểm `trade_stops_level`/freeze level trước khi gửi | `executor.py:49-74` | Minor | S | ✅ Kiểm `trade_stops_level`/freeze level (`e5362af`) |
+| c8 | Partial fill không xử lý phần còn lại | `executor.py:75, 346-347, 382` | Minor | S | ✅ Partial fill ghi volume thật, không gửi bù (`e5362af`) |
 
 Điểm mạnh: exactly-once (ghi submission trước khi gửi), reconcile trước submit, last-look recheck, chỉ đóng vị thế của bot, `order_send` chỉ có 1 call site.
 
 ### d) Rủi ro
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| d1 | `RiskEngine.check_account` **không được gọi trong vòng lặp demo** (chỉ có ở backtest và paper trader) | `backtest/engine.py:206, 329`; `execution/trader.py:92`; không có trong `scripts/demo_trader.py` | Major | S |
-| d2 | Balance đầu ngày = balance lần đầu bot thấy, không phải 00:00 giờ Prague; `XAU_EDGE_DEMO_INITIAL_CAPITAL` trống → sàn max-loss sai | `execution/state.py:327-338`; `.env.example:21-22`; `ftmo_2step.yaml:13-19` | Major | S |
-| d3 | Luật FTMO về EA/tin tức/cuối tuần **chưa xác minh** | `configs/prop/ftmo_2step.yaml:30-34` | **Blocker** (prop) | S |
-| d4 | Sizing tính stop từ bid close nhưng khớp ở ask → rủi ro thực > 0,5% | `bridge.py:126-135`; `risk/sizing.py` | Minor | S |
-| d5 | `ExecutionSafety` trong bridge dùng mặc định paper (`account="paper"`) | `execution/safety.py:23-30`; `demo_trader.py:114-119` | Minor | S |
-| d6 | Kill switch không tự đóng vị thế (chủ đích) | ADR-0019:53-57 | (cố ý) | — |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| d1 | `RiskEngine.check_account` **không được gọi trong vòng lặp demo** (chỉ có ở backtest và paper trader) | `backtest/engine.py:206, 329`; `execution/trader.py:92`; không có trong `scripts/demo_trader.py` | Major | S | ✅ `check_account` mọi chu kỳ (`3ab4a6c`) |
+| d2 | Balance đầu ngày = balance lần đầu bot thấy, không phải 00:00 giờ Prague; `XAU_EDGE_DEMO_INITIAL_CAPITAL` trống → sàn max-loss sai | `execution/state.py:327-338`; `.env.example:21-22`; `ftmo_2step.yaml:13-19` | Major | S | ✅ Balance đầu ngày từ deal từ 00:00 Prague (`3ab4a6c`) |
+| d3 | Luật FTMO về EA/tin tức/cuối tuần **chưa xác minh** | `configs/prop/ftmo_2step.yaml:30-34` | **Blocker** (prop) | S | ❌ Code khóa funded khi còn luật `must_verify` (`2eb58b1`); chủ dự án chưa xác minh luật |
+| d4 | Sizing tính stop từ bid close nhưng khớp ở ask → rủi ro thực > 0,5% | `bridge.py:126-135`; `risk/sizing.py` | Minor | S | ✅ Sizing theo giá khớp dự kiến (`e5362af`) |
+| d5 | `ExecutionSafety` trong bridge dùng mặc định paper (`account="paper"`) | `execution/safety.py:23-30`; `demo_trader.py:114-119` | Minor | S | ✅ `ExecutionSafety` nhận account thật (`244d750`) |
+| d6 | Kill switch không tự đóng vị thế (chủ đích) | ADR-0019:53-57 | (cố ý) | — | ✅ ADR-0020 D5: auto-flatten khi cách sàn ≤ 1% (`3ab4a6c`); kill switch tay vẫn không đóng vị thế |
 
 Điểm mạnh: 0,5%/lệnh, 2%/ngày, 1 vị thế, 3 thua liên tiếp, đệm 40%, chặn regime SHOCK.
 
 ### e) Vận hành
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| e1 | Không có supervision/auto-restart (không service/NSSM/task XML) | `docs/operations/demo-trading.md:68` | **Blocker** | M |
-| e2 | Cảnh báo chỉ ghi `alerts.jsonl` + exit code; không email/Telegram/webhook | `scripts/check_health.py:44-49` | **Blocker** | S–M |
-| e3 | Lần chạy dài nhất 8 chu kỳ (~75 phút) vs tiêu chí 24h; bot hiện không chạy | `cycles.jsonl`, `status.json`; `docs/reports/gap-audit.md:219` | **Blocker** | S (thời gian thực) |
-| e4 | Local hay VPS chưa chốt; Windows Update có thể reboot | `gap-audit.md:293` | Major | M |
-| e5 | Logging đặt `WARNING` → INFO bị lọc | `demo_trader.py:96` | Minor | S |
-| e6 | Không kiểm đồng bộ NTP (giả thuyết) | `runner.py:135-141`; `executor.py:285-287` | Minor | S |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| e1 | Không có supervision/auto-restart (không service/NSSM/task XML) | `docs/operations/demo-trading.md:68` | **Blocker** | M | 🟠 Installer NSSM + hướng dẫn VPS (`dde466c`, `244d750`); chủ dự án cài trên máy chạy |
+| e2 | Cảnh báo chỉ ghi `alerts.jsonl` + exit code; không email/Telegram/webhook | `scripts/check_health.py:44-49` | **Blocker** | S–M | 🟠 Telegram notifier + runbook (`ba8007f`, `dde466c`); chủ dự án tạo bot, điền token |
+| e3 | Lần chạy dài nhất 8 chu kỳ (~75 phút) vs tiêu chí 24h; bot hiện không chạy | `cycles.jsonl`, `status.json`; `docs/reports/gap-audit.md:219` | **Blocker** | S (thời gian thực) | ❌ Soak 14 ngày (T5.2) chưa chạy; cần thời gian thực |
+| e4 | Local hay VPS chưa chốt; Windows Update có thể reboot | `gap-audit.md:293` | Major | M | 🟠 Hướng dẫn VPS có sẵn (`dde466c`); chủ dự án chốt local hay VPS |
+| e5 | Logging đặt `WARNING` → INFO bị lọc | `demo_trader.py:96` | Minor | S | ✅ Log INFO ra file xoay vòng (`ba8007f`) |
+| e6 | Không kiểm đồng bộ NTP (giả thuyết) | `runner.py:135-141`; `executor.py:285-287` | Minor | S | ✅ Kiểm SNTP mỗi chu kỳ, trip khi lệch > 5 giây (`ba8007f`) |
 
 ### f) Cấu hình & bảo mật
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| f1 | Live không thể bật (chủ đích; cần ADR mới + sửa code) | `config.py:49-58`; `reader.py:89-91`; ADR-0019:13-15 | Blocker (cố ý) | L |
-| f2 | Mật khẩu demo **từng bị lộ trong chat**, chưa xác nhận đã đổi | `docs/ROADMAP_TRACEABILITY.md:64` | Major | S |
-| f3 | Tài khoản FTMO Challenge có thể cũng là trade mode DEMO → guard DEMO không phân biệt được (giả thuyết) | `reader.py:89` | Major | S |
-| f4 | `demo_max_lots` mặc định 1,0 — lớn cho giai đoạn đầu | `config.py:40` | Minor | S |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| f1 | Live không thể bật (chủ đích; cần ADR mới + sửa code) | `config.py:49-58`; `reader.py:89-91`; ADR-0019:13-15 | Blocker (cố ý) | L | ❌ Cố ý giữ: live retail vẫn không bật được; FTMO funded đi qua ADR-0020 |
+| f2 | Mật khẩu demo **từng bị lộ trong chat**, chưa xác nhận đã đổi | `docs/ROADMAP_TRACEABILITY.md:64` | Major | S | ❌ Chủ dự án phải đổi mật khẩu (go-live checklist 2.1) |
+| f3 | Tài khoản FTMO Challenge có thể cũng là trade mode DEMO → guard DEMO không phân biệt được (giả thuyết) | `reader.py:89` | Major | S | ✅ Nhận diện bằng whitelist + server, không dùng trade_mode (`2eb58b1`) |
+| f4 | `demo_max_lots` mặc định 1,0 — lớn cho giai đoạn đầu | `config.py:40` | Minor | S | 🟠 Bậc 1 rollout cap lot 0.01; `demo_max_lots`/`funded_max_lots` mặc định vẫn 1.0 |
 
 ### g) Kiểm thử
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| g1 | 1.233 unit test pass nhưng chỉ 1 integration test, 0 test marker `mt5`; fake giá lý tưởng → lọt lỗi c2/c3 | `pyproject.toml:123-129`; `tests/integration/` | Major | M |
-| g2 | Chưa có forward test trên dữ liệu mới (L4c) | `final-status.md:34-38` | **Blocker** (live) | L |
-| g3 | Chưa có soak/chaos test trên terminal thật | `gap-audit.md:57` | Major | M |
-| g4 | Dashboard không có browser test trong CI | `.github/workflows/xau-edge-ci.yml:48-68` | Minor | S |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| g1 | 1.233 unit test pass nhưng chỉ 1 integration test, 0 test marker `mt5`; fake giá lý tưởng → lọt lỗi c2/c3 | `pyproject.toml:123-129`; `tests/integration/` | Major | M | 🟠 Thêm nhiều test fake có spread/digits thật; vẫn 0 test marker `mt5` |
+| g2 | Chưa có forward test trên dữ liệu mới (L4c) | `final-status.md:34-38` | **Blocker** (live) | L | ❌ Không có ứng viên để forward test |
+| g3 | Chưa có soak/chaos test trên terminal thật | `gap-audit.md:57` | Major | M | ❌ Chờ T5.2 trên terminal thật |
+| g4 | Dashboard không có browser test trong CI | `.github/workflows/xau-edge-ci.yml:48-68` | Minor | S | ❌ Chưa có browser test trong CI |
 
 ### h) Con người / quy trình
-| # | Mô tả | Bằng chứng | Mức chặn | Công sức |
-|---|---|---|---|---|
-| h1 | Toàn bộ hệ thống xây trong ~14 giờ bởi AI agent, chưa qua thị trường thật | `git log` | Major | L |
-| h2 | Nhiều quyết định mở: smoke mode, whitelist tài khoản, local/VPS, luật FTMO, nguồn lịch tin, mật khẩu giao dịch | `gap-audit.md:286-294`; `demo-bot-status.md:33-38` | Major | S |
-| h3 | Lộ trình kết thúc ở demo (chủ đích) | ADR-0019 Non-goals | (cố ý) | — |
+| # | Mô tả | Bằng chứng | Mức chặn | Công sức | Trạng thái (2026-10-08) |
+|---|---|---|---|---|---|
+| h1 | Toàn bộ hệ thống xây trong ~14 giờ bởi AI agent, chưa qua thị trường thật | `git log` | Major | L | ❌ Chưa qua thị trường thật |
+| h2 | Nhiều quyết định mở: smoke mode, whitelist tài khoản, local/VPS, luật FTMO, nguồn lịch tin, mật khẩu giao dịch | `gap-audit.md:286-294`; `demo-bot-status.md:33-38` | Major | S | 🟠 D1-D6 đã chốt; còn luật FTMO, nguồn lịch tin, mật khẩu, Telegram, local/VPS |
+| h3 | Lộ trình kết thúc ở demo (chủ đích) | ADR-0019 Non-goals | (cố ý) | — | ✅ ADR-0020 mở rộng tới tài khoản FTMO funded (vẫn khóa tới khi nghiệm thu) |
 
 ### Docs ↔ code lệch nhau
 | Tài liệu nói | Thực tế code |
@@ -175,6 +177,11 @@ Kịch bản: (i) không vào được (live bị chặn), (ii) chạy 30 ngày 
 | `README.md:88`: "ADR-0001..0018" | Đã có ADR-0019 |
 | `GET /risk/status` hiển thị kill switch paper (in-memory) | Kill switch thật nằm ở `state.sqlite` → dễ gây hiểu nhầm (`api/app.py:241-249`) |
 | gap-audit dự kiến `configs/execution/demo.yaml`, `tests/integration/test_demo_execution_safety.py` | Cả hai không tồn tại |
+
+Cập nhật 2026-10-08 (T3.6): docstring `demo_trader.py`, `final-status.md`, `AGENTS.md`, `README.md`
+(ADR-0001..0022) đã sửa theo code; `/risk/status` trả kill switch thật từ `state.sqlite` (`6524313`);
+CLI kill switch, health check và API theo đúng state funded khi bật mode funded (`01d4364`). Dòng cuối
+(gap-audit) vẫn đúng: hai file đó không được tạo.
 
 ## 6. Top 5 Blocker cần xử lý trước
 

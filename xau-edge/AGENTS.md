@@ -4,7 +4,8 @@
 
 XAU EDGE is an explainable, probabilistic **decision-support and research** platform for
 XAUUSD. It must be able to say "no statistically justified trade". Protect statistical
-integrity first, capital second, and automate execution last (not in this codebase yet).
+integrity first, capital second, and automate execution last. Guarded execution now exists for an
+MT5 demo account (ADR-0019) and an FTMO funded account (ADR-0020); both are off by default.
 
 ## Safety boundaries (non-negotiable)
 
@@ -14,6 +15,18 @@ integrity first, capital second, and automate execution last (not in this codeba
   (`XAU_EDGE_ENABLE_DEMO_TRADING=false`) and dry-run by default
   (`XAU_EDGE_DEMO_DRY_RUN=true`). Do not bypass the signal evidence gate, `RiskEngine`,
   `ExecutionSafety`, persistent idempotency, kill switch, or broker reconciliation.
+* Funded execution is governed by ADR-0020: its own flag (`XAU_EDGE_ENABLE_FUNDED_TRADING=false`),
+  account identity by login whitelist + server (never by `trade_mode`; demo and funded whitelists
+  must not overlap), a start-up refusal while any `must_verify` rule in
+  `configs/prop/ftmo_funded.yaml` is unverified, `--confirm-mode FUNDED` on the command line, and the
+  staged rollout in `configs/execution/rollout.yaml`. An agent never enables the funded flag, never
+  enters a password and never sends an order on a funded account.
+* The D2 override (`XAU_EDGE_FUNDED_ALLOW_UNVALIDATED=true` plus a specific
+  `XAU_EDGE_FUNDED_STRATEGY_ID`) is the only exception to the evidence gate. Its 0.25%/trade cap and
+  the tier-2 ceiling for UNVALIDATED strategies are code constants, not configuration; do not make
+  them configurable.
+* Auto-flatten exists only for the FTMO floor-distance rule of ADR-0020 (D5). Do not add other
+  auto-close paths.
 * `market_data/mt5/` is read-only market data. A test forbids order/position API names there.
 * `src/xau_edge/execution/` is broker-neutral orchestration. Do not import `MetaTrader5` or call
   MT5 order APIs there. Any future MT5 demo order adapter must live in a separate demo-only broker
@@ -70,8 +83,9 @@ Set `HOME` to a scratch directory if you run ECC tooling, which writes a cache u
 | `src/xau_edge/{features,structure,patterns,outcomes,strategies}` | research layers; causal, tested against look-ahead |
 | `src/xau_edge/{backtest,risk,news,models,evaluation,experiments}` | evaluation machinery; the pre-registered protocol is code in `evaluation/` |
 | `src/xau_edge/{signals,execution,api}` + `apps/dashboard` | decision layer, paper broker, read-only API and UI |
-| `src/xau_edge/brokers` | future broker adapters; only demo adapters may call broker order APIs, and only under ADR-0019 controls |
-| `scripts` | operator tools (`dev.ps1`, `verify_mt5.py`, `run_backtest.py`, `run_models.py`, `serve_api.py`, `current_signal.py`, `forward_test.py`) |
+| `src/xau_edge/brokers` | broker adapters; only `brokers/mt5_demo/` may call broker order APIs, and only under ADR-0019/ADR-0020 controls |
+| `src/xau_edge/funded` | funded run plan: identity, FTMO rules lock, rollout tiers, wiring (ADR-0020) |
+| `scripts` | operator tools (`dev.ps1`, `verify_mt5.py`, `run_backtest.py`, `run_models.py`, `serve_api.py`, `current_signal.py`, `forward_test.py`, `demo_trader.py`, `rollout.py`, `news_update.py`, `install_services.ps1`, `run_edge_program.py`) |
 | `tests/{unit,integration,regression,statistical}` | tests mirror `src` layout |
 | `data/*` | git-ignored data; `.gitkeep` only |
 | `docs/decisions` | ADRs; add one for any architectural change |
@@ -110,4 +124,5 @@ Enabling live trading; changing risk limits silently; removing safety gates; cla
 profitability without evidence; fabricated results; look-ahead; random shuffling of time
 series; adding deep learning or reinforcement learning without benchmark evidence; adding
 AGPL/GPL dependencies (ADR-0006); adding a direct `Signal -> broker` path; retrying an unknown
-broker order blindly after a timeout; auto-closing positions on kill switch without an explicit ADR.
+broker order blindly after a timeout; auto-closing positions on kill switch without an explicit ADR
+(ADR-0020 D5 auto-flatten is the only one).

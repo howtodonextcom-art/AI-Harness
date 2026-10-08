@@ -9,8 +9,14 @@ statistics, a cost-aware backtest, a risk engine, four ML models with calibratio
 read-only API, a dashboard and a paper broker. Every component is tested and independently reviewed.
 The research finding is negative: three pre-specified baselines and four models did not beat a
 pre-registered, multiple-testing-adjusted bar after realistic costs, so the system's honest output is
-**WAIT**, and it says so with reasons. The test period was never touched. No component can place a
-real order.
+**WAIT**, and it says so with reasons. The test period was never touched.
+
+Update 2026-10-08 (evening): a guarded MT5 order path now exists in `brokers/mt5_demo/` for a demo
+account (ADR-0019) and an FTMO funded account (ADR-0020). Both are off by default and have only been
+exercised with fake terminals; no order has been sent by this repository. The 2026-10 edge program
+(6 pre-registered hypotheses, K = 21, new splits on 15 years of read-only H1/H4 history) also ended
+at **(B) NO EDGE WITHIN BUDGET** (`docs/research/edge-program/final-verdict.md`). Funded readiness:
+`docs/reports/funded-readiness.md`.
 
 ## MVP acceptance criteria (brief section 49)
 
@@ -26,7 +32,7 @@ real order.
 | 8 | Backtester simulates a baseline | done (3 baselines) |
 | 9 | Costs included | done (measured spread, slippage, commission, swap) |
 | 10 | Dashboard shows regime, multi-timeframe context, analogues, probabilities, BUY/SELL/WAIT | done (checked at 1440x900 and 390 px on real data) |
-| 11 | No live trade can be sent | done (no broker order API anywhere; tests scan for it) |
+| 11 | No live trade can be sent | done (`XAU_EDGE_ENABLE_LIVE_TRADING` rejects `true`; the only order API call site is `brokers/mt5_demo/executor.py`, reachable only in DEMO or FUNDED mode under ADR-0019/0020 guards; tests forbid order API names in `market_data/mt5/` and `execution/`) |
 | 12 | All critical modules have tests | done (1,030+ tests, 97% coverage, mutation spot-checks each sprint) |
 
 ## Run-ladder (docs/ROADMAP_TRACEABILITY.md section 5)
@@ -52,12 +58,12 @@ out of scope by decision.
 | Item | Reason |
 |---|---|
 | Forward test with new data | needs weeks of calendar time and a candidate that passed validation |
-| News calendar data and the news-window backtest | no data source in the project; the guard fails closed (NEWS_UNKNOWN forces WAIT) |
+| News calendar data and the news-window backtest | the point-in-time loader and daily update job exist (`scripts/news_update.py`), but the owner must supply a source; until then the guard fails closed (NEWS_UNKNOWN forces WAIT) |
 | Holiday calendar | only reclassifies validator warnings; nothing consumes it |
-| Live execution, `MT5ExecutionBroker` | out of scope by decision (ADR-0018) |
+| Live execution on a real-money retail account | out of scope by decision (ADR-0018, ADR-0020 keeps it out) |
+| Demo orders, 14-day soak, 4-week demo, funded rollout | code done; needs calendar time and the owner's actions (`funded-readiness.md`) |
 | Wednesday triple swap, partial fills, latency, margin | not modelled (ADR-0015) |
 | Dashboard browser tests in CI | type-check, lint and build run in CI; screenshots were inspected manually |
-| Persistent kill switch | needed only when an executor exists |
 | Docker, STUMPY/tslearn dependencies | not justified; numba support does not cover the Python matrix |
 
 ## Assumptions that would have to be checked before relying on any number

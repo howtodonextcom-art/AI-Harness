@@ -1,7 +1,10 @@
 # XAU EDGE
 
-Probabilistic decision-support and research platform for XAUUSD.
-**Research only. There is no live trading code and none can be enabled.**
+Probabilistic decision-support and research platform for XAUUSD, with a guarded MT5 execution track
+for a demo account (ADR-0019) and an FTMO funded account (ADR-0020).
+**Live trading on a real-money retail account cannot be enabled.** Demo and funded execution are off
+by default; funded additionally stays locked until every `must_verify` FTMO rule is verified, a
+command-line confirmation is given and the account is on the funded whitelist.
 
 The system is designed to answer: what is the regime and higher-timeframe bias, what happened
 after historically similar structures, what are the calibrated probabilities and expected value
@@ -20,11 +23,16 @@ All planned components are built and tested; the research conclusion so far is *
 | Backtest engine (bid/ask, spread, slippage, commission, swap, risk engine, FTMO profiles), metrics, pre-registered edge criteria | done |
 | ML benchmark (logistic, forest, XGBoost, LightGBM) with calibration | done |
 | Signal engine (BUY/SELL/**WAIT**, 12 refusal reasons, evidence gate), read-only API, dashboard, paper trading | done |
-| Forward test on new data (calendar-time bound), news calendar data, live execution | **not done** (live execution is out of scope by decision) |
+| Point-in-time news calendar with a daily update job; NSSM services; Telegram alerts | done (calendar data and the bot token are supplied by the owner) |
+| MT5 demo executor (exactly-once, reconcile, kill switch, auto-flatten near FTMO floors) and the funded run plan (whitelists, D6 rule lock, staged rollout, 0.25% UNVALIDATED cap) | done, tested with fakes only; no order has been sent by this repository |
+| Forward test on new data, 14-day soak, 4-week demo with orders | **not done** (calendar-time bound) |
 
 **Result.** Three pre-specified baselines and four models failed the pre-registered criteria on the
-development and validation periods; the test period was never touched. The signal engine therefore
-answers WAIT. See `docs/reports/checkpoint-1.md`, `docs/research/model-evaluation.md` and
+development and validation periods; the test period was never touched. The 2026-10 edge program
+(6 pre-registered hypotheses, 18 variants, K = 21) also found no variant passing Dev-H and Val-H:
+verdict **(B) NO EDGE WITHIN BUDGET** (`docs/research/edge-program/final-verdict.md`). The signal
+engine therefore answers WAIT; a funded bot could only run UNVALIDATED under the D2 override at
+0.25%/trade, tier 2 at most (`docs/reports/funded-readiness.md`). See `docs/reports/checkpoint-1.md`, `docs/research/model-evaluation.md` and
 `docs/reports/final-status.md`. No performance claim should be made from this repository.
 
 ## Quick start (Windows, PowerShell)
@@ -81,11 +89,12 @@ print(validate_bars(bars, tf).summary())
 src/xau_edge/        domain/ market_data/ features/ structure/ patterns/ outcomes/ strategies/
                      backtest/ risk/ news/ models/ evaluation/ experiments/ signals/ execution/
                      api/ observability.py config.py
+                     brokers/mt5_demo/ (the only MT5 order adapter) funded/ (run plan, rollout)
 apps/dashboard/      Next.js dashboard (read-only)
 configs/             brokers/ (measured profiles) prop/ (FTMO rules, verified 2026-10-08)
 tests/               unit/ integration/ regression/ statistical/ fixtures/
 docs/                PROJECT_PLAN.md BRIEF.md ROADMAP_TRACEABILITY.md architecture/ research/
-                     decisions/ (ADR-0001..0018) evals/ risk/ testing/ operations/ reports/
+                     decisions/ (ADR-0001..0022) evals/ risk/ testing/ operations/ reports/
 data/ models/ experiments/runs/   git-ignored local data, artifacts and run records
 .claude/             ECC components (project-local, minimal profile, no hooks)
 ```
@@ -97,11 +106,17 @@ data/ models/ experiments/runs/   git-ignored local data, artifacts and run reco
 * `docs/PROJECT_PLAN.md`, `docs/ROADMAP_TRACEABILITY.md`, `docs/BRIEF.md`
 * `docs/evals/edge-criteria.md`: the pre-registered rules that decide whether anything "works"
 * `docs/architecture/`, `docs/research/`, `docs/risk/`, `docs/operations/`, `docs/decisions/`
-* `docs/reports/`: one report per sprint, `checkpoint-1.md`, `mt5-verification.md`
+* `docs/reports/`: one report per sprint, `checkpoint-1.md`, `mt5-verification.md`,
+  `funded-readiness.md` (funded track status and operator commands)
+* Execution ADRs: ADR-0019 (demo execution scope), ADR-0020 (funded account execution: whitelists,
+  D6 rule lock, staged rollout, D2 override, D5 auto-flatten), ADR-0021 (strategy registry),
+  ADR-0022 (entry price side and deviation)
 
 ## Demo bot (MT5 demo only)
 
 A dry-run bot runs on real MT5 demo data and journals every decision; with explicit settings it can
 send guarded orders to a DEMO account. Live trading cannot be enabled. While no strategy has passed
 validation every signal is WAIT. See `docs/operations/demo-trading.md`, `docs/architecture/demo-execution.md`
-and `docs/risk/demo-execution-risk.md`.
+and `docs/risk/demo-execution-risk.md`. The same bot runs on an FTMO funded account only through
+`scripts/demo_trader.py --confirm-mode FUNDED` with every ADR-0020 condition met; see
+`docs/operations/go-live-checklist.md`.
