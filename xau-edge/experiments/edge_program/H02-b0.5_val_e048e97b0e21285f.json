@@ -1,0 +1,238 @@
+{
+  "program": "edge-program",
+  "variant": "H02-b0.5",
+  "hypothesis": "H02",
+  "params": {
+    "program": "edge-program",
+    "variant": "H02-b0.5",
+    "hypothesis": "H02",
+    "param": "b",
+    "value": 0.5,
+    "signal_timeframe": "H1",
+    "stop_atr": 1.5,
+    "target_atr": 3.0,
+    "hold_bars": 8,
+    "hold_execution_bars": 8,
+    "cooldown_bars": 0
+  },
+  "period": {
+    "name": "val",
+    "start": "2019-01-01T00:00:00+00:00",
+    "end_exclusive": "2022-01-01T00:00:00+00:00"
+  },
+  "dataset_ids": {
+    "H1": "8e64dd6561015b72",
+    "H4": "b438f1794bd11402"
+  },
+  "dataset_sha256": {
+    "H1": "9b521cda6648c08e5a2ff3e67c62e3345c66ae8c8e38946c076fbee431ebf93a",
+    "H4": "b4bbea7252a857d4dc405e7462960a29f49f4e0e2e932ff8d5df4a2a567b3bbb"
+  },
+  "code_version": "d28a3d0350a33310366f2e56e26bb10862f373ce",
+  "code_dirty": true,
+  "registry_id": "e048e97b0e21285f",
+  "recorded_at": "2026-10-08T14:51:40.846783+00:00",
+  "seed": 7,
+  "costs": {
+    "spread_rule": "max(recorded, 30) points",
+    "slippage_points": {
+      "base": 3.0,
+      "pessimistic": 6.0
+    },
+    "commission_per_lot_per_side": 0.0,
+    "swap_points": {
+      "long": -76.05,
+      "short": -4.2
+    }
+  },
+  "assumptions": "edge program research run: H1 execution, no news calendar; spread max(recorded, 30) pts; slippage 3 pts (base) / 6 pts (pessimistic); commission 0 (unverified); swap per CostModel",
+  "status": "completed",
+  "stage_pass": false,
+  "variants_k": 21,
+  "alpha": 0.002380952380952381,
+  "n_resamples": 20000,
+  "signals": 548,
+  "scenarios": {
+    "base": {
+      "trades": 487,
+      "mean_net_r": -0.09425480810836252,
+      "metrics": {
+        "trade_count": 487,
+        "net_profit": -21209.391717349383,
+        "net_return": -0.2120939171734929,
+        "profit_factor": 0.8216772317365574,
+        "win_rate": 0.38809034907597534,
+        "avg_win": 517.0837200704412,
+        "avg_loss": -399.1215262102778,
+        "avg_r": -0.09425480810836245,
+        "expectancy": -43.551112355953556,
+        "longest_losing_streak": 18,
+        "max_drawdown": 24338.98215222638,
+        "max_drawdown_pct": 0.23779645403598365,
+        "sharpe": -0.9827663061520543,
+        "sortino": -1.5095809715883333,
+        "calmar": -0.29731588287028726,
+        "exposure": 0.14105378704720087
+      },
+      "skipped_signals": {
+        "VOLATILITY": 61
+      },
+      "slippage_points": 3.0,
+      "verdict": {
+        "min_trades": {
+          "passed": true,
+          "value": 487,
+          "threshold": 100
+        },
+        "ci_lower_above_zero": {
+          "passed": false,
+          "value": -0.2490489333831418,
+          "threshold": 0.0
+        },
+        "profit_factor": {
+          "passed": false,
+          "value": 0.8216772317365574,
+          "threshold": 1.2
+        },
+        "max_drawdown_r": {
+          "passed": false,
+          "value": 52.55317579873159,
+          "threshold": 15.0
+        },
+        "positive_folds": {
+          "passed": false,
+          "value": 1,
+          "threshold": 3
+        },
+        "robust_to_best_trades": {
+          "passed": false,
+          "value": -0.20758028473760365,
+          "threshold": 0.0
+        },
+        "no_concentration": {
+          "passed": false,
+          "value": null,
+          "threshold": 0.6
+        },
+        "passed": false,
+        "variants": 21,
+        "alpha": 0.002380952380952381
+      }
+    },
+    "pessimistic": {
+      "trades": 487,
+      "mean_net_r": -0.10427039688506232,
+      "metrics": {
+        "trade_count": 487,
+        "net_profit": -23157.212574301826,
+        "net_return": -0.23157212574301778,
+        "profit_factor": 0.8057416056210914,
+        "win_rate": 0.38193018480492813,
+        "avg_win": 516.4036853107729,
+        "avg_loss": -396.0408572827428,
+        "avg_r": -0.10427039688506234,
+        "expectancy": -47.55074450575324,
+        "longest_losing_streak": 18,
+        "max_drawdown": 26252.91606411907,
+        "max_drawdown_pct": 0.25652625124541717,
+        "sharpe": -1.0881271225247569,
+        "sortino": -1.6592024935357113,
+        "calmar": -0.300919089409299,
+        "exposure": 0.14055982436882547
+      },
+      "skipped_signals": {
+        "VOLATILITY": 61
+      },
+      "slippage_points": 6.0
+    }
+  },
+  "prop_feasibility": {
+    "profile": "ftmo-2step",
+    "daily_floor_breach_days": 0,
+    "first_breach_days": [],
+    "max_loss_floor_hit": true
+  },
+  "data_issues": {
+    "policy": "reported, never repaired (ADR-0005); bars used as stored",
+    "dataset": {
+      "H1": [
+        {
+          "code": "MISSING_BARS",
+          "severity": "ERROR",
+          "count": 1003,
+          "message": "1003 expected bars absent in 245 gap(s) during open hours (1.07% of expected; threshold 1.00%)"
+        },
+        {
+          "code": "UNSCHEDULED_CLOSURES",
+          "severity": "WARNING",
+          "count": 1179,
+          "message": "1179 bars absent in 372 episode(s) of at least 30 min ending at a scheduled reopening; likely holidays or early closes - confirm against the holiday calendar"
+        },
+        {
+          "code": "WEEKEND_BARS",
+          "severity": "WARNING",
+          "count": 2226,
+          "message": "bars open while the market calendar says the market is closed"
+        },
+        {
+          "code": "INVALID_SPREAD",
+          "severity": "WARNING",
+          "count": 15,
+          "message": "spread above 200 points"
+        }
+      ],
+      "H4": [
+        {
+          "code": "MISSING_BARS",
+          "severity": "ERROR",
+          "count": 522,
+          "message": "522 expected bars absent in 125 gap(s) during open hours (1.60% of expected; threshold 1.00%)"
+        },
+        {
+          "code": "UNSCHEDULED_CLOSURES",
+          "severity": "WARNING",
+          "count": 181,
+          "message": "181 bars absent in 48 episode(s) of at least 30 min ending at a scheduled reopening; likely holidays or early closes - confirm against the holiday calendar"
+        },
+        {
+          "code": "WEEKEND_BARS",
+          "severity": "WARNING",
+          "count": 4,
+          "message": "bars open while the market calendar says the market is closed"
+        },
+        {
+          "code": "INVALID_SPREAD",
+          "severity": "WARNING",
+          "count": 3,
+          "message": "spread above 200 points"
+        }
+      ]
+    },
+    "period_h1": [
+      {
+        "code": "MISSING_BARS",
+        "severity": "WARNING",
+        "count": 150,
+        "message": "150 expected bars absent in 50 gap(s) during open hours (0.81% of expected; threshold 1.00%)"
+      },
+      {
+        "code": "UNSCHEDULED_CLOSURES",
+        "severity": "WARNING",
+        "count": 180,
+        "message": "180 bars absent in 23 episode(s) of at least 30 min ending at a scheduled reopening; likely holidays or early closes - confirm against the holiday calendar"
+      },
+      {
+        "code": "WEEKEND_BARS",
+        "severity": "WARNING",
+        "count": 541,
+        "message": "bars open while the market calendar says the market is closed"
+      },
+      {
+        "code": "INVALID_SPREAD",
+        "severity": "WARNING",
+        "count": 2,
+        "message": "spread above 200 points"
+      }
+    ]
+  }
+}
