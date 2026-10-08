@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0 - 2026-10-08 (Sprint 6: pattern similarity)
+
+### Added
+* `patterns/representation.py`: six ATR-normalised, causal per-bar channels; zero-copy windows.
+* `patterns/distances.py`: Euclidean, cosine, Pearson, multivariate DTW (Sakoe-Chiba band) and
+  z-normalised path distance behind one interface; FFT distance profile (MASS) and a reference
+  matrix profile.
+* `patterns/search.py`: leakage-safe k-NN (`e <= q - W - H`, data sliced to the query bar,
+  separated neighbours, deterministic ties) with query/candidate validity handling.
+* `tests/statistical/test_pattern_leakage.py`; `scripts/benchmark_similarity.py`;
+  `docs/research/pattern-similarity.md`; ADR-0013.
+
 ## 0.5.0 - 2026-10-08 (Sprint 5: market structure and regime)
 
 ### Added
