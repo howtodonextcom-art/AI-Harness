@@ -256,3 +256,29 @@ def test_build_status_from_a_cycle() -> None:
     )
     assert offline.connected is False
     assert offline.balance is None
+
+
+def _report(reasons: tuple[str, ...], *, skipped: bool = False) -> CycleReport:
+    return CycleReport(
+        NOW.isoformat(), NOW.isoformat(), "WAIT", "h", False, reasons, None, True, 2.0, skipped
+    )
+
+
+def test_news_is_only_clear_when_it_was_actually_evaluated() -> None:
+    def news(report: CycleReport | None) -> str:
+        built = build_status(
+            NOW,
+            mode="dry-run",
+            symbol="XAUUSD",
+            snapshot=None,
+            reconcile=None,
+            report=report,
+        )
+        return built.news_status
+
+    assert news(None) == "unknown"
+    assert news(_report(("NEWS_UNKNOWN",))) == "unknown"
+    assert news(_report(("DATA_STALE",))) == "unknown"
+    assert news(_report(("RECONCILE_LOT_MISMATCH",), skipped=True)) == "unknown"
+    assert news(_report(("NO_VALIDATED_EDGE",))) == "clear"
+    assert news(_report(("NEWS_RISK",))) == "risk"

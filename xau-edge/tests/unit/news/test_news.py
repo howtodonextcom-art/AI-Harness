@@ -13,6 +13,7 @@ from xau_edge.news.calendar import (
     NewsEvent,
     StaticCalendar,
     load_calendar_csv,
+    load_calendar_file,
     news_blocked,
 )
 
@@ -105,3 +106,26 @@ def test_naive_coverage_is_rejected() -> None:
     naive = datetime(2026, 1, 1)  # noqa: DTZ001 - naive on purpose
     with pytest.raises(ValueError, match="timezone"):
         StaticCalendar([], coverage=(naive, T))
+
+
+def test_a_calendar_file_must_declare_its_coverage(tmp_path: Path) -> None:
+    good = tmp_path / "cal.csv"
+    good.write_text(
+        "# coverage: 2026-03-01T00:00:00Z..2026-03-31T00:00:00Z\n"
+        "time_utc,category,impact\n2026-03-06T13:30:00Z,NFP,high\n",
+        encoding="utf-8",
+    )
+    cal = load_calendar_file(good)
+    assert cal.coverage[0].day == 1
+    assert len(cal.events_between(cal.coverage[0], cal.coverage[1])) == 1
+    assert not list(tmp_path.glob("*.tmp"))
+    for body in (
+        "time_utc,category,impact\n",
+        "# coverage: nonsense\ntime_utc,category,impact\n",
+        "# coverage: 2026-03-31T00:00:00Z..2026-03-01T00:00:00Z\ntime_utc,category,impact\n",
+        "# coverage: 2026-03-01T00:00:00..2026-03-31T00:00:00\ntime_utc,category,impact\n",
+    ):
+        bad = tmp_path / "bad.csv"
+        bad.write_text(body, encoding="utf-8")
+        with pytest.raises(ValueError, match="coverage"):
+            load_calendar_file(bad)

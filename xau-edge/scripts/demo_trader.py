@@ -22,7 +22,9 @@ import time
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
+from xau_edge.brokers.mt5_demo.connect import TradeConnectError, connect_for_trading
 from xau_edge.brokers.mt5_demo.executor import ExecutorConfig, Mt5DemoExecutor
 from xau_edge.brokers.mt5_demo.reader import DemoAccountError, DemoReader
 from xau_edge.config import Settings
@@ -30,7 +32,7 @@ from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.bridge import SignalBridge
 from xau_edge.execution.journal import ExecutionJournal
 from xau_edge.execution.order_intent import OrderIntent
-from xau_edge.execution.reconcile import Reconciler
+from xau_edge.execution.reconcile import Reconciler, trailing_losses
 from xau_edge.execution.runner import (
     CycleJournal,
     DryRunCycle,
@@ -40,7 +42,7 @@ from xau_edge.execution.runner import (
     next_close,
     write_heartbeat,
 )
-from xau_edge.execution.safety import ExecutionSafety, assert_live_trading_disabled
+from xau_edge.execution.safety import ExecutionSafety, assert_live_trading_disabled, day_key
 from xau_edge.execution.state import ExecutionState, PersistentKillSwitch
 from xau_edge.execution.status import build_status, write_status
 from xau_edge.experiments.registry import ExperimentRegistry
@@ -54,23 +56,30 @@ from xau_edge.market_data.profiles import BrokerProfile
 from xau_edge.market_data.refresh import refresh_market_data
 from xau_edge.market_data.store import RawStore
 from xau_edge.market_data.validators import validate_bars
+from xau_edge.news.calendar import StaticCalendar, load_calendar_file
 from xau_edge.observability import configure_logging
 from xau_edge.risk.engine import AccountState, RiskEngine, RiskLimits
 from xau_edge.risk.prop_rules import load_prop_profile
 from xau_edge.signals.engine import MarketFrames, generate_signal
 from xau_edge.signals.schema import Signal
 
+_PRAGUE = ZoneInfo("Europe/Prague")
 DEFAULT_TERMINAL = r"C:\Program Files\FTMO Global Markets MT5 Terminal\terminal64.exe"
 SETTLE_SECONDS = 20
 """Wait this long after an M15 close so the terminal has the finished bar."""
 
 
-def generate_signal_for(frames: MarketFrames, registry: ExperimentRegistry, at: datetime) -> Signal:
+def generate_signal_for(
+    frames: MarketFrames,
+    registry: ExperimentRegistry,
+    calendar: StaticCalendar | None,
+    at: datetime,
+) -> Signal:
     """Signal at ``at`` from a fixed set of frames (bound per cycle)."""
-    return generate_signal(frames, at, registry)
+    return generate_signal(frames, at, registry, calendar=calendar)
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0911 - one exit code per refusal
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
@@ -122,10 +131,20 @@ def main() -> int:
         trip_on_mismatch=demo_mode,  # the dry-run only observes; demo execution stops on a mismatch
     )
     store = RawStore(data_dir / "raw")
+    calendar = (
+        load_calendar_file(settings.news_calendar_path) if settings.news_calendar_path else None
+    )
 
     mt5 = load_mt5_module()
     reader = DemoReader(mt5, profile.clock, args.symbol)
-    if not mt5.initialize(path=args.terminal_path, timeout=90000):
+    if demo_mode:
+        try:
+            connect_for_trading(mt5, reader, args.terminal_path)
+        except TradeConnectError as exc:
+            print(f"REFUSING: {exc}")
+            (exec_dir / "demo_trader.lock").unlink(missing_ok=True)
+            return 3
+    elif not mt5.initialize(path=args.terminal_path, timeout=90000):
         print(f"MT5 initialize failed: {mt5.last_error()}")
         (exec_dir / "demo_trader.lock").unlink(missing_ok=True)
         return 2
@@ -217,21 +236,25 @@ def main() -> int:
             reconcile = reconciler.check(snapshot)
             audit.record("reconcile.result", clean=reconcile.clean, codes=list(reconcile.codes))
             balance = snapshot.account.balance
+            day = day_key(now.astimezone(_PRAGUE).date())
+            baseline = state.account_baseline(
+                day, balance, initial_capital=settings.demo_initial_capital
+            )
             account = AccountState(
                 timestamp=now,
-                initial_capital=balance,
+                initial_capital=baseline.initial_capital,
                 balance=balance,
                 equity=snapshot.account.equity,
-                day_start_balance=balance,
-                highest_eod_balance=balance,
+                day_start_balance=baseline.day_start_balance,
+                highest_eod_balance=baseline.highest_eod_balance,
                 open_positions=len(snapshot.positions),
                 open_lots=sum(p.lots for p in snapshot.positions),
-                risk_taken_today=0.0,
-                consecutive_losses=0,
+                risk_taken_today=state.risk_taken(day),
+                consecutive_losses=trailing_losses(snapshot.closed, state.all_bot_tickets()),
             )
             cycle = DryRunCycle(
                 bridge,
-                partial(generate_signal_for, frames, registry),
+                partial(generate_signal_for, frames, registry, calendar),
                 journal,
                 submit=submit,
             )
@@ -247,6 +270,7 @@ def main() -> int:
                         snapshot=snapshot,
                         reconcile=reconcile,
                         report=None,
+                        bot_tickets=frozenset(r.ticket for r in state.open_positions()),
                     ),
                 )
             else:

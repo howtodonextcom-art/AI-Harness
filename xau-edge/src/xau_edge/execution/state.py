@@ -24,7 +24,7 @@ from xau_edge.observability import log_event
 from xau_edge.risk.kill_switch import RESET_PHRASE, KillSwitch
 
 _LOG = logging.getLogger(__name__)
-SCHEMA_VERSION: Final = 3
+SCHEMA_VERSION: Final = 4
 STATE_UNREADABLE: Final = "STATE_UNREADABLE"
 
 _SCHEMA: Final = (
@@ -33,7 +33,7 @@ _SCHEMA: Final = (
     " tripped INTEGER NOT NULL, reason TEXT NOT NULL, updated_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS seen_signals (signal_hash TEXT PRIMARY KEY,"
     " intent_id TEXT NOT NULL, decision_time TEXT NOT NULL, dry_run INTEGER NOT NULL,"
-    " created_at TEXT NOT NULL)",
+    " risk_amount REAL NOT NULL, day TEXT NOT NULL, created_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS daily_orders (day TEXT PRIMARY KEY, count INTEGER NOT NULL)",
     "CREATE TABLE IF NOT EXISTS bot_positions (intent_id TEXT PRIMARY KEY, ticket TEXT NOT NULL,"
     " symbol TEXT NOT NULL, direction INTEGER NOT NULL, lots REAL NOT NULL,"
@@ -60,6 +60,15 @@ class BotPositionRecord:
     take_profit: float
     opened_at: datetime
     max_hold_until: datetime
+
+
+@dataclass(frozen=True)
+class AccountBaseline:
+    """Reference balances the prop-firm loss limits are measured from."""
+
+    initial_capital: float
+    day_start_balance: float
+    highest_eod_balance: float
 
 
 class StateError(RuntimeError):
@@ -231,6 +240,7 @@ class ExecutionState:
         day: str,
         dry_run: bool,
         max_orders_per_day: int,
+        risk_amount: float = 0.0,
     ) -> None:
         """Atomically mark a signal as acted on, advance the decision bar and count the order.
 
@@ -251,8 +261,16 @@ class ExecutionState:
                 raise DailyLimitError(msg)
             conn.execute(
                 "INSERT INTO seen_signals (signal_hash, intent_id, decision_time, dry_run,"
-                " created_at) VALUES (?, ?, ?, ?, ?)",
-                (signal_hash, intent_id, decision_time.isoformat(), int(dry_run), _now()),
+                " risk_amount, day, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    signal_hash,
+                    intent_id,
+                    decision_time.isoformat(),
+                    int(dry_run),
+                    risk_amount,
+                    day,
+                    _now(),
+                ),
             )
             if not dry_run:
                 conn.execute(
@@ -265,6 +283,62 @@ class ExecutionState:
                 " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
                 (decision_time.isoformat(),),
             )
+
+    def is_approved(self, intent_id: str) -> bool:
+        """True if the bridge accepted this intent for real submission (not a dry run)."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM seen_signals WHERE intent_id = ? AND dry_run = 0", (intent_id,)
+            ).fetchone()
+        return row is not None
+
+    def risk_taken(self, day: str) -> float:
+        """Total risk the bridge approved for real orders on a calendar-day key."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(risk_amount), 0) FROM seen_signals"
+                " WHERE day = ? AND dry_run = 0",
+                (day,),
+            ).fetchone()
+        return float(row[0])
+
+    def account_baseline(
+        self, day: str, balance: float, *, initial_capital: float | None = None
+    ) -> AccountBaseline:
+        """Persisted account reference points, so a restart cannot reset the loss limits.
+
+        The first call fixes the initial capital (or uses the one given). The first call of each
+        calendar-day key fixes that day's starting balance and raises the end-of-day high-water
+        mark with the previous day's last balance.
+        """
+        with self._transaction() as conn:
+
+            def get(key: str) -> str | None:
+                row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+                return None if row is None else str(row[0])
+
+            def put(key: str, value: str) -> None:
+                conn.execute(
+                    "INSERT INTO meta (key, value) VALUES (?, ?)"
+                    " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                    (key, value),
+                )
+
+            initial = get("initial_capital")
+            if initial is None:
+                initial = repr(initial_capital if initial_capital is not None else balance)
+                put("initial_capital", initial)
+            highest = float(get("highest_eod") or initial)
+            if get("baseline_day") != day:
+                previous = get("last_balance")
+                if previous is not None:
+                    highest = max(highest, float(previous))
+                put("highest_eod", repr(highest))
+                put("baseline_day", day)
+                put("day_start_balance", repr(balance))
+            put("last_balance", repr(balance))
+            day_start = float(get("day_start_balance") or balance)
+            return AccountBaseline(float(initial), day_start, highest)
 
     # -- positions the bot opened (for reconciliation) ----------------------------------------
 
@@ -305,6 +379,12 @@ class ExecutionState:
             if cursor.rowcount != 1:
                 msg = f"no open bot position with ticket {ticket}"
                 raise StateError(msg)
+
+    def all_bot_tickets(self) -> set[str]:
+        """Tickets of every position the bot ever opened (open or closed)."""
+        with self._connect() as conn:
+            rows = conn.execute("SELECT ticket FROM bot_positions").fetchall()
+        return {str(r[0]) for r in rows}
 
     def open_positions(self) -> list[BotPositionRecord]:
         """Positions the bot believes are open."""

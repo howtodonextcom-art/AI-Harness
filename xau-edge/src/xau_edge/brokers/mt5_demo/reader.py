@@ -10,12 +10,17 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
 import polars as pl
 
-from xau_edge.execution.reconcile import BrokerAccount, BrokerPosition, BrokerSnapshot
+from xau_edge.execution.reconcile import (
+    BrokerAccount,
+    BrokerPosition,
+    BrokerSnapshot,
+    ClosedResult,
+)
 from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.observability import log_event
 
@@ -33,6 +38,8 @@ _QUERY_NAMES = frozenset(
         "symbol_select",
         "positions_get",
         "orders_get",
+        "history_deals_get",
+        "DEAL_ENTRY_OUT",
         "ACCOUNT_TRADE_MODE_DEMO",
         "POSITION_TYPE_BUY",
         "POSITION_TYPE_SELL",
@@ -87,10 +94,11 @@ class DemoReader:
             is_demo=True,
             balance=float(info.balance),
             equity=float(info.equity),
-            trade_allowed=bool(getattr(info, "trade_allowed", True)),
+            trade_allowed=bool(getattr(info, "trade_allowed", False)),  # fail closed
         )
 
-    def _utc(self, epoch_seconds: int) -> datetime:
+    def utc_from_epoch(self, epoch_seconds: int) -> datetime:
+        """Server-clock epoch seconds from the terminal -> a true UTC datetime."""
         naive = datetime.fromtimestamp(epoch_seconds, UTC).replace(tzinfo=None)
         converted = self._clock.server_to_utc(pl.Series([naive], dtype=pl.Datetime("us")))
         value = converted[0]
@@ -123,13 +131,41 @@ class DemoReader:
                     take_profit=float(r.tp),
                     magic=int(r.magic),
                     comment=str(r.comment),
-                    opened_at=self._utc(int(r.time)),
+                    opened_at=self.utc_from_epoch(int(r.time)),
                 )
             )
         return tuple(out)
 
-    def snapshot(self, now: datetime) -> BrokerSnapshot:
-        """Account plus positions in one object; any failure raises."""
-        snap = BrokerSnapshot(now, self.account(), self.positions())
+    def closed_results(self, now: datetime, lookback: timedelta) -> tuple[ClosedResult, ...]:
+        """Positions closed in the window, from the deal history (net of commission and swap)."""
+        start = self._clock.label_as_utc(now - lookback)
+        end = self._clock.label_as_utc(now + timedelta(hours=1))
+        deals = self._client.history_deals_get(start, end)
+        if deals is None:
+            msg = f"history_deals_get failed: {self._client.last_error()}"
+            raise DemoAccountError(msg)
+        out_entry = self._client.DEAL_ENTRY_OUT
+        results: list[ClosedResult] = []
+        for deal in deals:
+            if deal.entry != out_entry or str(deal.symbol) != self.symbol:
+                continue
+            net = float(deal.profit) + float(deal.commission) + float(deal.swap)
+            if not math.isfinite(net):
+                msg = f"deal {deal.ticket} has non-finite values"
+                raise DemoAccountError(msg)
+            results.append(
+                ClosedResult(
+                    ticket=str(deal.position_id),
+                    closed_at=self.utc_from_epoch(int(deal.time)),
+                    profit=net,
+                )
+            )
+        return tuple(results)
+
+    def snapshot(self, now: datetime, lookback: timedelta = timedelta(days=14)) -> BrokerSnapshot:
+        """Account, positions and recent closes in one object; any failure raises."""
+        snap = BrokerSnapshot(
+            now, self.account(), self.positions(), self.closed_results(now, lookback)
+        )
         log_event(_LOG, "mt5.snapshot", positions=len(snap.positions))
         return snap

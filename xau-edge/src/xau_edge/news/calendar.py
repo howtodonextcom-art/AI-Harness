@@ -110,3 +110,40 @@ def news_blocked(
         )
         raise CalendarUnavailableError(msg)
     return any(e.impact >= min_impact for e in calendar.events_between(window_start, window_end))
+
+
+COVERAGE_PREFIX = "# coverage:"
+
+
+def load_calendar_file(path: Path | str) -> StaticCalendar:
+    """Load a calendar CSV whose FIRST line declares what it covers.
+
+    The first line must read ``# coverage: 2026-01-01T00:00:00Z..2026-12-31T23:59:59Z``. A file
+    without it is refused: a calendar that does not say which period it covers cannot be trusted
+    to mean "no event" for a time it never saw (that would be a fail-open risk check).
+    """
+    text = Path(path).read_text(encoding="utf-8")
+    first, _, rest = text.partition(chr(10))
+    if not first.startswith(COVERAGE_PREFIX):
+        msg = f"the first line must be '{COVERAGE_PREFIX} <start>Z..<end>Z'"
+        raise ValueError(msg)
+    try:
+        raw_start, raw_end = first[len(COVERAGE_PREFIX) :].strip().split("..")
+        if not (raw_start.endswith("Z") and raw_end.endswith("Z")):
+            raise ValueError
+        coverage = (
+            datetime.fromisoformat(raw_start[:-1]).replace(tzinfo=UTC),
+            datetime.fromisoformat(raw_end[:-1]).replace(tzinfo=UTC),
+        )
+    except ValueError:
+        msg = "the coverage line must look like '# coverage: <start>Z..<end>Z' (ISO, UTC)"
+        raise ValueError(msg) from None
+    if coverage[0] >= coverage[1]:
+        msg = "the coverage start must be before its end"
+        raise ValueError(msg)
+    tmp = Path(path).with_suffix(".body.tmp")
+    try:
+        tmp.write_text(rest, encoding="utf-8")
+        return load_calendar_csv(tmp, coverage=coverage)
+    finally:
+        tmp.unlink(missing_ok=True)

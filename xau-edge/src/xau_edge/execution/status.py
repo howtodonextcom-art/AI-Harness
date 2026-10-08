@@ -160,7 +160,11 @@ def build_status(
         if report
         else None
     )
-    news = "unknown" if report is None or "NEWS_UNKNOWN" in report.reasons else "clear"
+    news: Literal["unknown", "risk", "clear"] = "unknown"
+    if report is not None and not report.skipped:
+        refused_before_news = any(r.startswith(("DATA_", "RECONCILE_")) for r in report.reasons)
+        if not refused_before_news and "NEWS_UNKNOWN" not in report.reasons:
+            news = "clear"
     if report is not None and "NEWS_RISK" in report.reasons:
         news = "risk"
     return BotStatus(

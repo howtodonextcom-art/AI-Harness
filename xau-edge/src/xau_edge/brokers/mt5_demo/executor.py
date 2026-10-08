@@ -72,6 +72,16 @@ _TRADE_NAMES = frozenset(
         "TRADE_RETCODE_PLACED",
     }
 )
+RETCODE_PARTIAL = 10010
+DEFINITE_REJECTS = frozenset(
+    {
+        10004, 10006, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022,
+        10025, 10026, 10027, 10028, 10029, 10030, 10033, 10034, 10035, 10036, 10038, 10039,
+        10040, 10041, 10042, 10043, 10044,
+    }
+)  # fmt: skip
+"""Codes that prove the order did NOT execute. Anything else that is not a fill is ambiguous
+(timeouts, lost connection, too many requests) and is resolved by looking the position up."""
 CLOSE_COMMENT = f"{COMMENT_PREFIX}CLOSE"
 SMOKE_COMMENT = f"{COMMENT_PREFIX}SMOKE"
 
@@ -90,7 +100,9 @@ class ExecutorConfig:
     max_lots: float
     deviation_points: int = 30
     smoke: bool = False
-    point: float = 0.01
+    max_tick_age_seconds: int = 60
+    max_intent_age: timedelta = timedelta(minutes=45)
+    max_open_positions: int = 1
 
 
 @dataclass(frozen=True)
@@ -155,11 +167,11 @@ class Mt5DemoExecutor:
 
     def _open(self, intent: OrderIntent, now: datetime, *, smoke: bool) -> SubmitResult:
         try:
-            reasons = self._gates(intent, smoke=smoke)
+            reasons = self._gates(intent, now, smoke=smoke)
             if reasons:
                 self.journal.record("order.refused", intent_id=intent.intent_id, reasons=reasons)
                 return _refused(*reasons)
-            request, price_reason = self._build_request(intent)
+            request, price_reason = self._build_request(intent, now)
             if request is None:
                 self.journal.record(
                     "order.refused", intent_id=intent.intent_id, reasons=[price_reason]
@@ -171,13 +183,43 @@ class Mt5DemoExecutor:
             )  # fmt: skip
             self.state.begin_submission(intent.intent_id, intent.signal_hash)
         except DuplicateSubmissionError:
+            self._record_quietly(
+                "order.refused", intent_id=intent.intent_id, reasons=["DUPLICATE_SUBMISSION"]
+            )
             return _refused("DUPLICATE_SUBMISSION")
         except (StateError, JournalError, DemoAccountError) as exc:
             log_event(_LOG, "executor.refused_on_error", logging.ERROR, error=str(exc))
             return _refused("EXECUTOR_ERROR")
+        late = self._recheck(intent)
+        if late:
+            return late
         return self._send_and_record(intent, request)
 
-    def _gates(self, intent: OrderIntent, *, smoke: bool) -> list[str]:  # noqa: PLR0912
+    def _recheck(self, intent: OrderIntent) -> SubmitResult | None:
+        """Last look right before sending: the world may have changed since the gates ran."""
+        try:
+            reasons: list[str] = []
+            if self.state.kill_switch_state()[0]:
+                reasons.append("KILL_SWITCH")
+            account = self.reader.account()
+            if account.account_id not in self.config.allowed_accounts:
+                reasons.append("ACCOUNT_NOT_WHITELISTED")
+            if not account.trade_allowed:
+                reasons.append("TRADING_NOT_ALLOWED")
+            if not reasons:
+                return None
+            self.state.finish_submission(intent.intent_id, "REJECTED")
+            self.journal.record("order.refused", intent_id=intent.intent_id, reasons=reasons)
+            return _refused(*reasons)
+        except (StateError, JournalError, DemoAccountError) as exc:
+            log_event(_LOG, "executor.recheck_failed", logging.ERROR, error=str(exc))
+            with contextlib.suppress(StateError):
+                self.state.finish_submission(intent.intent_id, "REJECTED")
+            return _refused("EXECUTOR_ERROR")
+
+    def _gates(  # noqa: PLR0912
+        self, intent: OrderIntent, now: datetime, *, smoke: bool
+    ) -> list[str]:
         cfg = self.config
         reasons: list[str] = []
         if not cfg.enabled:
@@ -200,6 +242,14 @@ class Mt5DemoExecutor:
             reasons.append("LOTS_ABOVE_MAXIMUM")
         if smoke and intent.lots > 0.01 + 1e-12:
             reasons.append("SMOKE_LOT_TOO_LARGE")
+        if not smoke and not self.state.is_approved(intent.intent_id):
+            reasons.append("NOT_APPROVED_BY_BRIDGE")
+        if now >= intent.max_hold_until:
+            reasons.append("INTENT_EXPIRED")
+        if now - intent.decision_time > cfg.max_intent_age:
+            reasons.append("INTENT_STALE")
+        if len(self.state.open_positions()) >= cfg.max_open_positions:
+            reasons.append("BOT_POSITION_ALREADY_OPEN")
         if self.state.kill_switch_state()[0]:
             reasons.append("KILL_SWITCH")
         if reasons:
@@ -218,7 +268,7 @@ class Mt5DemoExecutor:
         return reasons
 
     def _build_request(  # noqa: PLR0911 - one early exit per refusal reason
-        self, intent: OrderIntent
+        self, intent: OrderIntent, now: datetime
     ) -> tuple[dict[str, Any] | None, str]:
         mt5 = self._mt5
         info = mt5.symbol_info(intent.symbol)
@@ -232,10 +282,13 @@ class Mt5DemoExecutor:
             return None, "VOLUME_OUT_OF_RANGE"
         if abs(intent.lots / step - round(intent.lots / step)) > 1e-6:
             return None, "VOLUME_NOT_ON_STEP"
+        tick_age = now - self.reader.utc_from_epoch(int(tick.time))
+        if tick_age.total_seconds() > self.config.max_tick_age_seconds:
+            return None, "TICK_STALE"
         price = float(tick.ask if intent.direction == 1 else tick.bid)
         if not math.isfinite(price) or price <= 0:
             return None, "PRICE_INVALID"
-        limit = self.config.deviation_points * self.config.point
+        limit = self.config.deviation_points * float(info.point)
         if abs(price - intent.entry_reference) > limit:
             return None, "ENTRY_PRICE_MOVED"
         flags = int(info.filling_mode)
@@ -286,15 +339,21 @@ class Mt5DemoExecutor:
             return self._resolve_uncertain(intent, f"order_send raised {type(exc).__name__}")
         if result is None:
             return self._resolve_uncertain(intent, "order_send returned no answer")
-        retcode = int(result.retcode)
-        self._record_quietly("order.answered", intent_id=intent.intent_id, retcode=retcode)
-        if retcode not in (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED):
-            try:
+        try:
+            retcode = int(result.retcode)
+            order_id = getattr(result, "order", None)
+            self._record_quietly("order.answered", intent_id=intent.intent_id, retcode=retcode)
+            fills = (mt5.TRADE_RETCODE_DONE, mt5.TRADE_RETCODE_PLACED, RETCODE_PARTIAL)
+            if retcode in fills:
+                return self._confirm_fill(intent, retcode, order_id)
+            if retcode in DEFINITE_REJECTS:
                 self.state.finish_submission(intent.intent_id, "REJECTED", retcode=retcode)
-            except StateError:
-                return self._unknown(intent, "could not record the rejection")
-            return SubmitResult("REJECTED", ("BROKER_REJECTED",), retcode=retcode)
-        return self._confirm_fill(intent, retcode, getattr(result, "order", None))
+                return SubmitResult("REJECTED", ("BROKER_REJECTED",), retcode=retcode)
+            return self._resolve_uncertain(intent, f"ambiguous broker answer {retcode}")
+        except Exception as exc:
+            return self._resolve_uncertain(
+                intent, f"post-send handling raised {type(exc).__name__}"
+            )
 
     def _resolve_uncertain(self, intent: OrderIntent, why: str) -> SubmitResult:
         """No clear answer: look the position up by magic and comment; unproven means stop."""
@@ -319,10 +378,10 @@ class Mt5DemoExecutor:
                     intent_id=intent.intent_id,
                     ticket=position.ticket,
                     symbol=position.symbol,
-                    direction=position.direction,
+                    direction=intent.direction,
                     lots=position.lots,
-                    stop_loss=position.stop_loss,
-                    take_profit=position.take_profit,
+                    stop_loss=intent.stop_loss,  # what we asked for: reconciliation compares
+                    take_profit=intent.take_profit,  # the broker against it, not against itself
                     opened_at=position.opened_at,
                     max_hold_until=intent.max_hold_until,
                 )
@@ -338,7 +397,24 @@ class Mt5DemoExecutor:
             ticket=position.ticket,
             lots=position.lots,
         )
+        if not self._protection_matches(intent, position):
+            log_event(_LOG, "executor.protection_missing", logging.CRITICAL, ticket=position.ticket)
+            self.close_position(position.ticket, "PROTECTION_MISMATCH")
+            with contextlib.suppress(StateError):
+                self.state.trip_kill_switch("PROTECTION_MISMATCH: stop or target not as ordered")
+            return SubmitResult(
+                "FILLED", ("PROTECTION_MISMATCH",), ticket=position.ticket, retcode=retcode
+            )
         return SubmitResult("FILLED", (), ticket=position.ticket, retcode=retcode)
+
+    @staticmethod
+    def _protection_matches(intent: OrderIntent, position: BrokerPosition) -> bool:
+        tolerance = 0.011
+        return (
+            position.direction == intent.direction
+            and abs(position.stop_loss - intent.stop_loss) <= tolerance
+            and abs(position.take_profit - intent.take_profit) <= tolerance
+        )
 
     def _find_position(self, comment: str, magic: int, order_id: Any) -> BrokerPosition | None:
         for position in self.reader.positions():

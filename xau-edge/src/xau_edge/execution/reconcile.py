@@ -49,12 +49,33 @@ class BrokerPosition:
 
 
 @dataclass(frozen=True)
+class ClosedResult:
+    """A position the broker has closed (by stop, target or request) and its net result."""
+
+    ticket: str
+    closed_at: datetime
+    profit: float
+
+
+def trailing_losses(closed: tuple[ClosedResult, ...], bot_tickets: set[str]) -> int:
+    """How many of the bot's most recent closed trades in a row lost money."""
+    mine = sorted((c for c in closed if c.ticket in bot_tickets), key=lambda c: c.closed_at)
+    count = 0
+    for result in reversed(mine):
+        if result.profit >= 0:
+            break
+        count += 1
+    return count
+
+
+@dataclass(frozen=True)
 class BrokerSnapshot:
     """One consistent read of the broker."""
 
     taken_at: datetime
     account: BrokerAccount
     positions: tuple[BrokerPosition, ...]
+    closed: tuple[ClosedResult, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -173,8 +194,16 @@ class Reconciler:
                         f"ticket {pos.ticket} on {pos.symbol} was not opened by the bot",
                     )
                 )
+        closed_tickets = {c.ticket for c in snapshot.closed}
         for ticket in records:
-            if ticket not in seen:
+            if ticket in seen:
+                continue
+            if ticket in closed_tickets:  # the broker closed it (stop, target): a normal event
+                try:
+                    self.state.mark_position_closed(ticket)
+                except StateError as exc:
+                    found.append(Mismatch("STATE_UNAVAILABLE", str(exc)))
+            else:
                 found.append(Mismatch("BOT_TICKET_MISSING", f"ticket {ticket} is not open"))
 
     def _compare(

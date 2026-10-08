@@ -170,6 +170,7 @@ class SignalBridge:
                 day=day,
                 dry_run=intent.dry_run,
                 max_orders_per_day=self.safety.max_orders_per_day,
+                risk_amount=decision.risk_amount,
             )
         except DuplicateSignalError:
             return _refuse("DUPLICATE_SIGNAL")

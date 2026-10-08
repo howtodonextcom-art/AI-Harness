@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Self
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,14 +33,16 @@ class Settings(BaseSettings):
     enable_demo_trading: bool = False
     demo_dry_run: bool = True
     demo_smoke: bool = False
-    demo_deviation_points: int = 30
+    demo_deviation_points: int = Field(default=30, ge=0, le=100)
     demo_allowed_accounts: str = ""
     demo_allowed_symbols: str = "XAUUSD"
     demo_magic: int | None = None
-    demo_max_lots: float = 1.0
+    demo_max_lots: float = Field(default=1.0, gt=0, le=5.0)
     demo_max_orders_per_day: int = 1
+    demo_initial_capital: float | None = Field(default=None, gt=0)
     demo_state_path: Path = Path("data/execution/state.sqlite")
     demo_journal_path: Path = Path("data/execution/journal.jsonl")
+    news_calendar_path: Path | None = None
     data_dir: Path = Path("data")
     log_level: str = "INFO"
 

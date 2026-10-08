@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ast
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -22,6 +22,7 @@ class FakeMt5:
     ACCOUNT_TRADE_MODE_REAL = 2
     POSITION_TYPE_BUY = 0
     POSITION_TYPE_SELL = 1
+    DEAL_ENTRY_OUT = 1
 
     def __init__(self, *, trade_mode: int = 0, positions: Any = (), info: Any = "default") -> None:
         self.calls: list[str] = []
@@ -42,6 +43,9 @@ class FakeMt5:
 
     def last_error(self) -> tuple[int, str]:
         return (1, "boom")
+
+    def history_deals_get(self, start: Any, end: Any) -> Any:
+        return ()
 
     def order_send(self, request: object) -> None:  # must never be reachable
         raise AssertionError("order_send was reached")
@@ -116,7 +120,7 @@ def test_the_snapshot_combines_account_and_positions() -> None:
 
 def test_the_query_proxy_cannot_reach_order_functions() -> None:
     proxy = QueryOnlyMt5(FakeMt5())
-    for name in ("order_send", "order_check", "positions_close", "login", "history_deals_get"):
+    for name in ("order_send", "order_check", "positions_close", "login", "history_orders_get"):
         with pytest.raises(AttributeError):
             getattr(proxy, name)
     assert proxy.account_info() is not None
@@ -133,3 +137,42 @@ def test_the_demo_adapter_package_uses_only_query_attributes() -> None:
             if isinstance(node, ast.Constant) and isinstance(node.value, str):
                 used.add(node.value)
     assert not (used & forbidden), sorted(used & forbidden)
+
+
+def test_closed_results_come_from_the_deal_history() -> None:
+    fake = FakeMt5()
+    deal_time = int(datetime(2026, 3, 4, 16, 0, tzinfo=UTC).timestamp())
+
+    def deals(start: Any, end: Any) -> Any:
+        keep = SimpleNamespace(
+            ticket=1, position_id=42, entry=1, symbol="XAUUSD", profit=10.0, commission=-1.0,
+            swap=-0.5, time=deal_time,
+        )  # fmt: skip
+        opening = SimpleNamespace(
+            ticket=2, position_id=42, entry=0, symbol="XAUUSD", profit=0.0, commission=0.0,
+            swap=0.0, time=deal_time,
+        )  # fmt: skip
+        other = SimpleNamespace(
+            ticket=3, position_id=7, entry=1, symbol="EURUSD", profit=1.0, commission=0.0,
+            swap=0.0, time=deal_time,
+        )  # fmt: skip
+        return (keep, opening, other)
+
+    fake.history_deals_get = deals  # type: ignore[method-assign]
+    results = _reader(fake).closed_results(NOW, timedelta(days=7))
+    assert len(results) == 1
+    assert results[0].ticket == "42"
+    assert results[0].profit == 8.5
+    assert results[0].closed_at == datetime(2026, 3, 4, 14, 0, tzinfo=UTC)
+
+
+def test_a_failed_history_query_is_an_error() -> None:
+    fake = FakeMt5()
+    fake.history_deals_get = lambda start, end: None  # type: ignore[method-assign]
+    with pytest.raises(DemoAccountError, match="history_deals_get failed"):
+        _reader(fake).closed_results(NOW, timedelta(days=1))
+
+
+def test_a_missing_trade_allowed_attribute_fails_closed() -> None:
+    info = SimpleNamespace(login=1, trade_mode=0, balance=1.0, equity=1.0)
+    assert _reader(FakeMt5(info=info)).account().trade_allowed is False
