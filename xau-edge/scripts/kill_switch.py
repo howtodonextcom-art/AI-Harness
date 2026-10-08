@@ -4,7 +4,8 @@
     uv run python scripts/kill_switch.py trip --reason "manual stop"
     uv run python scripts/kill_switch.py reset --confirm "I understand the risk"
 
-A tripped switch blocks NEW orders only; it never closes positions (ADR-0019).
+A tripped switch blocks NEW orders only; it never closes positions (ADR-0019). It acts on the state
+of the configured mode: the funded state when ``XAU_EDGE_ENABLE_FUNDED_TRADING=true``, else demo.
 """
 
 from __future__ import annotations
@@ -19,8 +20,8 @@ def main() -> int:
     settings = Settings()
     return run(
         sys.argv[1:],
-        state_path=settings.demo_state_path,
-        journal_path=settings.demo_journal_path,
+        state_path=settings.execution_state_path,
+        journal_path=settings.execution_journal_path,
     )
 
 

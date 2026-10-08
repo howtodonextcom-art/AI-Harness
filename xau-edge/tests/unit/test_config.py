@@ -178,6 +178,15 @@ def test_funded_mode_has_its_own_state_and_journal_files() -> None:
     assert moved.funded_state_path == Path("x/f.sqlite")
 
 
+def test_operator_tools_follow_the_configured_mode_to_its_state_and_journal() -> None:
+    demo = Settings(_env_file=None)
+    assert demo.execution_state_path == demo.demo_state_path
+    assert demo.execution_journal_path == demo.demo_journal_path
+    funded = _funded()
+    assert funded.execution_state_path == funded.funded_state_path
+    assert funded.execution_journal_path == funded.funded_journal_path
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [

@@ -30,9 +30,9 @@ def main() -> int:
         print(f"CRITICAL STATUS_UNREADABLE: {exc}")
         return 1
     state: ExecutionState | None = None
-    if settings.demo_state_path.exists():
+    if settings.execution_state_path.exists():
         try:
-            state = ExecutionState(settings.demo_state_path)
+            state = ExecutionState(settings.execution_state_path)
         except StateError as exc:
             print(f"CRITICAL STATE_UNAVAILABLE: {exc}")
             return 1

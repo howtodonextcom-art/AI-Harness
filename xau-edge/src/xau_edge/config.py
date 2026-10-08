@@ -138,6 +138,16 @@ class Settings(BaseSettings):
             raise ValueError(msg)
         return self
 
+    @property
+    def execution_state_path(self) -> Path:
+        """The state file of the configured mode (funded or demo) for operator tools."""
+        return self.funded_state_path if self.enable_funded_trading else self.demo_state_path
+
+    @property
+    def execution_journal_path(self) -> Path:
+        """The journal file of the configured mode (funded or demo) for operator tools."""
+        return self.funded_journal_path if self.enable_funded_trading else self.demo_journal_path
+
     def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:
         """Copy with ``update`` applied *and validated* (pydantic's default skips validation)."""
         unknown = set(update or {}) - set(type(self).model_fields)

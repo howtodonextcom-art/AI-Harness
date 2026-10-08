@@ -59,10 +59,11 @@ def main() -> None:
         models_dir=Path("models"),
         paper=paper,
         bot=BotContext(
-            state_path=settings.demo_state_path,
+            state_path=settings.execution_state_path,
             status_path=Path("data/execution/status.json"),
-            cycles_path=Path("data/execution/cycles.jsonl"),
-            journal_path=settings.demo_journal_path,
+            cycles_path=Path("data/execution")
+            / ("funded_cycles.jsonl" if settings.enable_funded_trading else "cycles.jsonl"),
+            journal_path=settings.execution_journal_path,
         ),
         journal_path=journal,
     )
