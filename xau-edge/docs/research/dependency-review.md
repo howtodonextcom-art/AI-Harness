@@ -22,11 +22,11 @@ interface), **DEFER** (planned, not needed yet), **AVOID** (do not depend on it)
 | polars | 2.0.0 (2026-10-06) | MIT (PyPI classifier; license text also credits NVIDIA for some portions) | pure wheel + `polars-runtime-32` | frames, Parquet I/O | ADOPT, pinned `>=2,<3` | **Major version released 2 days before this review**; last 1.x is 1.44.2 (2026-09-09). Risk accepted: API confined to the data layer, `uv.lock` committed, fallback to 1.44 is possible. Re-evaluate after 2.0.x patch releases |
 | pydantic | 2.13.5 (2026-08-28) | MIT | pure | models, schemas | ADOPT | |
 | pydantic-settings | 2.15.0 (2026-08-07) | MIT | pure | env/.env settings, `SecretStr` | ADOPT | |
-| PyYAML | 6.0.3 (2025-09-25) | MIT | win wheels | config files | ADOPT (declared; first used in Sprint 2) | Always `safe_load` |
+| PyYAML | 6.0.3 (2025-09-25) | MIT | win wheels | config files | ADOPT | Broker profiles; always `safe_load`, unknown keys rejected |
 | tzdata | 2026.5 | Apache-2.0 | pure | IANA zones for `zoneinfo` on Windows | ADOPT (Windows marker) | Windows ships no tz database |
 | MetaTrader5 | 5.0.6231 (2026-09-27) | PyPI says MIT; binary from MetaQuotes, **verify** | **Windows only**; cp312-cp314 win_amd64 wheels, no sdist; imports OK on 3.14 (verified) | MT5 terminal market data | WRAP, optional extra `mt5` | Talks to a locally running terminal. Only `copy_rates_range` is used; trading calls are forbidden by test |
-| DuckDB | 1.5.6 (2026-09-28) | MIT | win wheels cp312-cp314 | SQL over Parquet | DEFER to Sprint 2 | Will back dataset queries; also reads Parquet directly |
-| PyArrow | 25.0.1 (2026-08-10) | Apache-2.0 | win wheels | Arrow interop | DEFER | Polars and DuckDB already read/write Parquet; add only if a consumer needs Arrow objects |
+| DuckDB | 1.5.6 (2026-09-28) | MIT | win wheels cp312-cp314 | SQL over Parquet | ADOPT (Sprint 2) | Read-only SQL over merged datasets in `DatasetCatalog`; opened with `enable_external_access=false` |
+| PyArrow | 25.0.1 (2026-08-10) | Apache-2.0 | win wheels | Arrow interop | ADOPT (Sprint 2) | Required to hand Polars frames to DuckDB and read results back (`.pl()`); verified on 3.12-3.14 |
 | pandas | 3.0.6 (2026-09-17) | BSD-3 | win wheels | frames | AVOID as core | Not needed; allowed at library boundaries if a dependency demands it |
 | TA-Lib | 0.8.1 (2026-09-21) | BSD-2 (GitHub); PyPI license blank, **verify** | win wheels incl. cp314, no C library build needed | indicators | ADOPT in Sprint 3 behind an `indicators` interface | Active (GitHub push 2026-09-21). "Never blindly trust indicator libraries": every indicator gets a golden test against an independent reference, and Wilder-smoothing conventions (RSI/ATR/ADX) are pinned explicitly |
 | STUMPY | 1.14.1 (2026-02-08) | BSD-3 (PyPI); GitHub shows "NOASSERTION", **verify** | pure wheel; depends on numba (0.68.0 has win cp312-cp314 wheels) | Matrix Profile | WRAP, Phase 4 | GitHub push 2026-10-03. JIT warm-up cost; benchmark against plain NumPy distance search before committing |
@@ -67,4 +67,4 @@ interface), **DEFER** (planned, not needed yet), **AVOID** (do not depend on it)
    tested locally; 3.12 and 3.13 are supported on paper but **untested** (see sprint report).
 2. **Copyleft guard**: AGPL/GPL packages are not dependencies (ADR-0006).
 3. **Polars 2.0.0 is a risk to monitor**, not a settled choice.
-4. **Windows wheels exist for every adopted compiled dependency on cp312-cp314**, so no C toolchain is needed. This was checked from wheel filenames, not by installing all of them; only the Sprint 1 set (numpy, polars, pydantic, pydantic-settings, pyyaml, tzdata, MetaTrader5, dev tools) was actually installed and exercised.
+4. **Windows wheels exist for every adopted compiled dependency on cp312-cp314**, so no C toolchain is needed. This was checked from wheel filenames, not by installing all of them; only the Sprint 1-2 set (numpy, polars, pydantic, pydantic-settings, pyyaml, tzdata, duckdb, pyarrow, MetaTrader5, dev tools) was actually installed and exercised, on Python 3.12, 3.13 and 3.14.

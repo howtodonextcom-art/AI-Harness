@@ -10,8 +10,10 @@ readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license = { text = "Proprietary" }
 dependencies = [
+    "duckdb>=1.5,<2",
     "numpy>=2.0,<3",
     "polars>=2.0,<3",
+    "pyarrow>=25,<26",
     "pydantic>=2.13,<3",
     "pydantic-settings>=2.10,<3",
     "pyyaml>=6.0,<7",
@@ -52,6 +54,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "S105", "S106"]
+# Operator scripts print results and are long procedural flows by nature.
+"scripts/**" = ["T201", "E501", "PLR0915", "PLR0912"]
 
 [tool.mypy]
 python_version = "3.12"

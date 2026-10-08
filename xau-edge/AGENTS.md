@@ -14,7 +14,10 @@ integrity first, capital second, and automate execution last (not in this codeba
 * Never change risk limits, prop-firm limits, or safety gates silently; any change needs an ADR
   and a test.
 * Never claim profitability, show invented backtest numbers, or present synthetic data as real.
-* Never commit secrets. Credentials live in `.env` (git-ignored); use `SecretStr`.
+* Never commit secrets or account identifiers. Credentials and login numbers live in `.env`
+  (git-ignored); `.env.example` is committed and must stay empty of real values. Use `SecretStr`.
+* `scripts/verify_mt5.py` is read-only and must keep its DEMO-account guard. Never point MT5
+  tooling at a live account.
 * Never use future information. Never shuffle time series. Never optimise on test data.
 * Raw data is immutable. Do not edit files under `data/raw/`.
 
@@ -51,7 +54,9 @@ Set `HOME` to a scratch directory if you run ECC tooling, which writes a cache u
 | Path | Contents |
 |---|---|
 | `src/xau_edge/domain` | contracts: timeframe, bars, instrument |
-| `src/xau_edge/market_data` | sources, importers, raw store, validators |
+| `src/xau_edge/market_data` | sources, importers, raw store, catalog, resampling, broker clock/profiles, validators |
+| `configs/brokers` | measured broker profiles; every value must cite `docs/reports/mt5-verification.md` or a newer measurement |
+| `scripts` | operator tools (`dev.ps1`, `verify_mt5.py`) |
 | `tests/{unit,integration,regression,statistical}` | tests mirror `src` layout |
 | `data/*` | git-ignored data; `.gitkeep` only |
 | `docs/decisions` | ADRs; add one for any architectural change |

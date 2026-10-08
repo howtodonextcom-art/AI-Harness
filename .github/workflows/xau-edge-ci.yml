@@ -1,0 +1,41 @@
+name: xau-edge-ci
+
+on:
+  push:
+    paths:
+      - "xau-edge/**"
+      - ".github/workflows/xau-edge-ci.yml"
+  pull_request:
+    paths:
+      - "xau-edge/**"
+      - ".github/workflows/xau-edge-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.os }} / py${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.12", "3.13", "3.14"]
+    defaults:
+      run:
+        working-directory: xau-edge
+    steps:
+      # Actions are pinned to commit SHAs (tag shown in the comment).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: Install (locked)
+        run: uv sync --frozen --python ${{ matrix.python }}
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy
+      - name: Tests (no MT5 terminal in CI)
+        run: uv run pytest -m "not mt5"

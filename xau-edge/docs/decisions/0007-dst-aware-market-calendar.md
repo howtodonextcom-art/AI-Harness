@@ -15,6 +15,7 @@ automatically.
 **Tests.** Eight parametrised cases cover summer/winter Friday close and Sunday open on both
 sides of the boundary. A mutant that reverts the default to UTC is killed (7 failures).
 
-**Still assumed.** Broker hours may differ (extra daily break, holiday schedules). Holidays are
-not modelled; early closes and holiday gaps will appear as MISSING_BARS. Verify with real data
-in Sprint 2.
+**Update (Sprint 2).** Real data showed the broker's session is Sunday 18:05 to Friday 16:50 New
+York with a daily break 16:50-18:05, so the generic 17:00 default is only an approximation. The
+FTMO profile (`configs/brokers/ftmo_demo.yaml`) carries the measured values. Holidays are still not
+modelled; see ADR-0009 for how they are reported.

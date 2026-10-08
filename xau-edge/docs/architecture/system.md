@@ -20,10 +20,11 @@ A forecast never becomes an order directly. `WAIT` is a first-class output.
 |---|---|---|
 | Domain contracts (timeframes, bars, instrument) | `xau_edge.domain` | **Sprint 1, done** |
 | Settings and safety switches | `xau_edge.config` | **Sprint 1, done** |
-| Data sources (interface, file adapter, MT5 adapter) | `xau_edge.market_data` | **Sprint 1, done** (MT5 not yet run against a live terminal) |
+| Data sources (interface, file adapter, MT5 adapter) | `xau_edge.market_data` | **Sprints 1-2, done** (MT5 verified on an FTMO demo terminal) |
 | Raw storage (immutable, content-addressed) | `xau_edge.market_data.store` | **Sprint 1, done** |
-| Validation | `xau_edge.market_data.validators` | **Sprint 1, done** |
-| Resampling, dataset catalog (DuckDB) | `market_data.resampling` | Sprint 2 |
+| Validation, coverage and cross-checks | `xau_edge.market_data.validators` | **Sprints 1-2, done** |
+| Broker clock and profiles | `market_data.broker_clock`, `market_data.profiles`, `configs/brokers` | **Sprint 2, done** |
+| Resampling, dataset catalog (DuckDB) | `market_data.resampling`, `market_data.catalog` | **Sprint 2, done** |
 | Features, structure, regimes | `features`, `structure`, `regimes` | Sprints 3-4 |
 | Pattern similarity, outcomes | `patterns` | Sprints 5-6 |
 | Backtest, baselines | `backtest` | Sprints 6-7 |
@@ -42,7 +43,8 @@ A forecast never becomes an order directly. `WAIT` is a first-class output.
 * **Raw data is immutable**: files are named by content hash, written once, marked read-only;
   a different payload at an existing path raises.
 * **Time**: everything inside the platform is UTC. MT5 reports broker server wall-clock labelled
-  as UTC, so `MT5_BROKER_TIMEZONE` is mandatory and conversions raise on DST ambiguity.
+  as UTC, so `MT5_BROKER_TIMEZONE` is mandatory (`NY+7` on the FTMO demo server, not an IANA zone;
+  ADR-0008) and conversions raise on DST ambiguity.
 * **Safety**: the MT5 adapter exposes market data only; a test fails if any order/position API
   name appears in `market_data/mt5`.
 
@@ -52,9 +54,11 @@ See `docs/decisions/`. In short: a single installable package `xau_edge` under `
 many top-level folders (ADR-0001); `apps/` and `packages/` are created when the API and dashboard
 begin; `data/` subfolders exist with `.gitkeep` and their contents are git-ignored.
 
-## Data flow (Sprint 1)
+## Data flow
 
 ```
-CSV/Parquet or MT5 -> BarSource.fetch_bars -> RawStore.write (immutable Parquet)
-                                           -> validate_bars -> ValidationReport
+CSV/Parquet or MT5 -> BarSource.fetch_bars -> RawStore.write (immutable Parquet + .meta.json)
+                                           -> check_coverage / validate_bars -> ValidationReport
+RawStore -> DatasetCatalog.load (merge fetches, newest wins, dataset id) -> resample_bars -> cross_check
+                                           -> DatasetCatalog.sql (read-only DuckDB views)
 ```

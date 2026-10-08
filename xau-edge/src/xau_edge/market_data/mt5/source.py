@@ -12,16 +12,16 @@ against a live terminal.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol
-from zoneinfo import ZoneInfo
 
 import polars as pl
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from xau_edge.domain.bars import BarRequest, coerce_bars, empty_bars
+from xau_edge.market_data.broker_clock import BrokerClock
 
 
 class Mt5NotAvailableError(RuntimeError):
@@ -83,7 +83,7 @@ class Mt5BarSource:
             raise ValueError(msg)
         self._client = client
         self._settings = settings
-        self._tz = ZoneInfo(settings.broker_timezone)
+        self._clock = BrokerClock.parse(settings.broker_timezone)
 
     def connect(self) -> None:
         """Initialise the terminal connection (market data only)."""
@@ -140,14 +140,12 @@ class Mt5BarSource:
 
     def _to_server_wall_clock(self, utc_dt: datetime) -> datetime:
         """True UTC instant -> broker wall clock, labelled UTC (what MT5 expects)."""
-        return utc_dt.astimezone(self._tz).replace(tzinfo=UTC)
+        return self._clock.label_as_utc(utc_dt)
 
     def _to_utc(self, epoch_seconds: pl.Series) -> pl.Series:
         """Server-wall-clock epoch seconds -> true UTC datetimes (ambiguity raises)."""
         naive = pl.from_epoch(epoch_seconds, time_unit="s").cast(pl.Datetime("us"))
-        return naive.dt.replace_time_zone(
-            str(self._tz), ambiguous="raise", non_existent="raise"
-        ).dt.convert_time_zone("UTC")
+        return self._clock.server_to_utc(naive)
 
 
 __all__ = [

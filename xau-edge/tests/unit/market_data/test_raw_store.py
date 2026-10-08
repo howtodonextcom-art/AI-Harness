@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import stat
+from datetime import UTC, datetime
 from pathlib import Path
 
 import polars as pl
@@ -28,6 +29,60 @@ def test_write_creates_content_addressed_parquet(tmp_path: Path) -> None:
     assert pl.read_parquet(ds.path).equals(df)
 
 
+def test_fetch_time_is_recorded_and_survives_idempotent_rewrites(tmp_path: Path) -> None:
+    store = RawStore(tmp_path)
+    df = make_bars(5)
+    t1 = datetime(2026, 1, 1, tzinfo=UTC)
+    t2 = datetime(2026, 6, 1, tzinfo=UTC)
+    first = store.write(df, symbol="XAUUSD", timeframe=TF, source="unit", fetched_at=t1)
+    again = store.write(df, symbol="XAUUSD", timeframe=TF, source="unit", fetched_at=t2)
+    assert first.fetched_at == t1
+    assert again.fetched_at == t1  # the original record is never rewritten
+
+
+def test_fetch_time_defaults_to_now_in_utc(tmp_path: Path) -> None:
+    ds = RawStore(tmp_path).write(make_bars(5), symbol="XAUUSD", timeframe=TF, source="unit")
+    assert ds.fetched_at.tzinfo is not None
+    assert abs((datetime.now(UTC) - ds.fetched_at).total_seconds()) < 60
+
+
+def test_data_written_before_sidecars_existed_gets_a_record_from_file_time(
+    tmp_path: Path,
+) -> None:
+    store = RawStore(tmp_path)
+    df = make_bars(5)
+    ds = store.write(df, symbol="XAUUSD", timeframe=TF, source="unit")
+    meta = ds.path.with_name(ds.path.name + ".meta.json")
+    meta.chmod(stat.S_IWRITE | stat.S_IREAD)
+    meta.unlink()  # simulate a Sprint 1 file that has no sidecar
+    assert store.datasets("XAUUSD", TF) == []  # unrecorded files are not listed
+    again = store.write(df, symbol="XAUUSD", timeframe=TF, source="unit")
+    assert again.path == ds.path
+    assert again.sha256 == ds.sha256
+    assert meta.exists()
+    assert store.datasets("XAUUSD", TF) == [again]
+
+
+def test_datasets_lists_in_fetch_order(tmp_path: Path) -> None:
+    store = RawStore(tmp_path)
+    late = store.write(
+        make_bars(5, base=1.0),
+        symbol="XAUUSD",
+        timeframe=TF,
+        source="b",
+        fetched_at=datetime(2026, 3, 1, tzinfo=UTC),
+    )
+    early = store.write(
+        make_bars(5, base=2.0),
+        symbol="XAUUSD",
+        timeframe=TF,
+        source="a",
+        fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    assert store.datasets("XAUUSD", TF) == [early, late]
+    assert store.datasets("XAUUSD", Timeframe.H4) == []
+
+
 def test_stored_file_is_read_only(tmp_path: Path) -> None:
     ds = RawStore(tmp_path).write(make_bars(5), symbol="XAUUSD", timeframe=TF, source="unit")
     assert not os.access(ds.path, os.W_OK)
@@ -39,7 +94,7 @@ def test_rewriting_identical_data_is_idempotent(tmp_path: Path) -> None:
     first = store.write(df, symbol="XAUUSD", timeframe=TF, source="unit")
     second = store.write(df, symbol="XAUUSD", timeframe=TF, source="unit")
     assert first == second
-    assert len(list((tmp_path / "XAUUSD" / "M15").iterdir())) == 1
+    assert len(list((tmp_path / "XAUUSD" / "M15").glob("*.parquet"))) == 1
 
 
 def test_existing_file_with_different_content_is_never_overwritten(tmp_path: Path) -> None:

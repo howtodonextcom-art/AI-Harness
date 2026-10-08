@@ -17,8 +17,8 @@ for MVP, P2 after MVP.
 | # | Epic | Key tasks | Depends on | Acceptance criteria | Main risk | Cx | Pri | Sprint |
 |---|---|---|---|---|---|---|---|---|
 | 01 | Repository bootstrap | package, lint, types, tests, config, AGENTS.md, docs | - | `dev.ps1 check` green; docs exist | tooling drift across OS | S | P0 | **1 (done)** |
-| 02 | MT5 data connector | `BarSource` interface, MT5 adapter, offline file adapter | 01 | offline path works; MT5 path unit-tested with fake client | **broker time handling unverified live** | M | P0 | 1 (adapters), **2 (live verification)** |
-| 03 | Market-data validation | duplicate/order/gap/OHLC/volume/spread/tz/weekend checks; raw store | 02 | every check has a failing-input test; raw data immutable | market-calendar assumptions per broker | M | P0 | 1 (done), 2 (resample + cross-TF checks) |
+| 02 | MT5 data connector | `BarSource` interface, MT5 adapter, offline file adapter | 01 | offline path works; MT5 path unit-tested with fake client | terminal truncates deep history silently (handled, ADR-0009) | M | P0 | 1 (adapters), **2 (verified on FTMO demo)** |
+| 03 | Market-data validation | duplicate/order/gap/OHLC/volume/spread/tz/weekend checks; raw store | 02 | every check has a failing-input test; raw data immutable | holiday schedules not modelled | M | P0 | 1-2 (done) |
 | 04 | Feature engine | returns, EMA, ADX, RSI/MACD/Stoch, ATR/BB, candle geometry, volume, session | 03 | golden tests vs independent reference; deterministic output | indicator convention mismatch (Wilder) | M | P0 | 3 |
 | 05 | Market structure | swings, HH/HL/LH/LL, BOS, CHoCH, S/R | 04 | machine-testable definitions; no repainting test | subjective definitions | L | P0 | 4 |
 | 06 | Market regime | TREND_UP/DOWN, RANGE, HIGH/LOW_VOL, SHOCK, documented rules | 04, 05 | each rule documented and unit-tested | threshold fitting on test data | M | P1 | 4 |
@@ -52,29 +52,43 @@ Goal: foundation for trustworthy market data.
 | 7 | Config with live trading hard-disabled | done |
 | 8 | Docs: AGENTS.md, architecture, ADRs, this plan, sprint report | done |
 
-## Recommended Sprint 2
+## Sprint 2 (completed 2026-10-08)
 
-1. **Verify MT5 on a demo account** (owner: needs terminal): script that pulls a week of M5
-   XAUUSD, determines the broker timezone empirically (compare to known session opens and DST
-   transitions), and records it in config. Until this passes, MT5 data is untrusted.
-2. Resampling M5 -> M15/H1/H4 with the same alignment rules as the broker, plus cross-timeframe
-   consistency checks (a derived H1 must equal the broker's H1 within tolerance).
-3. Dataset catalog: DuckDB over Parquet (`DatasetCatalog.query`), dataset versioning by content hash.
-4. Real-data validation report on a real XAUUSD export (all Sprint 1 validators were tested on
-   synthetic data only).
-5. Confirm broker market hours against real data (default is 17:00 New York, ADR-0007; holidays
-   are not modelled) and set `MarketCalendar` accordingly; add Python 3.12/3.13 to CI.
+Goal: make the data layer trustworthy against a real broker feed.
 
+| Step | Output | Status |
+|---|---|---|
+| 1 | Live MT5 verification on the FTMO **demo** terminal (`scripts/verify_mt5.py`, read-only, demo-only guard); findings in `docs/reports/mt5-verification.md` | done |
+| 2 | `BrokerClock` (`NY+7` or IANA), `infer_broker_clock`; ADR-0008 | done |
+| 3 | Resampling M5 -> M15/H1/H4 on server-clock boundaries, calendar-aware completeness; derived bars equal the broker's (0 differences on 44,000+ compared bars) | done |
+| 4 | `cross_check` of derived vs broker bars | done |
+| 5 | `DatasetCatalog`: merge of raw fetches (newest wins), content-hash dataset id, read-only SQL via DuckDB | done |
+| 6 | Broker profile loader and `configs/brokers/ftmo_demo.yaml` with measured values | done |
+| 7 | Validator fixes found with real data: span-aware closures, closure vs data loss, `check_coverage`; ADR-0007/0009 | done |
+| 8 | Python 3.12 and 3.13 tested; CI workflow (ubuntu + windows x 3.12-3.14), actions pinned by SHA | done (CI not yet run on GitHub) |
+
+## Recommended Sprint 3 (Epic 04, features)
+
+1. Indicator interface with golden tests against an independent reference implementation
+   (EMA, RSI, ATR, ADX, MACD, Stochastic, Bollinger), pinning Wilder smoothing conventions.
+2. Candle geometry, volume z-score, temporal and session features using the broker profile's
+   calendar and clock; versioned feature sets keyed by dataset id.
+3. Tick/spread cost inputs for the cost model from M5 spread (derived higher-timeframe spread
+   does not reproduce the broker's).
+4. A holiday/early-close calendar so closures stop appearing as warnings, and a decision on raising
+   the terminal's bar limit so a single fetch covers the whole history.
+5. Run the CI workflow on GitHub and fix any platform differences.
 ## Testing strategy
 
 * Unit tests for every pure function; synthetic data only for exercising code paths.
-* Mutation spot-checks for critical logic (Sprint 1: 10 hand-made mutants; 4 initially
-  survived, tests were strengthened, and all 10 are now killed).
+* Mutation spot-checks for critical logic (Sprint 1: 10 hand-made mutants, 4 initially survived;
+  Sprint 2: 12 more, all killed on the first full pass after two boundary tests were added).
 * Statistical tests (leakage, calibration, walk-forward) arrive with their epics.
 * No MT5 test runs in CI (`-m "not mt5"`).
 
 ## Success criteria for the MVP
 
-See section 49 of the project brief. Sprint 1 satisfies items 2 (validation), 11 (no live
-trade possible) and part of 12 (critical modules tested); items 1 and 3 are only
-partially met (MT5 import untested live; querying arrives in Sprint 2).
+See section 49 of the project brief. After Sprint 2: items 1 (MT5 import, verified on a demo
+terminal), 2 (validation), 3 (M5/M15/H1/H4 datasets queryable through `DatasetCatalog`), 11 (no live
+trade possible) and part of 12 (critical modules tested) are met. Items 4-10 (features, structure,
+patterns, outcomes, backtest, dashboard) are not started.

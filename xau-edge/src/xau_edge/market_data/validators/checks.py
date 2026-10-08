@@ -67,41 +67,87 @@ def _normalised_ts(df: pl.DataFrame) -> pl.Expr:
 
 def _missing_bars(
     work: pl.DataFrame, timeframe: Timeframe, config: ValidationConfig
-) -> ValidationIssue | None:
+) -> list[ValidationIssue]:
+    """Report open-hours gaps, separating likely closures from data loss.
+
+    A gap whose last missing slot is followed by a scheduled closure (so the next bar is the
+    first bar after a reopening) and which is at least ``min_closure_minutes`` long looks like a
+    holiday or early close: it is reported as a warning and does not count toward the missing
+    fraction. Any other gap is data loss.
+    """
     unique_ts = work.select(pl.col(_TS).unique().sort())
     if unique_ts.height < 2:
-        return None
-    tf_minutes = timeframe.minutes
+        return []
+    tf = timeframe.minutes
+    calendar = config.calendar
     gaps = (
         unique_ts.with_columns(pl.col(_TS).shift(1).alias("prev"))
-        .with_columns(((pl.col(_TS) - pl.col("prev")).dt.total_minutes() // tf_minutes).alias("n"))
+        .with_columns(((pl.col(_TS) - pl.col("prev")).dt.total_minutes() // tf).alias("n"))
         .filter(pl.col("n") > 1)
+        .with_row_index("gap")
     )
     if gaps.is_empty():
-        return None
+        return []
     slots = (
         gaps.with_columns(pl.int_ranges(1, pl.col("n")).alias("idx"))
         .explode("idx")
+        .with_columns((pl.col("prev") + pl.duration(minutes=pl.col("idx") * tf)).alias("slot"))
+        .filter(~calendar.closed_span_expr(pl.col("slot"), tf))
+    )
+    if slots.is_empty():
+        return []
+
+    ends_after_closure = gaps.select(
+        "gap",
+        calendar.closed_span_expr(pl.col(_TS) - pl.duration(minutes=tf), tf).alias(
+            "_closed_before"
+        ),
+    )
+    per_gap = (
+        slots.group_by("gap")
+        .agg(pl.len().alias("missing"), pl.col("slot").min().alias("first_slot"))
+        .join(ends_after_closure, on="gap")
         .with_columns(
-            (pl.col("prev") + pl.duration(minutes=pl.col("idx") * tf_minutes)).alias("slot")
+            (
+                pl.col("_closed_before") & (pl.col("missing") * tf >= config.min_closure_minutes)
+            ).alias("_closure")
         )
-        .filter(~config.calendar.closed_expr(pl.col("slot")))
-        .sort("slot")
+        .sort("first_slot")
     )
-    missing = slots.height
-    if missing == 0:
-        return None
-    fraction = missing / (unique_ts.height + missing)
-    severity = Severity.ERROR if fraction > config.max_missing_fraction else Severity.WARNING
-    sample = tuple(slots["slot"].head(config.max_samples).to_list())
-    return _issue(
-        IssueCode.MISSING_BARS,
-        severity,
-        missing,
-        f"{missing} expected bars absent during open market hours "
-        f"({fraction:.2%} of expected; threshold {config.max_missing_fraction:.2%})",
-        sample,
-    )
+    closures = per_gap.filter(pl.col("_closure"))
+    losses = per_gap.filter(~pl.col("_closure"))
+    total_missing = int(per_gap["missing"].sum())
+    expected_total = unique_ts.height + total_missing
+
+    issues: list[ValidationIssue] = []
+    lost = int(losses["missing"].sum()) if losses.height else 0
+    if lost:
+        fraction = lost / expected_total
+        severity = Severity.ERROR if fraction > config.max_missing_fraction else Severity.WARNING
+        issues.append(
+            _issue(
+                IssueCode.MISSING_BARS,
+                severity,
+                lost,
+                f"{lost} expected bars absent in {losses.height} gap(s) during open hours "
+                f"({fraction:.2%} of expected; threshold {config.max_missing_fraction:.2%})",
+                tuple(losses["first_slot"].head(config.max_samples).to_list()),
+            )
+        )
+    closed_bars = int(closures["missing"].sum()) if closures.height else 0
+    if closed_bars:
+        issues.append(
+            _issue(
+                IssueCode.UNSCHEDULED_CLOSURES,
+                Severity.WARNING,
+                closed_bars,
+                f"{closed_bars} bars absent in {closures.height} episode(s) of at least "
+                f"{config.min_closure_minutes} min ending at a scheduled reopening; "
+                "likely holidays or early closes - confirm against the holiday calendar",
+                tuple(closures["first_slot"].head(config.max_samples).to_list()),
+            )
+        )
+    return issues
 
 
 def validate_bars(
@@ -236,11 +282,11 @@ def validate_bars(
         )
     )
 
-    checks.append(_missing_bars(work, timeframe, cfg))
+    checks.extend(_missing_bars(work, timeframe, cfg))
     checks.append(
         _masked_issue(
             work,
-            cfg.calendar.closed_expr(ts),
+            cfg.calendar.closed_span_expr(ts, timeframe.minutes),
             IssueCode.WEEKEND_BARS,
             Severity.WARNING,
             "bars open while the market calendar says the market is closed",

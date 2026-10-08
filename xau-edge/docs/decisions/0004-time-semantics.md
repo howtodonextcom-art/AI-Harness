@@ -1,6 +1,7 @@
 # ADR-0004: Timestamps are UTC bar-open times; broker zone is explicit
 
-Status: accepted (2026-10-08); live MT5 behaviour unverified
+Status: accepted (2026-10-08); amended by ADR-0008 after live verification (the broker clock is
+`NY+7`, not an IANA zone, for the FTMO demo server)
 
 **Decision.** Every frame stores the bar OPEN time as tz-aware UTC. Naive or non-UTC frames are
 a validation ERROR. Sources that read broker-local times take an explicit IANA zone

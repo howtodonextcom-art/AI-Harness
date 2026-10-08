@@ -1,0 +1,30 @@
+# FTMO demo server, XAUUSD. Every value below was measured on 2026-10-08 from the live demo
+# terminal (see docs/reports/mt5-verification.md). Re-verify before relying on it for another
+# server, account type or symbol. Prop-firm RULES (loss limits etc.) are NOT in this file.
+name: ftmo-demo
+
+# Server wall clock = New York wall clock + 7 hours (weekly close/open labels stayed constant
+# across the US/EU daylight-saving mismatch weeks of Oct 2025 and Mar 2026; Europe/Athens did not).
+clock: NY+7
+
+instrument:
+  symbol: XAUUSD
+  digits: 2
+  point: 0.01
+  contract_size: 100.0
+  quote_currency: USD
+
+validation:
+  calendar:
+    timezone: America/New_York
+    # Last bar of the week opens 16:45 NY (server Fri 23:45); first bar opens Sun 18:05 NY
+    # (server Mon 01:05). The same 16:50-18:05 NY break repeats every weekday.
+    weekend_close_minute: 1010      # 16:50
+    weekend_open_minute: 1085       # 18:05
+    daily_break_start_minute: 1010  # 16:50
+    daily_break_end_minute: 1085    # 18:05
+  # Observed over 101,150 M5 bars: median 31, p99 67, p99.9 105, max 942 points.
+  # Only 7 bars exceeded 200, so 200 flags genuine outliers for review.
+  max_spread_points: 200
+  # Set after validating real data; see the verification report.
+  max_missing_fraction: 0.01

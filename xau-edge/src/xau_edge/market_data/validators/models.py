@@ -30,6 +30,8 @@ class IssueCode(StrEnum):
     OUT_OF_ORDER = "OUT_OF_ORDER"
     MISALIGNED_TIMESTAMPS = "MISALIGNED_TIMESTAMPS"
     MISSING_BARS = "MISSING_BARS"
+    UNSCHEDULED_CLOSURES = "UNSCHEDULED_CLOSURES"
+    INCOMPLETE_COVERAGE = "INCOMPLETE_COVERAGE"
     WEEKEND_BARS = "WEEKEND_BARS"
     INVALID_OHLC = "INVALID_OHLC"
     NON_POSITIVE_PRICE = "NON_POSITIVE_PRICE"
@@ -45,6 +47,9 @@ class ValidationConfig(BaseModel):
     calendar: MarketCalendar = Field(default_factory=MarketCalendar)
     max_spread_points: int = Field(default=2000, ge=0)
     max_missing_fraction: float = Field(default=0.01, ge=0, le=1)
+    min_closure_minutes: int = Field(default=30, ge=0)
+    """A gap at least this long that ends at a scheduled reopening is reported as an
+    UNSCHEDULED_CLOSURES warning (holiday / early close) instead of as missing data."""
     max_samples: int = Field(default=5, ge=0)
 
 

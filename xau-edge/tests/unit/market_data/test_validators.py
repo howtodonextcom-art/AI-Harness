@@ -126,16 +126,18 @@ def test_missing_bars_escalate_to_error_above_threshold() -> None:
     assert not report.passed
 
 
-def test_weekend_gap_is_not_reported_as_missing() -> None:
+def test_weekend_gap_itself_is_never_reported_as_missing() -> None:
     friday = datetime(2025, 2, 7, 20, 0, tzinfo=UTC)
     sunday = datetime(2025, 2, 9, 22, 0, tzinfo=UTC)
     fri = make_bars(4, start=friday)  # 20:00..20:45 -> last bar 20:45 Fri
     sun = make_bars(4, start=sunday)
     report = validate_bars(pl.concat([fri, sun]), TF)
-    # Friday 21:00..21:45 slots are still open (close at 22:00); they ARE missing.
-    missing = [i for i in report.issues if i.code is IssueCode.MISSING_BARS]
-    assert len(missing) == 1
-    assert missing[0].count == 4  # 21:00, 21:15, 21:30, 21:45 only
+    # Friday 21:00..21:45 slots are still open (close at 22:00): the week ended early. That is
+    # an early close ending at a scheduled reopening, i.e. a closure warning, not data loss.
+    assert IssueCode.MISSING_BARS not in codes(report)
+    closure = next(i for i in report.issues if i.code is IssueCode.UNSCHEDULED_CLOSURES)
+    assert closure.count == 4  # 21:00, 21:15, 21:30, 21:45 only
+    assert closure.severity is Severity.WARNING
 
 
 def test_weekend_bars_flagged_as_warning() -> None:

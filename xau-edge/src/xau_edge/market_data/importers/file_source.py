@@ -10,6 +10,7 @@ import polars as pl
 
 from xau_edge.domain.bars import BarRequest, coerce_bars
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.market_data.broker_clock import BrokerClock
 
 _CSV_SUFFIXES: Final = {".csv", ".tsv", ".txt"}
 _PARQUET_SUFFIXES: Final = {".parquet", ".pq"}
@@ -57,7 +58,7 @@ def _sniff_separator(path: Path) -> str:
     return ","
 
 
-def _parse_text_timestamp(series: pl.Series, source_timezone: str) -> pl.Series:
+def _parse_text_timestamp(series: pl.Series, clock: BrokerClock) -> pl.Series:
     series = series.str.replace(r"Z$", "+0000")
     for fmt in _OFFSET_FORMATS:
         try:
@@ -71,19 +72,9 @@ def _parse_text_timestamp(series: pl.Series, source_timezone: str) -> pl.Series:
             naive = series.str.to_datetime(fmt, time_unit="us", strict=True)
         except pl.exceptions.PolarsError:
             continue
-        return _localise(naive, source_timezone)
+        return clock.server_to_utc(naive)
     msg = f"Cannot parse timestamps; sample value: {series[0]!r}"
     raise ValueError(msg)
-
-
-def _localise(naive: pl.Series, source_timezone: str) -> pl.Series:
-    """Interpret naive wall-clock values in ``source_timezone`` and convert to UTC.
-
-    Ambiguous (repeated) and non-existent local times raise instead of being guessed.
-    """
-    return naive.dt.replace_time_zone(
-        source_timezone, ambiguous="raise", non_existent="raise"
-    ).dt.convert_time_zone("UTC")
 
 
 class FileBarSource:
@@ -107,6 +98,7 @@ class FileBarSource:
         self.symbol = symbol
         self.timeframe = timeframe
         self.source_timezone = source_timezone
+        self._clock = BrokerClock.parse(source_timezone)
         self.columns = dict(columns or {})
         self.name = f"file:{self.path.name}"
 
@@ -185,10 +177,10 @@ class FileBarSource:
         dtype = series.dtype
         if isinstance(dtype, pl.Datetime):
             if dtype.time_zone is None:
-                return _localise(series.cast(pl.Datetime("us")), self.source_timezone)
+                return self._clock.server_to_utc(series.cast(pl.Datetime("us")))
             return series.dt.convert_time_zone("UTC")
         if dtype.is_integer():
-            return _localise(
-                pl.from_epoch(series, time_unit="s").cast(pl.Datetime("us")), self.source_timezone
+            return self._clock.server_to_utc(
+                pl.from_epoch(series, time_unit="s").cast(pl.Datetime("us"))
             )
-        return _parse_text_timestamp(series.cast(pl.String), self.source_timezone)
+        return _parse_text_timestamp(series.cast(pl.String), self._clock)
