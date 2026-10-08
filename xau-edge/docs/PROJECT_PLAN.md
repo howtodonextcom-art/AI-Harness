@@ -37,9 +37,28 @@ for MVP, P2 after MVP.
 
 | 19 | News risk layer (added 2026-10-08, brief section 27) | economic-calendar interface, high-impact categories, configurable windows 5-60 min, backtest of the window (not assumed); data source chosen with `search-first`, or interface only with the limitation stated | 10, 14 | window backtested; news guard feeds the risk engine | no reliable free calendar data | M | P2 | 8-9 |
 
-Auto-execution (phases 12-13) is deliberately not an epic here. The Sprint column follows the
+Auto-execution (phases 12-13) was deliberately not an epic through Sprint 14. ADR-0019 opens a
+separate **demo-only** execution track for operational testing on an MT5 demo account; it does not
+authorize live trading or any bypass of the evidence gate. The Sprint column follows the
 "Roadmap to a complete application" table, which is authoritative. Gaps against the brief and
 proposed epic 19 (news risk) are tracked in `docs/ROADMAP_TRACEABILITY.md`.
+
+## Demo-only execution extension (requires owner gates)
+
+This extension follows `docs/reports/gap-audit.md` and ADR-0019. Each row is a separate owner-gated
+work package; do not merge them into one large coding turn.
+
+| Lượt | Scope | Key outputs | Acceptance | Must not do |
+|---|---|---|---|---|
+| 1 | Safety alignment and design lock | ADR-0019, `AGENTS.md`, `.env.example`, this plan, repo-aware gap audit updates, safe demo settings | Existing tests pass; demo disabled by default; dry-run default; no broker APIs added | No broker adapter, no `order_send`, no write API route |
+| 2 | Persistent state and signal bridge | state store, persistent kill switch, order intent, idempotency, signal-to-order bridge reusing risk/safety/evidence | restart keeps kill switch/idempotency; corrupt state fails closed; `WAIT`/risk/safety/evidence refusals never reach a broker | No MT5 real send |
+| 3 | Demo broker adapter, reconciliation and runner | `src/xau_edge/brokers/mt5_demo/`, fake MT5 tests, reconciliation, M15 runner dry-run, CLI kill switch | broker APIs appear only in demo broker package; unknown order state trips kill switch; dry-run runner works | No arbitrary order API, no live account |
+| 4 | Web app observability | read-only bot status API, dashboard panels, journal/reconciliation/status views | dashboard build passes; no UI for arbitrary trade params; write routes unchanged unless a new ADR/auth/test set is accepted | No unauthenticated kill-switch route |
+
+Required deferred or parallel work before calling the bot "operationally complete": news data source
+and news-window study, measured demo costs/slippage, alerting/heartbeat, chaos tests, FTMO automation
+rule verification, and forward runtime evidence. Without real demo/manual evidence, report the system
+as dry-run/fake-tested only.
 
 ## Sprint 1 (completed 2026-10-08)
 

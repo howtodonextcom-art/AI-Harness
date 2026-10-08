@@ -8,16 +8,27 @@ integrity first, capital second, and automate execution last (not in this codeba
 
 ## Safety boundaries (non-negotiable)
 
-* Live trading does not exist. `Settings.enable_live_trading` rejects `true`. Do not add order
-  placement, position modification, or any code path that can send an order.
+* Live trading does not exist. `Settings.enable_live_trading` rejects `true`. Do not add any path
+  that can send an order to a live account.
+* Demo execution is a separate, demo-only track governed by ADR-0019. It is disabled by default
+  (`XAU_EDGE_ENABLE_DEMO_TRADING=false`) and dry-run by default
+  (`XAU_EDGE_DEMO_DRY_RUN=true`). Do not bypass the signal evidence gate, `RiskEngine`,
+  `ExecutionSafety`, persistent idempotency, kill switch, or broker reconciliation.
 * `market_data/mt5/` is read-only market data. A test forbids order/position API names there.
+* `src/xau_edge/execution/` is broker-neutral orchestration. Do not import `MetaTrader5` or call
+  MT5 order APIs there. Any future MT5 demo order adapter must live in a separate demo-only broker
+  package, such as `src/xau_edge/brokers/mt5_demo/`, and must be covered by fake-client tests.
+* Do not add dashboard/API endpoints that accept arbitrary trade direction, lots, SL or TP. The
+  first manual kill-switch control should be a local CLI; any write API route needs an ADR update,
+  local operator token, origin checks and route-table tests.
 * Never change risk limits, prop-firm limits, or safety gates silently; any change needs an ADR
   and a test.
 * Never claim profitability, show invented backtest numbers, or present synthetic data as real.
 * Never commit secrets or account identifiers. Credentials and login numbers live in `.env`
   (git-ignored); `.env.example` is committed and must stay empty of real values. Use `SecretStr`.
 * `scripts/verify_mt5.py` is read-only and must keep its DEMO-account guard. Never point MT5
-  tooling at a live account.
+  tooling at a live account. Prefer an investor/read-only MT5 password for market data. Future demo
+  execution uses a separate `MT5_TRADE_PASSWORD`, never committed.
 * Never use future information. Never shuffle time series. Never optimise on test data.
 * Raw data is immutable. Do not edit files under `data/raw/`.
 
@@ -59,6 +70,7 @@ Set `HOME` to a scratch directory if you run ECC tooling, which writes a cache u
 | `src/xau_edge/{features,structure,patterns,outcomes,strategies}` | research layers; causal, tested against look-ahead |
 | `src/xau_edge/{backtest,risk,news,models,evaluation,experiments}` | evaluation machinery; the pre-registered protocol is code in `evaluation/` |
 | `src/xau_edge/{signals,execution,api}` + `apps/dashboard` | decision layer, paper broker, read-only API and UI |
+| `src/xau_edge/brokers` | future broker adapters; only demo adapters may call broker order APIs, and only under ADR-0019 controls |
 | `scripts` | operator tools (`dev.ps1`, `verify_mt5.py`, `run_backtest.py`, `run_models.py`, `serve_api.py`, `current_signal.py`, `forward_test.py`) |
 | `tests/{unit,integration,regression,statistical}` | tests mirror `src` layout |
 | `data/*` | git-ignored data; `.gitkeep` only |
@@ -97,4 +109,5 @@ met, no known critical bug, result reproducible.
 Enabling live trading; changing risk limits silently; removing safety gates; claiming
 profitability without evidence; fabricated results; look-ahead; random shuffling of time
 series; adding deep learning or reinforcement learning without benchmark evidence; adding
-AGPL/GPL dependencies (ADR-0006).
+AGPL/GPL dependencies (ADR-0006); adding a direct `Signal -> broker` path; retrying an unknown
+broker order blindly after a timeout; auto-closing positions on kill switch without an explicit ADR.

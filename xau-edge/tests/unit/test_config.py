@@ -12,8 +12,13 @@ pytestmark = pytest.mark.unit
 
 def test_defaults_are_safe(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("XAU_EDGE_ENABLE_LIVE_TRADING", raising=False)
+    monkeypatch.delenv("XAU_EDGE_ENABLE_DEMO_TRADING", raising=False)
+    monkeypatch.delenv("XAU_EDGE_DEMO_DRY_RUN", raising=False)
     s = Settings(_env_file=None)
     assert s.enable_live_trading is False
+    assert s.enable_demo_trading is False
+    assert s.demo_dry_run is True
+    assert s.demo_allowed_symbols == "XAUUSD"
     assert s.data_dir == Path("data")
 
 
@@ -41,6 +46,34 @@ def test_live_trading_cannot_be_enabled_through_model_copy() -> None:
     with pytest.raises(ValidationError, match="not implemented"):
         settings.model_copy(update={"enable_live_trading": True})
     assert settings.model_copy(update={"log_level": "DEBUG"}).log_level == "DEBUG"
+
+
+def test_demo_trading_defaults_to_dry_run_when_enabled() -> None:
+    settings = Settings(enable_demo_trading=True, _env_file=None)
+    assert settings.enable_demo_trading is True
+    assert settings.demo_dry_run is True
+
+
+def test_demo_order_mode_requires_whitelist_and_magic() -> None:
+    with pytest.raises(ValidationError, match="DEMO_ALLOWED_ACCOUNTS"):
+        Settings(enable_demo_trading=True, demo_dry_run=False, _env_file=None)
+
+    with pytest.raises(ValidationError, match="DEMO_MAGIC"):
+        Settings(
+            enable_demo_trading=True,
+            demo_dry_run=False,
+            demo_allowed_accounts="123456",
+            _env_file=None,
+        )
+
+    settings = Settings(
+        enable_demo_trading=True,
+        demo_dry_run=False,
+        demo_allowed_accounts="123456",
+        demo_magic=2601008,
+        _env_file=None,
+    )
+    assert settings.demo_magic == 2601008
 
 
 def test_model_copy_rejects_unknown_keys_instead_of_ignoring_them() -> None:

@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Self
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     )
 
     enable_live_trading: bool = False
+    enable_demo_trading: bool = False
+    demo_dry_run: bool = True
+    demo_allowed_accounts: str = ""
+    demo_allowed_symbols: str = "XAUUSD"
+    demo_magic: int | None = None
+    demo_max_lots: float = 1.0
+    demo_max_orders_per_day: int = 1
+    demo_state_path: Path = Path("data/execution/state.sqlite")
+    demo_journal_path: Path = Path("data/execution/journal.jsonl")
     data_dir: Path = Path("data")
     log_level: str = "INFO"
 
@@ -43,6 +52,20 @@ class Settings(BaseSettings):
             )
             raise ValueError(msg)
         return value
+
+    @model_validator(mode="after")
+    def _demo_execution_requires_explicit_guards(self) -> Self:
+        if self.enable_demo_trading and not self.demo_dry_run:
+            missing: list[str] = []
+            if not self.demo_allowed_accounts.strip():
+                missing.append("XAU_EDGE_DEMO_ALLOWED_ACCOUNTS")
+            if self.demo_magic is None:
+                missing.append("XAU_EDGE_DEMO_MAGIC")
+            if missing:
+                joined = ", ".join(missing)
+                msg = f"demo execution requires explicit guard setting(s): {joined}"
+                raise ValueError(msg)
+        return self
 
     def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:
         """Copy with ``update`` applied *and validated* (pydantic's default skips validation)."""
