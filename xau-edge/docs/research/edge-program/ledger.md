@@ -42,6 +42,40 @@ khi có kết quả. Commit đầu tiên của file này nằm TRƯỚC mọi fi
 * Lượt trước dừng giữa chừng (hết quota) khi các file trên mới được stage; lượt tiếp theo kiểm tra
   lại các điểm trên và commit chúng thành một commit riêng TRƯỚC mọi code thực nghiệm và kết quả.
 
+## Lựa chọn triển khai (ghi TRƯỚC lần chạy đầu tiên, commit `eaffe46` là code)
+
+Code: `src/xau_edge/strategies/edge_program.py`, `src/xau_edge/evaluation/edge_program.py`,
+`scripts/run_edge_program.py`. Chỗ giả thuyết chưa nói rõ được đọc theo nghĩa đen, quyết định ở đây
+trước khi có kết quả, không đổi sau:
+
+1. Cooldown đếm bar (timeframe tín hiệu) từ tín hiệu phát ra trước đó, kể cả khi engine bỏ qua tín
+   hiệu đó vì đang có vị thế (giống `signals_from_direction` của baseline).
+2. H01: ATR14 tại chính bar mở phiên; bar mở phiên chỉ khi giờ mở địa phương đúng 09:00 Tokyo /
+   08:00 London / 08:00 New York.
+3. H02: ngày UTC; đủ 7 bar Asia; ATR tại bar phá vỡ; không cooldown, tối đa 1 tín hiệu/ngày.
+4. H03: cần đủ 120 giá trị ATR trước đó; kênh 24 bar trước tính theo hàng (vượt qua gap); ATR trung
+   bình = 0 thì không có tín hiệu.
+5. H04: `available_at` = giờ mở bar H1 cuối + 1h, áp dụng nguyên văn cả ở ngày đóng cửa sớm (hơi lạc
+   quan ở những ngày đó, ghi nhận); L đếm bar daily được giữ (>= 12 bar H1); `t-1` là hàng H1 trước;
+   SHORT: `close[t-1] >= ema[t-1]` và `close[t] < ema[t]`; EMA20 khởi tạo từ đầu lịch sử nạp.
+6. H05: ngưỡng dùng ATR tại t-1; stop/target dùng ATR tại t.
+7. H06: dùng dataset H4 của broker (không resample từ H1); regime cho chặn SHOCK và tiêu chí 7 là
+   regime của bar H4; vào lệnh ở bar H1 đầu tiên mở tại/sau lúc đóng bar H4.
+8. Regime null trong warm-up bị bỏ qua (`REGIME_UNKNOWN`, mặc định risk engine); trần spread 120 pts
+   của engine giữ nguyên (bar vượt bị bỏ qua `SPREAD`); tín hiệu mà bar H1 kế tiếp cách > 30 phút bị
+   bỏ qua `ENTRY_GAP` và được đếm. Dữ liệu không được sửa/điền; lỗi validator ghi trong mỗi kết quả.
+9. Biên giai đoạn: end-exclusive; lệnh còn mở ở cuối giai đoạn đóng ở bar cuối (`DATA_END`).
+10. 7 tiêu chí chấm trên kịch bản cơ sở; kịch bản bi quan chỉ dùng điều kiện mean net R > 0.
+11. Test-H: ghi marker "started" trước khi chạy, nên kể cả lỗi code cũng tiêu hết lượt duy nhất (chặt
+    hơn quy tắc ledger, được chấp nhận). Dev/Val chạy lại sau lỗi code được phép và được ghi; bản ghi
+    hoàn tất gần nhất quyết định.
+12. K = 21 là hằng số trong code (không đọc từ registry).
+13. Monte Carlo T1.5: mặc định chỉ resample các ngày có lệnh (bảo thủ); rủi ro theo % vốn ban đầu,
+    không lãi kép; ngưỡng vi phạm bao gồm dấu bằng; không mô phỏng lỗ thả nổi trong lệnh vượt R đã
+    chốt; mức rủi ro chọn theo chân trời 90 ngày.
+14. Bootstrap của tiêu chí 2 dùng khối theo ngày UTC vào lệnh (như `evaluate_edge` hiện có); chỉ Monte
+    Carlo dùng ngày Prague.
+
 ## Bảng chạy
 
 | # | Thời gian | Giả thuyết/biến thể | Giai đoạn | Kịch bản | Ghi chú | Registry id |
