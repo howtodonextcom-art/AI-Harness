@@ -34,6 +34,10 @@ from xau_edge.risk.prop_rules import PropProfile
 _LOG = logging.getLogger(__name__)
 PRAGUE = ZoneInfo("Europe/Prague")
 
+DAILY_REQUEST_BUDGET = 900
+"""Hard cap on trade-server requests per Prague day, strictly below 1,000 (ADR-0020)."""
+SOFT_CALL_WARNING = 1800
+
 MIDNIGHT_ROLLOVER_RISK = "MIDNIGHT_ROLLOVER_RISK"
 NEAR_MARKET_CLOSE = "NEAR_MARKET_CLOSE"
 
@@ -115,10 +119,15 @@ class RequestBudgetExceededError(RuntimeError):
 
 
 class CountingMt5:
-    """Counts every terminal call in the persistent state and refuses past the budget.
+    """Counts terminal calls in the persistent state and refuses trade requests past the budget.
 
-    ``last_error`` is not counted (it is a local read). Attributes that are not callable
-    (constants) pass through. The proxy is an accounting device, not a security boundary.
+    Two counters per Prague day: the calls named in ``budgeted`` (the broker adapter's
+    trade-server requests) are held to the hard ``budget``; every other call is counted
+    too, logged when it passes ``SOFT_CALL_WARNING``, but never stopped, so monitoring keeps
+    running after the trading budget is spent. What FTMO counts as a "request" is a must_verify
+    rule in ``configs/prop/ftmo_funded.yaml``. ``last_error`` is not counted (a local read).
+    Attributes that are not callable (constants) pass through. The proxy is an accounting device,
+    not a security boundary.
     """
 
     def __init__(
@@ -126,11 +135,13 @@ class CountingMt5:
         client: Any,
         state: ExecutionState,
         *,
-        budget: int = 1000,
+        budgeted: frozenset[str],
+        budget: int = DAILY_REQUEST_BUDGET,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self._inner = client
         self._state = state
+        self._budgeted = budgeted
         self._budget = budget
         self._clock = clock
 
@@ -143,8 +154,12 @@ class CountingMt5:
         return self._clock().astimezone(PRAGUE).date().isoformat()
 
     def used_today(self) -> int:
-        """Requests counted for the current Prague day."""
+        """Trade-server requests counted for the current Prague day (the budgeted number)."""
         return self._state.requests_on(self._day())
+
+    def calls_today(self) -> int:
+        """Every other terminal call counted for the current Prague day (not budgeted)."""
+        return self._state.requests_on(f"calls:{self._day()}")
 
     def __getattr__(self, name: str) -> Any:
         attribute = getattr(self._inner, name)
@@ -152,11 +167,16 @@ class CountingMt5:
             return attribute
 
         def counted(*args: Any, **kwargs: Any) -> Any:
-            total = self._state.bump_requests(self._day())
-            if total > self._budget:
-                log_event(_LOG, "requests.budget_exceeded", logging.CRITICAL, used=total)
-                msg = f"daily request budget {self._budget} exceeded"
-                raise RequestBudgetExceededError(msg)
+            if name in self._budgeted:
+                total = self._state.bump_requests(self._day())
+                if total > self._budget:
+                    log_event(_LOG, "requests.budget_exceeded", logging.CRITICAL, used=total)
+                    msg = f"daily request budget {self._budget} exceeded"
+                    raise RequestBudgetExceededError(msg)
+            else:
+                calls = self._state.bump_requests(f"calls:{self._day()}")
+                if calls == SOFT_CALL_WARNING:
+                    log_event(_LOG, "requests.calls_high", logging.WARNING, calls=calls)
             return attribute(*args, **kwargs)
 
         return counted

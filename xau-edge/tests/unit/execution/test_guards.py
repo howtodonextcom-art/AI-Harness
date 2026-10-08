@@ -9,7 +9,9 @@ from types import SimpleNamespace
 import pytest
 
 from tests.unit.execution.test_bridge import PROP, _account, _bridge, _buy, _offer
+from xau_edge.brokers.mt5_demo.executor import TRADE_SERVER_REQUESTS
 from xau_edge.execution.guards import (
+    DAILY_REQUEST_BUDGET,
     MIDNIGHT_ROLLOVER_RISK,
     NEAR_MARKET_CLOSE,
     CountingMt5,
@@ -28,6 +30,7 @@ PROFILE = BrokerProfile.from_yaml(
 )
 CAL = PROFILE.validation.calendar
 T = datetime(2026, 3, 4, 14, 0, tzinfo=UTC)  # a Wednesday afternoon
+BUDGETED = TRADE_SERVER_REQUESTS
 
 
 def test_next_prague_midnight_follows_daylight_saving() -> None:
@@ -112,9 +115,14 @@ class _Terminal:
 
     def __init__(self) -> None:
         self.calls = 0
+        self.reads = 0
+
+    def order_check(self, request: object = None) -> SimpleNamespace:
+        self.calls += 1
+        return SimpleNamespace(retcode=0)
 
     def account_info(self) -> SimpleNamespace:
-        self.calls += 1
+        self.reads += 1
         return SimpleNamespace(login=1)
 
     def last_error(self) -> tuple[int, str]:
@@ -124,31 +132,60 @@ class _Terminal:
 def test_the_request_counter_persists_and_stops_at_the_budget(tmp_path: Path) -> None:
     state = ExecutionState(tmp_path / "s.sqlite")
     term = _Terminal()
-    client = CountingMt5(term, state, budget=3, clock=lambda: T)
+    client = CountingMt5(term, state, budgeted=BUDGETED, budget=3, clock=lambda: T)
     for _ in range(3):
-        client.account_info()
+        client.order_check()
     client.last_error()  # not counted
     assert client.ACCOUNT_TRADE_MODE_DEMO == 0  # constants pass through
     assert client.used_today() == 3
     with pytest.raises(RequestBudgetExceededError):
-        client.account_info()
+        client.order_check()
     assert term.calls == 3  # the refused call never reached the terminal
-    again = CountingMt5(term, ExecutionState(tmp_path / "s.sqlite"), budget=3, clock=lambda: T)
+    again = CountingMt5(
+        term, ExecutionState(tmp_path / "s.sqlite"), budgeted=BUDGETED, budget=3, clock=lambda: T
+    )
     with pytest.raises(RequestBudgetExceededError):
-        again.account_info()  # a restart does not reset the count
+        again.order_check()  # a restart does not reset the count
+
+
+def test_reads_are_counted_but_never_stopped_by_the_trade_budget(tmp_path: Path) -> None:
+    state = ExecutionState(tmp_path / "s.sqlite")
+    term = _Terminal()
+    client = CountingMt5(term, state, budgeted=BUDGETED, budget=1, clock=lambda: T)
+    client.order_check()
+    for _ in range(5):
+        client.account_info()  # monitoring keeps working once the trade budget is spent
+    assert client.used_today() == 1
+    assert client.calls_today() == 5
+    assert term.reads == 5
 
 
 def test_the_counter_starts_over_on_the_next_prague_day(tmp_path: Path) -> None:
     state = ExecutionState(tmp_path / "s.sqlite")
     term = _Terminal()
     now = {"t": T}
-    client = CountingMt5(term, state, budget=1, clock=lambda: now["t"])
-    client.account_info()
+    client = CountingMt5(term, state, budgeted=BUDGETED, budget=1, clock=lambda: now["t"])
+    client.order_check()
     with pytest.raises(RequestBudgetExceededError):
-        client.account_info()
+        client.order_check()
     now["t"] = T + timedelta(days=1)
-    client.account_info()
+    client.order_check()
     assert term.calls == 2
+
+
+def test_the_default_budget_is_a_hard_900_requests_a_day(tmp_path: Path) -> None:
+    assert DAILY_REQUEST_BUDGET == 900
+    assert DAILY_REQUEST_BUDGET < 1000
+    state = ExecutionState(tmp_path / "s.sqlite")
+    term = _Terminal()
+    client = CountingMt5(term, state, budgeted=BUDGETED, clock=lambda: T)
+    assert client.budget == 900
+    state.bump_requests("2026-03-04", 899)
+    client.order_check()  # the 900th request is allowed
+    assert client.used_today() == 900
+    with pytest.raises(RequestBudgetExceededError):
+        client.order_check()  # the 901st is not
+    assert term.calls == 1
 
 
 def test_trading_days_are_recorded_once_per_day(tmp_path: Path) -> None:

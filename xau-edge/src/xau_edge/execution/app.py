@@ -10,7 +10,9 @@ real collaborators and the tests build fakes. What it adds on top of the pieces:
 * the account checks run in EVERY cycle, even with a position open (T2.7): the kill switch
   trips on a breach, and equity close to a loss floor flattens the bot's positions (T2.13);
 * the day-start balance is rebuilt from the deal history as the balance at 00:00 Prague (T2.8);
-* a system clock more than a few seconds off NTP stops trading (T3.5).
+* a system clock more than a few seconds off NTP stops trading (T3.5);
+* an optional ``prop_facts`` hook adds the FTMO-facing facts (evidence label, rollout tier, floor
+  distances, requests, trading days, kill switch) to ``status.json`` every cycle (T4.5).
 """
 
 from __future__ import annotations
@@ -46,7 +48,7 @@ from xau_edge.execution.runner import (
 )
 from xau_edge.execution.safety import day_key
 from xau_edge.execution.state import ExecutionState, StateError
-from xau_edge.execution.status import build_status, write_status
+from xau_edge.execution.status import StatusPropFacts, build_status, write_status
 from xau_edge.market_data.mt5.source import Mt5AccountError, Mt5NotAvailableError
 from xau_edge.observability import log_event
 from xau_edge.risk.engine import AccountState, RiskEngine
@@ -64,6 +66,9 @@ CRITICAL_AFTER_FAILURES = 5
 
 AlertFn = Callable[[str, str, str], None]
 """``alert(code, severity, message)``: delivery, de-duplication and fallback are the caller's."""
+
+PropFactsFn = Callable[[datetime, AccountState | None], StatusPropFacts]
+"""``prop_facts(now, account)``: the FTMO-facing facts written into ``status.json`` each cycle."""
 
 
 class ErrorClass(StrEnum):
@@ -116,7 +121,10 @@ class Backoff:
 class ClockCheck(Protocol):
     """What the NTP check returns (``ops.clock_check.ClockCheckResult`` satisfies it)."""
 
-    offset_seconds: float | None
+    @property
+    def offset_seconds(self) -> float | None:
+        """Measured offset in seconds, ``None`` when unknown."""
+        ...
 
     def exceeds(self, limit: float = ...) -> bool:
         """True if the measured offset is above the limit."""
@@ -164,6 +172,7 @@ class BotApp:
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
         settle_seconds: float = 20.0,
         max_clock_offset_seconds: float = 5.0,
+        prop_facts: PropFactsFn | None = None,
     ) -> None:
         self.mode = mode
         self.symbol = symbol
@@ -188,6 +197,7 @@ class BotApp:
         self._clock = clock
         self.settle_seconds = settle_seconds
         self.max_clock_offset_seconds = max_clock_offset_seconds
+        self._prop_facts = prop_facts
         self.backoff = Backoff()
 
     # -- files ---------------------------------------------------------------------------------
@@ -200,6 +210,7 @@ class BotApp:
         snapshot: BrokerSnapshot | None = None,
         reconcile: Any = None,
         report: CycleReport | None = None,
+        account: AccountState | None = None,
     ) -> None:
         write_heartbeat(self.exec_dir / "heartbeat.json", now, heartbeat)
         tickets = frozenset(r.ticket for r in self._open_records())
@@ -213,8 +224,19 @@ class BotApp:
                 reconcile=reconcile,
                 report=report,
                 bot_tickets=tickets,
+                prop=self._facts(now, account),
             ),
         )
+
+    def _facts(self, now: datetime, account: AccountState | None) -> StatusPropFacts | None:
+        """The hook's facts; a failing hook costs the status its prop facts, never the cycle."""
+        if self._prop_facts is None:
+            return None
+        try:
+            return self._prop_facts(now, account)
+        except Exception as exc:
+            log_event(_LOG, "status.prop_facts_failed", logging.WARNING, error=type(exc).__name__)
+            return None
 
     def _open_records(self) -> list[Any]:
         try:
@@ -295,28 +317,34 @@ class BotApp:
         frames, invalid = self._load_frames()
         snapshot = self.reader.snapshot(now)
         if self.executor is not None:
-            for closed in self.executor.close_expired(now):
+            expired = self.executor.close_expired(now)
+            for closed in expired:
                 self.audit.record(
                     "expiry.close", status=closed.status, reasons=list(closed.reasons)
                 )
-            snapshot = self.reader.snapshot(now)
+            if expired:  # re-read only when something changed: every call counts to the budget
+                snapshot = self.reader.snapshot(now)
         reconcile = self.reconciler.check(snapshot)
         self.audit.record("reconcile.result", clean=reconcile.clean, codes=list(reconcile.codes))
         if not reconcile.clean:
             self._alert("RECONCILE_MISMATCH", "critical", ", ".join(reconcile.codes))
         account = self._account_state(now, snapshot)
         if self._guard_account(now, account) == "FLATTENED":
-            self._write(now, "FLATTENED", snapshot=snapshot, reconcile=reconcile)
+            self._write(now, "FLATTENED", snapshot=snapshot, reconcile=reconcile, account=account)
             return CycleResult("FLATTENED")
         if invalid:
             self._alert("STALE_DATA", "warning", f"validation failed for {invalid}")
-            self._write(now, "DATA_INVALID", snapshot=snapshot, reconcile=reconcile)
+            self._write(
+                now, "DATA_INVALID", snapshot=snapshot, reconcile=reconcile, account=account
+            )
             return CycleResult("DATA_INVALID")
         report = self._make_cycle(frames).run(
             frames, now, account, force=force, reconcile=reconcile
         )
         self._alerts_from_report(report)
-        self._write(now, "OK", snapshot=snapshot, reconcile=reconcile, report=report)
+        self._write(
+            now, "OK", snapshot=snapshot, reconcile=reconcile, report=report, account=account
+        )
         return CycleResult("OK", report)
 
     def _alerts_from_report(self, report: CycleReport) -> None:

@@ -7,6 +7,9 @@ independent controls enforce that:
 * the client is wrapped in :class:`ReadOnlyMt5Client`, an allowlist proxy that makes every
   other function of the MetaTrader5 module unreachable (not merely unused);
 * every connection and every fetch is refused unless the logged-in account is a DEMO account;
+  the only exception is the funded bot (ADR-0020), which passes ``require_demo=False`` after its
+  start-up has identified the account by login and server whitelists (FTMO may report a funded
+  account as either trade mode);
 * a test fails if source or scripts touch any MT5 attribute outside the allowlist.
 
 Time handling (important): the terminal reports bar times as *broker server wall-clock*
@@ -132,6 +135,7 @@ class Mt5BarSource:
         settings: Mt5Settings,
         *,
         now: Callable[[], datetime] = _utc_now,
+        require_demo: bool = True,
     ) -> None:
         if not settings.broker_timezone:
             msg = (
@@ -144,6 +148,7 @@ class Mt5BarSource:
         self._settings = settings
         self._clock = BrokerClock.parse(settings.broker_timezone)
         self._now = now
+        self._require_demo_account = require_demo
 
     def connect(self) -> None:
         """Initialise the terminal connection (market data only, DEMO accounts only)."""
@@ -212,6 +217,8 @@ class Mt5BarSource:
 
     def _require_demo(self) -> None:
         """Refuse to read from anything but a DEMO account (a live password also trades)."""
+        if not self._require_demo_account:
+            return
         info = self._client.account_info()
         if info is None or info.trade_mode != self._client.ACCOUNT_TRADE_MODE_DEMO:
             msg = (

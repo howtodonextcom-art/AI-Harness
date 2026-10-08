@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     funded_strategy_id: str = ""
     funded_profile_path: Path = Path("configs/prop/ftmo_funded.yaml")
     funded_rollout_path: Path = Path("configs/execution/rollout.yaml")
+    funded_state_path: Path = Path("data/execution/funded_state.sqlite")
+    funded_journal_path: Path = Path("data/execution/funded_journal.jsonl")
     news_calendar_path: Path | None = None
     data_dir: Path = Path("data")
     log_level: str = "INFO"
@@ -122,6 +124,10 @@ class Settings(BaseSettings):
             if missing:
                 msg = f"funded execution requires explicit setting(s): {', '.join(missing)}"
                 raise ValueError(msg)
+        demo_files = {self.demo_state_path.resolve(), self.demo_journal_path.resolve()}
+        if {self.funded_state_path.resolve(), self.funded_journal_path.resolve()} & demo_files:
+            msg = "the funded state and journal files must differ from the demo ones"
+            raise ValueError(msg)
         if self.funded_allow_unvalidated and not (
             self.enable_funded_trading and self.funded_strategy_id.strip()
         ):

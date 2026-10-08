@@ -40,9 +40,10 @@ from xau_edge.execution.reconcile import Reconciler
 from xau_edge.execution.runner import CycleJournal, DryRunCycle, JournalError
 from xau_edge.execution.safety import ExecutionSafety
 from xau_edge.execution.state import ExecutionState, PersistentKillSwitch, StateError
+from xau_edge.execution.status import StatusPropFacts
 from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.market_data.mt5.source import Mt5AccountError, Mt5NotAvailableError
-from xau_edge.risk.engine import RiskEngine, RiskLimits
+from xau_edge.risk.engine import AccountState, RiskEngine, RiskLimits
 from xau_edge.signals.decision import decide
 from xau_edge.signals.engine import MarketFrames
 from xau_edge.signals.schema import EvidenceStatus, Signal
@@ -417,6 +418,89 @@ def test_without_deal_history_the_day_start_falls_back_to_the_stored_baseline(
     # the snapshot itself needs the history for closed results, so this surfaces as transient
     with pytest.raises(DemoAccountError):
         h.app.run_cycle(h.now)
+
+
+def test_the_prop_facts_hook_fills_the_status_every_cycle(
+    tmp_path: Path,
+    frames: MarketFrames,  # noqa: F811
+) -> None:
+    calls: list[tuple[datetime, AccountState | None]] = []
+
+    def facts(now: datetime, account: AccountState | None) -> StatusPropFacts:
+        calls.append((now, account))
+        return StatusPropFacts(
+            evidence_label="UNVALIDATED",
+            strategy_id="h03",
+            rollout_tier=0,
+            rollout_tier_name="shadow",
+            requests_today=12,
+            request_budget=900,
+        )
+
+    h = Harness(tmp_path, frames, prop_facts=facts)
+    h.app.mode = "funded"
+    assert h.app.run_cycle(h.now).status == "OK"
+    status = json.loads((tmp_path / "exec" / "status.json").read_text(encoding="utf-8"))
+    assert status["mode"] == "funded"
+    assert status["prop"]["evidence_label"] == "UNVALIDATED"
+    assert status["prop"]["rollout_tier_name"] == "shadow"
+    assert status["prop"]["request_budget"] == 900
+    assert len(calls) == 1
+    assert calls[0][1] is not None
+    assert calls[0][1].initial_capital == 100_000.0
+
+
+def test_the_prop_facts_hook_also_runs_on_a_clock_stop_without_an_account(
+    tmp_path: Path,
+    frames: MarketFrames,  # noqa: F811
+) -> None:
+    class Drift:
+        offset_seconds = 9.0
+
+        def exceeds(self, limit: float = 5.0) -> bool:
+            return True
+
+    seen: list[AccountState | None] = []
+
+    def facts(now: datetime, account: AccountState | None) -> StatusPropFacts:
+        seen.append(account)
+        return StatusPropFacts(kill_switch_tripped=True)
+
+    h = Harness(tmp_path, frames, prop_facts=facts, ntp_check=Drift)
+    assert h.app.run_cycle(h.now).status == "CLOCK_DRIFT"
+    assert seen == [None]
+    status = json.loads((tmp_path / "exec" / "status.json").read_text(encoding="utf-8"))
+    assert status["prop"]["kill_switch_tripped"] is True
+
+
+def test_a_failing_prop_facts_hook_never_breaks_the_cycle(
+    tmp_path: Path,
+    frames: MarketFrames,  # noqa: F811
+) -> None:
+    def broken(now: datetime, account: AccountState | None) -> StatusPropFacts:
+        raise StateError("db locked")
+
+    h = Harness(tmp_path, frames, prop_facts=broken)
+    assert h.app.run_cycle(h.now).status == "OK"
+    status = json.loads((tmp_path / "exec" / "status.json").read_text(encoding="utf-8"))
+    assert status["prop"]["evidence_label"] == "NONE"  # the default facts
+
+
+def test_the_snapshot_is_not_read_twice_when_nothing_expired(
+    tmp_path: Path,
+    frames: MarketFrames,  # noqa: F811
+) -> None:
+    h = Harness(tmp_path, frames, with_executor=True)
+    reads: list[datetime] = []
+    original = h.reader.snapshot
+
+    def counting(now: datetime, *args: Any, **kwargs: Any) -> Any:
+        reads.append(now)
+        return original(now, *args, **kwargs)
+
+    h.reader.snapshot = counting  # type: ignore[method-assign]
+    h.app.run_cycle(h.now)
+    assert len(reads) == 1
 
 
 def test_a_dirty_reconciliation_alerts_and_the_cycle_is_refused(

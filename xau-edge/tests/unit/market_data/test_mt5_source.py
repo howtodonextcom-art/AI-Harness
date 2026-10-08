@@ -294,6 +294,19 @@ def test_fetch_bars_also_refuses_non_demo_accounts_without_connect(mode: int | N
     assert not [c for c in fake.calls if c[0] == "copy_rates_range"]
 
 
+def test_the_demo_check_is_on_by_default_and_only_the_funded_bot_turns_it_off() -> None:
+    fake = FakeMt5(
+        rates_from_server_wall_clock(wall(2)), trade_mode=FakeMt5.ACCOUNT_TRADE_MODE_REAL
+    )
+    with pytest.raises(Mt5AccountError):
+        Mt5BarSource(fake, ATHENS).fetch_bars(request())
+    funded = Mt5BarSource(fake, ATHENS, require_demo=False)
+    assert funded.fetch_bars(request()).height == 1
+    assert isinstance(funded._client, ReadOnlyMt5Client)  # still market data only
+    with pytest.raises(AttributeError):
+        funded._client.order_send  # noqa: B018
+
+
 def test_connect_shuts_the_terminal_down_on_any_failure_during_the_account_check() -> None:
     """Re-review: a crash while inspecting the account must not leave the terminal initialised."""
 

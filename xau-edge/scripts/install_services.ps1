@@ -25,8 +25,14 @@
 .PARAMETER ServicePassword
     SecureString password for -ServiceAccount (prompted if the account needs one and none is given).
 
+.PARAMETER ConfirmMode
+    Passes --confirm-mode DEMO or --confirm-mode FUNDED to the bot (ADR-0020). Leave empty for a
+    dry-run service. The value must match the mode .env configures, or the bot refuses to start.
+    Only the owner chooses FUNDED, after the go-live checklist is signed.
+
 .EXAMPLE
     .\scripts\install_services.ps1 -WhatIf
+    .\scripts\install_services.ps1 -ServiceAccount ".\xauedge" -ConfirmMode DEMO -StartNow
     .\scripts\install_services.ps1 -ServiceAccount ".\xauedge" -StartNow
     .\scripts\install_services.ps1 -Uninstall
 #>
@@ -46,7 +52,9 @@ param(
     [int]$RotateMegabytes = 10,
     [switch]$SkipApi,
     [switch]$SkipBot,
-    [switch]$StartNow
+    [switch]$StartNow,
+    [ValidateSet('', 'DEMO', 'FUNDED')]
+    [string]$ConfirmMode = ''
 )
 
 Set-StrictMode -Version 2.0
@@ -184,9 +192,11 @@ if ($ServiceAccount -and $PSCmdlet.ShouldProcess($RepoRoot, "Grant Modify on dat
 }
 
 if (-not $SkipBot) {
-    Install-OneService -Name $BotServiceName -Display 'xau-edge demo bot' `
-        -Description 'XAUUSD demo bot (scripts/demo_trader.py). Dry-run unless .env enables demo execution.' `
-        -UvArguments 'run --extra mt5 python scripts/demo_trader.py' -LogPrefix 'bot'
+    $botArgs = 'run --extra mt5 python scripts/demo_trader.py'
+    if ($ConfirmMode) { $botArgs = "$botArgs --confirm-mode $ConfirmMode" }
+    Install-OneService -Name $BotServiceName -Display 'xau-edge bot' `
+        -Description "XAUUSD bot (scripts/demo_trader.py). Mode from .env; confirm-mode: $(if ($ConfirmMode) { $ConfirmMode } else { 'none (dry-run)' })." `
+        -UvArguments $botArgs -LogPrefix 'bot'
 }
 if (-not $SkipApi) {
     Install-OneService -Name $ApiServiceName -Display 'xau-edge read-only API' `

@@ -42,3 +42,10 @@ def test_script_keeps_its_safety_switches() -> None:
     assert "SERVICE_DELAYED_AUTO_START" in text
     assert "AppExit" in text
     assert "AppRotateFiles" in text
+
+
+def test_the_confirm_mode_is_explicit_and_limited_to_demo_or_funded() -> None:
+    text = SCRIPT.read_text(encoding="utf-8")
+    assert "[ValidateSet('', 'DEMO', 'FUNDED')]" in text
+    assert "[string]$ConfirmMode = ''" in text  # default: no flag, the bot stays dry-run
+    assert "--confirm-mode $ConfirmMode" in text

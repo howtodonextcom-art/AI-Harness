@@ -168,6 +168,29 @@ def test_the_unvalidated_override_needs_funded_mode_and_a_named_strategy() -> No
     assert _funded(funded_allow_unvalidated=True, funded_strategy_id="h03").funded_strategy_id
 
 
+def test_funded_mode_has_its_own_state_and_journal_files() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.funded_state_path == Path("data/execution/funded_state.sqlite")
+    assert settings.funded_journal_path == Path("data/execution/funded_journal.jsonl")
+    assert settings.funded_state_path != settings.demo_state_path
+    assert settings.funded_journal_path != settings.demo_journal_path
+    moved = _funded(funded_state_path=Path("x/f.sqlite"), funded_journal_path=Path("x/f.jsonl"))
+    assert moved.funded_state_path == Path("x/f.sqlite")
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("funded_state_path", Path("data/execution/state.sqlite")),
+        ("funded_journal_path", Path("data/execution/journal.jsonl")),
+        ("funded_state_path", Path("data/execution/journal.jsonl")),
+    ],
+)
+def test_funded_files_may_not_reuse_the_demo_files(field: str, value: Path) -> None:
+    with pytest.raises(ValidationError, match="must differ"):
+        Settings(_env_file=None, **{field: value})  # type: ignore[arg-type]
+
+
 def test_the_override_risk_ceiling_cannot_be_raised_by_configuration() -> None:
     assert _funded().funded_risk_pct == 0.25
     with pytest.raises(ValidationError):

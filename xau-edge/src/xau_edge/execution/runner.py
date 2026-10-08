@@ -110,12 +110,15 @@ class DryRunCycle:
         *,
         max_data_age: timedelta = timedelta(minutes=30),
         submit: Callable[[OrderIntent, datetime], SubmitOutcome] | None = None,
+        strategy_id: str | None = None,
     ) -> None:
         self.bridge = bridge
         self.signal_fn = signal_fn
         self.journal = journal
         self.max_data_age = max_data_age
         self.submit = submit
+        self.strategy_id = strategy_id
+        """The strategy whose signals ``signal_fn`` produces (the bridge's override checks it)."""
 
     def run(
         self,
@@ -145,7 +148,9 @@ class DryRunCycle:
             return self._skip(now, "BAR_ALREADY_PROCESSED", at, age_minutes)  # not journalled
         signal = self.signal_fn(at)
         spread = float(frames.m5["spread"][-1])
-        result = self.bridge.process(signal, now, account=account, spread_points=spread)
+        result = self.bridge.process(
+            signal, now, account=account, spread_points=spread, strategy_id=self.strategy_id
+        )
         outcome: SubmitOutcome | None = None
         if result.intent is not None and not result.intent.dry_run and self.submit is not None:
             outcome = self.submit(result.intent, now)

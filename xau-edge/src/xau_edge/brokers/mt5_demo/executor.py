@@ -51,6 +51,9 @@ from xau_edge.observability import log_event
 _LOG = logging.getLogger(__name__)
 _PRAGUE = ZoneInfo("Europe/Prague")
 
+TRADE_SERVER_REQUESTS = frozenset({"order_send", "order_check"})
+"""Terminal calls that reach the trade server; the daily request budget applies to these."""
+
 _TRADE_NAMES = frozenset(
     {
         "order_send",
