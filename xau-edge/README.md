@@ -10,31 +10,40 @@ valuable output.
 
 ## Status
 
-Sprints 1-2 complete: a market-data layer verified against a real broker feed (FTMO **demo**, XAUUSD).
+All planned components are built and tested; the research conclusion so far is **no validated edge**.
 
-| Capability | State |
+| Area | State |
 |---|---|
-| Domain contracts (timeframes M5/M15/H1/H4, bar schema, instrument) | done |
-| Offline CSV/TSV/Parquet source (incl. MetaTrader exports, timezone-aware) | done |
-| MT5 source (read-only market data) | done; verified on an FTMO demo terminal (`docs/reports/mt5-verification.md`) |
-| Immutable raw store (content-addressed Parquet) | done |
-| Validation (16 issue codes, ERROR/WARNING), coverage and cross-checks | done; run on 17 months of real M5 data |
-| Broker clock (`NY+7` / IANA), broker profiles (YAML) | done |
-| Resampling M5 -> M15/H1/H4 (equals the broker's own bars) | done |
-| Dataset catalog (merge of raw fetches, read-only SQL via DuckDB) | done |
-| Features, structure, patterns, backtest, signals, API, dashboard | planned (`docs/PROJECT_PLAN.md`) |
+| Market data: MT5 (read-only, demo-guarded) and file sources, immutable store, validators, broker clock, resampling, DuckDB catalog | done, verified on an FTMO demo feed |
+| Features (indicators checked against TA-Lib, candle/volume/session), market structure, regimes | done, no look-ahead by test |
+| Pattern similarity (5 measures, leakage-safe search), outcome statistics | done |
+| Backtest engine (bid/ask, spread, slippage, commission, swap, risk engine, FTMO profiles), metrics, pre-registered edge criteria | done |
+| ML benchmark (logistic, forest, XGBoost, LightGBM) with calibration | done |
+| Signal engine (BUY/SELL/**WAIT**, 12 refusal reasons, evidence gate), read-only API, dashboard, paper trading | done |
+| Forward test on new data (calendar-time bound), news calendar data, live execution | **not done** (live execution is out of scope by decision) |
 
-No backtest results or performance figures exist yet; none should be quoted.
+**Result.** Three pre-specified baselines and four models failed the pre-registered criteria on the
+development and validation periods; the test period was never touched. The signal engine therefore
+answers WAIT. See `docs/reports/checkpoint-1.md`, `docs/research/model-evaluation.md` and
+`docs/reports/final-status.md`. No performance claim should be made from this repository.
 
 ## Quick start (Windows, PowerShell)
 
 Requires [uv](https://docs.astral.sh/uv/) and Python 3.12-3.14 (tested on 3.12.13, 3.13.13 and 3.14.4).
 
 ```powershell
-.\scripts\dev.ps1 setup      # uv sync
+.\scripts\dev.ps1 setup      # uv sync --extra ml --extra api
 .\scripts\dev.ps1 check      # ruff, format check, mypy --strict, pytest
 ```
 Linux/macOS: `make setup`, `make check`.
+
+Run the application (research only, localhost):
+
+```powershell
+uv run python scripts/serve_api.py                     # read-only API on 127.0.0.1:8000
+cd apps/dashboard; npm ci; npm run build; npx next start -p 3000   # dashboard on :3000
+uv run python scripts/current_signal.py                # the current signal as JSON
+```
 
 Optional MetaTrader 5 support (Windows only): `uv sync --extra mt5`, then copy `.env.example`
 to `.env` (git-ignored) and fill in a **demo** account and `MT5_BROKER_TIMEZONE` (`NY+7` for the FTMO
@@ -69,18 +78,23 @@ print(validate_bars(bars, tf).summary())
 ## Layout
 
 ```
-src/xau_edge/        domain/ market_data/ (importers, mt5, validators, store, catalog, resampling,
-                     broker_clock, profiles) config.py
-configs/brokers/     measured broker profiles (clock, session calendar, thresholds)
-tests/               unit/ integration/ (regression/ statistical/ arrive with their epics)
-docs/                PROJECT_PLAN.md architecture/ research/ decisions/ reports/
-data/                git-ignored raw/processed/features/patterns/backtests
+src/xau_edge/        domain/ market_data/ features/ structure/ patterns/ outcomes/ strategies/
+                     backtest/ risk/ news/ models/ evaluation/ experiments/ signals/ execution/
+                     api/ observability.py config.py
+apps/dashboard/      Next.js dashboard (read-only)
+configs/             brokers/ (measured profiles) prop/ (FTMO rules, verified 2026-10-08)
+tests/               unit/ integration/ regression/ statistical/ fixtures/
+docs/                PROJECT_PLAN.md BRIEF.md ROADMAP_TRACEABILITY.md architecture/ research/
+                     decisions/ (ADR-0001..0018) evals/ risk/ testing/ operations/ reports/
+data/ models/ experiments/runs/   git-ignored local data, artifacts and run records
 .claude/             ECC components (project-local, minimal profile, no hooks)
 ```
 
 ## Documents
 
 * `AGENTS.md`: rules for AI coding agents (safety boundaries, commands, definition of done)
-* `docs/PROJECT_PLAN.md`: epics, acceptance criteria, risks, Sprint 2 recommendation
-* `docs/architecture/system.md`, `docs/research/dependency-review.md`, `docs/decisions/`
-* `docs/reports/sprint-1-report.md`, `docs/reports/sprint-2-report.md`, `docs/reports/mt5-verification.md`
+* `docs/reports/final-status.md`: where the product stands against the brief (start here)
+* `docs/PROJECT_PLAN.md`, `docs/ROADMAP_TRACEABILITY.md`, `docs/BRIEF.md`
+* `docs/evals/edge-criteria.md`: the pre-registered rules that decide whether anything "works"
+* `docs/architecture/`, `docs/research/`, `docs/risk/`, `docs/operations/`, `docs/decisions/`
+* `docs/reports/`: one report per sprint, `checkpoint-1.md`, `mt5-verification.md`

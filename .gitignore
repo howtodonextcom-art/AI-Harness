@@ -5,3 +5,6 @@
 *.db
 node_modules/
 state.db.from-real-home
+
+# Playwright MCP scratch output
+.playwright-mcp/

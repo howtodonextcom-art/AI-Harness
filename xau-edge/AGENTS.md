@@ -40,7 +40,7 @@ other packages.
 ## Commands (Windows has no `make`; use the script)
 
 ```
-.\scripts\dev.ps1 setup           # uv sync
+.\scripts\dev.ps1 setup           # uv sync --extra ml --extra api
 .\scripts\dev.ps1 check           # ruff + ruff format --check + mypy + pytest  (definition of done gate)
 .\scripts\dev.ps1 test            # unit tests only
 .\scripts\dev.ps1 test-integration
@@ -56,7 +56,10 @@ Set `HOME` to a scratch directory if you run ECC tooling, which writes a cache u
 | `src/xau_edge/domain` | contracts: timeframe, bars, instrument |
 | `src/xau_edge/market_data` | sources, importers, raw store, catalog, resampling, broker clock/profiles, validators |
 | `configs/brokers` | measured broker profiles; every value must cite `docs/reports/mt5-verification.md` or a newer measurement |
-| `scripts` | operator tools (`dev.ps1`, `verify_mt5.py`) |
+| `src/xau_edge/{features,structure,patterns,outcomes,strategies}` | research layers; causal, tested against look-ahead |
+| `src/xau_edge/{backtest,risk,news,models,evaluation,experiments}` | evaluation machinery; the pre-registered protocol is code in `evaluation/` |
+| `src/xau_edge/{signals,execution,api}` + `apps/dashboard` | decision layer, paper broker, read-only API and UI |
+| `scripts` | operator tools (`dev.ps1`, `verify_mt5.py`, `run_backtest.py`, `run_models.py`, `serve_api.py`, `current_signal.py`, `forward_test.py`) |
 | `tests/{unit,integration,regression,statistical}` | tests mirror `src` layout |
 | `data/*` | git-ignored data; `.gitkeep` only |
 | `docs/decisions` | ADRs; add one for any architectural change |

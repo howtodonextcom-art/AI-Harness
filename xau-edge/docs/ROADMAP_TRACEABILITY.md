@@ -207,3 +207,22 @@ Chưa được reviewer kiểm tra: từng bản sửa F-xx và số liệu 298 
 | G-12..14 | Đã bổ sung vào epic 10, 11, 14, 15 |
 | G-15 | Đã sửa cột Sprint của bảng epic |
 | D-4 Sprint 3 bước 4 | Đã làm: `features/indicators.py`, ADR-0010 |
+
+## 12. Estado final (2026-10-08, sau Sprint 14)
+
+| Mục | Kết quả |
+|---|---|
+| Phase 0-11 của brief | xong (xem `docs/reports/final-status.md`) |
+| Phase 12-13 (bán tự động, tự động) | cố ý ngoài phạm vi (ADR-0018) |
+| G-1 logging | xong (Sprint 3) |
+| G-2 news | giao diện + guard fail-closed xong; **không có dữ liệu lịch** nên nghiên cứu cửa sổ news chưa chạy |
+| G-3 experiment registry | xong (Sprint 7) |
+| G-4 model versioning | xong (Sprint 10, artifact + calibrator + hash) |
+| G-5 tài liệu §43 | xong: data-flow, pattern-similarity, model-evaluation, risk-engine, testing-strategy, paper-trading |
+| G-6 tests/regression, tests/statistical | xong (hash ghim, leakage, power test) |
+| G-7 configs/prop | xong, xác minh 2026-10-08 |
+| G-8 pre-commit | xong; hook đã cài; Docker không cần |
+| G-9 red-team + checklist overfitting | mỗi báo cáo sprint có mục red-team; tiêu chí trong `docs/evals/edge-criteria.md` |
+| G-12..14 | xong (risk đủ thành phần, báo cáo backtest, ML không có DL) |
+| §33 `POST /paper/orders` | xong, chỉ chạm paper broker |
+| Hoãn | holiday calendar, forward test theo lịch (cần thời gian), persistent kill switch |

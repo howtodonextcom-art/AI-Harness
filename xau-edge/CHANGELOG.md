@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.14.0 - 2026-10-08 (Sprints 11-14: signals, API, dashboard, paper trading, forward tooling)
+
+### Added
+* `signals/`: schema, twelve refusal reasons, EV after costs, explanations, evidence gate, engine.
+* `api/` (read-only FastAPI, one paper-only write route), `apps/dashboard` (Next.js), `scripts/serve_api.py`,
+  `scripts/current_signal.py`, optional `api` extra, CI dashboard job.
+* `execution/`: broker interface, paper broker, safety limits, paper trader, replay and forward comparison;
+  `scripts/forward_test.py`.
+* ADR-0017, ADR-0018, `docs/operations/paper-trading.md`, `docs/reports/sprint-11-14-report.md`,
+  `docs/reports/final-status.md`.
+
+### Safety
+* A BUY/SELL cannot be constructed without validated evidence and without passing every check; the
+  evidence gate is tied to one configuration; there is no live execution path.
+
 ## 0.10.0 - 2026-10-08 (Sprint 10: ML benchmark and calibration)
 
 ### Added

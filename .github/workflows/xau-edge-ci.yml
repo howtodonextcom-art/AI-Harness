@@ -35,7 +35,7 @@ jobs:
         with:
           version: "0.11.14"
       - name: Install (fails if uv.lock is out of date)
-        run: uv sync --locked --extra ml --python ${{ matrix.python }}
+        run: uv sync --locked --extra ml --extra api --python ${{ matrix.python }}
       - name: Lint
         run: |
           uv run ruff check .
@@ -44,3 +44,24 @@ jobs:
         run: uv run mypy
       - name: Tests (no MT5 terminal in CI)
         run: uv run pytest -m "not mt5"
+
+  dashboard:
+    name: dashboard (lint, types, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: xau-edge/apps/dashboard
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The runner image ships Node; the lock file pins every package.
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
