@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 
 import polars as pl
@@ -15,7 +16,9 @@ from xau_edge.market_data.validators.models import (
     ValidationIssue,
     ValidationReport,
 )
+from xau_edge.observability import log_event
 
+_LOG = logging.getLogger(__name__)
 _PRICE_COLS = ("open", "high", "low", "close")
 _TS = "__ts"
 _MINUTES_PER_HOUR = 60
@@ -159,10 +162,33 @@ def validate_bars(
     symbol: str = "XAUUSD",
     config: ValidationConfig | None = None,
 ) -> ValidationReport:
-    """Validate a bar frame against the platform data contract.
+    """Validate a bar frame against the platform data contract and log the verdict.
 
     The frame is never sorted, de-duplicated or repaired; problems are only reported.
     """
+    report = _validate(df, timeframe, symbol=symbol, config=config)
+    log_event(
+        _LOG,
+        "validation.result",
+        logging.INFO if report.passed else logging.WARNING,
+        symbol=symbol,
+        timeframe=timeframe.value,
+        rows=report.rows,
+        passed=report.passed,
+        errors=len(report.errors),
+        warnings=len(report.warnings),
+        issues={i.code.value: i.count for i in report.issues},
+    )
+    return report
+
+
+def _validate(
+    df: pl.DataFrame,
+    timeframe: Timeframe,
+    *,
+    symbol: str = "XAUUSD",
+    config: ValidationConfig | None = None,
+) -> ValidationReport:
     cfg = config or ValidationConfig()
 
     def report(issues: list[ValidationIssue]) -> ValidationReport:

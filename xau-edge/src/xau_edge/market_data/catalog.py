@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import logging
 import re
 import threading
 from dataclasses import dataclass
@@ -15,6 +16,9 @@ import polars as pl
 from xau_edge.domain.bars import coerce_bars
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.store import RawDataset, RawStore, is_safe_name
+from xau_edge.observability import log_event
+
+_LOG = logging.getLogger(__name__)
 
 _READ_ONLY_SQL = re.compile(r"^\s*(select|with)\b", re.IGNORECASE)
 SQL_MEMORY_LIMIT = "512MB"
@@ -87,12 +91,23 @@ class DatasetCatalog:
             .drop("_rank")
         )
         digest = hashlib.sha256("|".join(sorted(d.sha256 for d in datasets)).encode()).hexdigest()
-        return CatalogLoad(
+        result = CatalogLoad(
             frame=coerce_bars(merged),
             dataset_id=digest[:16],
             datasets=tuple(datasets),
             duplicates_resolved=combined.height - merged.height,
         )
+        log_event(
+            _LOG,
+            "catalog.load",
+            symbol=symbol,
+            timeframe=timeframe.value,
+            dataset_id=result.dataset_id,
+            rows=result.frame.height,
+            files=len(datasets),
+            duplicates_resolved=result.duplicates_resolved,
+        )
+        return result
 
     def sql(
         self,

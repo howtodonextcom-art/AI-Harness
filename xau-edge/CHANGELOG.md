@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 - 2026-10-08 (roadmap debt and indicators)
+
+### Added
+* `features/indicators.py`: SMA, EMA, RSI, ATR, true range, ADX/+DI/-DI, MACD, slow stochastic,
+  Bollinger bands, simple/log/rolling returns and rolling volatility as pure NumPy functions
+  (causal, `NaN` warm-up, inputs untouched). Golden tests against recorded TA-Lib output
+  (`tests/fixtures/talib_golden.json`), repainting tests, property tests (ADR-0010).
+* `observability.py`: JSON-lines logging with credential redaction, bounded output and a formatter
+  that never raises. Events `raw.write`, `validation.result`, `catalog.load`.
+* `docs/BRIEF.md`, `docs/ROADMAP_TRACEABILITY.md`, `docs/architecture/data-flow.md`,
+  `docs/testing/testing-strategy.md`; `tests/regression` (pinned hashes), `tests/statistical`.
+* `.pre-commit-config.yaml` (configuration only) and `scripts/block_env_files.py`.
+
+### Changed
+* `PROJECT_PLAN.md`: epic 19 (news risk), richer acceptance for epics 10, 11, 14, 15, run-ladder,
+  sprint numbering aligned with the roadmap table, sprint closing criteria (red-team, overfitting).
+
 ## 0.2.1 - 2026-10-08 (ECC review remediation)
 
 ### Security

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import stat
 from dataclasses import dataclass
@@ -13,7 +14,9 @@ from pathlib import Path
 import polars as pl
 
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.observability import log_event
 
+_LOG = logging.getLogger(__name__)
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 _WINDOWS_RESERVED = re.compile(r"^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\.|$)", re.IGNORECASE)
 _META_SUFFIX = ".meta.json"
@@ -104,6 +107,21 @@ def _read_meta(parquet: Path) -> RawDataset | None:
     )
 
 
+def _log_write(dataset: RawDataset, *, duplicate: bool) -> None:
+    log_event(
+        _LOG,
+        "raw.write",
+        symbol=dataset.symbol,
+        timeframe=dataset.timeframe.value,
+        source=dataset.source,
+        rows=dataset.rows,
+        sha256=dataset.sha256,
+        start=dataset.start,
+        end=dataset.end,
+        duplicate=duplicate,
+    )
+
+
 class RawStore:
     """Write-once store for raw market data.
 
@@ -153,6 +171,7 @@ class RawStore:
                 raise RawDataImmutableError(msg)
             existing = _read_meta(path)
             if existing is not None:
+                _log_write(existing, duplicate=True)
                 return existing
             legacy = RawDataset(
                 path,
@@ -166,6 +185,7 @@ class RawStore:
                 datetime.fromtimestamp(path.stat().st_mtime, UTC),
             )
             _write_meta(legacy)
+            _log_write(legacy, duplicate=True)
             return legacy
 
         directory.mkdir(parents=True, exist_ok=True)
@@ -174,6 +194,7 @@ class RawStore:
         tmp.rename(path)
         path.chmod(stat.S_IREAD)
         _write_meta(dataset)
+        _log_write(dataset, duplicate=False)
         return dataset
 
     def datasets(self, symbol: str, timeframe: Timeframe) -> list[RawDataset]:

@@ -19,23 +19,27 @@ for MVP, P2 after MVP.
 | 01 | Repository bootstrap | package, lint, types, tests, config, AGENTS.md, docs | - | `dev.ps1 check` green; docs exist | tooling drift across OS | S | P0 | **1 (done)** |
 | 02 | MT5 data connector | `BarSource` interface, MT5 adapter, offline file adapter | 01 | offline path works; MT5 path unit-tested with fake client | terminal truncates deep history silently (handled, ADR-0009) | M | P0 | 1 (adapters), **2 (verified on FTMO demo)** |
 | 03 | Market-data validation | duplicate/order/gap/OHLC/volume/spread/tz/weekend checks; raw store | 02 | every check has a failing-input test; raw data immutable | holiday schedules not modelled | M | P0 | 1-2 (done) |
-| 04 | Feature engine | returns, EMA, ADX, RSI/MACD/Stoch, ATR/BB, candle geometry, volume, session | 03 | golden tests vs independent reference; deterministic output | indicator convention mismatch (Wilder) | M | P0 | 3 |
-| 05 | Market structure | swings, HH/HL/LH/LL, BOS, CHoCH, S/R | 04 | machine-testable definitions; no repainting test | subjective definitions | L | P0 | 4 |
-| 06 | Market regime | TREND_UP/DOWN, RANGE, HIGH/LOW_VOL, SHOCK, documented rules | 04, 05 | each rule documented and unit-tested | threshold fitting on test data | M | P1 | 4 |
-| 07 | Pattern similarity | normalisation; Pearson, Euclid, cosine, DTW, Matrix Profile, kNN; unified interface | 04 | leakage tests (future, overlap, self-match) pass | **look-ahead via overlapping windows** | L | P0 | 5 |
-| 08 | Historical outcomes | forward return, MFE, MAE, direction, time-to-target/stop; distribution stats | 07 | UP/DOWN/NEUTRAL stats with percentiles; no contamination of inputs | small samples, regime dependence | M | P0 | 5-6 |
-| 09 | Baseline strategies | A (H1 trend + M15 pullback + M5 BOS), B (EMA+RSI+ATR), C (pattern only) | 05, 08 | deterministic signals; documented | overfitting while tuning | M | P1 | 6 |
-| 10 | Backtesting | engine, spread/commission/slippage/swap, SL/TP, sizing, metrics, walk-forward | 09 | costs included; reproducible; regression-pinned results | unrealistic fills | L | P0 | 6-7 |
-| 11 | ML benchmark | logistic, RF, XGBoost, LightGBM vs baselines, chronological splits | 10 | beats a baseline OOS or is rejected | leakage, instability | L | P1 | 8 |
-| 12 | Probability calibration | calibration curves, Brier, log loss, Platt/isotonic | 11 | calibration report per model | overconfidence | M | P1 | 8 |
-| 13 | Signal engine | schema, EV after costs, BUY/SELL/WAIT, explanations | 08, 10, 12 | every signal explainable and reproducible; NO TRADE conditions covered | explanations that mislead | M | P1 | 9 |
-| 14 | Risk engine | sizing, exposure, drawdown, kill switch, spread/vol/news guards, prop profiles | 10 | independent of forecasting; limits in config not code | stale prop-firm rules | M | P1 | 7-9 |
-| 15 | FastAPI | read-only endpoints, no live order endpoints | 13 | contract tests | accidental write endpoints | S | P2 | 10 |
-| 16 | Dashboard | Next.js, regime/bias/probabilities/analogue overlay | 15 | 1440x900 + mobile layout | chart misuse implying certainty | L | P2 | 10 |
-| 17 | Paper trading | `PaperExecutionBroker`, same signal schema as future live | 13, 14 | simulated SL/TP/spread/slippage/limits | divergence from live fills | M | P2 | 11 |
-| 18 | Forward testing | run paper mode live, compare to backtest | 17 | documented out-of-sample comparison | too short a sample to conclude | M | P2 | 11+ |
+| 04 | Feature engine | returns, EMA, ADX, RSI/MACD/Stoch, ATR/BB, candle geometry, volume, session | 03 | golden tests vs independent reference; deterministic output | indicator convention mismatch (Wilder) | M | P0 | 3-4 |
+| 05 | Market structure | swings, HH/HL/LH/LL, BOS, CHoCH, S/R | 04 | machine-testable definitions; no repainting test | subjective definitions | L | P0 | 5 |
+| 06 | Market regime | TREND_UP/DOWN, RANGE, HIGH/LOW_VOL, SHOCK, documented rules | 04, 05 | each rule documented and unit-tested | threshold fitting on test data | M | P1 | 5 |
+| 07 | Pattern similarity | normalisation; Pearson, Euclid, cosine, DTW, Matrix Profile, kNN; unified interface | 04 | leakage tests (future, overlap, self-match) pass | **look-ahead via overlapping windows** | L | P0 | 6 |
+| 08 | Historical outcomes | forward return, MFE, MAE, direction, time-to-target/stop; distribution stats | 07 | UP/DOWN/NEUTRAL stats with percentiles; no contamination of inputs | small samples, regime dependence | M | P0 | 7 |
+| 09 | Baseline strategies | A (H1 trend + M15 pullback + M5 BOS), B (EMA+RSI+ATR), C (pattern only) | 05, 08 | deterministic signals; documented | overfitting while tuning | M | P1 | 7 |
+| 10 | Backtesting | engine, spread/commission/slippage/swap, SL/TP, sizing, metrics, walk-forward | 09 | costs included; reproducible; regression-pinned results; outputs equity curve, drawdown curve, trade list, monthly, regime and session summaries | unrealistic fills | L | P0 | 8-9 |
+| 11 | ML benchmark | logistic, RF, XGBoost, LightGBM vs baselines, chronological splits | 10 | beats a baseline OOS or is rejected; deep learning (LSTM, Transformer, RL) is excluded from the MVP unless benchmark evidence shows a clear need | leakage, instability | L | P1 | 10 |
+| 12 | Probability calibration | calibration curves, Brier, log loss, Platt/isotonic | 11 | calibration report per model | overconfidence | M | P1 | 10 |
+| 13 | Signal engine | schema, EV after costs, BUY/SELL/WAIT, explanations | 08, 10, 12 | every signal explainable and reproducible; NO TRADE conditions covered | explanations that mislead | M | P1 | 11 |
+| 14 | Risk engine | risk per trade, max concurrent trades, max exposure, daily risk budget, consecutive-loss guard, drawdown guard, kill switch, spread/vol/news guards, account-state validation, prop profiles (`configs/prop/`, rules verified against official sources before shipping) | 10 | independent of forecasting; limits in config not code | stale prop-firm rules | M | P1 | 8-9 |
+| 15 | FastAPI | read-only endpoints; `POST /paper/orders` arrives with Sprint 13 and only reaches `PaperExecutionBroker`; no live order endpoints | 13 | contract tests; a test proves no route can reach a real broker | accidental write endpoints | S | P2 | 12 |
+| 16 | Dashboard | Next.js, regime/bias/probabilities/analogue overlay | 15 | 1440x900 + mobile layout | chart misuse implying certainty | L | P2 | 12 |
+| 17 | Paper trading | `PaperExecutionBroker`, same signal schema as future live | 13, 14 | simulated SL/TP/spread/slippage/limits | divergence from live fills | M | P2 | 13 |
+| 18 | Forward testing | run paper mode live, compare to backtest | 17 | documented out-of-sample comparison | too short a sample to conclude | M | P2 | 14+ |
 
-Auto-execution (phases 12-13) is deliberately not an epic here.
+| 19 | News risk layer (added 2026-10-08, brief section 27) | economic-calendar interface, high-impact categories, configurable windows 5-60 min, backtest of the window (not assumed); data source chosen with `search-first`, or interface only with the limitation stated | 10, 14 | window backtested; news guard feeds the risk engine | no reliable free calendar data | M | P2 | 8-9 |
+
+Auto-execution (phases 12-13) is deliberately not an epic here. The Sprint column follows the
+"Roadmap to a complete application" table, which is authoritative. Gaps against the brief and
+proposed epic 19 (news risk) are tracked in `docs/ROADMAP_TRACEABILITY.md`.
 
 ## Sprint 1 (completed 2026-10-08)
 
@@ -101,21 +105,21 @@ Sizes: S <= 2 days, M 3-5 days, L 1-2 weeks of focused work. Each row is one spr
 | 4 | 04 (part 2: candle geometry, volume, sessions); holiday calendar | tdd-guide, code-reviewer | versioned feature set keyed by dataset id; same input gives byte-identical output; no feature uses data after its bar closes | feature leakage | M |
 | 5 | 05 Market structure; 06 Regime | planner, council (rule definitions), tdd-guide | swing/BOS/CHoCH rules documented and unit-tested; repainting test: appending future bars never changes past labels | subjective definitions | L |
 | 6 | 07 Pattern similarity | architect, tdd-guide, **statistical leakage tests written first**, code-reviewer | no overlap or self-match across train/outcome windows (tests prove it); unified interface for Pearson, Euclid, cosine, DTW, Matrix Profile, kNN; benchmark vs plain NumPy search | look-ahead through overlapping windows | L |
-| 7 | 08 Historical outcomes; 09 Baseline strategies | tdd-guide, eval-harness (define evals first) | UP/DOWN/NEUTRAL stats with distributions; three deterministic baselines; no tuning on the test period | small samples, regime dependence | M |
-| 8 | 14 Risk engine (core); 10 Backtest engine (part 1: costs, fills, sizing) | architect, security-reviewer, tdd-guide | spread/commission/slippage/swap modelled from measured M5 spread and the broker profile; risk limits live in config, never in code; kill switch tested | unrealistic fills, stale limits | L |
+| 7 | 08 Historical outcomes; 09 Baseline strategies; experiment registry (brief section 39) | tdd-guide, eval-harness (define evals first) | UP/DOWN/NEUTRAL stats with distributions; three deterministic baselines; no tuning on the test period | small samples, regime dependence | M |
+| 8 | 14 Risk engine (core, prop profiles); 10 Backtest engine (part 1: costs, fills, sizing); 19 News risk (interface) | architect, security-reviewer, tdd-guide | spread/commission/slippage/swap modelled from measured M5 spread and the broker profile; risk limits live in config, never in code; kill switch tested | unrealistic fills, stale limits | L |
 | 9 | 10 Backtest (part 2: metrics, walk-forward, regime/session breakdown) | eval-harness, santa-method | reproducible results with pinned dataset id; every required metric in the brief; regression-pinned run | overfitting, multiple testing | L |
 | **Checkpoint** | After sprint 9: do the baselines show an edge after costs, out of sample? | council + santa-method | written decision: continue to ML, or stop and conclude "no statistically justified trade" | wishful reading of results | - |
 | 10 | 11 ML benchmark; 12 Calibration | mle-reviewer, eval-harness, tdd-guide | each model beats a baseline out of sample, else rejected; Brier/log-loss/calibration curves reported | leakage, instability | L |
 | 11 | 13 Signal engine | code-reviewer, security-reviewer, santa-method | every signal explainable and reproducible; all NO TRADE conditions covered; EV computed after costs | misleading explanations | M |
 | 12 | 15 FastAPI (read-only); 16 Dashboard | api-design, e2e-runner, browser-qa | no write/order endpoints (test enforces); 1440x900 and mobile layouts; analogue overlay never feeds model inputs | UI implying certainty | L |
-| 13 | 17 Paper trading | tdd-guide, security-reviewer | `PaperExecutionBroker` uses the same signal schema as any future broker; SL/TP/spread/slippage/limits simulated | divergence from live fills | M |
+| 13 | 17 Paper trading; `POST /paper/orders` | tdd-guide, security-reviewer | `PaperExecutionBroker` uses the same signal schema as any future broker; SL/TP/spread/slippage/limits simulated; the paper endpoint cannot reach a live broker (test) | divergence from live fills | M |
 | 14+ | 18 Forward testing (calendar-time bound, weeks) | eval-harness, santa-method | documented out-of-sample comparison against backtest; no claims without a sufficient sample | too short a sample | - |
 
 Critical path: 04 -> 05 -> 07 -> 08 -> 09 -> 10 -> checkpoint -> (11, 12) -> 13 -> 17 -> 18.
 The checkpoint is a real fork: if no baseline survives costs out of sample, the correct outcome
 is to stop building predictors and report that, consistent with the brief's principle.
 
-### Sprint 3 scope (Gate A passed; steps 1-3 done, awaiting Gate B; step 4 not started)
+### Sprint 3 scope (steps 1-3 done in 270e484; roadmap debt and step 4 in the commit that follows)
 
 Order matters: remediation first, features second. See `docs/ECC_ALIGNMENT_AUDIT.md` for the
 finding IDs.
@@ -128,7 +132,31 @@ finding IDs.
    F-07 (`.gitignore`), F-08 and F-09 (`cross_check`), V-01 (version bump), V-02 (sdist excludes
    `.claude`, data, `.env.example`); then the remaining MEDIUM and LOW items.
 3. Run `code-reviewer`, `python-reviewer` and `security-reviewer` again on the fixes (Gate B).
-4. Epic 04 part 1 (indicator interface with golden tests) through the full delivery loop.
+4. Epic 04 part 1: `features/indicators.py` (EMA, SMA, RSI, ATR, ADX, MACD, Stochastic, Bollinger,
+   simple/log/rolling returns, rolling volatility) as pure NumPy functions; golden tests against
+   recorded TA-Lib output; repainting, validation and property tests. ADR-0010.
+5. Roadmap debt from `docs/ROADMAP_TRACEABILITY.md` that was due now: structured logging
+   (`observability.py`, G-1), brief copy (`docs/BRIEF.md`), `data-flow.md` and `testing-strategy.md`
+   (G-5), `tests/regression` and `tests/statistical` (G-6), `.pre-commit-config.yaml` config only (G-8).
+
+**Sprint closing criteria (added 2026-10-08, brief sections 26 and 52).** Every sprint report must
+contain a written red-team section ("how could this be wrong?", each item with a status) and, for
+any result that claims an edge, the overfitting checklist in `docs/testing/testing-strategy.md`.
+## Run-ladder: when does the system "run for real"?
+
+Full detail and the brief-to-plan matrix: `docs/ROADMAP_TRACEABILITY.md`. No level involves real money.
+
+| Level | Meaning | Exit evidence | Sprint |
+|---|---|---|---|
+| L0 | Foundation | CI green | 1 (done) |
+| L1 | Trustworthy real data | demo MT5 import, validation, dataset id | 2 (done) - **current** |
+| L2 | Offline research on real data | features, structure, regime, patterns, outcomes; leakage tests pass | 3-7 |
+| L3 | Costed backtest | reproducible report, walk-forward; **Checkpoint** (edge after costs, out of sample?) | 8-9 |
+| L4a | Offline signals | ML + calibration + signal engine + API/dashboard | 10-12 |
+| L4b | Paper trading | `PaperExecutionBroker` on live demo data | 13 |
+| L4c | Forward test | weeks of paper vs backtest | 14+ |
+| L5 | Live trading | out of scope; needs a separate decision | - |
+
 ## Testing strategy
 
 * Unit tests for every pure function; synthetic data only for exercising code paths.
