@@ -10,6 +10,11 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _csv(value: str) -> set[str]:
+    """Comma separated whitelist -> set of non-empty trimmed items."""
+    return {item.strip() for item in value.split(",") if item.strip()}
+
+
 class Settings(BaseSettings):
     """Process-wide settings, read from ``XAU_EDGE_*`` environment variables or ``.env``.
 
@@ -42,6 +47,20 @@ class Settings(BaseSettings):
     demo_initial_capital: float | None = Field(default=None, gt=0)
     demo_state_path: Path = Path("data/execution/state.sqlite")
     demo_journal_path: Path = Path("data/execution/journal.jsonl")
+    demo_allowed_servers: str = ""
+    enable_funded_trading: bool = False
+    funded_allowed_accounts: str = ""
+    funded_allowed_servers: str = ""
+    funded_magic: int | None = None
+    funded_initial_capital: float | None = Field(default=None, gt=0)
+    funded_max_lots: float = Field(default=1.0, gt=0, le=5.0)
+    funded_risk_pct: float = Field(default=0.25, gt=0, le=0.25)
+    """Per-trade risk ceiling of the owner-override (UNVALIDATED) path; not raisable by config."""
+    funded_validated_risk_pct: float | None = Field(default=None, gt=0, le=1.0)
+    funded_allow_unvalidated: bool = False
+    funded_strategy_id: str = ""
+    funded_profile_path: Path = Path("configs/prop/ftmo_funded.yaml")
+    funded_rollout_path: Path = Path("configs/execution/rollout.yaml")
     news_calendar_path: Path | None = None
     data_dir: Path = Path("data")
     log_level: str = "INFO"
@@ -68,10 +87,49 @@ class Settings(BaseSettings):
                 missing.append("XAU_EDGE_DEMO_ALLOWED_ACCOUNTS")
             if self.demo_magic is None:
                 missing.append("XAU_EDGE_DEMO_MAGIC")
+            if self.demo_initial_capital is None:
+                missing.append("XAU_EDGE_DEMO_INITIAL_CAPITAL")
             if missing:
                 joined = ", ".join(missing)
                 msg = f"demo execution requires explicit guard setting(s): {joined}"
                 raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _modes_and_accounts_are_separate(self) -> Self:
+        """Demo and funded stay apart: exclusive flags, disjoint whitelists, explicit guards."""
+        demo = _csv(self.demo_allowed_accounts)
+        funded = _csv(self.funded_allowed_accounts)
+        if demo & funded:
+            msg = "the demo and funded account whitelists must not share an account"
+            raise ValueError(msg)
+        if self.enable_funded_trading and self.enable_demo_trading:
+            msg = (
+                "XAU_EDGE_ENABLE_FUNDED_TRADING and XAU_EDGE_ENABLE_DEMO_TRADING exclude each other"
+            )
+            raise ValueError(msg)
+        if self.enable_funded_trading:
+            missing = [
+                name
+                for name, ok in (
+                    ("XAU_EDGE_FUNDED_ALLOWED_ACCOUNTS", bool(funded)),
+                    ("XAU_EDGE_FUNDED_ALLOWED_SERVERS", bool(_csv(self.funded_allowed_servers))),
+                    ("XAU_EDGE_FUNDED_MAGIC", self.funded_magic is not None),
+                    ("XAU_EDGE_FUNDED_INITIAL_CAPITAL", self.funded_initial_capital is not None),
+                )
+                if not ok
+            ]
+            if missing:
+                msg = f"funded execution requires explicit setting(s): {', '.join(missing)}"
+                raise ValueError(msg)
+        if self.funded_allow_unvalidated and not (
+            self.enable_funded_trading and self.funded_strategy_id.strip()
+        ):
+            msg = (
+                "XAU_EDGE_FUNDED_ALLOW_UNVALIDATED needs XAU_EDGE_ENABLE_FUNDED_TRADING and a "
+                "specific XAU_EDGE_FUNDED_STRATEGY_ID"
+            )
+            raise ValueError(msg)
         return self
 
     def model_copy(self, *, update: Mapping[str, Any] | None = None, deep: bool = False) -> Self:

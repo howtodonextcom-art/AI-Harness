@@ -67,6 +67,8 @@ class FakeTerminal:
         self.ask = 2000.2
         self.bid = 2000.0
         self.close_removes = True
+        self.balance = 100000.0
+        self.equity = 100000.0
         self.stops_level = 0
         self.freeze_level = 0
         self.tick_time = int((T + timedelta(hours=2)).timestamp())  # server clock is UTC+2
@@ -78,8 +80,8 @@ class FakeTerminal:
         return SimpleNamespace(
             login=int(LOGIN),
             trade_mode=self.trade_mode,
-            balance=100000.0,
-            equity=100000.0,
+            balance=self.balance,
+            equity=self.equity,
             trade_allowed=self.trade_allowed,
         )
 

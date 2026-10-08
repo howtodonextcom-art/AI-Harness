@@ -53,6 +53,10 @@ class DemoAccountError(RuntimeError):
     """The terminal is not logged in to a DEMO account, or the read failed."""
 
 
+class NotDemoAccountError(DemoAccountError):
+    """The terminal is logged in to an account that is NOT a DEMO account (never transient)."""
+
+
 class QueryMt5(Protocol):
     """The query subset of the MetaTrader5 module."""
 
@@ -88,10 +92,13 @@ class EntryDeal:
 class DemoReader:
     """Builds a ``BrokerSnapshot`` from a terminal after checking that it is a DEMO account."""
 
-    def __init__(self, client: Any, clock: BrokerClock, symbol: str = "XAUUSD") -> None:
+    def __init__(
+        self, client: Any, clock: BrokerClock, symbol: str = "XAUUSD", *, require_demo: bool = True
+    ) -> None:
         self._client = QueryOnlyMt5(client)
         self._clock = clock
         self.symbol = symbol
+        self.require_demo = require_demo
 
     def account(self) -> BrokerAccount:
         """The account facts; raises ``DemoAccountError`` unless the account is DEMO."""
@@ -99,12 +106,13 @@ class DemoReader:
         if info is None:
             msg = f"no account is logged in: {self._client.last_error()}"
             raise DemoAccountError(msg)
-        if info.trade_mode != self._client.ACCOUNT_TRADE_MODE_DEMO:
+        if self.require_demo and info.trade_mode != self._client.ACCOUNT_TRADE_MODE_DEMO:
             msg = "refusing to read from a non-DEMO account"
-            raise DemoAccountError(msg)
+            raise NotDemoAccountError(msg)
         return BrokerAccount(
             account_id=str(info.login),
-            is_demo=True,
+            is_demo=info.trade_mode == self._client.ACCOUNT_TRADE_MODE_DEMO,
+            server=str(getattr(info, "server", "")),
             balance=float(info.balance),
             equity=float(info.equity),
             trade_allowed=bool(getattr(info, "trade_allowed", False)),  # fail closed
@@ -174,6 +182,32 @@ class DemoReader:
                 )
             )
         return tuple(results)
+
+    def net_since(self, start: datetime, now: datetime) -> float:
+        """Net balance change from ``start`` to ``now``: every deal (any symbol, any type).
+
+        Used to rebuild the balance at the start of the Prague day: balance now minus this.
+        Profit, commission, swap and fee of every deal count, deposits and withdrawals included.
+        """
+        label_start = self._clock.label_as_utc(start)
+        label_end = self._clock.label_as_utc(now + timedelta(hours=1))
+        deals = self._client.history_deals_get(label_start, label_end)
+        if deals is None:
+            msg = f"history_deals_get failed: {self._client.last_error()}"
+            raise DemoAccountError(msg)
+        total = 0.0
+        for d in deals:
+            amount = (
+                float(d.profit)
+                + float(d.commission)
+                + float(d.swap)
+                + float(getattr(d, "fee", 0.0))
+            )
+            if not math.isfinite(amount):
+                msg = f"deal {d.ticket} has non-finite values"
+                raise DemoAccountError(msg)
+            total += amount
+        return total
 
     def entry_deals(self, now: datetime, lookback: timedelta) -> tuple[EntryDeal, ...]:
         """Deals that opened a position in the window (used to resolve an unknown order)."""

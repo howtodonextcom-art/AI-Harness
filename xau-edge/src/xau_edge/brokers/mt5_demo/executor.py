@@ -32,12 +32,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
+from zoneinfo import ZoneInfo
 
 from xau_edge.brokers.mt5_demo.reader import DemoAccountError, DemoReader, EntryDeal
 from xau_edge.execution.journal import ExecutionJournal
 from xau_edge.execution.order_intent import COMMENT_PREFIX, OrderIntent, make_intent_id
 from xau_edge.execution.reconcile import BrokerPosition, Reconciler
 from xau_edge.execution.runner import JournalError
+from xau_edge.execution.safety import day_key
 from xau_edge.execution.state import (
     BotPositionRecord,
     DuplicateSubmissionError,
@@ -47,6 +49,7 @@ from xau_edge.execution.state import (
 from xau_edge.observability import log_event
 
 _LOG = logging.getLogger(__name__)
+_PRAGUE = ZoneInfo("Europe/Prague")
 
 _TRADE_NAMES = frozenset(
     {
@@ -86,8 +89,9 @@ DEFINITE_REJECTS = frozenset(
 (timeouts, lost connection, too many requests) and is resolved by looking the position up."""
 CLOSE_COMMENT = f"{COMMENT_PREFIX}CLOSE"
 SMOKE_COMMENT = f"{COMMENT_PREFIX}SMOKE"
+SHADOW_RETCODE_OK = 0
 
-Status = Literal["FILLED", "REJECTED", "REFUSED", "UNKNOWN"]
+Status = Literal["FILLED", "REJECTED", "REFUSED", "UNKNOWN", "SHADOW"]
 
 
 @dataclass(frozen=True)
@@ -105,6 +109,8 @@ class ExecutorConfig:
     max_tick_age_seconds: int = 60
     max_intent_age: timedelta = timedelta(minutes=45)
     max_open_positions: int = 1
+    shadow: bool = False
+    """Shadow tier: gates and the broker's order_check run, but nothing is ever sent."""
     unknown_resolution_seconds: float = 15.0
     unknown_poll_seconds: float = 3.0
 
@@ -186,6 +192,8 @@ class Mt5DemoExecutor:
             self.journal.record(
                 "order.requested", intent_id=intent.intent_id, signal_hash=intent.signal_hash,
                 lots=intent.lots, direction=intent.direction, smoke=smoke,
+                evidence=intent.metadata.get("evidence_status"),
+                strategy=intent.metadata.get("strategy_id"),
             )  # fmt: skip
             self.state.begin_submission(intent.intent_id, intent.signal_hash)
         except DuplicateSubmissionError:
@@ -347,6 +355,10 @@ class Mt5DemoExecutor:
                 self.state.finish_submission(intent.intent_id, "REJECTED", retcode=code)
                 self.journal.record("order.check_failed", intent_id=intent.intent_id, retcode=code)
                 return SubmitResult("REJECTED", ("ORDER_CHECK_FAILED",), retcode=code)
+            if self.config.shadow:
+                self.state.finish_submission(intent.intent_id, "SHADOW", retcode=SHADOW_RETCODE_OK)
+                self.journal.record("order.shadow_checked", intent_id=intent.intent_id)
+                return SubmitResult("SHADOW", ("SHADOW_TIER_NOT_SENT",))
         except (StateError, JournalError):
             return self._unknown(intent, "state or journal failed around order_check")
         except Exception as exc:
@@ -447,6 +459,8 @@ class Mt5DemoExecutor:
             )
         except StateError:
             return self._unknown(intent, "could not record the filled position")
+        with contextlib.suppress(StateError):
+            self.state.record_trading_day(day_key(datetime.now(UTC).astimezone(_PRAGUE).date()))
         self._record_quietly(
             "position.opened",
             intent_id=intent.intent_id,
@@ -597,6 +611,20 @@ class Mt5DemoExecutor:
             log_event(_LOG, "executor.trip_failed", logging.CRITICAL, error=str(exc))
         self._record_quietly("position.close_unknown", ticket=ticket, why=why)
         return SubmitResult("UNKNOWN", ("UNKNOWN_CLOSE_STATE",), ticket=ticket)
+
+    def flatten_all(self, reason: str) -> list[SubmitResult]:
+        """Stop new orders (kill switch) and close every position the bot owns.
+
+        The kill switch is tripped FIRST, so nothing new can open while the closes run. Positions
+        that are not the bot's are never touched. A close that is refused (for example inside the
+        freeze level) stays listed in the results; the caller alerts the operator.
+        """
+        with contextlib.suppress(StateError):
+            self.state.trip_kill_switch(reason)
+        self._record_quietly("flatten.started", reason=reason)
+        results = [self.close_position(r.ticket, reason) for r in self.state.open_positions()]
+        self._record_quietly("flatten.finished", reason=reason, results=[r.status for r in results])
+        return results
 
     def close_expired(self, now: datetime) -> list[SubmitResult]:
         """Close every bot position whose ``max_hold_until`` has passed."""

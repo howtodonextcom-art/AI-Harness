@@ -24,7 +24,7 @@ from xau_edge.observability import log_event
 from xau_edge.risk.kill_switch import RESET_PHRASE, KillSwitch
 
 _LOG = logging.getLogger(__name__)
-SCHEMA_VERSION: Final = 4
+SCHEMA_VERSION: Final = 5
 STATE_UNREADABLE: Final = "STATE_UNREADABLE"
 
 _SCHEMA: Final = (
@@ -41,9 +41,20 @@ _SCHEMA: Final = (
     " opened_at TEXT NOT NULL, max_hold_until TEXT NOT NULL, updated_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS submissions (intent_id TEXT PRIMARY KEY, signal_hash TEXT NOT NULL,"
     " status TEXT NOT NULL, retcode INTEGER, ticket TEXT, updated_at TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS request_counts (day TEXT PRIMARY KEY, count INTEGER NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS trading_days (day TEXT PRIMARY KEY)",
 )
 _EXPECTED_TABLES: Final = frozenset(
-    {"meta", "kill_switch", "seen_signals", "daily_orders", "bot_positions", "submissions"}
+    {
+        "meta",
+        "kill_switch",
+        "seen_signals",
+        "daily_orders",
+        "bot_positions",
+        "submissions",
+        "request_counts",
+        "trading_days",
+    }
 )
 
 
@@ -283,6 +294,58 @@ class ExecutionState:
                 " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
                 (decision_time.isoformat(),),
             )
+
+    def get_meta(self, key: str) -> str | None:
+        """A stored text value (rollout tier, timestamps), ``None`` if absent."""
+        with self._connect() as conn:
+            row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+        return None if row is None else str(row[0])
+
+    def set_meta(self, key: str, value: str) -> None:
+        """Store a text value."""
+        with self._transaction() as conn:
+            conn.execute(
+                "INSERT INTO meta (key, value) VALUES (?, ?)"
+                " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (key, value),
+            )
+
+    def submission_counts_since(self, since_iso: str) -> dict[str, int]:
+        """Submissions by final status whose last update is at or after ``since_iso``."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT status, COUNT(*) FROM submissions WHERE updated_at >= ? GROUP BY status",
+                (since_iso,),
+            ).fetchall()
+        return {str(r[0]): int(r[1]) for r in rows}
+
+    def bump_requests(self, day: str, n: int = 1) -> int:
+        """Add ``n`` terminal requests to a calendar-day key and return the new total."""
+        with self._transaction() as conn:
+            conn.execute(
+                "INSERT INTO request_counts (day, count) VALUES (?, ?)"
+                " ON CONFLICT(day) DO UPDATE SET count = count + ?",
+                (day, n, n),
+            )
+            row = conn.execute("SELECT count FROM request_counts WHERE day = ?", (day,)).fetchone()
+        return int(row[0])
+
+    def requests_on(self, day: str) -> int:
+        """Terminal requests made on a calendar-day key."""
+        with self._connect() as conn:
+            row = conn.execute("SELECT count FROM request_counts WHERE day = ?", (day,)).fetchone()
+        return int(row[0]) if row else 0
+
+    def record_trading_day(self, day: str) -> None:
+        """Remember a Prague calendar day on which a real order was opened."""
+        with self._transaction() as conn:
+            conn.execute("INSERT OR IGNORE INTO trading_days (day) VALUES (?)", (day,))
+
+    def trading_days(self) -> list[str]:
+        """Prague calendar days with at least one opened order, oldest first."""
+        with self._connect() as conn:
+            rows = conn.execute("SELECT day FROM trading_days ORDER BY day").fetchall()
+        return [str(r[0]) for r in rows]
 
     def is_approved(self, intent_id: str) -> bool:
         """True if the bridge accepted this intent for real submission (not a dry run)."""

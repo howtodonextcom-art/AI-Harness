@@ -30,6 +30,7 @@ class BrokerAccount:
     balance: float
     equity: float
     trade_allowed: bool = True
+    server: str = ""
 
 
 @dataclass(frozen=True)
@@ -114,6 +115,7 @@ class Reconciler:
         symbols: tuple[str, ...] = ("XAUUSD",),
         allowed_accounts: tuple[str, ...] = (),
         trip_on_mismatch: bool = False,
+        require_demo: bool = True,
         price_tolerance: float = 0.005,
         lot_tolerance: float = 1e-9,
     ) -> None:
@@ -122,6 +124,7 @@ class Reconciler:
         self.symbols = symbols
         self.allowed_accounts = allowed_accounts
         self.trip_on_mismatch = trip_on_mismatch
+        self.require_demo = require_demo
         self.price_tolerance = price_tolerance
         self.lot_tolerance = lot_tolerance
 
@@ -159,7 +162,7 @@ class Reconciler:
             log_event(_LOG, "reconcile.trip_failed", logging.CRITICAL, error=str(exc))
 
     def _check_account(self, account: BrokerAccount, found: list[Mismatch]) -> None:
-        if not account.is_demo:
+        if self.require_demo and not account.is_demo:
             found.append(
                 Mismatch("ACCOUNT_NOT_DEMO", "the connected account is not a DEMO account")
             )

@@ -66,11 +66,21 @@ def test_demo_order_mode_requires_whitelist_and_magic() -> None:
             _env_file=None,
         )
 
+    with pytest.raises(ValidationError, match="DEMO_INITIAL_CAPITAL"):
+        Settings(
+            enable_demo_trading=True,
+            demo_dry_run=False,
+            demo_allowed_accounts="123456",
+            demo_magic=2601008,
+            _env_file=None,
+        )
+
     settings = Settings(
         enable_demo_trading=True,
         demo_dry_run=False,
         demo_allowed_accounts="123456",
         demo_magic=2601008,
+        demo_initial_capital=100_000.0,
         _env_file=None,
     )
     assert settings.demo_magic == 2601008
@@ -104,7 +114,63 @@ def test_smoke_mode_needs_demo_trading_and_the_explicit_guards() -> None:
         demo_smoke=True,
         demo_allowed_accounts="123",
         demo_magic=7,
+        demo_initial_capital=100_000.0,
         _env_file=None,
     )
     assert ok.demo_smoke is True
     assert Settings(_env_file=None).demo_smoke is False
+
+
+def _funded(**over: object) -> Settings:
+    base: dict[str, object] = {
+        "enable_funded_trading": True,
+        "funded_allowed_accounts": "900001",
+        "funded_allowed_servers": "FTMO-Server",
+        "funded_magic": 77,
+        "funded_initial_capital": 100_000.0,
+    }
+    base.update(over)
+    return Settings(_env_file=None, **base)  # type: ignore[arg-type]
+
+
+def test_funded_trading_is_off_by_default_and_live_stays_forbidden() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.enable_funded_trading is False
+    assert settings.funded_allow_unvalidated is False
+    with pytest.raises(ValidationError, match="not implemented"):
+        Settings(enable_live_trading=True, enable_funded_trading=True, _env_file=None)
+
+
+@pytest.mark.parametrize(
+    "missing",
+    ["funded_allowed_accounts", "funded_allowed_servers", "funded_magic", "funded_initial_capital"],
+)
+def test_funded_trading_needs_every_explicit_setting(missing: str) -> None:
+    with pytest.raises(ValidationError, match="funded execution requires"):
+        _funded(**{missing: None if missing in {"funded_magic", "funded_initial_capital"} else ""})
+
+
+def test_funded_and_demo_modes_exclude_each_other_and_share_no_account() -> None:
+    with pytest.raises(ValidationError, match="exclude each other"):
+        _funded(enable_demo_trading=True)
+    with pytest.raises(ValidationError, match="must not share"):
+        _funded(demo_allowed_accounts="900001")
+    with pytest.raises(ValidationError, match="must not share"):
+        Settings(demo_allowed_accounts="1,2,3", funded_allowed_accounts=" 3 ,4", _env_file=None)
+    assert _funded().funded_magic == 77
+
+
+def test_the_unvalidated_override_needs_funded_mode_and_a_named_strategy() -> None:
+    with pytest.raises(ValidationError, match="specific"):
+        _funded(funded_allow_unvalidated=True)
+    with pytest.raises(ValidationError, match="specific"):
+        Settings(funded_allow_unvalidated=True, funded_strategy_id="h03", _env_file=None)
+    assert _funded(funded_allow_unvalidated=True, funded_strategy_id="h03").funded_strategy_id
+
+
+def test_the_override_risk_ceiling_cannot_be_raised_by_configuration() -> None:
+    assert _funded().funded_risk_pct == 0.25
+    with pytest.raises(ValidationError):
+        _funded(funded_risk_pct=0.5)
+    with pytest.raises(ValidationError):
+        _funded(funded_risk_pct=0.0)

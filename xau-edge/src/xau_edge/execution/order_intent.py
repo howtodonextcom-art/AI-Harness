@@ -125,6 +125,9 @@ def build_intent(
     entry_reference: float | None = None,
     stop_loss: float | None = None,
     take_profit: float | None = None,
+    direction: Direction | None = None,
+    unvalidated: bool = False,
+    strategy_id: str | None = None,
 ) -> OrderIntent:
     """Build the intent for a BUY/SELL signal; WAIT or an incomplete one raises ``IntentError``.
 
@@ -133,7 +136,8 @@ def build_intent(
     ``take_profit`` default to the signal's own levels; the bridge passes them rounded to the
     symbol's digits.
     """
-    if signal.direction is Direction.WAIT:
+    side = direction or signal.direction
+    if side is Direction.WAIT:
         msg = "a WAIT signal never becomes an order intent"
         raise IntentError(msg)
     if not signal.inputs_hash:
@@ -154,7 +158,7 @@ def build_intent(
             intent_id=intent_id,
             signal_hash=signal.inputs_hash,
             symbol=signal.symbol,
-            direction=1 if signal.direction is Direction.BUY else -1,
+            direction=1 if side is Direction.BUY else -1,
             lots=lots,
             risk_amount=risk_amount,
             entry_reference=entry,
@@ -164,14 +168,21 @@ def build_intent(
             decision_time=signal.timestamp,
             created_at=created_at,
             magic=magic,
-            comment=f"{COMMENT_PREFIX}{intent_id[:12]}",
+            comment=(
+                f"{COMMENT_PREFIX}UNV:{intent_id[:10]}"
+                if unvalidated
+                else f"{COMMENT_PREFIX}{intent_id[:12]}"
+            ),
             dry_run=dry_run,
             metadata={
                 "timeframe": signal.timeframe,
                 "regime": signal.market_regime,
                 "risk_reward": signal.risk_reward,
                 "expected_R": signal.expected_R,
-                "evidence_status": signal.evidence_status.value,
+                "evidence_status": (
+                    "UNVALIDATED_OVERRIDE" if unvalidated else signal.evidence_status.value
+                ),
+                "strategy_id": strategy_id,
                 "code_version": signal.code_version,
             },
         )
