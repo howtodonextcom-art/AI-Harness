@@ -51,13 +51,35 @@ class StatusCycle(BaseModel):
     data_age_minutes: float | None
 
 
+Mode = Literal["disabled", "dry-run", "demo", "funded"]
+EvidenceLabel = Literal["VALIDATED", "UNVALIDATED", "NONE"]
+
+
+class StatusPropFacts(BaseModel):
+    """FTMO-facing facts of the current cycle (ADR-0020); every field is optional."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    evidence_label: EvidenceLabel = "NONE"
+    strategy_id: str | None = None
+    rollout_tier: int | None = None
+    rollout_tier_name: str | None = None
+    daily_floor_distance_pct: float | None = None
+    max_floor_distance_pct: float | None = None
+    requests_today: int | None = None
+    request_budget: int | None = None
+    trading_days: int | None = None
+    kill_switch_tripped: bool | None = None
+    kill_switch_reason: str | None = None
+
+
 class BotStatus(BaseModel):
     """What the dashboard shows about the running bot."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     updated_at: datetime
-    mode: Literal["disabled", "dry-run", "demo"]
+    mode: Mode
     live_trading: Literal[False] = False
     symbol: str
     connected: bool
@@ -70,6 +92,7 @@ class BotStatus(BaseModel):
     last_cycle: StatusCycle | None
     news_status: Literal["unknown", "risk", "clear"]
     loop_interval_minutes: int = 15
+    prop: StatusPropFacts = StatusPropFacts()
 
 
 def write_status(path: Path, status: BotStatus) -> None:
@@ -125,7 +148,7 @@ def evaluate_health(
         alerts.append(Alert("HEARTBEAT_STALE", "critical", f"no cycle for {minutes} minutes"))
     if not status.connected:
         alerts.append(Alert("TERMINAL_DISCONNECTED", "critical", "the MT5 terminal is unreachable"))
-    if status.account_demo is False:
+    if status.account_demo is False and status.mode != "funded":
         alerts.append(Alert("ACCOUNT_NOT_DEMO", "critical", "the connected account is not DEMO"))
     if status.reconcile_clean is False:
         codes = ", ".join(status.reconcile_codes)
@@ -141,12 +164,13 @@ def evaluate_health(
 def build_status(
     now: datetime,
     *,
-    mode: Literal["disabled", "dry-run", "demo"],
+    mode: Mode,
     symbol: str,
     snapshot: BrokerSnapshot | None,
     reconcile: ReconcileResult | None,
     report: CycleReport | None,
     bot_tickets: frozenset[str] = frozenset(),
+    prop: StatusPropFacts | None = None,
 ) -> BotStatus:
     """Assemble the status from one cycle; a missing snapshot means the terminal was unreachable."""
     cycle = (
@@ -193,4 +217,5 @@ def build_status(
         reconcile_codes=list(reconcile.codes) if reconcile else [],
         last_cycle=cycle,
         news_status=news,
+        prop=prop or StatusPropFacts(),
     )
