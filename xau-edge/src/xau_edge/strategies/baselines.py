@@ -68,7 +68,11 @@ def signals_from_direction(
     cooldown_bars: int = 0,
 ) -> pl.DataFrame:
     """Turn a per-row direction series (-1, 0, 1) into signal rows, applying a cooldown."""
-    rows = frame.select("timestamp", "available_at", "atr_14").with_columns(
+    keep_cols = ["timestamp", "available_at", "atr_14"]
+    has_regime = "regime" in frame.columns
+    if has_regime:
+        keep_cols.append("regime")
+    rows = frame.select(keep_cols).with_columns(
         direction.alias("direction"), pl.int_range(pl.len()).alias("_i")
     )
     candidates = rows.filter((pl.col("direction") != 0) & pl.col("atr_14").is_not_null())
@@ -88,6 +92,7 @@ def signals_from_direction(
         pl.lit(target_atr).alias("target_atr"),
         pl.lit(max_hold_bars, dtype=pl.Int32).alias("max_hold_bars"),
         pl.lit(name).alias("strategy"),
+        *([pl.col("regime")] if has_regime else []),
     )
 
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 - 2026-10-08 (Sprint 9: metrics, edge criteria, checkpoint)
+
+### Added
+* `backtest/metrics.py` (all required metrics), `evaluation/edge.py` (seven criteria, folds),
+  `evaluation/runner.py`, `scripts/run_backtest.py`, planted-edge power test.
+* `docs/reports/checkpoint-1.md`.
+
+### Result
+* Baselines A, B and C failed the pre-registered edge criteria on Development and Validation; the
+  test period remains locked.
+
 ## 0.8.0 - 2026-10-08 (Sprint 8: risk engine and backtest engine)
 
 ### Added

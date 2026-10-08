@@ -323,6 +323,7 @@ def run_backtest(  # noqa: PLR0912, PLR0915 - one sequential simulation loop
                 "mae_r": mae / stop_dist,
                 "balance_after": acct.balance,
                 "strategy": row.get("strategy", ""),
+                "regime": regime,
             }
         )
         engine.check_account(
@@ -385,6 +386,7 @@ _TRADE_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
     "mae_r": pl.Float64,
     "balance_after": pl.Float64,
     "strategy": pl.String,
+    "regime": pl.String,
 }
 _SKIP_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
     "decision_time": _UTC,

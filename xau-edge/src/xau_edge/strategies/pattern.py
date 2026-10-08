@@ -131,8 +131,16 @@ def analogue_study(
     return pl.DataFrame(rows, schema=schema)
 
 
-def baseline_c(study: pl.DataFrame, config: PatternConfig | None = None) -> pl.DataFrame:
-    """Signals from an analogue study (needs ``n_matches``, ``p_up``, ``p_down``, ``atr``)."""
+def baseline_c(
+    study: pl.DataFrame,
+    config: PatternConfig | None = None,
+    *,
+    regimes: pl.DataFrame | None = None,
+) -> pl.DataFrame:
+    """Signals from an analogue study (needs ``n_matches``, ``p_up``, ``p_down``, ``atr``).
+
+    ``regimes`` (columns ``timestamp``, ``regime``) attaches the regime of each query bar.
+    """
     cfg = config or PatternConfig()
     edge = (pl.col("p_up") - pl.col("p_down")).round(12)
     enough = pl.col("n_matches") >= cfg.min_matches
@@ -144,6 +152,8 @@ def baseline_c(study: pl.DataFrame, config: PatternConfig | None = None) -> pl.D
         .otherwise(0)
         .alias("d")
     )["d"]
+    if regimes is not None:
+        study = study.join(regimes.select("timestamp", "regime"), on="timestamp", how="left")
     frame = study.with_columns(
         pl.col("atr").alias("atr_14"), pl.col("decision_time").alias("available_at")
     )

@@ -446,3 +446,8 @@ def test_daily_risk_budget_accumulates_across_trades_on_the_same_day() -> None:
     res = _run(sigs, _bars(60, high={2: 120.0, 8: 120.0}), cfg)
     assert res.trades.height == 1
     assert "DAILY_RISK_BUDGET" in res.skipped["reason"][0]
+
+
+def test_trades_record_the_regime_of_the_signal() -> None:
+    res = _run(_signal(1, regime="TREND_UP"), _bars(high={3: 106.5}))
+    assert res.trades["regime"][0] == "TREND_UP"

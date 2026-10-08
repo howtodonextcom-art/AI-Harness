@@ -148,3 +148,23 @@ def test_realised_outcomes_never_reach_into_the_next_period() -> None:
     assert late.height > 0
     assert late["realized_atr"].null_count() == late.height
     assert early["realized_atr"].null_count() == 0
+
+
+def test_baseline_c_attaches_regimes_by_timestamp() -> None:
+    ts = [datetime(2026, 1, 1, tzinfo=UTC), datetime(2026, 1, 1, 0, 15, tzinfo=UTC)]
+    study = pl.DataFrame(
+        {
+            "timestamp": pl.Series(ts, dtype=pl.Datetime("us", "UTC")),
+            "decision_time": pl.Series(ts, dtype=pl.Datetime("us", "UTC")),
+            "q_index": [0, 1],
+            "atr": [2.0, 2.0],
+            "n_matches": [20, 20],
+            "p_up": [0.9, 0.9],
+            "p_down": [0.0, 0.0],
+        }
+    )
+    regimes = pl.DataFrame(
+        {"timestamp": pl.Series(ts, dtype=pl.Datetime("us", "UTC")), "regime": ["RANGE", "SHOCK"]}
+    )
+    sig = baseline_c(study, PatternConfig(), regimes=regimes)
+    assert sig["regime"].to_list() == ["RANGE", "SHOCK"]

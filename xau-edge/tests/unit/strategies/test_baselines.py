@@ -164,3 +164,12 @@ def test_signals_are_decided_at_bar_close() -> None:
     f = _b_frame([3, 3], [2, 2], [1, 1], [40.0, 60.0])
     sig = baseline_b(f)
     assert sig["decision_time"][0] == f["available_at"][1]
+
+
+def test_signals_carry_the_regime_of_the_decision_bar_when_available() -> None:
+    f = _b_frame([3.0, 3.0], [2.0, 2.0], [1.0, 1.0], [40.0, 60.0]).with_columns(
+        pl.Series("regime", ["RANGE", "TREND_UP"])
+    )
+    sig = baseline_b(f)
+    assert sig["regime"].to_list() == ["TREND_UP"]
+    assert "regime" not in baseline_b(f.drop("regime")).columns
