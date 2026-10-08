@@ -115,6 +115,15 @@ class Reconciler:
             records = {}
         else:
             self._check_positions(snapshot, records, found)
+            try:
+                pending = self.state.unresolved_submissions()
+            except StateError as exc:
+                found.append(Mismatch("STATE_UNAVAILABLE", str(exc)))
+                pending = []
+            found.extend(
+                Mismatch("UNRESOLVED_SUBMISSION", f"intent {i[:12]} has no final outcome")
+                for i in pending
+            )
         result = ReconcileResult(not found, tuple(found))
         if not result.clean:
             log_event(_LOG, "reconcile.mismatch", logging.ERROR, codes=list(result.codes))

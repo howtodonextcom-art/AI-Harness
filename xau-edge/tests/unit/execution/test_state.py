@@ -13,6 +13,7 @@ from xau_edge.execution.state import (
     BotPositionRecord,
     DailyLimitError,
     DuplicateSignalError,
+    DuplicateSubmissionError,
     ExecutionState,
     PersistentKillSwitch,
     StateError,
@@ -97,7 +98,7 @@ def test_dry_run_is_remembered_but_does_not_use_the_daily_budget(tmp_path: Path)
 
 
 def _record_position(intent: str = "i1", ticket: str = "100") -> BotPositionRecord:
-    return BotPositionRecord(intent, ticket, "XAUUSD", 1, 0.5, 1990.0, 2010.0, T)
+    return BotPositionRecord(intent, ticket, "XAUUSD", 1, 0.5, 1990.0, 2010.0, T, T)
 
 
 def test_bot_positions_persist_and_can_be_closed(tmp_path: Path) -> None:
@@ -217,3 +218,20 @@ def test_an_unreadable_state_makes_the_persistent_kill_switch_report_tripped(
     conn.close()
     assert switch.tripped is True
     assert switch.reason == STATE_UNREADABLE
+
+
+def test_a_submission_can_begin_once_and_unresolved_ones_are_listed(tmp_path: Path) -> None:
+    path = tmp_path / "s.sqlite"
+    state = ExecutionState(path)
+    state.begin_submission("i1", "h1")
+    with pytest.raises(DuplicateSubmissionError):
+        ExecutionState(path).begin_submission("i1", "h1")  # even from a new process
+    assert state.unresolved_submissions() == ["i1"]
+    state.finish_submission("i1", "UNKNOWN")
+    assert state.unresolved_submissions() == ["i1"]
+    state.finish_submission("i1", "FILLED", retcode=10009, ticket="5")
+    assert state.unresolved_submissions() == []
+    with pytest.raises(DuplicateSubmissionError):
+        state.begin_submission("i1", "h1")  # a finished intent is never sent again
+    with pytest.raises(StateError, match="no submission"):
+        state.finish_submission("zzz", "FILLED")

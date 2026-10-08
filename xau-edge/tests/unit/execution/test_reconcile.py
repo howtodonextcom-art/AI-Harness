@@ -54,7 +54,7 @@ def _snap(*positions: BrokerPosition, account: BrokerAccount | None = None) -> B
 
 
 def _record() -> BotPositionRecord:
-    return BotPositionRecord("i1", "100", "XAUUSD", 1, 0.5, 1990.0, 2010.0, T)
+    return BotPositionRecord("i1", "100", "XAUUSD", 1, 0.5, 1990.0, 2010.0, T, T)
 
 
 def _rec(tmp_path: Path, *, with_position: bool = True, **kwargs: Any) -> Reconciler:

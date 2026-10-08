@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     enable_live_trading: bool = False
     enable_demo_trading: bool = False
     demo_dry_run: bool = True
+    demo_smoke: bool = False
+    demo_deviation_points: int = 30
     demo_allowed_accounts: str = ""
     demo_allowed_symbols: str = "XAUUSD"
     demo_magic: int | None = None
@@ -55,7 +57,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _demo_execution_requires_explicit_guards(self) -> Self:
-        if self.enable_demo_trading and not self.demo_dry_run:
+        if self.demo_smoke and not self.enable_demo_trading:
+            msg = "XAU_EDGE_DEMO_SMOKE requires XAU_EDGE_ENABLE_DEMO_TRADING"
+            raise ValueError(msg)
+        if (self.enable_demo_trading and not self.demo_dry_run) or self.demo_smoke:
             missing: list[str] = []
             if not self.demo_allowed_accounts.strip():
                 missing.append("XAU_EDGE_DEMO_ALLOWED_ACCOUNTS")

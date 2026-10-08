@@ -18,6 +18,7 @@ from pathlib import Path
 
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.bridge import SignalBridge
+from xau_edge.execution.order_intent import OrderIntent
 from xau_edge.execution.reconcile import ReconcileResult
 from xau_edge.observability import log_event
 from xau_edge.risk.engine import AccountState
@@ -25,6 +26,14 @@ from xau_edge.signals.engine import MarketFrames
 from xau_edge.signals.schema import Signal
 
 _LOG = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class SubmitOutcome:
+    """What an executor answered for an intent (status and ticket only)."""
+
+    status: str
+    ticket: str | None = None
 
 
 class JournalError(RuntimeError):
@@ -45,6 +54,8 @@ class CycleReport:
     dry_run: bool
     data_age_minutes: float | None
     skipped: bool = False
+    order_status: str | None = None
+    ticket: str | None = None
 
 
 class CycleJournal:
@@ -97,11 +108,13 @@ class DryRunCycle:
         journal: CycleJournal,
         *,
         max_data_age: timedelta = timedelta(minutes=30),
+        submit: Callable[[OrderIntent, datetime], SubmitOutcome] | None = None,
     ) -> None:
         self.bridge = bridge
         self.signal_fn = signal_fn
         self.journal = journal
         self.max_data_age = max_data_age
+        self.submit = submit
 
     def run(
         self,
@@ -132,6 +145,9 @@ class DryRunCycle:
         signal = self.signal_fn(at)
         spread = float(frames.m5["spread"][-1])
         result = self.bridge.process(signal, now, account=account, spread_points=spread)
+        outcome: SubmitOutcome | None = None
+        if result.intent is not None and not result.intent.dry_run and self.submit is not None:
+            outcome = self.submit(result.intent, now)
         report = CycleReport(
             recorded_at=now.isoformat(),
             decision_time=at.isoformat(),
@@ -142,6 +158,8 @@ class DryRunCycle:
             intent_id=result.intent.intent_id if result.intent else None,
             dry_run=self.bridge.dry_run,
             data_age_minutes=age_minutes,
+            order_status=outcome.status if outcome else None,
+            ticket=outcome.ticket if outcome else None,
         )
         return self._record(report)
 

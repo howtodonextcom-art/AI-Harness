@@ -24,7 +24,7 @@ from xau_edge.observability import log_event
 from xau_edge.risk.kill_switch import RESET_PHRASE, KillSwitch
 
 _LOG = logging.getLogger(__name__)
-SCHEMA_VERSION: Final = 2
+SCHEMA_VERSION: Final = 3
 STATE_UNREADABLE: Final = "STATE_UNREADABLE"
 
 _SCHEMA: Final = (
@@ -38,10 +38,12 @@ _SCHEMA: Final = (
     "CREATE TABLE IF NOT EXISTS bot_positions (intent_id TEXT PRIMARY KEY, ticket TEXT NOT NULL,"
     " symbol TEXT NOT NULL, direction INTEGER NOT NULL, lots REAL NOT NULL,"
     " stop_loss REAL NOT NULL, take_profit REAL NOT NULL, status TEXT NOT NULL,"
-    " opened_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
+    " opened_at TEXT NOT NULL, max_hold_until TEXT NOT NULL, updated_at TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS submissions (intent_id TEXT PRIMARY KEY, signal_hash TEXT NOT NULL,"
+    " status TEXT NOT NULL, retcode INTEGER, ticket TEXT, updated_at TEXT NOT NULL)",
 )
 _EXPECTED_TABLES: Final = frozenset(
-    {"meta", "kill_switch", "seen_signals", "daily_orders", "bot_positions"}
+    {"meta", "kill_switch", "seen_signals", "daily_orders", "bot_positions", "submissions"}
 )
 
 
@@ -57,6 +59,7 @@ class BotPositionRecord:
     stop_loss: float
     take_profit: float
     opened_at: datetime
+    max_hold_until: datetime
 
 
 class StateError(RuntimeError):
@@ -65,6 +68,10 @@ class StateError(RuntimeError):
 
 class DuplicateSignalError(StateError):
     """The signal hash was already recorded as acted on."""
+
+
+class DuplicateSubmissionError(StateError):
+    """The intent was already submitted (or a submission is unresolved)."""
 
 
 class DailyLimitError(StateError):
@@ -271,8 +278,8 @@ class ExecutionState:
                 raise StateError(msg)
             conn.execute(
                 "INSERT INTO bot_positions (intent_id, ticket, symbol, direction, lots,"
-                " stop_loss, take_profit, status, opened_at, updated_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?)",
+                " stop_loss, take_profit, status, opened_at, max_hold_until, updated_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?)",
                 (
                     record.intent_id,
                     record.ticket,
@@ -282,6 +289,7 @@ class ExecutionState:
                     record.stop_loss,
                     record.take_profit,
                     record.opened_at.isoformat(),
+                    record.max_hold_until.isoformat(),
                     _now(),
                 ),
             )
@@ -303,7 +311,8 @@ class ExecutionState:
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT intent_id, ticket, symbol, direction, lots, stop_loss, take_profit,"
-                " opened_at FROM bot_positions WHERE status = 'OPEN' ORDER BY opened_at"
+                " opened_at, max_hold_until FROM bot_positions WHERE status = 'OPEN'"
+                " ORDER BY opened_at"
             ).fetchall()
         try:
             return [
@@ -316,12 +325,51 @@ class ExecutionState:
                     stop_loss=float(r[5]),
                     take_profit=float(r[6]),
                     opened_at=datetime.fromisoformat(r[7]),
+                    max_hold_until=datetime.fromisoformat(r[8]),
                 )
                 for r in rows
             ]
         except (ValueError, TypeError) as exc:
             msg = "a stored bot position is malformed"
             raise StateError(msg) from exc
+
+    # -- submissions: exactly-once guard for order sending -------------------------------------
+
+    def begin_submission(self, intent_id: str, signal_hash: str) -> None:
+        """Mark an intent as being sent; a second attempt for the same intent is refused."""
+        with self._transaction() as conn:
+            if conn.execute(
+                "SELECT 1 FROM submissions WHERE intent_id = ?", (intent_id,)
+            ).fetchone():
+                msg = f"intent {intent_id[:12]} was already submitted or is being submitted"
+                raise DuplicateSubmissionError(msg)
+            conn.execute(
+                "INSERT INTO submissions (intent_id, signal_hash, status, updated_at)"
+                " VALUES (?, ?, 'PENDING', ?)",
+                (intent_id, signal_hash, _now()),
+            )
+
+    def finish_submission(
+        self, intent_id: str, status: str, *, retcode: int | None = None, ticket: str | None = None
+    ) -> None:
+        """Record the outcome (FILLED, REJECTED or UNKNOWN) of a started submission."""
+        with self._transaction() as conn:
+            cursor = conn.execute(
+                "UPDATE submissions SET status = ?, retcode = ?, ticket = ?, updated_at = ?"
+                " WHERE intent_id = ?",
+                (status, retcode, ticket, _now(), intent_id),
+            )
+            if cursor.rowcount != 1:
+                msg = f"no submission recorded for intent {intent_id[:12]}"
+                raise StateError(msg)
+
+    def unresolved_submissions(self) -> list[str]:
+        """Intent ids whose submission never reached a final outcome (PENDING or UNKNOWN)."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT intent_id FROM submissions WHERE status IN ('PENDING', 'UNKNOWN')"
+            ).fetchall()
+        return [str(r[0]) for r in rows]
 
 
 class PersistentKillSwitch(KillSwitch):

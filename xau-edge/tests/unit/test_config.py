@@ -92,3 +92,19 @@ def test_settings_are_immutable() -> None:
 def test_env_overrides_data_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("XAU_EDGE_DATA_DIR", str(tmp_path))
     assert Settings(_env_file=None).data_dir == tmp_path
+
+
+def test_smoke_mode_needs_demo_trading_and_the_explicit_guards() -> None:
+    with pytest.raises(ValueError, match="SMOKE"):
+        Settings(demo_smoke=True, _env_file=None)
+    with pytest.raises(ValueError, match="explicit guard"):
+        Settings(enable_demo_trading=True, demo_smoke=True, _env_file=None)
+    ok = Settings(
+        enable_demo_trading=True,
+        demo_smoke=True,
+        demo_allowed_accounts="123",
+        demo_magic=7,
+        _env_file=None,
+    )
+    assert ok.demo_smoke is True
+    assert Settings(_env_file=None).demo_smoke is False

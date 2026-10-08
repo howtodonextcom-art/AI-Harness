@@ -23,16 +23,19 @@ from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 
+from xau_edge.brokers.mt5_demo.executor import ExecutorConfig, Mt5DemoExecutor
 from xau_edge.brokers.mt5_demo.reader import DemoAccountError, DemoReader
 from xau_edge.config import Settings
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.bridge import SignalBridge
 from xau_edge.execution.journal import ExecutionJournal
+from xau_edge.execution.order_intent import OrderIntent
 from xau_edge.execution.reconcile import Reconciler
 from xau_edge.execution.runner import (
     CycleJournal,
     DryRunCycle,
     LockHeldError,
+    SubmitOutcome,
     acquire_lock,
     next_close,
     write_heartbeat,
@@ -67,7 +70,7 @@ def generate_signal_for(frames: MarketFrames, registry: ExperimentRegistry, at: 
     return generate_signal(frames, at, registry)
 
 
-def main() -> int:  # noqa: PLR0911 - one exit code per refusal
+def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
@@ -84,9 +87,8 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
     assert_live_trading_disabled()
 
     settings = Settings()
-    if not settings.demo_dry_run:
-        print("REFUSING: XAU_EDGE_DEMO_DRY_RUN=false, but order submission is not implemented.")
-        return 2
+    demo_mode = settings.enable_demo_trading and not settings.demo_dry_run
+    mode = "demo" if demo_mode else "dry-run"
     magic = args.magic if args.magic is not None else settings.demo_magic
 
     data_dir = Path(args.data_dir)
@@ -103,9 +105,9 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
         allowed_symbols=tuple(s.strip() for s in settings.demo_allowed_symbols.split(",")),
         max_lots=settings.demo_max_lots,
         max_orders_per_day=settings.demo_max_orders_per_day,
-        dry_run=True,
+        dry_run=not demo_mode,
     )
-    bridge = SignalBridge(state, risk, safety, magic=magic, dry_run=True)
+    bridge = SignalBridge(state, risk, safety, magic=magic, dry_run=not demo_mode)
     registry = ExperimentRegistry("experiments/runs")
     journal = CycleJournal(exec_dir / "cycles.jsonl")
     audit = ExecutionJournal(settings.demo_journal_path)
@@ -113,8 +115,12 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
         a.strip() for a in settings.demo_allowed_accounts.split(",") if a.strip()
     )
     reconciler = Reconciler(
-        state, magic=magic, symbols=(args.symbol,), allowed_accounts=allowed_accounts
-    )  # observe only: the dry-run never trips the kill switch
+        state,
+        magic=magic,
+        symbols=(args.symbol,),
+        allowed_accounts=allowed_accounts,
+        trip_on_mismatch=demo_mode,  # the dry-run only observes; demo execution stops on a mismatch
+    )
     store = RawStore(data_dir / "raw")
 
     mt5 = load_mt5_module()
@@ -130,9 +136,40 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
             print(f"REFUSING: {exc}")
             return 3
         mt5.symbol_select(args.symbol, True)
+        executor: Mt5DemoExecutor | None = None
+        if demo_mode:
+            executor = Mt5DemoExecutor(
+                mt5,
+                reader,
+                state,
+                audit,
+                reconciler,
+                ExecutorConfig(
+                    enabled=True,
+                    dry_run=False,
+                    allowed_accounts=allowed_accounts,
+                    symbols=safety.allowed_symbols,
+                    magic=magic,
+                    max_lots=settings.demo_max_lots,
+                    deviation_points=settings.demo_deviation_points,
+                ),
+            )
         source = Mt5BarSource(mt5, Mt5Settings(broker_timezone=profile.clock.token))
+
+        def submit(intent: OrderIntent, at: datetime) -> SubmitOutcome:
+            if executor is None:
+                raise RuntimeError("no executor in dry-run mode")
+            outcome = executor.submit(intent, at)
+            return SubmitOutcome(outcome.status, outcome.ticket)
+
         print(
-            f"dry-run demo bot started (read-only, never sends orders); magic={'set' if magic is not None else 'MISSING'}"
+            f"{mode} bot started "
+            + (
+                "(DEMO account only, bounded by every gate)"
+                if demo_mode
+                else "(read-only, never sends orders)"
+            )
+            + f"; magic={'set' if magic is not None else 'MISSING'}"
         )
         while True:
             now = datetime.now(UTC)
@@ -161,7 +198,7 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
                     exec_dir / "status.json",
                     build_status(
                         now,
-                        mode="dry-run",
+                        mode=mode,
                         symbol=args.symbol,
                         snapshot=None,
                         reconcile=None,
@@ -173,6 +210,10 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
                     return 5
                 time.sleep(30)
                 continue
+            if executor is not None:
+                for closed in executor.close_expired(now):
+                    print(f"{now:%H:%M:%S} expiry close: {closed.status} {list(closed.reasons)}")
+                snapshot = reader.snapshot(now)
             reconcile = reconciler.check(snapshot)
             audit.record("reconcile.result", clean=reconcile.clean, codes=list(reconcile.codes))
             balance = snapshot.account.balance
@@ -188,7 +229,12 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
                 risk_taken_today=0.0,
                 consecutive_losses=0,
             )
-            cycle = DryRunCycle(bridge, partial(generate_signal_for, frames, registry), journal)
+            cycle = DryRunCycle(
+                bridge,
+                partial(generate_signal_for, frames, registry),
+                journal,
+                submit=submit,
+            )
             if invalid:
                 print(f"{now:%H:%M:%S} data validation failed for {invalid}; cycle skipped")
                 write_heartbeat(exec_dir / "heartbeat.json", now, "DATA_INVALID")
@@ -196,7 +242,7 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
                     exec_dir / "status.json",
                     build_status(
                         now,
-                        mode="dry-run",
+                        mode=mode,
                         symbol=args.symbol,
                         snapshot=snapshot,
                         reconcile=reconcile,
@@ -214,7 +260,7 @@ def main() -> int:  # noqa: PLR0911 - one exit code per refusal
                     exec_dir / "status.json",
                     build_status(
                         now,
-                        mode="dry-run",
+                        mode=mode,
                         symbol=args.symbol,
                         snapshot=snapshot,
                         reconcile=reconcile,
