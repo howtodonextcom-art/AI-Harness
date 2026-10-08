@@ -90,11 +90,11 @@ src/xau_edge/        domain/ market_data/ features/ structure/ patterns/ outcome
                      backtest/ risk/ news/ models/ evaluation/ experiments/ signals/ execution/
                      api/ observability.py config.py
                      brokers/mt5_demo/ (the only MT5 order adapter) funded/ (run plan, rollout)
-apps/dashboard/      Next.js dashboard (read-only)
+apps/dashboard/      Next.js dashboard (read-only; /control only with XAU_EDGE_WEB_CONTROL)
 configs/             brokers/ (measured profiles) prop/ (FTMO rules, verified 2026-10-08)
 tests/               unit/ integration/ regression/ statistical/ fixtures/
 docs/                PROJECT_PLAN.md BRIEF.md ROADMAP_TRACEABILITY.md architecture/ research/
-                     decisions/ (ADR-0001..0022) evals/ risk/ testing/ operations/ reports/
+                     decisions/ (ADR-0001..0023) evals/ risk/ testing/ operations/ reports/
 data/ models/ experiments/runs/   git-ignored local data, artifacts and run records
 .claude/             ECC components (project-local, minimal profile, no hooks)
 ```
@@ -110,7 +110,7 @@ data/ models/ experiments/runs/   git-ignored local data, artifacts and run reco
   `funded-readiness.md` (funded track status and operator commands)
 * Execution ADRs: ADR-0019 (demo execution scope), ADR-0020 (funded account execution: whitelists,
   D6 rule lock, staged rollout, D2 override, D5 auto-flatten), ADR-0021 (strategy registry),
-  ADR-0022 (entry price side and deviation)
+  ADR-0022 (entry price side and deviation), ADR-0023 (local web control plane)
 
 ## Demo bot (MT5 demo only)
 
@@ -120,3 +120,19 @@ validation every signal is WAIT. See `docs/operations/demo-trading.md`, `docs/ar
 and `docs/risk/demo-execution-risk.md`. The same bot runs on an FTMO funded account only through
 `scripts/demo_trader.py --confirm-mode FUNDED` with every ADR-0020 condition met; see
 `docs/operations/go-live-checklist.md`.
+
+## Dashboard và điều khiển từ web (`XAU_EDGE_WEB_CONTROL`)
+
+Mặc định dashboard chỉ đọc. Đặt `XAU_EDGE_WEB_CONTROL=true` trong `.env` để mở trang "Điều khiển"
+(`/control`): preflight, khởi động/dừng bot, chuyển DRY-RUN ↔ DEMO, smoke test và đóng khẩn cấp (ADR-0023).
+Cờ này không bật demo hay funded; mọi gate an toàn giữ nguyên.
+
+```powershell
+uv run --extra api --extra mt5 python scripts/serve_api.py      # API 127.0.0.1:8000, ghi data/execution/control_token
+cd apps/dashboard; npm run build; npx next start -p 3000 -H 127.0.0.1   # bắt buộc cổng 3000
+```
+
+Token chỉ được server Next.js đọc từ file (`XAU_EDGE_CONTROL_TOKEN_FILE` nếu khác mặc định), không
+bao giờ vào trình duyệt. Hướng dẫn đầy đủ: mục 9 "Vận hành từ web" trong `docs/operations/demo-trading.md`.
+
+![Trang Điều khiển](docs/operations/img/control-page.png)
