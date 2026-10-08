@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -20,6 +23,7 @@ from xau_edge.execution.runner import (
     LockHeldError,
     acquire_lock,
     next_close,
+    pid_alive,
     write_heartbeat,
 )
 from xau_edge.execution.safety import ExecutionSafety
@@ -196,3 +200,49 @@ def test_a_dirty_reconciliation_refuses_the_cycle_without_consuming_the_bar(
     assert not report.accepted
     clean = cycle.run(frames, now, _account(), reconcile=ReconcileResult(True, ()))
     assert clean.accepted  # the bar was not consumed by the refusal
+
+
+def _dead_pid() -> int:
+    proc = subprocess.Popen([sys.executable, "-c", "pass"])
+    proc.wait()
+    return proc.pid
+
+
+def test_pid_alive_knows_itself_and_a_finished_process() -> None:
+    assert pid_alive(os.getpid())
+    assert not pid_alive(_dead_pid())
+    assert not pid_alive(0)
+    assert not pid_alive(-5)
+
+
+def test_a_lock_records_pid_and_start_time(tmp_path: Path) -> None:
+    lock = tmp_path / "bot.lock"
+    acquire_lock(lock)
+    data = json.loads(lock.read_text(encoding="utf-8"))
+    assert data["pid"] == os.getpid()
+    assert data["started_at"]
+
+
+def test_a_stale_lock_of_a_dead_process_is_taken_over(tmp_path: Path) -> None:
+    lock = tmp_path / "bot.lock"
+    lock.write_text(json.dumps({"pid": _dead_pid(), "started_at": "2026-01-01T00:00:00+00:00"}))
+    acquire_lock(lock)
+    assert json.loads(lock.read_text(encoding="utf-8"))["pid"] == os.getpid()
+
+
+def test_the_old_bare_pid_format_of_a_dead_process_is_also_taken_over(tmp_path: Path) -> None:
+    lock = tmp_path / "bot.lock"
+    lock.write_text(str(_dead_pid()))
+    acquire_lock(lock)
+
+
+def test_a_lock_of_a_live_process_or_an_unreadable_one_is_never_taken(tmp_path: Path) -> None:
+    live = tmp_path / "live.lock"
+    live.write_text(json.dumps({"pid": os.getpid(), "started_at": "x"}))
+    with pytest.raises(LockHeldError):
+        acquire_lock(live)
+    broken = tmp_path / "broken.lock"
+    broken.write_text("not a pid")
+    with pytest.raises(LockHeldError):
+        acquire_lock(broken)
+    assert broken.exists()

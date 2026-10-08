@@ -27,11 +27,13 @@ from __future__ import annotations
 import contextlib
 import logging
 import math
+import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
-from xau_edge.brokers.mt5_demo.reader import DemoAccountError, DemoReader
+from xau_edge.brokers.mt5_demo.reader import DemoAccountError, DemoReader, EntryDeal
 from xau_edge.execution.journal import ExecutionJournal
 from xau_edge.execution.order_intent import COMMENT_PREFIX, OrderIntent, make_intent_id
 from xau_edge.execution.reconcile import BrokerPosition, Reconciler
@@ -103,6 +105,8 @@ class ExecutorConfig:
     max_tick_age_seconds: int = 60
     max_intent_age: timedelta = timedelta(minutes=45)
     max_open_positions: int = 1
+    unknown_resolution_seconds: float = 15.0
+    unknown_poll_seconds: float = 3.0
 
 
 @dataclass(frozen=True)
@@ -143,6 +147,7 @@ class Mt5DemoExecutor:
         journal: ExecutionJournal,
         reconciler: Reconciler,
         config: ExecutorConfig,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._mt5 = TradeMt5(client)
         self.reader = reader
@@ -150,6 +155,7 @@ class Mt5DemoExecutor:
         self.journal = journal
         self.reconciler = reconciler
         self.config = config
+        self._sleep = sleep
 
     # -- opening ------------------------------------------------------------------------------
 
@@ -369,13 +375,51 @@ class Mt5DemoExecutor:
 
     def _resolve_uncertain(self, intent: OrderIntent, why: str) -> SubmitResult:
         """No clear answer: look the position up by magic and comment; unproven means stop."""
+        poll = max(self.config.unknown_poll_seconds, 0.1)
+        attempts = int(self.config.unknown_resolution_seconds / poll) + 1
+        for attempt in range(attempts):
+            try:
+                found = self._find_position(intent.comment, intent.magic, None)
+                if found is not None:
+                    return self._confirm_fill(intent, -1, found.ticket)
+                deal = self._find_entry_deal(intent)
+            except DemoAccountError:
+                deal = None
+            if deal is not None:
+                return self._register_already_closed(intent, deal)
+            if attempt < attempts - 1:
+                self._sleep(poll)
+        return self._unknown(intent, why)
+
+    def _find_entry_deal(self, intent: OrderIntent) -> EntryDeal | None:
+        lookback = timedelta(hours=1)
+        for deal in self.reader.entry_deals(datetime.now(UTC), lookback):
+            if deal.magic == intent.magic and deal.comment.startswith(intent.comment):
+                return deal
+        return None
+
+    def _register_already_closed(self, intent: OrderIntent, deal: EntryDeal) -> SubmitResult:
+        """The order filled and the position is already gone (stop or target hit at once)."""
         try:
-            found = self._find_position(intent.comment, intent.magic, None)
-        except DemoAccountError:
-            found = None
-        if found is None:
-            return self._unknown(intent, why)
-        return self._confirm_fill(intent, -1, found.ticket)
+            self.state.register_position(
+                BotPositionRecord(
+                    intent_id=intent.intent_id,
+                    ticket=deal.position_id,
+                    symbol=intent.symbol,
+                    direction=intent.direction,
+                    lots=deal.volume,
+                    stop_loss=intent.stop_loss,
+                    take_profit=intent.take_profit,
+                    opened_at=deal.opened_at,
+                    max_hold_until=intent.max_hold_until,
+                )
+            )
+            self.state.mark_position_closed(deal.position_id)
+            self.state.finish_submission(intent.intent_id, "FILLED", ticket=deal.position_id)
+        except StateError:
+            return self._unknown(intent, "could not record a position that closed at once")
+        self._record_quietly("position.opened_and_closed", intent_id=intent.intent_id)
+        return SubmitResult("FILLED", ("ALREADY_CLOSED",), ticket=deal.position_id)
 
     def _confirm_fill(self, intent: OrderIntent, retcode: int, order_id: Any) -> SubmitResult:
         try:

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import math
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
@@ -40,6 +41,7 @@ _QUERY_NAMES = frozenset(
         "orders_get",
         "history_deals_get",
         "DEAL_ENTRY_OUT",
+        "DEAL_ENTRY_IN",
         "ACCOUNT_TRADE_MODE_DEMO",
         "POSITION_TYPE_BUY",
         "POSITION_TYPE_SELL",
@@ -70,6 +72,17 @@ class QueryOnlyMt5:
             return getattr(self._inner, name)
         msg = f"{name!r} is not available on the query-only MT5 client"
         raise AttributeError(msg)
+
+
+@dataclass(frozen=True)
+class EntryDeal:
+    """A deal that opened a position."""
+
+    position_id: str
+    magic: int
+    comment: str
+    volume: float
+    opened_at: datetime
 
 
 class DemoReader:
@@ -161,6 +174,27 @@ class DemoReader:
                 )
             )
         return tuple(results)
+
+    def entry_deals(self, now: datetime, lookback: timedelta) -> tuple[EntryDeal, ...]:
+        """Deals that opened a position in the window (used to resolve an unknown order)."""
+        start = self._clock.label_as_utc(now - lookback)
+        end = self._clock.label_as_utc(now + timedelta(hours=1))
+        deals = self._client.history_deals_get(start, end)
+        if deals is None:
+            msg = f"history_deals_get failed: {self._client.last_error()}"
+            raise DemoAccountError(msg)
+        entry_in = self._client.DEAL_ENTRY_IN
+        return tuple(
+            EntryDeal(
+                position_id=str(d.position_id),
+                magic=int(d.magic),
+                comment=str(d.comment),
+                volume=float(d.volume),
+                opened_at=self.utc_from_epoch(int(d.time)),
+            )
+            for d in deals
+            if d.entry == entry_in and str(d.symbol) == self.symbol
+        )
 
     def snapshot(self, now: datetime, lookback: timedelta = timedelta(days=14)) -> BrokerSnapshot:
         """Account, positions and recent closes in one object; any failure raises."""

@@ -51,6 +51,7 @@ class FakeTerminal:
     TRADE_RETCODE_DONE = 10009
     TRADE_RETCODE_PLACED = 10008
     DEAL_ENTRY_OUT = 1
+    DEAL_ENTRY_IN = 0
 
     def __init__(self) -> None:
         self.sent: list[dict[str, Any]] = []
@@ -199,7 +200,12 @@ def _make(
     reader = DemoReader(term, BrokerClock.parse("NY+7"))
     reconciler = Reconciler(state, magic=MAGIC, allowed_accounts=(LOGIN,), trip_on_mismatch=True)
     journal = ExecutionJournal(tmp_path / "j.jsonl")
-    return Mt5DemoExecutor(term, reader, state, journal, reconciler, _config(**cfg)), term
+    sleeps: list[float] = []
+    executor = Mt5DemoExecutor(
+        term, reader, state, journal, reconciler, _config(**cfg), sleep=sleeps.append
+    )
+    executor.sleeps = sleeps  # type: ignore[attr-defined]
+    return executor, term
 
 
 def _go(ex: Mt5DemoExecutor, intent: OrderIntent, now: datetime) -> SubmitResult:
@@ -737,3 +743,74 @@ def test_a_buy_from_a_signal_fills_with_the_real_31_point_spread(tmp_path: Path)
     intent = result.intent.model_copy(update={"dry_run": False})
     assert ex.submit(intent, T).status == "FILLED"
     assert term.sent[0]["price"] == 2000.31
+
+
+def test_an_unknown_order_is_polled_before_the_kill_switch_trips(tmp_path: Path) -> None:
+    """T2.4: the answer was lost, the position shows up a moment later."""
+    term = FakeTerminal()
+    term.send_behaviour = "none"
+    ex, term = _make(tmp_path, term)
+    original_positions = term.positions_get
+    late = _position(4242, MAGIC)
+    late.comment = "XAUEDGE:" + "a" * 12
+
+    def late_positions(**kwargs: Any) -> Any:
+        if len(ex.sleeps) >= 2 and late not in term.positions:  # type: ignore[attr-defined]
+            term.positions.append(late)
+        return original_positions(**kwargs)
+
+    term.positions_get = late_positions  # type: ignore[method-assign]
+    result = _go(ex, _intent(), T)
+    assert result.status == "FILLED"
+    assert ex.state.kill_switch_state()[0] is False
+    assert len(ex.sleeps) == 2  # type: ignore[attr-defined]
+    assert len(term.sent) == 1  # never retried
+
+
+def test_an_order_that_filled_and_closed_at_once_is_found_in_the_deal_history(
+    tmp_path: Path,
+) -> None:
+    term = FakeTerminal()
+    term.send_behaviour = "none"
+    term.deals.append(
+        SimpleNamespace(
+            ticket=1, position_id=777, entry=0, symbol="XAUUSD", magic=MAGIC,
+            comment="XAUEDGE:" + "a" * 12, volume=0.5, profit=0.0, commission=0.0, swap=0.0,
+            time=int((T + timedelta(hours=2)).timestamp()),
+        )
+    )  # fmt: skip
+    ex, term = _make(tmp_path, term)
+    result = _go(ex, _intent(), T)
+    assert result.status == "FILLED"
+    assert result.reasons == ("ALREADY_CLOSED",)
+    assert ex.state.open_positions() == []
+    assert ex.state.kill_switch_state()[0] is False
+
+
+def test_an_unknown_order_that_never_appears_polls_then_trips(tmp_path: Path) -> None:
+    term = FakeTerminal()
+    term.send_behaviour = "none"
+    ex, term = _make(tmp_path, term)
+    result = _go(ex, _intent(), T)
+    assert result.status == "UNKNOWN"
+    assert ex.state.kill_switch_state()[0] is True
+    assert len(ex.sleeps) == 5  # type: ignore[attr-defined]  # 15 s resolution / 3 s poll
+    assert len(term.sent) == 1
+
+
+def test_a_partial_fill_is_never_topped_up(tmp_path: Path) -> None:
+    """T2.6: the real volume is recorded and no second order is sent."""
+    term = FakeTerminal()
+    original = term.order_send
+
+    def partial(request: dict[str, Any]) -> Any:
+        result = original(request)
+        term.positions[-1].volume = 0.2
+        result.retcode = 10010
+        return result
+
+    term.order_send = partial  # type: ignore[method-assign]
+    ex, term = _make(tmp_path, term)
+    assert _go(ex, _intent(), T).status == "FILLED"
+    assert len(term.sent) == 1
+    assert ex.reconciler.check(ex.reader.snapshot(T)).clean  # reconciles with the real volume

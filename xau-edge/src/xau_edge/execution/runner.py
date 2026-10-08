@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sys
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
@@ -203,16 +204,69 @@ class LockHeldError(RuntimeError):
     """Another instance holds the lock file."""
 
 
-def acquire_lock(path: Path) -> None:
-    """Refuse to run twice: create the lock atomically; the operator removes a stale one."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+def pid_alive(pid: int) -> bool:  # noqa: PLR0911 - one answer per platform and error
+    """True if a process with this id is running (never signals it: could kill it on Windows)."""
+    if pid <= 0:
+        return False
+    if sys.platform == "win32":
+        import ctypes  # noqa: PLC0415 - Windows only
+
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined,unused-ignore]
+        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        try:
+            code = ctypes.c_ulong()
+            if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+                return True  # cannot tell: assume alive (fail closed)
+            return code.value == 259  # STILL_ACTIVE
+        finally:
+            kernel32.CloseHandle(handle)
     try:
-        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
-        msg = f"another instance holds {path}; if it is not running, delete the file after checking"
-        raise LockHeldError(msg) from None
-    with os.fdopen(fd, "w") as handle:
-        handle.write(str(os.getpid()))
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _lock_owner(path: Path) -> int | None:
+    """The pid written in a lock file (new JSON format or the old bare number), if readable."""
+    try:
+        text = path.read_text(encoding="utf-8").strip()
+        return int(json.loads(text)["pid"]) if text.startswith("{") else int(text)
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def acquire_lock(path: Path) -> None:
+    """Refuse to run twice; a lock whose owner process is gone is taken over automatically.
+
+    The lock records the pid and the start time. If the file cannot be read or the pid cannot be
+    shown to be dead, the lock is treated as held (fail closed: never run two bots).
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(2):
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            owner = _lock_owner(path)
+            if owner is not None and not pid_alive(owner):
+                log_event(_LOG, "lock.stale_released", logging.WARNING, pid=owner)
+                path.unlink(missing_ok=True)
+                continue
+            msg = (
+                f"another instance holds {path} (pid {owner}); delete it only if it is not running"
+            )
+            raise LockHeldError(msg) from None
+        with os.fdopen(fd, "w") as handle:
+            handle.write(
+                json.dumps({"pid": os.getpid(), "started_at": datetime.now(UTC).isoformat()})
+            )
+        return
+    msg = f"could not take the lock {path}"
+    raise LockHeldError(msg)
 
 
 def next_close(now: datetime) -> datetime:
