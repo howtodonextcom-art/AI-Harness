@@ -4,7 +4,9 @@ Everything is computed from bars that had CLOSED by the decision time (the close
 M15 bar at or before ``at``), so the same call on data truncated there returns the identical signal
 and a bar still forming at ``at`` is never used. Probabilities come from the historical analogues
 (empirical frequencies of what followed, with the leakage rule of ADR-0013), labelled as such. The
-evidence gate (ADR-0017) is bound to the Baseline C configuration this engine mirrors.
+evidence gate (ADR-0017) is looked up through a ``StrategySpec`` (ADR-0021): by strategy id, config
+hash and dataset hash. Without an explicit strategy the spec is Baseline C, which mirrors the
+analogue inputs this engine builds; no strategy is VALIDATED today, so the answer stays WAIT.
 """
 
 from __future__ import annotations
@@ -30,8 +32,9 @@ from xau_edge.outcomes.summary import summarise
 from xau_edge.patterns.representation import pattern_values, window_validity
 from xau_edge.patterns.search import PatternIndex, SearchConfig
 from xau_edge.signals.decision import DecisionPolicy, SignalInputs, decide
-from xau_edge.signals.evidence import evidence_status
+from xau_edge.signals.evidence import evidence_for_strategy
 from xau_edge.signals.schema import EvidenceStatus, Signal
+from xau_edge.signals.strategy_registry import StrategySpec, default_strategy
 from xau_edge.strategies.context import build_context
 from xau_edge.strategies.pattern import PatternConfig
 
@@ -189,10 +192,16 @@ def generate_signal(
     *,
     calendar: EconomicCalendar | None = None,
     policy: DecisionPolicy | None = None,
+    strategy: StrategySpec | None = None,
+    dataset: str | None = None,
 ) -> Signal:
-    """The signal at ``at``: evidence gate from the registry, inputs from closed bars, decision."""
+    """The signal at ``at``: evidence gate from the registry, inputs from closed bars, decision.
+
+    ``strategy`` selects whose evidence opens the gate (default Baseline C); ``dataset`` optionally
+    pins the dataset hash the validation records must carry.
+    """
     pol = policy or default_policy()
-    evidence = evidence_status(registry, family=EVIDENCE_FAMILY, params=evidence_params())
+    evidence = evidence_for_strategy(registry, strategy or default_strategy(), dataset=dataset)
     inputs = build_inputs(frames, at, evidence=evidence, calendar=calendar, policy=pol)
     commit, _ = current_code_version()
     signal = decide(inputs, pol, code_version=commit)

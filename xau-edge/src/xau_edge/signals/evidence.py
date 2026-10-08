@@ -14,6 +14,7 @@ from typing import Any
 
 from xau_edge.experiments.registry import ExperimentRecord, ExperimentRegistry
 from xau_edge.signals.schema import EvidenceStatus
+from xau_edge.signals.strategy_registry import StrategySpec, config_hash, dataset_hash
 
 PERIODS = ("development", "validation", "test")
 
@@ -37,10 +38,35 @@ def evidence_status(
     for record in registry.list(family):
         if _key(record.params) == wanted:
             latest[record.period] = record
+    return _decide(latest, None)
+
+
+def evidence_for_strategy(
+    registry: ExperimentRegistry, spec: StrategySpec, *, dataset: str | None = None
+) -> EvidenceStatus:
+    """VALIDATED for ``spec`` (id + config hash) on one dataset hash (ADR-0021).
+
+    Same conditions as :func:`evidence_status`; additionally the records must carry
+    ``params["strategy"] == spec.strategy_id`` and the config hash of ``spec``, and, when
+    ``dataset`` is given, the hash of the datasets they ran on must equal it.
+    """
+    latest: dict[str, ExperimentRecord] = {}
+    for record in registry.list(spec.family):
+        if (
+            record.params.get("strategy") == spec.strategy_id
+            and config_hash(record.params) == spec.config_hash
+        ):
+            latest[record.period] = record
+    return _decide(latest, dataset)
+
+
+def _decide(latest: dict[str, ExperimentRecord], dataset: str | None) -> EvidenceStatus:
     if not all(period in latest for period in PERIODS):
         return EvidenceStatus.NONE
     records = [latest[p] for p in PERIODS]
     same_data = len({_key(dict(r.dataset_ids)) for r in records}) == 1
+    if dataset is not None and dataset_hash(records[0].dataset_ids) != dataset:
+        return EvidenceStatus.NONE
     clean = not any(r.code_dirty for r in records)
     if same_data and clean and all(_passed(r) for r in records):
         return EvidenceStatus.VALIDATED
