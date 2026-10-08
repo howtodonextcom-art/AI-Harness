@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 - 2026-10-08 (Sprint 8: risk engine and backtest engine)
+
+### Added
+* `risk/`: sizing, FTMO profile loader, risk engine with 12 refusal reasons, latching kill switch.
+* `news/`: calendar interface, CSV loader and a window guard that fails closed outside coverage.
+* `backtest/`: bid/ask fill model with spread, slippage, commission, swap, gaps, equity and
+  intrabar-low curves, prop-day tracking and breach scan.
+* `docs/risk/risk-engine.md`, ADR-0015.
+
+### Safety
+* Unknown regime, missing news calendar, non-finite market state and corrupt bars are refused by default.
+
 ## 0.7.0 - 2026-10-08 (Sprint 7: outcomes, baselines, evaluation protocol)
 
 ### Added
