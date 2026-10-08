@@ -15,6 +15,7 @@ import numpy as np
 import polars as pl
 
 from xau_edge.api.bot import BotContext
+from xau_edge.control.service import ControlService
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.trader import PaperTrader
 from xau_edge.experiments.registry import ExperimentRegistry
@@ -77,6 +78,9 @@ class ApiContext:
     signal_provider: Callable[[datetime], Signal] | None = None
     paper: PaperTrader | None = None
     bot: BotContext | None = None
+    control: ControlService | None = None
+    """The web control plane (ADR-0023); ``None`` keeps the API free of ``/control`` routes."""
+    control_port: int = 8000
     clock: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
     max_data_age_minutes: int = 45
     _paper_lock: threading.Lock = field(default_factory=threading.Lock)

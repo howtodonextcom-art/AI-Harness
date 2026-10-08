@@ -66,6 +66,8 @@ class Settings(BaseSettings):
     news_calendar_path: Path | None = None
     data_dir: Path = Path("data")
     log_level: str = "INFO"
+    web_control: bool = False
+    """Mount the local web control plane (``/control/*``, ADR-0023); off unless set explicitly."""
 
     @field_validator("enable_live_trading")
     @classmethod

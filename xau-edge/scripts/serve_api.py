@@ -1,7 +1,13 @@
-"""Serve the read-only research API on localhost (never exposed beyond 127.0.0.1).
+"""Serve the research API on localhost (never exposed beyond 127.0.0.1).
 
 Usage: ``uv run python scripts/serve_api.py [--port 8000]``
-The API has no endpoint that can place an order; live trading does not exist in this project.
+The research endpoints are read-only; live trading does not exist in this project.
+
+With ``XAU_EDGE_WEB_CONTROL=true`` (default false) the local web control plane ``/control/*`` is
+mounted too (ADR-0023): start/stop the bot, DRY_RUN/DEMO, smoke and flatten, guarded by a token
+that is generated at every start and written to ``data/execution/control_token`` (readable by the
+current user only). The bot itself needs the MT5 package, so start the API with both extras:
+``uv run --extra api --extra mt5 python scripts/serve_api.py``.
 """
 
 from __future__ import annotations
@@ -27,12 +33,15 @@ from xau_edge.risk.engine import RiskEngine, RiskLimits
 from xau_edge.risk.prop_rules import load_prop_profile
 from xau_edge.signals.engine import MarketFrames
 
+DEFAULT_TERMINAL = r"C:\Program Files\FTMO Global Markets MT5 Terminal\terminal64.exe"
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default="data/raw")
     parser.add_argument("--prop", default="configs/prop/ftmo_2step.yaml")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--terminal-path", default=DEFAULT_TERMINAL)
     args = parser.parse_args()
     configure_logging("INFO")
 
@@ -52,6 +61,16 @@ def main() -> None:
     journal = Path("data/paper/forward-journal.jsonl")
     broker = PaperExecutionBroker(100_000.0, costs=CostModel(), journal_path=journal)
     paper = PaperTrader(broker, RiskEngine(RiskLimits(), prop), ExecutionSafety())
+    control = None
+    if settings.web_control:
+        from xau_edge.control.factory import build_control_service  # noqa: PLC0415 - opt-in
+
+        control = build_control_service(
+            repo_root=Path.cwd(),
+            terminal_path=args.terminal_path,
+            data_dir=Path.cwd() / settings.data_dir,
+        )
+        print("Web control plane ON (/control/*); token written for the dashboard server.")
     ctx = ApiContext(
         load_frames=load,
         registry=ExperimentRegistry("experiments/runs"),
@@ -66,6 +85,8 @@ def main() -> None:
             journal_path=settings.execution_journal_path,
         ),
         journal_path=journal,
+        control=control,
+        control_port=args.port,
     )
     uvicorn.run(create_app(ctx), host="127.0.0.1", port=args.port, log_level="info")
 

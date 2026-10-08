@@ -1,7 +1,8 @@
 """Read-only bot endpoints: status, account, positions, cycles, journal, reconciliation, alerts.
 
-Everything is served from files and the persistent state the bot writes; the API never talks to the
-terminal and has no route that changes anything (ADR-0019: the kill switch is a local command).
+Everything is served from files and the persistent state the bot writes; these routes never talk to
+the terminal and change nothing. Starting, stopping and the DRY_RUN/DEMO choice live in the opt-in
+control plane (``/control/*``, ADR-0023); a kill-switch reset stays a local command (ADR-0019).
 """
 
 from __future__ import annotations

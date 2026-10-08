@@ -1,8 +1,11 @@
 """FastAPI application: read-only research endpoints (brief section 33).
 
-There is no endpoint that can place, modify or cancel a REAL order. The one write endpoint is
-``POST /paper/orders``: it takes no trade parameters from the client and reaches only the paper
-broker. A test walks the route table and fails if any other route accepts a non-GET method.
+There is no endpoint that can place, modify or cancel an order with client-chosen parameters.
+``POST /paper/orders`` takes no trade parameters and reaches only the paper broker. The local web
+control plane (``/control/*``, ADR-0023) is mounted only when ``XAU_EDGE_WEB_CONTROL=true``: it
+starts and stops the bot, selects DRY_RUN or DEMO, and can send the fixed 0.01-lot smoke order or
+close the bot's own positions, behind a token, a Host/Origin check and typed confirmations. A test
+walks the route table and fails on any other write route.
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ from pydantic import BaseModel, ConfigDict
 
 from xau_edge import __version__ as package_version
 from xau_edge.api.bot import add_bot_routes, read_kill_switch
+from xau_edge.api.control import mount_control
 from xau_edge.api.service import (
     SYMBOL,
     ApiContext,
@@ -237,6 +241,8 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
         return {"models": model_records(ctx.models_dir)}
 
     add_bot_routes(app, ctx.bot, ctx.clock)
+    if ctx.control is not None:
+        mount_control(app, ctx.control, port=ctx.control_port, allowed_origins=ALLOWED_ORIGINS)
 
     @app.get("/risk/status")
     def risk_status() -> dict[str, Any]:
