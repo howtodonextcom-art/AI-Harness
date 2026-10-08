@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
@@ -50,6 +50,19 @@ class ValidationConfig(BaseModel):
     min_closure_minutes: int = Field(default=30, ge=0)
     """A gap at least this long that ends at a scheduled reopening is reported as an
     UNSCHEDULED_CLOSURES warning (holiday / early close) instead of as missing data."""
+    max_closure_minutes: int = Field(default=24 * 60, ge=1)
+    """Upper bound on the open-hours minutes a single gap may span and still be treated as a
+    closure. Longer gaps are data loss even if they end at a reopening: an outage must not be able
+    to hide as a holiday. The default is one trading day; broker profiles raise it using measured
+    holiday closures."""
+
+    @model_validator(mode="after")
+    def _closure_bounds_are_ordered(self) -> ValidationConfig:
+        if self.max_closure_minutes < self.min_closure_minutes:
+            msg = "max_closure_minutes must be >= min_closure_minutes"
+            raise ValueError(msg)
+        return self
+
     max_samples: int = Field(default=5, ge=0)
 
 

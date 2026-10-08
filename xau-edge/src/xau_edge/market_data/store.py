@@ -15,11 +15,16 @@ import polars as pl
 from xau_edge.domain.timeframe import Timeframe
 
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+_WINDOWS_RESERVED = re.compile(r"^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\.|$)", re.IGNORECASE)
 _META_SUFFIX = ".meta.json"
 
 
 class RawDataImmutableError(RuntimeError):
     """Raised when a write would replace existing raw data with different content."""
+
+
+class RawDataIntegrityError(RawDataImmutableError):
+    """Raised when stored data no longer matches the hash recorded when it was written."""
 
 
 @dataclass(frozen=True)
@@ -45,8 +50,18 @@ def dataframe_sha256(df: pl.DataFrame) -> str:
     return digest.hexdigest()
 
 
+def is_safe_name(value: str) -> bool:
+    """True if ``value`` is acceptable as a symbol/source directory or file component."""
+    return not (
+        not _SAFE_NAME.fullmatch(value)
+        or ".." in value
+        or value.endswith(".")
+        or _WINDOWS_RESERVED.match(value)
+    )
+
+
 def _check_name(label: str, value: str) -> None:
-    if not _SAFE_NAME.match(value) or ".." in value:
+    if not is_safe_name(value):
         msg = f"unsafe {label} name {value!r}"
         raise ValueError(msg)
 
@@ -128,7 +143,12 @@ class RawStore:
         dataset = RawDataset(path, digest, df.height, start, end, symbol, timeframe, source, stamp)
 
         if path.exists():
-            if not self.verify(dataset):
+            try:
+                stored = pl.read_parquet(path)
+            except (OSError, pl.exceptions.PolarsError) as exc:
+                msg = f"{path} exists but is unreadable ({exc}); raw data is immutable"
+                raise RawDataImmutableError(msg) from exc
+            if dataframe_sha256(stored) != digest:
                 msg = f"{path} exists with different content; raw data is immutable"
                 raise RawDataImmutableError(msg)
             existing = _read_meta(path)
@@ -158,15 +178,52 @@ class RawStore:
 
     def datasets(self, symbol: str, timeframe: Timeframe) -> list[RawDataset]:
         """Stored datasets for a symbol/timeframe, oldest fetch first."""
+        _check_name("symbol", symbol)
         directory = self.root / symbol / timeframe.value
         if not directory.is_dir():
             return []
         found = [d for p in directory.glob("*.parquet") if (d := _read_meta(p)) is not None]
         return sorted(found, key=lambda d: (d.fetched_at, d.path.name))
 
+    def read_verified(self, dataset: RawDataset) -> pl.DataFrame:
+        """Read a stored file and prove it matches both its hash and its sidecar record.
+
+        Checks, in order: the file name carries the recorded hash prefix, the content re-hashes to
+        the recorded hash, and the sidecar's row count, time range, symbol and timeframe agree with
+        the file and its location. ``fetched_at`` cannot be verified from the data itself, so a
+        sidecar can still be backdated by someone with write access; the store defends against
+        accidents and silent corruption, not against an attacker who can rewrite both files.
+
+        Raises :class:`RawDataIntegrityError` on any mismatch or if the file is unreadable.
+        """
+        path = dataset.path
+        if f"__{dataset.sha256[:12]}." not in path.name:
+            msg = f"{path} file name does not carry the sidecar hash; the pair was altered"
+            raise RawDataIntegrityError(msg)
+        try:
+            frame = pl.read_parquet(path)
+        except (OSError, pl.exceptions.PolarsError) as exc:
+            msg = f"{path} is unreadable ({exc})"
+            raise RawDataIntegrityError(msg) from exc
+        if dataframe_sha256(frame) != dataset.sha256:
+            msg = f"{path} content does not match the hash recorded when it was written"
+            raise RawDataIntegrityError(msg)
+        problems = []
+        if frame.height != dataset.rows:
+            problems.append(f"rows {dataset.rows} != {frame.height}")
+        if (dataset.start, dataset.end) != (frame["timestamp"].min(), frame["timestamp"].max()):
+            problems.append("start/end differ from the data")
+        if (path.parent.parent.name, path.parent.name) != (dataset.symbol, dataset.timeframe.value):
+            problems.append("symbol/timeframe differ from the file location")
+        if problems:
+            msg = f"{path} sidecar record disagrees with the file: {'; '.join(problems)}"
+            raise RawDataIntegrityError(msg)
+        return frame
+
     def verify(self, dataset: RawDataset) -> bool:
         """True if the stored file still matches the recorded content hash."""
         try:
-            return dataframe_sha256(pl.read_parquet(dataset.path)) == dataset.sha256
-        except Exception:
+            self.read_verified(dataset)
+        except RawDataIntegrityError:
             return False
+        return True

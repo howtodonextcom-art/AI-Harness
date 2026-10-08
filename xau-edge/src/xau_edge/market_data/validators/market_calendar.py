@@ -5,7 +5,7 @@ from __future__ import annotations
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class MarketCalendar(BaseModel):
@@ -27,12 +27,25 @@ class MarketCalendar(BaseModel):
     daily_break_start_minute: int | None = Field(default=None, ge=0, lt=24 * 60)
     daily_break_end_minute: int | None = Field(default=None, ge=0, lt=24 * 60)
 
+    @model_validator(mode="after")
+    def _daily_break_is_complete(self) -> MarketCalendar:
+        has_start = self.daily_break_start_minute is not None
+        has_end = self.daily_break_end_minute is not None
+        if has_start != has_end:
+            msg = "a daily break needs both daily_break_start_minute and daily_break_end_minute"
+            raise ValueError(msg)
+        return self
+
     @field_validator("timezone")
     @classmethod
     def _known_zone(cls, value: str) -> str:
         try:
             ZoneInfo(value)
-        except (ZoneInfoNotFoundError, ValueError) as exc:
+        except (
+            ZoneInfoNotFoundError,
+            ValueError,
+            OSError,
+        ) as exc:  # OSError: directory names on 3.12
             msg = f"unknown IANA time zone {value!r}"
             raise ValueError(msg) from exc
         return value

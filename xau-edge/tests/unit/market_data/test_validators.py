@@ -87,9 +87,11 @@ def test_default_calendar_follows_new_york_daylight_saving(
     assert flagged is weekend_bar_expected, label
 
 
-def test_calendar_rejects_unknown_timezone() -> None:
+@pytest.mark.parametrize("zone", ["Mars/Olympus", "Europe", "America", "../etc"])
+def test_calendar_rejects_unknown_timezone(zone: str) -> None:
+    """ "Europe" is a directory in the tz database: older Pythons raise OSError, not NotFound."""
     with pytest.raises(ValueError, match="unknown IANA time zone"):
-        MarketCalendar(timezone="Mars/Olympus")
+        MarketCalendar(timezone=zone)
 
 
 def test_missing_fraction_exactly_at_threshold_is_only_a_warning() -> None:

@@ -21,7 +21,7 @@ from typing import Literal, TypeVar
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import polars as pl
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 NEW_YORK = "America/New_York"
 _NY_TOKEN = re.compile(r"^NY([+-]\d{1,2})$", re.IGNORECASE)
@@ -30,6 +30,10 @@ _NY_ROLLOVER_MINUTE = 17 * 60
 _WEEKEND_GAP = timedelta(hours=24)
 
 SeriesOrExpr = TypeVar("SeriesOrExpr", pl.Series, pl.Expr)
+
+
+class BrokerClockError(ValueError):
+    """Raised for an unparseable or invalid broker clock token."""
 
 
 class BrokerClock(BaseModel):
@@ -51,7 +55,11 @@ class BrokerClock(BaseModel):
         if self.iana is not None:
             try:
                 ZoneInfo(self.iana)
-            except (ZoneInfoNotFoundError, ValueError) as exc:
+            except (
+                ZoneInfoNotFoundError,
+                ValueError,
+                OSError,
+            ) as exc:  # OSError: directory names on 3.12
                 msg = f"invalid broker clock: unknown IANA zone {self.iana!r}"
                 raise ValueError(msg) from exc
         return self
@@ -61,18 +69,19 @@ class BrokerClock(BaseModel):
         """Parse ``"NY+7"`` / ``"NY-2"`` or an IANA zone name such as ``"Europe/Athens"``."""
         text = token.strip()
         match = _NY_TOKEN.match(text)
+        if not text or (text.upper().startswith("NY") and not match):
+            msg = f"invalid broker clock {token!r}: expected 'NY+<hours>' or an IANA zone"
+            raise BrokerClockError(msg)
         try:
-            if match:
-                return cls(ny_offset_hours=int(match.group(1)))
-            if not text or text.upper().startswith("NY"):
-                msg = f"invalid broker clock {token!r}: expected 'NY+<hours>' or an IANA zone"
-                raise ValueError(msg)
-            return cls(iana=text)
-        except ValueError as exc:
-            if "broker clock" in str(exc):
-                raise
-            msg = f"invalid broker clock {token!r}: {exc}"
-            raise ValueError(msg) from exc
+            return cls(ny_offset_hours=int(match.group(1))) if match else cls(iana=text)
+        except ValidationError as exc:
+            detail = (
+                exc.errors()[0]["msg"]
+                .removeprefix("Value error, ")
+                .removeprefix("invalid broker clock: ")
+            )
+            msg = f"invalid broker clock {token!r}: {detail}"
+            raise BrokerClockError(msg) from exc
 
     @property
     def token(self) -> str:

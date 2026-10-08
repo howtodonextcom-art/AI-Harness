@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 import polars as pl
 import pytest
@@ -134,6 +135,73 @@ def test_coerce_bars_casts_types_and_fills_optional_columns() -> None:
     assert out.columns == list(BAR_COLUMNS)
     assert out["open"].dtype == pl.Float64
     assert out["real_volume"].null_count() == 1
+
+
+@pytest.mark.parametrize("column", ["tick_volume", "spread", "real_volume"])
+def test_coerce_bars_refuses_to_truncate_fractional_values(column: str) -> None:
+    """ECC review F-10: 10.9 must not silently become 10."""
+    raw = pl.DataFrame(
+        {
+            "timestamp": [T0],
+            "open": [2000.0],
+            "high": [2001.0],
+            "low": [1999.0],
+            "close": [2000.0],
+            "tick_volume": [5.0],
+            "spread": [20.0],
+            "real_volume": [1.0],
+        }
+    ).with_columns(pl.lit(10.9).alias(column))
+    with pytest.raises(ValueError, match=f"{column}.*non-integer"):
+        coerce_bars(raw)
+
+
+def test_coerce_bars_refuses_to_round_decimal_values() -> None:
+    raw = pl.DataFrame(
+        {
+            "timestamp": [T0],
+            "open": [2000.0],
+            "high": [2001.0],
+            "low": [1999.0],
+            "close": [2000.0],
+            "tick_volume": [1],
+            "spread": [20],
+        }
+    ).with_columns(pl.Series("tick_volume", [Decimal("1.5")], dtype=pl.Decimal(10, 2)))
+    with pytest.raises(ValueError, match=r"tick_volume.*non-integer"):
+        coerce_bars(raw)
+
+
+def test_coerce_bars_accepts_whole_valued_floats() -> None:
+    raw = pl.DataFrame(
+        {
+            "timestamp": [T0],
+            "open": [2000.0],
+            "high": [2001.0],
+            "low": [1999.0],
+            "close": [2000.0],
+            "tick_volume": [10.0],
+            "spread": [25.0],
+        }
+    )
+    out = coerce_bars(raw)
+    assert out["tick_volume"].to_list() == [10]
+    assert out["spread"].dtype == pl.Int64
+
+
+def test_bar_rejects_infinite_prices() -> None:
+    with pytest.raises(ValidationError):
+        Bar(
+            symbol="XAUUSD",
+            timeframe=Timeframe.M5,
+            timestamp=T0,
+            open=2000.0,
+            high=float("inf"),
+            low=1999.0,
+            close=2000.5,
+            tick_volume=1,
+            spread=1,
+        )
 
 
 def test_coerce_bars_reports_all_missing_columns() -> None:

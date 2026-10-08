@@ -67,17 +67,68 @@ Goal: make the data layer trustworthy against a real broker feed.
 | 7 | Validator fixes found with real data: span-aware closures, closure vs data loss, `check_coverage`; ADR-0007/0009 | done |
 | 8 | Python 3.12 and 3.13 tested; CI workflow (ubuntu + windows x 3.12-3.14), actions pinned by SHA | done (CI not yet run on GitHub) |
 
-## Recommended Sprint 3 (Epic 04, features)
+## ECC delivery loop (applies to every epic from Sprint 3)
 
-1. Indicator interface with golden tests against an independent reference implementation
-   (EMA, RSI, ATR, ADX, MACD, Stochastic, Bollinger), pinning Wilder smoothing conventions.
-2. Candle geometry, volume z-score, temporal and session features using the broker profile's
-   calendar and clock; versioned feature sets keyed by dataset id.
-3. Tick/spread cost inputs for the cost model from M5 spread (derived higher-timeframe spread
-   does not reproduce the broker's).
-4. A holiday/early-close calendar so closures stop appearing as warnings, and a decision on raising
-   the terminal's bar limit so a single fetch covers the whole history.
-5. Run the CI workflow on GitHub and fix any platform differences.
+Derived from ECC's `rules/common/development-workflow.md` and the `orch-*` pipeline. Each step
+names the ECC component that performs it; "gate" means work stops until the owner approves.
+
+| Step | What | ECC component | Evidence required |
+|---|---|---|---|
+| E0 Research & reuse | search existing libraries/code before writing | `search-first`, `documentation-lookup` | short note in the plan; licence check (ADR-0006) |
+| E1 Plan | requirements, files, order, risks, success criteria | `/plan` (agent `planner`; `architect` for structural choices) | plan section in this file |
+| **Gate A** | **owner approves the plan** | - | explicit "OK" |
+| E2 Tests first | failing tests that encode the acceptance criteria | `tdd-workflow` (agent `tdd-guide`) | RED output saved in the report |
+| E3 Implement | smallest change to GREEN, then refactor | `tdd-workflow` | tests pass |
+| E4 Review | fresh-context reviews before any commit | `/code-review` (`code-reviewer`), `/python-review` (`python-reviewer`), `security-reviewer` when a security trigger applies | findings list with file:line; CRITICAL/HIGH fixed |
+| E5 Verify | build, types, lint, tests >= 80% (target 95%+ for data/risk code), secret grep, diff review; mutation spot-check; red-team | `verification-loop` | `scripts/dev.ps1 check` output, mutants killed |
+| **Gate B** | **owner confirms the commit** | - | explicit "OK" |
+| E6 Commit | author/committer `howtodonext.com`, straight to `main` | - | pushed SHA |
+| E7 Record | ADR for decisions, sprint report, handoff | `architecture-decision-records`, `unified-memory` (`ecc memory`) | files committed |
+
+Extra gates by epic type: results that claim an *edge* (backtest, ML) need `santa-method` (two
+independent reviewers with one rubric, both must pass) and `eval-harness` evals defined before
+the experiment; ambiguous design choices use `council`; anything touching signals, risk or
+execution needs `security-reviewer` and a fail-safe default of WAIT. Live execution is not part of
+this roadmap.
+
+## Roadmap to a complete application
+
+Sizes: S <= 2 days, M 3-5 days, L 1-2 weeks of focused work. Each row is one sprint unless noted.
+
+| Sprint | Epic(s) | ECC focus | Acceptance (measurable) | Main risk | Size |
+|---|---|---|---|---|---|
+| 3 | Housekeeping from the ECC audit; 04 Feature engine (part 1) | planner, tdd-guide, python-reviewer | audit findings fixed; indicators match an independent reference within stated tolerance (EMA, RSI, ATR, ADX, MACD, Stochastic, Bollinger) | Wilder smoothing conventions | M |
+| 4 | 04 (part 2: candle geometry, volume, sessions); holiday calendar | tdd-guide, code-reviewer | versioned feature set keyed by dataset id; same input gives byte-identical output; no feature uses data after its bar closes | feature leakage | M |
+| 5 | 05 Market structure; 06 Regime | planner, council (rule definitions), tdd-guide | swing/BOS/CHoCH rules documented and unit-tested; repainting test: appending future bars never changes past labels | subjective definitions | L |
+| 6 | 07 Pattern similarity | architect, tdd-guide, **statistical leakage tests written first**, code-reviewer | no overlap or self-match across train/outcome windows (tests prove it); unified interface for Pearson, Euclid, cosine, DTW, Matrix Profile, kNN; benchmark vs plain NumPy search | look-ahead through overlapping windows | L |
+| 7 | 08 Historical outcomes; 09 Baseline strategies | tdd-guide, eval-harness (define evals first) | UP/DOWN/NEUTRAL stats with distributions; three deterministic baselines; no tuning on the test period | small samples, regime dependence | M |
+| 8 | 14 Risk engine (core); 10 Backtest engine (part 1: costs, fills, sizing) | architect, security-reviewer, tdd-guide | spread/commission/slippage/swap modelled from measured M5 spread and the broker profile; risk limits live in config, never in code; kill switch tested | unrealistic fills, stale limits | L |
+| 9 | 10 Backtest (part 2: metrics, walk-forward, regime/session breakdown) | eval-harness, santa-method | reproducible results with pinned dataset id; every required metric in the brief; regression-pinned run | overfitting, multiple testing | L |
+| **Checkpoint** | After sprint 9: do the baselines show an edge after costs, out of sample? | council + santa-method | written decision: continue to ML, or stop and conclude "no statistically justified trade" | wishful reading of results | - |
+| 10 | 11 ML benchmark; 12 Calibration | mle-reviewer, eval-harness, tdd-guide | each model beats a baseline out of sample, else rejected; Brier/log-loss/calibration curves reported | leakage, instability | L |
+| 11 | 13 Signal engine | code-reviewer, security-reviewer, santa-method | every signal explainable and reproducible; all NO TRADE conditions covered; EV computed after costs | misleading explanations | M |
+| 12 | 15 FastAPI (read-only); 16 Dashboard | api-design, e2e-runner, browser-qa | no write/order endpoints (test enforces); 1440x900 and mobile layouts; analogue overlay never feeds model inputs | UI implying certainty | L |
+| 13 | 17 Paper trading | tdd-guide, security-reviewer | `PaperExecutionBroker` uses the same signal schema as any future broker; SL/TP/spread/slippage/limits simulated | divergence from live fills | M |
+| 14+ | 18 Forward testing (calendar-time bound, weeks) | eval-harness, santa-method | documented out-of-sample comparison against backtest; no claims without a sufficient sample | too short a sample | - |
+
+Critical path: 04 -> 05 -> 07 -> 08 -> 09 -> 10 -> checkpoint -> (11, 12) -> 13 -> 17 -> 18.
+The checkpoint is a real fork: if no baseline survives costs out of sample, the correct outcome
+is to stop building predictors and report that, consistent with the brief's principle.
+
+### Sprint 3 scope (Gate A passed; steps 1-3 done, awaiting Gate B; step 4 not started)
+
+Order matters: remediation first, features second. See `docs/ECC_ALIGNMENT_AUDIT.md` for the
+finding IDs.
+
+1. Install the missing ECC workflow components (dry-run first, `--no-hooks`): 8 skills for the
+   workflow and the `security` capability (21 files).
+2. Fix, test-first, in this order: F-01 (HIGH: cap on closure length), F-02 (settings guard),
+   F-03 (DEMO guard inside `Mt5BarSource`), F-04 (allowlist proxy for the MT5 module),
+   F-05 (drop forming bar in the adapter), F-06 (verify content in `DatasetCatalog.load`),
+   F-07 (`.gitignore`), F-08 and F-09 (`cross_check`), V-01 (version bump), V-02 (sdist excludes
+   `.claude`, data, `.env.example`); then the remaining MEDIUM and LOW items.
+3. Run `code-reviewer`, `python-reviewer` and `security-reviewer` again on the fixes (Gate B).
+4. Epic 04 part 1 (indicator interface with golden tests) through the full delivery loop.
 ## Testing strategy
 
 * Unit tests for every pure function; synthetic data only for exercising code paths.

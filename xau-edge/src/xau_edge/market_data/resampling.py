@@ -36,6 +36,9 @@ def _spread_expr(policy: SpreadPolicy) -> pl.Expr:
             return col.max()
         case "mean":
             return col.mean().round(0).cast(pl.Int64)
+        case _:
+            msg = f"unknown spread_policy {policy!r}; use one of first, last, max, mean"
+            raise ValueError(msg)
 
 
 def resample_bars(
@@ -66,9 +69,13 @@ def resample_bars(
 
     ratio = target.minutes // source.minutes
     tgt_step = f"{target.minutes}m"
+    spread = _spread_expr(spread_policy)  # validates the policy before any work is done
 
     work = df.with_columns(
-        clock.utc_to_server(pl.col("timestamp")).dt.truncate(tgt_step).alias("_bucket")
+        clock.utc_to_server(pl.col("timestamp")).dt.truncate(tgt_step).alias("_bucket"),
+        calendar.closed_span_expr(pl.col("timestamp"), source.minutes)
+        .fill_null(False)
+        .alias("_in_closed_slot"),
     )
     has_real = pl.col("real_volume").count() > 0
     buckets = work.group_by("_bucket", maintain_order=True).agg(
@@ -77,9 +84,9 @@ def resample_bars(
         pl.col("low").min(),
         pl.col("close").last(),
         pl.col("tick_volume").sum(),
-        _spread_expr(spread_policy).alias("spread"),
+        spread.alias("spread"),
         pl.when(has_real).then(pl.col("real_volume").sum()).otherwise(None).alias("real_volume"),
-        pl.len().alias("_n"),
+        (~pl.col("_in_closed_slot")).sum().alias("_n"),  # only bars in OPEN slots count
     )
 
     slots = (

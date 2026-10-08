@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Final
+from typing import Final, Literal
 
 import polars as pl
 
@@ -73,8 +74,42 @@ def _parse_text_timestamp(series: pl.Series, clock: BrokerClock) -> pl.Series:
         except pl.exceptions.PolarsError:
             continue
         return clock.server_to_utc(naive)
-    msg = f"Cannot parse timestamps; sample value: {series[0]!r}"
+    msg = f"Cannot parse timestamps; first offending value: {_first_unparseable(series)!r}"
     raise ValueError(msg)
+
+
+def _first_unparseable(series: pl.Series) -> str | None:
+    """The first value that the best-matching format cannot parse (for a useful error)."""
+    best: pl.Series | None = None
+    for fmt in (*_OFFSET_FORMATS, *_DATETIME_FORMATS):
+        parsed = series.str.to_datetime(fmt, time_unit="us", strict=False)
+        if best is None or parsed.is_not_null().sum() > best.is_not_null().sum():
+            best = parsed
+    if best is None:
+        return None
+    bad = series.filter(best.is_null() & series.is_not_null())
+    return str(bad[0] if bad.len() else series[0])
+
+
+def _epoch_unit(values: pl.Series) -> Literal["s", "ms", "us"]:
+    """Infer the epoch unit of integer timestamps from their magnitude (years 2001-2096)."""
+    non_null = values.drop_nulls()
+    if non_null.len() == 0:
+        msg = "integer timestamp column has no values"
+        raise ValueError(msg)
+    low, high = int(non_null.min()), int(non_null.max())  # type: ignore[arg-type]
+    for unit, scale in (("s", 1), ("ms", 1_000), ("us", 1_000_000)):
+        if _EPOCH_SECONDS_MIN * scale <= low and high <= _EPOCH_SECONDS_MAX * scale:
+            return unit  # type: ignore[return-value]
+    msg = (
+        f"ambiguous integer timestamps (min {low}, max {high}): not plausible epoch seconds, "
+        "milliseconds or microseconds; pass epoch_unit explicitly or convert the column"
+    )
+    raise ValueError(msg)
+
+
+_EPOCH_SECONDS_MIN: Final = 1_000_000_000  # 2001-09-09
+_EPOCH_SECONDS_MAX: Final = 4_000_000_000  # 2096-10-02
 
 
 class FileBarSource:
@@ -93,6 +128,7 @@ class FileBarSource:
         timeframe: Timeframe,
         source_timezone: str = "UTC",
         columns: Mapping[str, str] | None = None,
+        epoch_unit: Literal["s", "ms", "us"] | None = None,
     ) -> None:
         self.path = Path(path)
         self.symbol = symbol
@@ -100,7 +136,10 @@ class FileBarSource:
         self.source_timezone = source_timezone
         self._clock = BrokerClock.parse(source_timezone)
         self.columns = dict(columns or {})
-        self.name = f"file:{self.path.name}"
+        self.epoch_unit = epoch_unit
+        # A valid RawStore source name, so the protocol's ``name`` can be used as provenance.
+        stem = re.sub(r"[^A-Za-z0-9_-]+", "_", self.path.stem).strip("_-")[:100]
+        self.name = f"file_{stem or 'data'}"
 
     def fetch_bars(self, request: BarRequest) -> pl.DataFrame:
         """Return file contents restricted to ``[request.start, request.end)``."""
@@ -180,7 +219,8 @@ class FileBarSource:
                 return self._clock.server_to_utc(series.cast(pl.Datetime("us")))
             return series.dt.convert_time_zone("UTC")
         if dtype.is_integer():
+            unit = self.epoch_unit or _epoch_unit(series)
             return self._clock.server_to_utc(
-                pl.from_epoch(series, time_unit="s").cast(pl.Datetime("us"))
+                pl.from_epoch(series, time_unit=unit).cast(pl.Datetime("us"))
             )
         return _parse_text_timestamp(series.cast(pl.String), self._clock)

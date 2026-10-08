@@ -109,7 +109,9 @@ def _missing_bars(
         .join(ends_after_closure, on="gap")
         .with_columns(
             (
-                pl.col("_closed_before") & (pl.col("missing") * tf >= config.min_closure_minutes)
+                pl.col("_closed_before")
+                & (pl.col("missing") * tf >= config.min_closure_minutes)
+                & (pl.col("missing") * tf <= config.max_closure_minutes)
             ).alias("_closure")
         )
         .sort("first_slot")

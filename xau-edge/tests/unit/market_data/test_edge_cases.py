@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import polars as pl
 import pytest
@@ -124,6 +125,11 @@ def test_mt5_connect_failure_surfaces_terminal_error() -> None:
 
 def test_mt5_missing_timeframe_constant_raises() -> None:
     class NoConstants:
+        ACCOUNT_TRADE_MODE_DEMO = 0
+
+        def account_info(self) -> object:
+            return SimpleNamespace(trade_mode=0)
+
         def copy_rates_range(self, *args: object) -> None:
             raise AssertionError
 

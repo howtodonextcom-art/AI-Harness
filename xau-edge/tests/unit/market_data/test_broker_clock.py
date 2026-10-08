@@ -6,7 +6,7 @@ import polars as pl
 import pytest
 
 from tests.synthetic import ftmo_like_m5, to_server_labels
-from xau_edge.market_data.broker_clock import BrokerClock, infer_broker_clock
+from xau_edge.market_data.broker_clock import BrokerClock, BrokerClockError, infer_broker_clock
 
 pytestmark = pytest.mark.unit
 
@@ -33,6 +33,20 @@ def test_parse_accepts_ny_offset_and_iana_tokens() -> None:
 def test_parse_rejects_invalid_tokens(token: str) -> None:
     with pytest.raises(ValueError, match="broker clock"):
         BrokerClock.parse(token)
+
+
+@pytest.mark.parametrize("token", ["", "Mars/Olympus", "NY+30", "NY+x"])
+def test_invalid_tokens_raise_the_dedicated_error_type(token: str) -> None:
+    with pytest.raises(BrokerClockError):
+        BrokerClock.parse(token)
+    assert issubclass(BrokerClockError, ValueError)  # existing callers keep working
+
+
+@pytest.mark.parametrize("token", ["Europe", "NY+15", "Not/AZone"])
+def test_error_messages_do_not_repeat_their_prefix(token: str) -> None:
+    with pytest.raises(BrokerClockError) as exc:
+        BrokerClock.parse(token)
+    assert str(exc.value).count("invalid broker clock") == 1
 
 
 def test_exactly_one_clock_kind_must_be_set() -> None:

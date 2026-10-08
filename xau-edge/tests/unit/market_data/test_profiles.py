@@ -23,6 +23,8 @@ def test_ftmo_demo_profile_loads_with_empirically_derived_values() -> None:
     assert (cal.weekend_close_minute, cal.weekend_open_minute) == (16 * 60 + 50, 18 * 60 + 5)
     assert (cal.daily_break_start_minute, cal.daily_break_end_minute) == (16 * 60 + 50, 18 * 60 + 5)
     assert profile.validation.max_spread_points == 200
+    # Longest legitimate closure measured: Christmas, 1,550 open minutes (25.8 h).
+    assert profile.validation.max_closure_minutes == 28 * 60
     assert profile.instrument.symbol == "XAUUSD"
     assert profile.instrument.digits == 2
 

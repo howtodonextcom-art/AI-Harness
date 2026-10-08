@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xau-edge"
-version = "0.1.0"
+version = "0.2.1"
 description = "Probabilistic decision-support and research platform for XAUUSD (research only, no live trading)."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
@@ -36,6 +36,39 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/xau_edge"]
+
+# Ship source, tests, docs, configs and the lock file; never tool config (.claude), data, or env files.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/configs",
+    "/scripts",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/AGENTS.md",
+    "/Makefile",
+    "/pyproject.toml",
+    "/uv.lock",
+]
+# The folders above are included wholesale, so secret-looking files inside them are excluded explicitly.
+exclude = [
+    "**/.env",
+    "**/.env.*",
+    "**/*.env",
+    "**/env.*",
+    "**/.envrc",
+    "**/id_rsa*",
+    "**/id_ed25519*",
+    "**/*.pem",
+    "**/*.key",
+    "**/*.pfx",
+    "**/*.p12",
+    "**/*.crt",
+    "**/secrets.*",
+    "**/credentials*.json",
+]
 
 [tool.ruff]
 extend-exclude = [".claude", "data", "experiments/runs"]

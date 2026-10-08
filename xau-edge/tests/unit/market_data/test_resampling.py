@@ -101,6 +101,32 @@ def test_session_start_bucket_is_complete_when_the_break_covers_missing_sub_bars
     assert server_label == datetime(2026, 7, 1, 1, 0)  # noqa: DTZ001
 
 
+def test_a_stray_bar_in_a_closed_slot_cannot_complete_a_bucket() -> None:
+    """ECC review F-17: bar counts must come from OPEN slots only."""
+    # Server 01:00-01:15 (summer): 01:00 is inside the break, 01:05 and 01:10 are open.
+    start = datetime(2026, 6, 30, 22, 0, tzinfo=UTC)  # server 01:00
+    three = m5(3, start)  # bars at 01:00 (stray, closed), 01:05, 01:10
+    without_0105 = pl.concat([three.slice(0, 1), three.slice(2)])
+    out = resample_bars(without_0105, Timeframe.M5, Timeframe.M15, clock=CLOCK, calendar=FTMO_CAL)
+    assert out.frame.height == 0
+    assert out.incomplete == (start,)
+    # Control: with the open slot present the bucket is complete.
+    ok = resample_bars(three, Timeframe.M5, Timeframe.M15, clock=CLOCK, calendar=FTMO_CAL)
+    assert ok.frame.height == 1
+
+
+def test_unknown_spread_policy_is_a_clear_error() -> None:
+    with pytest.raises(ValueError, match="spread_policy"):
+        resample_bars(
+            m5(3),
+            Timeframe.M5,
+            Timeframe.M15,
+            clock=CLOCK,
+            calendar=FTMO_CAL,
+            spread_policy="median",  # type: ignore[arg-type]
+        )
+
+
 def test_full_synthetic_sessions_resample_without_incomplete_buckets() -> None:
     utc_bars = ftmo_like_m5(datetime(2026, 3, 2, tzinfo=UTC), weeks=2)  # spans the US DST change
     for tf in (Timeframe.M15, Timeframe.H1, Timeframe.H4):

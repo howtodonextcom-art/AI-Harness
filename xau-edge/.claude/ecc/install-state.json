@@ -1,6 +1,6 @@
 {
   "schemaVersion": "ecc.install.v1",
-  "installedAt": "2026-10-07T23:18:51.079Z",
+  "installedAt": "2026-10-08T00:19:37.032Z",
   "target": {
     "id": "claude-project",
     "target": "claude-project",
@@ -11,7 +11,17 @@
   "request": {
     "profile": "minimal",
     "modules": [],
-    "includeComponents": [],
+    "includeComponents": [
+      "skill:python-patterns",
+      "skill:python-testing",
+      "skill:search-first",
+      "skill:orch-pipeline",
+      "skill:orch-add-feature",
+      "skill:orch-fix-defect",
+      "skill:orch-change-feature",
+      "skill:orch-refine-code",
+      "capability:security"
+    ],
     "excludeComponents": [],
     "legacyLanguages": [],
     "legacyMode": false,
@@ -24,7 +34,16 @@
       "commands-core",
       "platform-configs",
       "skill-unified-memory",
-      "workflow-quality"
+      "workflow-quality",
+      "security",
+      "skill-orch-add-feature",
+      "skill-orch-change-feature",
+      "skill-orch-fix-defect",
+      "skill-orch-pipeline",
+      "skill-orch-refine-code",
+      "skill-python-patterns",
+      "skill-python-testing",
+      "skill-search-first"
     ],
     "skippedModules": []
   },
@@ -5412,6 +5431,325 @@
       "ownership": "managed",
       "scaffoldOnly": false,
       "contentSha256": "7094ab94802d7e839dc33c6ea230020327260518b1b1ce62b42d56d051c1d7c5"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\defi-amm-security\\SKILL.md",
+      "sourceRelativePath": "skills\\defi-amm-security\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\defi-amm-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "06f662a81b1faebb9930118302d88d649dbc5bcbf7dfe87c3780ddc72f2d6516"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\django-security\\SKILL.md",
+      "sourceRelativePath": "skills\\django-security\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\django-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "e043c9d300695aea5a9bb4c72a6f47e47ba1f2c7ddc1e82b8191acd0ad70c54a"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\healthcare-phi-compliance\\SKILL.md",
+      "sourceRelativePath": "skills\\healthcare-phi-compliance\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\healthcare-phi-compliance\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "02f9091e652f278a722230d5b96948d6ceaf10f9f37bc4c7eb6ddaad7bc8a271"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\hipaa-compliance\\SKILL.md",
+      "sourceRelativePath": "skills\\hipaa-compliance\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\hipaa-compliance\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "4bc1f29a3be7986f89bdd7b5ec3894451e67c687a558b683cab62bd8d1fd2264"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\laravel-security\\SKILL.md",
+      "sourceRelativePath": "skills\\laravel-security\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\laravel-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "0440ddff450c63a9338f15b765ec35486f3f3266b321e0b27128faa3c29784fe"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\llm-trading-agent-security\\SKILL.md",
+      "sourceRelativePath": "skills\\llm-trading-agent-security\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\llm-trading-agent-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "8a59b241f6ae86d8f96b88122643b4d27d70adb6c15b31f5163f9586cb81b293"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\nodejs-keccak256\\SKILL.md",
+      "sourceRelativePath": "skills\\nodejs-keccak256\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\nodejs-keccak256\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "973c1194e28b51f56895617abcbcca82a37d25282e7603700a6bf284459bebdb"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\perl-security\\SKILL.md",
+      "sourceRelativePath": "skills\\perl-security\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\perl-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "fd6dd778ed3b612dd8ee5f856d557b9328a1f92f87d5b69b91a53d58657531f6"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\quarkus-security\\SKILL.md",
+      "sourceRelativePath": "skills\\quarkus-security\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\quarkus-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "bb7c13aec927ec8d73f2e949eee2a4d44a9f908541e7d9acd7e2fd8f64f0ae3e"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\security-review\\SKILL.md",
+      "sourceRelativePath": "skills\\security-review\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\security-review\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "b9eb6416eebc8dda046674f0a2dbb3be88aff526d182b60a0f55998d3d6d0d8d"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\security-review\\cloud-infrastructure-security.md",
+      "sourceRelativePath": "skills\\security-review\\cloud-infrastructure-security.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\security-review\\cloud-infrastructure-security.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "7d9a83852475a9396e04c59c73df84ac24ee0f41322016de7c11c62138c2a8ca"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\security-scan\\SKILL.md",
+      "sourceRelativePath": "skills\\security-scan\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\security-scan\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "74bc3006fb15eef9cea6bf70a4e9cc45ec118ef00733d1c8226c9dc428f8d658"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\security-bounty-hunter\\SKILL.md",
+      "sourceRelativePath": "skills\\security-bounty-hunter\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\security-bounty-hunter\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "c94945165ca16ec06a04727dcbcf7a7593810d83fe168247c9c2d88c5a078611"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\springboot-security\\SKILL.md",
+      "sourceRelativePath": "skills\\springboot-security\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\springboot-security\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "566ecf928bf76812d15efd62e2f00841652e1618f0a97d8dda93e1c247a162c5"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\evm-token-decimals\\SKILL.md",
+      "sourceRelativePath": "skills\\evm-token-decimals\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\evm-token-decimals\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "4e3fd13794f55a2a424cabdfe90935effb35d37155fda3fcacd27cfe20102838"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\the-security-guide.md",
+      "sourceRelativePath": "the-security-guide.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\the-security-guide.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "ac797e493a6d52ffe88f0c6d28fde80794f5e284716a1d6c98d9e7a14946a4ca"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\gateguard\\SKILL.md",
+      "sourceRelativePath": "skills\\gateguard\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\gateguard\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "33e89b52b5f76ade2508165271bcf425fc3b792e56a92405c356a7e94077610a"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\healthcare-cdss-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\healthcare-cdss-patterns\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\healthcare-cdss-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "439875d2fff3bbf14e0b46b7310b4c815c2596e54a6cafaafb4b2b93b4865626"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\healthcare-emr-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\healthcare-emr-patterns\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\healthcare-emr-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "117e1861c5313f1874c82791c73798d28e9985cac8964a95d73bed915a8aff39"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\healthcare-eval-harness\\SKILL.md",
+      "sourceRelativePath": "skills\\healthcare-eval-harness\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\healthcare-eval-harness\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "0c74bb0309d4fb7e3bf04b0f779909156520c73bd6162bd405f7232af19c0a68"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "security",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\safety-guard\\SKILL.md",
+      "sourceRelativePath": "skills\\safety-guard\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\safety-guard\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "6378dad8e60286b3fcc32e064e4ba2e452000f5eef0cb2c2204ad7fe7dae3afc"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-orch-add-feature",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\orch-add-feature\\SKILL.md",
+      "sourceRelativePath": "skills\\orch-add-feature\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\orch-add-feature\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "6ba858d94cfaa05f3b1e63ad09656285a4a33009e9cd837ebcaf093d39d29a25"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-orch-change-feature",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\orch-change-feature\\SKILL.md",
+      "sourceRelativePath": "skills\\orch-change-feature\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\orch-change-feature\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "d35ee5dfdf5f64e60e8905124eccf73267bc59852e7d11ba5ca5acf7d765c6f8"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-orch-fix-defect",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\orch-fix-defect\\SKILL.md",
+      "sourceRelativePath": "skills\\orch-fix-defect\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\orch-fix-defect\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "399e142bbf3751b5a0fdec1ae450f5673bd1a038304a221748c865280e885b2d"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-orch-pipeline",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\orch-pipeline\\SKILL.md",
+      "sourceRelativePath": "skills\\orch-pipeline\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\orch-pipeline\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "26707fc276a0a8489a5919c48af22f0c2c2d12724d3e031080200281f26a3f2e"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-orch-refine-code",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\orch-refine-code\\SKILL.md",
+      "sourceRelativePath": "skills\\orch-refine-code\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\orch-refine-code\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "5f0f468ffa4e220bd8f76684b3df6a14b67b34333e1ae52e0de49ed2c16fa17b"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-python-patterns",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\python-patterns\\SKILL.md",
+      "sourceRelativePath": "skills\\python-patterns\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\python-patterns\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "103e0130dac33a49d26705fc5a2df804980fcab6a0138d65bc7f370a987d49f6"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-python-testing",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\python-testing\\SKILL.md",
+      "sourceRelativePath": "skills\\python-testing\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\python-testing\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "b9f7a158dae3b6c06c9c75ffe84e27a1edc86092d2afdcb39e96fc2569902eb7"
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "skill-search-first",
+      "sourcePath": "Z:\\Coding\\Projects\\AI-Harness\\ECC\\skills\\search-first\\SKILL.md",
+      "sourceRelativePath": "skills\\search-first\\SKILL.md",
+      "destinationPath": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\.claude\\skills\\search-first\\SKILL.md",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false,
+      "contentSha256": "76835db48dd910061d2e4271b1151793d2fddbabeb2d2866eed068b3580c55d5"
     }
   ]
 }

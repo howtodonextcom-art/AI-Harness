@@ -63,7 +63,20 @@ Set `HOME` to a scratch directory if you run ECC tooling, which writes a cache u
 | `docs/reports` | sprint reports |
 | `.claude/` | ECC components installed project-local (minimal profile, **no hooks**); do not hand-edit |
 
-## Workflow (ECC)
+## Workflow (ECC) - the delivery loop is mandatory
+
+Every change follows `docs/PROJECT_PLAN.md` ("ECC delivery loop"): research -> plan -> **Gate A**
+-> failing tests first (watch them fail) -> implement -> fresh-context reviews (`code-reviewer`,
+`python-reviewer`, plus `security-reviewer` for MT5, SQL, file I/O, config or CI) -> `check` ->
+**Gate B** (owner confirms) -> commit. Do not commit before Gate B. ECC components live in
+`.claude/` (workflow skills and the `security` capability are installed; hooks are not).
+
+Guards stop *accidental* misuse, not deliberate in-process bypass: the MT5 read-only proxy and
+`Settings` freeze are not sandboxes. Real controls: DEMO-only guard, the terminal trading switch
+off, MT5 investor (read-only) password, and re-checking the live-trading flag at any future
+execution entry point.
+
+### Method details
 
 Plan with the `planner` format (`docs/PROJECT_PLAN.md`), write tests first and watch them fail
 (`tdd-workflow`), keep changes small, run `check` (`verification-loop`), then review for

@@ -74,6 +74,20 @@ def coerce_bars(df: pl.DataFrame) -> pl.DataFrame:
     if "real_volume" not in work.columns:
         work = work.with_columns(pl.lit(None, dtype=pl.Int64).alias("real_volume"))
 
+    for name, dtype in BAR_SCHEMA.items():
+        source = work.schema[name]
+        if dtype.is_integer() and not source.is_integer():
+            as_float = pl.col(name).cast(pl.Float64)
+            fractional = work.select(
+                ((as_float - as_float.round(0)).abs() > 0).fill_null(False).sum()
+            ).item()
+            if fractional:
+                msg = (
+                    f"{name} has {fractional} non-integer value(s); refusing to truncate "
+                    "them into integers"
+                )
+                raise ValueError(msg)
+
     casts: list[pl.Expr] = [pl.col("timestamp").cast(pl.Datetime("us", ts_dtype.time_zone))]
     casts.extend(
         pl.col(name).cast(dtype) for name, dtype in BAR_SCHEMA.items() if name != "timestamp"
@@ -89,10 +103,10 @@ class Bar(BaseModel):
     symbol: str = Field(min_length=1)
     timeframe: Timeframe
     timestamp: AwareDatetime
-    open: float = Field(gt=0)
-    high: float = Field(gt=0)
-    low: float = Field(gt=0)
-    close: float = Field(gt=0)
+    open: float = Field(gt=0, allow_inf_nan=False)
+    high: float = Field(gt=0, allow_inf_nan=False)
+    low: float = Field(gt=0, allow_inf_nan=False)
+    close: float = Field(gt=0, allow_inf_nan=False)
     tick_volume: int = Field(ge=0)
     spread: int = Field(ge=0)
     real_volume: int | None = Field(default=None, ge=0)

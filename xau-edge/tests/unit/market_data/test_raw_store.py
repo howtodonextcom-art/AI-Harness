@@ -132,6 +132,40 @@ def test_refuses_empty_frame_and_unsafe_source_names(tmp_path: Path) -> None:
         store.write(make_bars(3), symbol="XAUUSD", timeframe=TF, source="../evil")
 
 
+def test_read_side_names_are_validated_like_write_side(tmp_path: Path) -> None:
+    """ECC review F-15: datasets() must not accept names that write() would refuse."""
+    store = RawStore(tmp_path / "root")
+    store.write(make_bars(3), symbol="XAUUSD", timeframe=TF, source="unit")
+    (tmp_path / "XAUUSD").mkdir()  # sibling directory outside the store root
+    with pytest.raises(ValueError, match="unsafe"):
+        store.datasets("../XAUUSD", TF)
+
+
+@pytest.mark.parametrize(
+    "bad", ["NUL", "con", "COM1", "lpt9", "XAUUSD.", "XAU USD", "XAUUSD\n", ""]
+)
+def test_windows_reserved_names_trailing_dots_and_blanks_are_rejected(
+    tmp_path: Path, bad: str
+) -> None:
+    with pytest.raises(ValueError, match="unsafe"):
+        RawStore(tmp_path).write(make_bars(3), symbol=bad, timeframe=TF, source="unit")
+    with pytest.raises(ValueError, match="unsafe"):
+        RawStore(tmp_path).write(make_bars(3), symbol="XAUUSD", timeframe=TF, source=bad)
+
+
+def test_unreadable_existing_file_is_reported_as_unreadable_not_as_different(
+    tmp_path: Path,
+) -> None:
+    store = RawStore(tmp_path)
+    df = make_bars(5)
+    ds = store.write(df, symbol="XAUUSD", timeframe=TF, source="unit")
+    ds.path.chmod(stat.S_IWRITE | stat.S_IREAD)
+    ds.path.write_bytes(b"PAR1")
+    with pytest.raises(RawDataImmutableError, match="unreadable"):
+        store.write(df, symbol="XAUUSD", timeframe=TF, source="unit")
+    assert store.verify(ds) is False
+
+
 def test_hash_is_stable_and_sensitive_to_values() -> None:
     a = make_bars(5)
     assert dataframe_sha256(a) == dataframe_sha256(a.clone())

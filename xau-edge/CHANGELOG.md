@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.2.1 - 2026-10-08 (ECC review remediation)
+
+### Security
+* `Settings` is immutable and re-validates on copy: live trading cannot be enabled by assignment
+  or `model_copy` (F-02).
+* `Mt5BarSource` refuses non-DEMO accounts on connect and on every fetch (F-03) and only holds an
+  allowlist proxy of the MT5 module, so order/position functions are unreachable (F-04).
+* `.gitignore` now covers CSV/Parquet/DuckDB/log/key/credential files anywhere (F-07); the sdist
+  ships only source, tests, docs, configs, scripts and the lock file (V-02).
+* CI installs with `uv sync --locked` and a pinned uv version (F-21).
+
+### Fixed
+* A gap longer than `max_closure_minutes` that ends at a reopening is now data loss, not a holiday
+  warning (F-01). The FTMO profile sets 28 h from measured Christmas/New Year closures.
+* `Mt5BarSource` drops the bar still forming (F-05); request bounds are tested (F-13).
+* `DatasetCatalog.load` re-hashes every file and raises `RawDataIntegrityError` on tampering (F-06);
+  SQL has memory/thread limits and a timeout (F-14).
+* `cross_check` flags duplicate timestamps and compares null/NaN consistently (F-08, F-09).
+* `coerce_bars` refuses to truncate fractional numbers into integers (F-10).
+* `FileBarSource` infers epoch units safely, rejects date-shaped integers, names the offending
+  timestamp, and exposes a valid raw-store source name (F-11, F-12, F-20).
+* Raw store validates names on read, rejects Windows reserved names, and reports unreadable files
+  accurately (F-15). Half-configured daily breaks are rejected (F-16). Resampling counts only bars
+  in open slots (F-17) and rejects unknown spread policies (F-18).
+* Package version now matches the changelog (V-01); a test keeps them in sync.
+
+### Second review round (three independent reviewers, no CRITICAL/HIGH)
+* `DatasetCatalog.available()` ignores stray directories instead of failing all queries.
+* Raw-store reads check the sidecar against the file (name hash, rows, time range, symbol,
+  timeframe); names use `fullmatch` so a trailing newline is refused.
+* SQL results are capped (`max_rows`), the timer is a daemon and only genuine timeouts are
+  reported as such.
+* `Mt5BarSource.connect` shuts the terminal down on any failure while checking the account; the
+  read-only proxy docstring no longer claims to stop deliberate in-process misuse.
+* `Settings.model_copy` rejects unknown keys; `coerce_bars` also refuses Decimal rounding;
+  `FileBarSource` names are always valid store sources; clock error messages are not repeated.
+* `.gitignore` covers secret-looking names and more data formats; sdist has explicit excludes;
+  CI checkout does not persist credentials and jobs have a timeout.
+* Found by testing on Python 3.12: `ZoneInfo("Europe")` raises `PermissionError`; invalid zone
+  names are now reported cleanly on every supported version.
+
 ## 0.2.0 - 2026-10-08 (Sprint 2)
 
 ### Added

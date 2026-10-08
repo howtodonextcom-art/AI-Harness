@@ -10,6 +10,7 @@ from tests.conftest import MONDAY, make_bars
 from xau_edge.domain.bars import BAR_COLUMNS, BarRequest, MissingColumnsError
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.importers.file_source import FileBarSource, UnsupportedFileError
+from xau_edge.market_data.store import RawStore
 
 pytestmark = pytest.mark.unit
 
@@ -133,6 +134,77 @@ def test_unsupported_extension_and_missing_file(tmp_path: Path) -> None:
         FileBarSource(other, symbol="XAUUSD", timeframe=TF).fetch_bars(WIDE)
     with pytest.raises(FileNotFoundError):
         FileBarSource(tmp_path / "nope.csv", symbol="XAUUSD", timeframe=TF).fetch_bars(WIDE)
+
+
+@pytest.mark.parametrize(
+    ("unit", "scale"), [("s", 1), ("ms", 1000), ("us", 1_000_000)], ids=["s", "ms", "us"]
+)
+def test_integer_epoch_timestamps_infer_their_unit(tmp_path: Path, unit: str, scale: int) -> None:
+    """ECC review F-11: millisecond epochs used to be read as seconds and silently filtered out."""
+    path = tmp_path / f"epoch_{unit}.csv"
+    epoch = int(datetime(2025, 3, 3, 0, 0, tzinfo=UTC).timestamp()) * scale
+    path.write_text(
+        f"time,open,high,low,close,tick_volume,spread\n{epoch},2000.0,2001.0,1999.0,2000.5,10,20\n",
+        encoding="utf-8",
+    )
+    out = FileBarSource(path, symbol="XAUUSD", timeframe=TF).fetch_bars(WIDE)
+    assert out["timestamp"].to_list() == [datetime(2025, 3, 3, 0, 0, tzinfo=UTC)]
+
+
+def test_explicit_epoch_unit_overrides_inference(tmp_path: Path) -> None:
+    path = tmp_path / "epoch.csv"
+    epoch_ms = int(datetime(2025, 3, 3, tzinfo=UTC).timestamp()) * 1000
+    path.write_text(
+        "time,open,high,low,close,tick_volume,spread\n"
+        f"{epoch_ms},2000.0,2001.0,1999.0,2000.5,10,20\n",
+        encoding="utf-8",
+    )
+    src = FileBarSource(path, symbol="XAUUSD", timeframe=TF, epoch_unit="ms")
+    assert src.fetch_bars(WIDE).height == 1
+
+
+def test_date_shaped_integers_are_rejected_as_ambiguous(tmp_path: Path) -> None:
+    path = tmp_path / "yyyymmdd.csv"
+    path.write_text(
+        "timestamp,open,high,low,close,tick_volume,spread\n20250303,2000.0,2001.0,1999.0,2000.5,10,20\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="ambiguous"):
+        FileBarSource(path, symbol="XAUUSD", timeframe=TF).fetch_bars(WIDE)
+
+
+def test_source_name_is_a_valid_raw_store_source(tmp_path: Path) -> None:
+    """ECC review F-12: the protocol's ``name`` is the natural provenance value for the store."""
+    path = tmp_path / "my data (1).parquet"
+    make_bars(5).write_parquet(path)
+    src = FileBarSource(path, symbol="XAUUSD", timeframe=TF)
+    store = RawStore(tmp_path / "raw")
+    dataset = store.write(src.fetch_bars(WIDE), symbol="XAUUSD", timeframe=TF, source=src.name)
+    assert dataset.source == src.name
+    assert src.name.startswith("file_")
+
+
+@pytest.mark.parametrize(
+    "stem", ["xau..m5", "a...b", "données", "con", "x y", "-lead", "trail.", "." * 5, "é" * 300]
+)
+def test_source_name_is_valid_for_any_file_stem(tmp_path: Path, stem: str) -> None:
+    """Re-review: every file name must yield a name the raw store accepts."""
+    path = tmp_path / f"{stem}.parquet"
+    src = FileBarSource(path, symbol="XAUUSD", timeframe=TF)
+    frame = make_bars(3)
+    RawStore(tmp_path / "raw").write(frame, symbol="XAUUSD", timeframe=TF, source=src.name)
+
+
+def test_unparseable_timestamp_error_names_the_offending_value(tmp_path: Path) -> None:
+    path = tmp_path / "bad.csv"
+    path.write_text(
+        "timestamp,open,high,low,close,tick_volume,spread\n"
+        "2025-03-03 00:00:00,1,1,1,1,1,1\n"
+        "GARBAGE,1,1,1,1,1,1\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="GARBAGE"):
+        FileBarSource(path, symbol="XAUUSD", timeframe=TF).fetch_bars(WIDE)
 
 
 def test_custom_column_mapping(tmp_path: Path) -> None:

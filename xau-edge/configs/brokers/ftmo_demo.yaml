@@ -28,3 +28,7 @@ validation:
   max_spread_points: 200
   # Set after validating real data; see the verification report.
   max_missing_fraction: 0.01
+  # Longest legitimate closure in 17 months of M5 data: Christmas, 1,550 open minutes (25.8 h);
+  # New Year and Good Friday were 1,365. Gaps beyond this are treated as data loss even when they
+  # end at a reopening.
+  max_closure_minutes: 1680   # 28 h

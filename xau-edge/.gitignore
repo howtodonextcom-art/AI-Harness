@@ -11,18 +11,50 @@ htmlcov/
 dist/
 build/
 
-# Secrets (never commit credentials)
+# Secrets (never commit credentials or account identifiers)
 .env
 .env.*
 !.env.example
+*.env
+env.*
+.envrc
+id_rsa*
+id_ed25519*
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+secrets.*
+credentials*.json
 
 # Market data is large, reproducible from sources, and may be licensed: keep out of git.
-data/raw/*
-data/processed/*
-data/features/*
-data/patterns/*
-data/backtests/*
-!data/**/.gitkeep
+# Nothing inside data/ is tracked except the .gitkeep placeholders of its sub-folders.
+data/*
+!data/*/
+data/*/*
+!data/*/.gitkeep
+
+# Data and database formats, anywhere in the project (names match case-insensitively on Windows)
+*.csv
+*.tsv
+*.parquet
+*.pq
+*.feather
+*.hst
+*.sqlite
+*.sqlite3
+*.duckdb
+*.wal
+*.pkl
+*.pickle
+*.zip
+*.gz
+
+# Spill files and logs
+.tmp/
+logs/
+*.log
 
 # Local experiment output
 experiments/runs/

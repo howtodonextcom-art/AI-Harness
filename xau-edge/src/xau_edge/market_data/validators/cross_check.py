@@ -30,11 +30,23 @@ class CrossCheckReport:
     only_in_reference: int
     mismatches: dict[str, int] = field(default_factory=dict)
     sample: dict[str, tuple[datetime, ...]] = field(default_factory=dict)
+    duplicates_in_derived: int = 0
+    duplicates_in_reference: int = 0
 
     @property
     def exact(self) -> bool:
-        """True when both frames cover the same timestamps and no column differs."""
-        return not self.mismatches and not self.only_in_derived and not self.only_in_reference
+        """True when both frames cover the same unique timestamps and no column differs."""
+        return (
+            not self.mismatches
+            and not self.only_in_derived
+            and not self.only_in_reference
+            and not self.duplicates_in_derived
+            and not self.duplicates_in_reference
+        )
+
+
+def _duplicates(df: pl.DataFrame) -> int:
+    return df.height - df["timestamp"].n_unique()
 
 
 def cross_check(
@@ -46,9 +58,12 @@ def cross_check(
 ) -> CrossCheckReport:
     """Join on ``timestamp`` and count per-column differences.
 
-    Prices may differ by up to ``price_tolerance``; other columns must be equal (nulls compare
-    equal to nulls). Rows present on only one side are counted separately.
+    Prices may differ by up to ``price_tolerance``; other columns must be equal. Nulls and NaNs
+    compare equal to themselves (a null or NaN against a value is a mismatch). Rows present on
+    only one side, and repeated timestamps on either side, are counted separately and make the
+    comparison inexact rather than being silently fanned out by the join.
     """
+    dup_derived, dup_reference = _duplicates(derived), _duplicates(reference)
     ref = reference.select("timestamp", *columns).rename({c: f"{c}__ref" for c in columns})
     joined = derived.select("timestamp", *columns).join(ref, on="timestamp", how="inner")
 
@@ -56,8 +71,11 @@ def cross_check(
     sample: dict[str, tuple[datetime, ...]] = {}
     for col in columns:
         a, b = pl.col(col), pl.col(f"{col}__ref")
-        differs = (a - b).abs() > price_tolerance if col in _PRICE_COLUMNS else ~a.eq_missing(b)
-        bad = joined.filter(differs.fill_null(True))
+        if col in _PRICE_COLUMNS:
+            same = a.eq_missing(b) | ((a - b).abs() <= price_tolerance).fill_null(False)
+        else:
+            same = a.eq_missing(b)
+        bad = joined.filter(~same)
         if bad.height:
             mismatches[col] = bad.height
             sample[col] = tuple(bad["timestamp"].head(_MAX_SAMPLES).to_list())
@@ -72,4 +90,6 @@ def cross_check(
         ).height,
         mismatches=mismatches,
         sample=sample,
+        duplicates_in_derived=dup_derived,
+        duplicates_in_reference=dup_reference,
     )
