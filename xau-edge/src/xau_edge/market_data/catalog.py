@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import logging
+import os
 import re
 import threading
 from dataclasses import dataclass
@@ -25,6 +26,31 @@ SQL_MEMORY_LIMIT = "512MB"
 SQL_THREADS = 2
 SQL_TIMEOUT_SECONDS = 30.0
 SQL_MAX_ROWS = 1_000_000
+CACHE_MAX_ENTRIES = 32
+
+_FileSignature = tuple[tuple[str, int, int], ...]
+_CACHE: dict[tuple[str, str, str], tuple[_FileSignature, CatalogLoad]] = {}
+_CACHE_LOCK = threading.Lock()
+
+
+def clear_catalog_cache() -> None:
+    """Drop every cached merge (tests, or after maintenance such as compaction)."""
+    with _CACHE_LOCK:
+        _CACHE.clear()
+
+
+def _signature(directory: Path) -> _FileSignature | None:
+    """(name, mtime_ns, size) of every Parquet file and sidecar; None if the folder is missing."""
+    try:
+        with os.scandir(directory) as entries:
+            found = [
+                (e.name, (st := e.stat()).st_mtime_ns, st.st_size)
+                for e in entries
+                if e.name.endswith((".parquet", ".parquet.meta.json")) and e.is_file()
+            ]
+    except OSError:
+        return None
+    return tuple(sorted(found))
 
 
 @dataclass(frozen=True)
@@ -69,12 +95,45 @@ class DatasetCatalog:
                     found.append((symbol_dir.name, tf))
         return found
 
-    def load(self, symbol: str, timeframe: Timeframe) -> CatalogLoad:
+    def load(self, symbol: str, timeframe: Timeframe, *, use_cache: bool = True) -> CatalogLoad:
         """Merge all fetches; where timestamps overlap, the most recent fetch wins.
 
         Raises ``RawDataIntegrityError`` if any stored file or its sidecar record no longer
         agrees with the hash and metadata written with it.
+
+        The merged result is cached per (root, symbol, timeframe) and reused while the
+        (name, mtime, size) of every Parquet file and sidecar is unchanged, so the per-cycle
+        cost does not grow with re-hashing. Content is fully re-hashed on the first load and on
+        any change; pass ``use_cache=False`` to force a full integrity verification.
         """
+        key = (str(self.root.resolve()), symbol, timeframe.value)
+        signature = (
+            _signature(self.root / symbol / timeframe.value)
+            if use_cache and is_safe_name(symbol)
+            else None
+        )
+        if signature is not None:
+            with _CACHE_LOCK:
+                hit = _CACHE.get(key)
+            if hit is not None and hit[0] == signature:
+                log_event(
+                    _LOG,
+                    "catalog.load",
+                    symbol=symbol,
+                    timeframe=timeframe.value,
+                    dataset_id=hit[1].dataset_id,
+                    cached=True,
+                )
+                return hit[1]
+        result = self._load_uncached(symbol, timeframe)
+        if signature is not None and _signature(self.root / symbol / timeframe.value) == signature:
+            with _CACHE_LOCK:
+                if len(_CACHE) >= CACHE_MAX_ENTRIES:
+                    _CACHE.pop(next(iter(_CACHE)))
+                _CACHE[key] = (signature, result)
+        return result
+
+    def _load_uncached(self, symbol: str, timeframe: Timeframe) -> CatalogLoad:
         datasets = self._store.datasets(symbol, timeframe)
         if not datasets:
             msg = f"No raw datasets for {symbol} {timeframe.value} under {self.root}"
