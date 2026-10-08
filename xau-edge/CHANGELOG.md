@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 - 2026-10-08 (Sprint 5: market structure and regime)
+
+### Added
+* `structure/swings.py`: confirmed-pivot swings, HH/HL/LH/LL, trend, BOS, CHoCH, support and
+  resistance; non-repainting by construction and by test (truncation, mirror symmetry).
+* `structure/regime.py`: rule-based TREND_UP/DOWN, RANGE, HIGH/LOW_VOLATILITY, SHOCK with a-priori
+  thresholds and a causal volatility baseline; `structure/frame.py` aligns both to the bars.
+* ADR-0012 (rules, order of operations, known weaknesses).
+
 ## 0.4.0 - 2026-10-08 (Sprint 4: feature set)
 
 ### Added

@@ -69,7 +69,7 @@ def feature_id(dataset_id: str, timeframe: Timeframe, config: FeatureConfig | No
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
-def _check_bars(bars: pl.DataFrame) -> None:
+def check_bars(bars: pl.DataFrame) -> None:
     missing = [c for c in REQUIRED_COLUMNS if c not in bars.columns]
     if missing:
         msg = f"missing column(s): {', '.join(missing)}"
@@ -96,7 +96,7 @@ def build_features(
 ) -> pl.DataFrame:
     """Compute the feature frame for ``bars`` (sorted, unique, UTC, validated upstream)."""
     cfg = config or FeatureConfig()
-    _check_bars(bars)
+    check_bars(bars)
     o, h, lo, c = (bars[k].to_numpy() for k in ("open", "high", "low", "close"))
     volume = bars["tick_volume"].to_numpy().astype(np.float64)
     ts = bars["timestamp"]
