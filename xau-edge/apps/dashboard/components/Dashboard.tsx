@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AnalogueChart } from "@/components/AnalogueChart";
 import { BotPanel } from "@/components/BotPanel";
@@ -140,6 +141,9 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-500">
+          <Link href="/control" className="rounded-md border border-sky-600 px-3 py-1 text-sky-700 dark:text-sky-300">
+            Điều khiển
+          </Link>
           <span>Decision time {new Date(signal.timestamp).toUTCString()}</span>
           <button type="button" onClick={refresh} disabled={loading}
             className="rounded-md border border-slate-400 px-3 py-1 hover:bg-slate-200 disabled:opacity-50 dark:hover:bg-slate-800">

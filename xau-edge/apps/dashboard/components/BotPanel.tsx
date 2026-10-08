@@ -249,8 +249,10 @@ export function BotPanel({
             ))}
           </ul>
           <p className="mt-4 text-xs text-slate-500">
-            This panel only reads. There is no control here that can place, change or close an order;
-            the kill switch is a local command (<code>scripts/kill_switch.py</code>).
+            This panel only reads. Start/stop, DRY-RUN/DEMO, smoke and flatten are on the{" "}
+            <a href="/control" className="underline">Điều khiển</a> page (when the API runs with{" "}
+            <code>XAU_EDGE_WEB_CONTROL=true</code>); resetting the kill switch stays a local command (
+            <code>scripts/kill_switch.py</code>).
           </p>
         </div>
       </div>
