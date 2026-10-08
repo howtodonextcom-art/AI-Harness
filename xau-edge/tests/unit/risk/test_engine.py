@@ -230,12 +230,25 @@ def test_exposure_limit_is_inclusive() -> None:
     assert "MAX_EXPOSURE" in d.reasons
 
 
-def test_daily_buffer_boundary_is_inclusive() -> None:
-    # day start 102,500: floor 97,500 + buffer 2,000 = 99,500 ; equity 100,000 - risk 500 = 99,500
+def test_daily_buffer_boundary_counts_as_a_breach() -> None:
+    # day start 102,500: floor 97,500 + buffer 2,000 = 99,500 ; equity 100,000 - risk 500 = 99,500.
+    # Equality with a floor is a breach (T2.9), so exactly on the buffer line is refused.
     acct = _account(day_start_balance=102_500.0)
-    assert _engine().evaluate(_request(), acct, _market()).allowed
-    tighter = _account(day_start_balance=102_501.0)
-    assert "DAILY_LOSS_BUFFER" in _engine().evaluate(_request(), tighter, _market()).reasons
+    assert "DAILY_LOSS_BUFFER" in _engine().evaluate(_request(), acct, _market()).reasons
+    looser = _account(day_start_balance=102_499.0)
+    assert _engine().evaluate(_request(), looser, _market()).allowed
+
+
+def test_equity_exactly_on_a_floor_trips_the_kill_switch() -> None:
+    engine = _engine()
+    # static max-loss floor is 90,000 for a 100,000 account
+    on_floor = _account(equity=90_000.0, balance=90_000.0, day_start_balance=90_000.0)
+    assert engine.check_account(on_floor) is True
+    daily = _engine()
+    # daily floor = day start 100,000 - 5,000 = 95,000
+    assert daily.check_account(_account(equity=95_000.0, day_start_balance=100_000.0)) is True
+    just_above = _engine()
+    assert just_above.check_account(_account(equity=95_000.01)) is False
 
 
 def test_a_max_loss_breach_alone_trips_the_kill_switch() -> None:

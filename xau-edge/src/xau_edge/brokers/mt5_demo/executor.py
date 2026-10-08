@@ -291,6 +291,18 @@ class Mt5DemoExecutor:
         limit = self.config.deviation_points * float(info.point)
         if abs(price - intent.entry_reference) > limit:
             return None, "ENTRY_PRICE_MOVED"
+        digits = int(info.digits)
+        if (
+            round(intent.stop_loss, digits) != intent.stop_loss
+            or round(intent.take_profit, digits) != intent.take_profit
+        ):
+            return None, "LEVELS_NOT_ON_TICK"
+        min_distance = int(info.trade_stops_level) * float(info.point)
+        if (
+            abs(price - intent.stop_loss) < min_distance
+            or abs(intent.take_profit - price) < min_distance
+        ):
+            return None, "STOPS_TOO_CLOSE"
         flags = int(info.filling_mode)
         if flags & mt5.SYMBOL_FILLING_FOK:
             filling = mt5.ORDER_FILLING_FOK
@@ -466,9 +478,9 @@ class Mt5DemoExecutor:
             position = next((p for p in self.reader.positions() if p.ticket == ticket), None)
             if position is None or position.magic != cfg.magic:
                 return _refused("NOT_A_BOT_POSITION")
-            request = self._close_request(position)
+            request, close_reason = self._close_request(position)
             if request is None:
-                return _refused("SYMBOL_UNAVAILABLE")
+                return _refused(close_reason)
             self.journal.record("position.closing", ticket=ticket, reason=reason)
         except (StateError, JournalError, DemoAccountError) as exc:
             log_event(_LOG, "executor.close_refused_on_error", logging.ERROR, error=str(exc))
@@ -496,12 +508,20 @@ class Mt5DemoExecutor:
         self._record_quietly("position.closed", ticket=ticket, reason=reason)
         return SubmitResult("FILLED", (), ticket=ticket, retcode=retcode)
 
-    def _close_request(self, position: BrokerPosition) -> dict[str, Any] | None:
+    def _close_request(self, position: BrokerPosition) -> tuple[dict[str, Any] | None, str]:
         mt5 = self._mt5
         info = mt5.symbol_info(position.symbol)
         tick = mt5.symbol_info_tick(position.symbol)
         if info is None or tick is None:
-            return None
+            return None, "SYMBOL_UNAVAILABLE"
+        freeze = int(info.trade_freeze_level) * float(info.point)
+        if freeze > 0:
+            mid = (float(tick.bid) + float(tick.ask)) / 2
+            near = (
+                abs(mid - position.stop_loss) <= freeze or abs(mid - position.take_profit) <= freeze
+            )
+            if near:
+                return None, "POSITION_FROZEN"
         flags = int(info.filling_mode)
         if flags & mt5.SYMBOL_FILLING_FOK:
             filling = mt5.ORDER_FILLING_FOK
@@ -510,7 +530,7 @@ class Mt5DemoExecutor:
         else:
             filling = mt5.ORDER_FILLING_RETURN
         closing_a_long = position.direction == 1
-        return {
+        request = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": position.symbol,
             "volume": position.lots,
@@ -523,6 +543,7 @@ class Mt5DemoExecutor:
             "type_time": mt5.ORDER_TIME_GTC,
             "type_filling": filling,
         }
+        return request, ""
 
     def _close_unknown(self, ticket: str, why: str) -> SubmitResult:
         log_event(_LOG, "executor.close_unknown", logging.CRITICAL, reason=why)

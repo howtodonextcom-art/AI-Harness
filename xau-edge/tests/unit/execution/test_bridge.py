@@ -83,7 +83,7 @@ def test_a_valid_buy_becomes_a_deterministic_intent_and_is_marked_as_seen(tmp_pa
     assert intent.signal_hash == signal.inputs_hash
     assert intent.dry_run is True
     assert intent.magic == 7
-    assert intent.lots == pytest.approx(0.66)  # sized by the risk engine, not the bridge
+    assert intent.lots == pytest.approx(0.64)  # sized by the risk engine from the ask entry
     assert bridge.state.is_seen(signal.inputs_hash)
     assert bridge.state.last_decision_bar() == signal.timestamp
     other = tmp_path / "other"
@@ -251,14 +251,16 @@ def test_an_unreadable_state_fails_closed(tmp_path: Path) -> None:
     assert result.reasons == ("STATE_UNAVAILABLE",)
 
 
-def test_the_bridge_sizes_exactly_like_the_paper_trader(tmp_path: Path) -> None:
+def test_the_bridge_never_sizes_larger_than_the_paper_trader(tmp_path: Path) -> None:
     signal = _buy()
     paper = _trader().on_signal(signal, T, spread_points=30.0)
     bridged = _offer(_bridge(tmp_path), signal)
     assert paper.accepted
     assert bridged.accepted
     assert bridged.intent is not None
-    assert bridged.intent.lots == pytest.approx(paper.lots)  # one sizing logic for both paths
+    # the bridge measures the stop from the executable entry (the ask), so it never sizes larger
+    assert bridged.intent.lots <= paper.lots + 1e-9
+    assert bridged.intent.lots == pytest.approx(0.64)
 
 
 def test_the_state_kill_switch_blocks_even_if_the_risk_engine_uses_an_in_memory_switch(
@@ -270,3 +272,45 @@ def test_the_state_kill_switch_blocks_even_if_the_risk_engine_uses_an_in_memory_
     result = _offer(bridge, _buy())
     assert result.reasons == ("KILL_SWITCH",)
     assert not state.is_seen(_buy().inputs_hash)
+
+
+def test_a_buy_enters_at_the_ask_and_a_sell_at_the_bid(tmp_path: Path) -> None:
+    buy = _offer(_bridge(tmp_path), _buy())
+    assert buy.intent is not None
+    assert buy.intent.entry_reference == pytest.approx(2000.3)  # zone mid 2000.0 + 30 points
+    sell_signal = decide(
+        _inputs(
+            prob_up=0.15,
+            prob_down=0.60,
+            prob_neutral=0.25,
+            htf_bias={"H4": -1, "H1": -1, "M15": -1, "M5": -1},
+            analogue_expected_r_long=-0.3,
+            analogue_expected_r_short=0.6,
+        )
+    )
+    other = tmp_path / "s"
+    other.mkdir()
+    sell = _offer(_bridge(other), sell_signal)
+    assert sell.intent is not None
+    assert sell.intent.entry_reference == pytest.approx(2000.0)
+
+
+def test_sizing_uses_the_stop_distance_from_the_executable_entry(tmp_path: Path) -> None:
+    result = _offer(_bridge(tmp_path), _buy())
+    assert result.intent is not None
+    # stop 1992.5; from the ask 2000.30 the distance is 7.80, not 7.50: 500 / (7.8 * 100) = 0.64
+    assert result.intent.lots == pytest.approx(0.64)
+
+
+def test_levels_are_rounded_to_the_symbols_digits(tmp_path: Path) -> None:
+    state = ExecutionState(tmp_path / "s.sqlite")
+    risk = RiskEngine(RiskLimits(), PROP, kill_switch=PersistentKillSwitch(state))
+    bridge = SignalBridge(state, risk, ExecutionSafety(), magic=7, digits=1)
+    result = _offer(bridge, _buy(atr=5.01))
+    assert result.intent is not None
+    for level in (
+        result.intent.stop_loss,
+        result.intent.take_profit,
+        result.intent.entry_reference,
+    ):
+        assert round(level, 1) == level

@@ -122,8 +122,17 @@ def build_intent(
     created_at: datetime,
     max_hold_until: datetime,
     dry_run: bool,
+    entry_reference: float | None = None,
+    stop_loss: float | None = None,
+    take_profit: float | None = None,
 ) -> OrderIntent:
-    """Build the intent for a BUY/SELL signal; WAIT or an incomplete one raises ``IntentError``."""
+    """Build the intent for a BUY/SELL signal; WAIT or an incomplete one raises ``IntentError``.
+
+    ``entry_reference`` is the price the order is expected to fill at (the ask for a BUY, the bid
+    for a SELL); without it the middle of the signal's entry zone is used. ``stop_loss`` and
+    ``take_profit`` default to the signal's own levels; the bridge passes them rounded to the
+    symbol's digits.
+    """
     if signal.direction is Direction.WAIT:
         msg = "a WAIT signal never becomes an order intent"
         raise IntentError(msg)
@@ -133,8 +142,10 @@ def build_intent(
     if signal.entry_zone is None or signal.stop_loss is None or signal.take_profit_1 is None:
         msg = "the signal lacks an entry zone, stop loss or take profit"
         raise IntentError(msg)
-    entry = sum(signal.entry_zone) / 2
-    if not all(math.isfinite(v) for v in (entry, signal.stop_loss, signal.take_profit_1)):
+    entry = entry_reference if entry_reference is not None else sum(signal.entry_zone) / 2
+    sl = signal.stop_loss if stop_loss is None else stop_loss
+    tp = signal.take_profit_1 if take_profit is None else take_profit
+    if not all(math.isfinite(v) for v in (entry, sl, tp)):
         msg = "the signal has non-finite price levels"
         raise IntentError(msg)
     intent_id = make_intent_id(signal.inputs_hash, signal.timestamp)
@@ -147,8 +158,8 @@ def build_intent(
             lots=lots,
             risk_amount=risk_amount,
             entry_reference=entry,
-            stop_loss=signal.stop_loss,
-            take_profit=signal.take_profit_1,
+            stop_loss=sl,
+            take_profit=tp,
             max_hold_until=max_hold_until,
             decision_time=signal.timestamp,
             created_at=created_at,

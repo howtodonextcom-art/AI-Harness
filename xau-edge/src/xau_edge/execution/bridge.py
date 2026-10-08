@@ -58,6 +58,8 @@ class SignalBridge:
         hold_bars: int = 20,
         bar_minutes: int = 15,
         max_decision_age: timedelta = timedelta(minutes=30),
+        point: float = 0.01,
+        digits: int = 2,
     ) -> None:
         self.state = state
         self.risk = risk
@@ -67,6 +69,8 @@ class SignalBridge:
         self.hold_bars = hold_bars
         self.bar_minutes = bar_minutes
         self.max_decision_age = max_decision_age
+        self.point = point
+        self.digits = digits
 
     def process(
         self, signal: Signal, now: datetime, *, account: AccountState, spread_points: float
@@ -104,7 +108,7 @@ class SignalBridge:
             return _refuse("DECISION_STALE")
         return None
 
-    def _process(  # noqa: PLR0911 - one early exit per refusal, in a fixed order
+    def _process(  # noqa: PLR0911, PLR0912 - one early exit per refusal, in a fixed order
         self, signal: Signal, now: datetime, account: AccountState, spread_points: float
     ) -> BridgeResult:
         if (refusal := self._pre_checks(signal, now)) is not None:
@@ -123,17 +127,22 @@ class SignalBridge:
         if last_bar is not None and signal.timestamp <= last_bar:
             return _refuse("DUPLICATE_DECISION_BAR")
 
-        entry = sum(signal.entry_zone) / 2
-        if not all(math.isfinite(v) for v in (entry, signal.stop_loss, signal.take_profit_1)):
+        zone_mid = sum(signal.entry_zone) / 2
+        if not all(math.isfinite(v) for v in (zone_mid, signal.stop_loss, signal.take_profit_1)):
             return _refuse("SIGNAL_LEVELS_INVALID")
         direction = 1 if signal.direction is Direction.BUY else -1
-        if (entry - signal.stop_loss) * direction <= 0:
+        # The signal's price is a bar close (a bid). A BUY fills at the ask: spread above it.
+        spread_price = spread_points * self.point if math.isfinite(spread_points) else math.nan
+        entry = round(zone_mid + (spread_price if direction == 1 else 0.0), self.digits)
+        stop_loss = round(signal.stop_loss, self.digits)
+        take_profit = round(signal.take_profit_1, self.digits)
+        if not all(math.isfinite(v) for v in (entry, stop_loss, take_profit)):
+            return _refuse("SIGNAL_LEVELS_INVALID")
+        if (entry - stop_loss) * direction <= 0 or (take_profit - entry) * direction <= 0:
             return _refuse("SIGNAL_LEVELS_INVALID")
 
         decision = self.risk.evaluate(
-            TradeRequest(
-                timestamp=now, direction=direction, stop_distance=abs(entry - signal.stop_loss)
-            ),
+            TradeRequest(timestamp=now, direction=direction, stop_distance=abs(entry - stop_loss)),
             account,
             # A BUY/SELL signal cannot exist with a NEWS_* reason (schema), so news is clear here.
             MarketState(
@@ -158,6 +167,9 @@ class SignalBridge:
                 created_at=now,
                 max_hold_until=now + timedelta(minutes=self.bar_minutes * self.hold_bars),
                 dry_run=self.dry_run,
+                entry_reference=entry,
+                stop_loss=stop_loss,
+                take_profit=take_profit,
             )
         except IntentError as exc:
             log_event(_LOG, "bridge.intent_invalid", logging.WARNING, error=str(exc))

@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from tests.unit.execution.test_bridge import _account, _bridge, _buy
 from xau_edge.brokers.mt5_demo import executor as executor_module
 from xau_edge.brokers.mt5_demo.executor import (
     SMOKE_COMMENT,
@@ -65,6 +66,8 @@ class FakeTerminal:
         self.ask = 2000.2
         self.bid = 2000.0
         self.close_removes = True
+        self.stops_level = 0
+        self.freeze_level = 0
         self.tick_time = int((T + timedelta(hours=2)).timestamp())  # server clock is UTC+2
         self.deals: list[SimpleNamespace] = []
         self._next = 1000
@@ -96,6 +99,9 @@ class FakeTerminal:
             volume_max=high,
             volume_step=step,
             point=0.01,
+            digits=2,
+            trade_stops_level=self.stops_level,
+            trade_freeze_level=self.freeze_level,
             filling_mode=2,
         )
 
@@ -678,3 +684,56 @@ def test_a_duplicate_is_journalled_as_refused(tmp_path: Path) -> None:
     _go(ex, _intent(), T)
     events = [(e["event"], e.get("reasons")) for e in ex.journal.read()]
     assert ("order.refused", ["DUPLICATE_SUBMISSION"]) in events
+
+
+def test_levels_not_on_the_symbols_tick_are_refused(tmp_path: Path) -> None:
+    ex, term = _make(tmp_path)
+    result = _go(ex, _intent(stop_loss=1990.123), T)
+    assert result.reasons == ("LEVELS_NOT_ON_TICK",)
+    assert term.sent == []
+
+
+def test_stops_closer_than_the_brokers_stop_level_are_refused(tmp_path: Path) -> None:
+    term = FakeTerminal()
+    term.stops_level = 2000  # 20.00 in price units for a 0.01 point
+    ex, term = _make(tmp_path, term)
+    result = _go(ex, _intent(), T)  # stop is only 10.2 away
+    assert result.reasons == ("STOPS_TOO_CLOSE",)
+    assert term.sent == []
+
+
+def test_a_position_inside_the_freeze_level_is_not_closed_but_not_treated_as_unknown(
+    tmp_path: Path,
+) -> None:
+    ex, term = _make(tmp_path)
+    ticket = _go(ex, _intent(), T).ticket
+    assert ticket is not None
+    term.freeze_level = 100000  # everything is frozen
+    result = ex.close_position(ticket, "x")
+    assert result.status == "REFUSED"
+    assert result.reasons == ("POSITION_FROZEN",)
+    assert ex.state.kill_switch_state()[0] is False
+    assert len(term.sent) == 1  # only the opening order
+
+
+def test_a_buy_from_a_signal_fills_with_the_real_31_point_spread(tmp_path: Path) -> None:
+    """Regression for blocker c2: entry was a bid compared with an ask and always moved."""
+    bridge = _bridge(tmp_path / "b")
+    signal = _buy()
+    result = bridge.process(signal, T, account=_account(), spread_points=31.0)
+    assert result.intent is not None
+    term = FakeTerminal()
+    term.bid = 2000.0
+    term.ask = 2000.31
+    ex, term = _make(tmp_path, term)
+    ex.state.record_accepted(
+        signal_hash=result.intent.signal_hash,
+        intent_id=result.intent.intent_id,
+        decision_time=T,
+        day="d",
+        dry_run=False,
+        max_orders_per_day=9,
+    )
+    intent = result.intent.model_copy(update={"dry_run": False})
+    assert ex.submit(intent, T).status == "FILLED"
+    assert term.sent[0]["price"] == 2000.31

@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     enable_demo_trading: bool = False
     demo_dry_run: bool = True
     demo_smoke: bool = False
-    demo_deviation_points: int = Field(default=30, ge=0, le=100)
+    demo_deviation_points: int = Field(default=60, ge=0, le=100)
     demo_allowed_accounts: str = ""
     demo_allowed_symbols: str = "XAUUSD"
     demo_magic: int | None = None

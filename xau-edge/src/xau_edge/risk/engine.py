@@ -127,7 +127,7 @@ class RiskEngine:
             self.kill_switch.trip("ACCOUNT_STATE_INVALID")
             return True
         daily, maximum = self._floors(account)
-        if account.equity < daily or account.equity < maximum:
+        if account.equity <= daily or account.equity <= maximum:
             self.kill_switch.trip(
                 f"PROP_BREACH: equity {account.equity:.2f} below floor {max(daily, maximum):.2f}"
             )
@@ -161,12 +161,12 @@ class RiskEngine:
         daily_floor, max_floor = self._floors(account)
         buffer = self.prop.internal_buffer_pct_of_limit / 100.0
         worst_equity = account.equity - risk_amount
-        if worst_equity < daily_floor + buffer * self.prop.daily_loss_amount(
+        if worst_equity <= daily_floor + buffer * self.prop.daily_loss_amount(
             account.initial_capital
         ):
             reasons.append("DAILY_LOSS_BUFFER")
         max_amount = account.initial_capital * self.prop.max_loss_limit_pct / 100.0
-        if worst_equity < max_floor + buffer * max_amount:
+        if worst_equity <= max_floor + buffer * max_amount:
             reasons.append("MAX_LOSS_BUFFER")
         if account.open_positions >= lim.max_concurrent_trades:
             reasons.append("MAX_CONCURRENT")
