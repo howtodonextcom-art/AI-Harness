@@ -12,7 +12,8 @@ real collaborators and the tests build fakes. What it adds on top of the pieces:
 * the day-start balance is rebuilt from the deal history as the balance at 00:00 Prague (T2.8);
 * a system clock more than a few seconds off NTP stops trading (T3.5);
 * an optional ``prop_facts`` hook adds the FTMO-facing facts (evidence label, rollout tier, floor
-  distances, requests, trading days, kill switch) to ``status.json`` every cycle (T4.5).
+  distances, requests, trading days, kill switch) to ``status.json`` every cycle (T4.5);
+* an optional ``stop_requested`` hook ends the loop between cycles, never inside one (ADR-0023).
 """
 
 from __future__ import annotations
@@ -173,6 +174,7 @@ class BotApp:
         settle_seconds: float = 20.0,
         max_clock_offset_seconds: float = 5.0,
         prop_facts: PropFactsFn | None = None,
+        stop_requested: Callable[[], bool] | None = None,
     ) -> None:
         self.mode = mode
         self.symbol = symbol
@@ -198,6 +200,7 @@ class BotApp:
         self.settle_seconds = settle_seconds
         self.max_clock_offset_seconds = max_clock_offset_seconds
         self._prop_facts = prop_facts
+        self._stop_requested = stop_requested
         self.backoff = Backoff()
 
     # -- files ---------------------------------------------------------------------------------
@@ -357,13 +360,17 @@ class BotApp:
 
     # -- the loop ------------------------------------------------------------------------------
 
-    def run(self, *, once: bool = False, max_cycles: int = 0, force: bool = False) -> int:
+    def run(  # noqa: PLR0911, PLR0912 - one exit per error class and per stop point
+        self, *, once: bool = False, max_cycles: int = 0, force: bool = False
+    ) -> int:
         """Run until stopped; returns a process exit code (0 normal)."""
         cycles = 0
         failures = 0
         unknown_failures = 0
         while True:
             now = self._clock()
+            if self._stop_now():
+                return self._stopped(now)
             try:
                 self.run_cycle(now, force=force)
             except KeyboardInterrupt:
@@ -383,7 +390,8 @@ class BotApp:
                     if once:
                         return EXIT_TRANSIENT_ONCE
                     wake = next_prague_midnight(now) + timedelta(seconds=30)
-                    self._sleep(max(1.0, (wake - self._clock()).total_seconds()))
+                    if self._pause(max(1.0, (wake - self._clock()).total_seconds())):
+                        return self._stopped(self._clock())
                     continue
                 if kind is ErrorClass.UNKNOWN:
                     unknown_failures += 1
@@ -397,7 +405,8 @@ class BotApp:
                 self._safe_heartbeat(now, "RETRYING")
                 if once:
                     return EXIT_TRANSIENT_ONCE
-                self._sleep(self.backoff.next_delay())
+                if self._pause(self.backoff.next_delay()):
+                    return self._stopped(self._clock())
                 self._try_reconnect()
                 continue
             failures = 0
@@ -407,7 +416,35 @@ class BotApp:
             if once or (max_cycles and cycles >= max_cycles):
                 return EXIT_OK
             wake = next_close(self._clock()) + timedelta(seconds=self.settle_seconds)
-            self._sleep(max(1.0, (wake - self._clock()).total_seconds()))
+            if self._pause(max(1.0, (wake - self._clock()).total_seconds())):
+                return self._stopped(self._clock())
+
+    def _stop_now(self) -> bool:
+        return self._stop_requested is not None and self._stop_requested()
+
+    def _pause(self, seconds: float) -> bool:
+        """Wait; True when a soft stop was requested (checked at least once a second)."""
+        if self._stop_requested is None:
+            self._sleep(seconds)
+            return False
+        remaining = seconds
+        while remaining > 0:
+            if self._stop_requested():
+                return True
+            step = min(1.0, remaining)
+            self._sleep(step)
+            remaining -= step
+        return self._stop_requested()
+
+    def _stopped(self, now: datetime) -> int:
+        """A soft stop between cycles: never in the middle of one (ADR-0023)."""
+        log_event(_LOG, "bot.soft_stop", logging.WARNING)
+        self._safe_heartbeat(now, "STOPPED")
+        try:
+            self.audit.record("bot.stopped", reason="stop requested", source="web")
+        except JournalError as exc:
+            log_event(_LOG, "bot.stop_journal_failed", logging.ERROR, error=type(exc).__name__)
+        return EXIT_OK
 
     def _try_reconnect(self) -> None:
         if self._reconnect is None:

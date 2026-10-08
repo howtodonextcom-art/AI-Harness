@@ -11,6 +11,12 @@ The mode comes from ``.env``, never from this command line:
   account, only when every ``must_verify`` rule in ``configs/prop/ftmo_funded.yaml`` is verified,
   and only as the rollout tier allows (tier 0 = shadow: ``order_check`` only, nothing is sent).
 
+The web control plane (ADR-0023) may choose between DRY-RUN and DEMO through
+``data/execution/runtime_mode.json``; ``.env`` stays the upper bound (no demo trading in ``.env`` =
+DRY-RUN whatever the file says), FUNDED is never read from that file, and a file holding anything
+other than DRY_RUN or DEMO refuses the start. A soft stop requested from the web ends the loop
+between cycles.
+
 DEMO and FUNDED refuse to start without ``--confirm-mode DEMO`` / ``--confirm-mode FUNDED``. The
 start-up banner prints the mode, server, trade_mode, rules profile and the account's last three
 digits. Trade-server requests (order_check/order_send) have a hard budget of 900 per Prague day;
@@ -39,7 +45,7 @@ import argparse
 import contextlib
 import sys
 from collections.abc import Callable
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -48,6 +54,14 @@ from xau_edge.brokers.mt5_demo.connect import TradeConnectError, connect_for_tra
 from xau_edge.brokers.mt5_demo.executor import TRADE_SERVER_REQUESTS, Mt5DemoExecutor
 from xau_edge.brokers.mt5_demo.reader import DemoAccountError, DemoReader
 from xau_edge.config import Settings
+from xau_edge.control.paths import RUNTIME_MODE_FILE, STOP_FILE
+from xau_edge.control.runtime_mode import (
+    RuntimeModeError,
+    apply_runtime_mode,
+    describe_settings_error,
+    read_runtime_mode,
+)
+from xau_edge.control.sentinel import StopSentinel
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.app import AlertFn, BotApp
 from xau_edge.execution.bridge import SignalBridge
@@ -155,13 +169,27 @@ def main() -> int:
     data_dir = Path(args.data_dir) if args.data_dir else settings.data_dir
     exec_dir = data_dir / "execution"
     lock = exec_dir / "demo_trader.lock"
+    started_at = datetime.now(UTC)
     try:
         acquire_lock(lock)
     except LockHeldError as exc:
         print(exc, file=sys.stderr)
         return EXIT_LOCKED
     try:
-        return _run(args, settings, ops, data_dir, exec_dir)
+        try:
+            settings, note = apply_runtime_mode(
+                settings, read_runtime_mode(exec_dir / RUNTIME_MODE_FILE)
+            )
+        except RuntimeModeError as exc:
+            print(f"REFUSING: {exc}")
+            return EXIT_REFUSED
+        except ValueError as exc:
+            print(f"REFUSING: DEMO from the web needs: {describe_settings_error(exc)}")
+            return EXIT_REFUSED
+        if note:
+            print(f"NOTE: {note}")
+        stop = StopSentinel(exec_dir / STOP_FILE, started_at)
+        return _run(args, settings, ops, data_dir, exec_dir, stop=stop)
     except KeyboardInterrupt:
         print("stopped by operator")
         return EXIT_OK
@@ -171,7 +199,13 @@ def main() -> int:
 
 
 def _run(
-    args: argparse.Namespace, settings: Settings, ops: OpsSettings, data_dir: Path, exec_dir: Path
+    args: argparse.Namespace,
+    settings: Settings,
+    ops: OpsSettings,
+    data_dir: Path,
+    exec_dir: Path,
+    *,
+    stop: Callable[[], bool],
 ) -> int:
     requested = requested_mode(settings)
     funded = requested is RunMode.FUNDED
@@ -255,6 +289,7 @@ def _run(
             alert=alert,
             connect=connect,
             login=account.account_id,
+            stop=stop,
         )
         return app.run(once=args.once, max_cycles=args.max_cycles, force=args.force)
     finally:
@@ -296,6 +331,7 @@ def _build_app(
     alert: AlertFn,
     connect: Callable[[], None],
     login: str,
+    stop: Callable[[], bool],
 ) -> BotApp:
     mt5: Any = counter
     profile = BrokerProfile.from_yaml(args.profile)
@@ -393,6 +429,7 @@ def _build_app(
         prop_facts=PropFacts(
             plan, state, prop, requests_today=counter.used_today, request_budget=counter.budget
         ),
+        stop_requested=stop,
     )
 
 
