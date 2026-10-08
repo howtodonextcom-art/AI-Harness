@@ -83,9 +83,25 @@ export interface Bar {
   spread: number;
 }
 
+/** The bot's persistent kill switch; `tripped: null` means unknown, never "clear". */
+export interface PersistentKillSwitch {
+  source: "execution_state";
+  tripped: boolean | null;
+  reason: string;
+  known: boolean;
+  error: string | null;
+}
+
 export interface RiskStatus {
   live_trading: boolean;
-  kill_switch: { tripped: boolean; note: string };
+  kill_switch: PersistentKillSwitch;
+  paper_kill_switch: {
+    source: "paper_broker";
+    configured: boolean;
+    tripped: boolean | null;
+    reason: string;
+    note: string;
+  };
   limits: Record<string, number | string | boolean | string[]>;
   prop_profile: {
     name: string;
@@ -133,9 +149,28 @@ export interface BotPosition {
   bot_owned: boolean;
 }
 
+export type BotMode = "disabled" | "dry-run" | "demo" | "funded";
+
+export type EvidenceLabel = "VALIDATED" | "UNVALIDATED" | "NONE";
+
+/** FTMO-facing facts of the last cycle; every field may be missing on older status files. */
+export interface BotPropFacts {
+  evidence_label?: EvidenceLabel;
+  strategy_id?: string | null;
+  rollout_tier?: number | null;
+  rollout_tier_name?: string | null;
+  daily_floor_distance_pct?: number | null;
+  max_floor_distance_pct?: number | null;
+  requests_today?: number | null;
+  request_budget?: number | null;
+  trading_days?: number | null;
+  kill_switch_tripped?: boolean | null;
+  kill_switch_reason?: string | null;
+}
+
 export interface BotStatusBody {
   updated_at: string;
-  mode: "disabled" | "dry-run" | "demo";
+  mode: BotMode;
   live_trading: false;
   symbol: string;
   connected: boolean;
@@ -153,6 +188,7 @@ export interface BotStatusBody {
     data_age_minutes: number | null;
   } | null;
   news_status: "unknown" | "risk" | "clear";
+  prop?: BotPropFacts;
 }
 
 export interface BotStatus {

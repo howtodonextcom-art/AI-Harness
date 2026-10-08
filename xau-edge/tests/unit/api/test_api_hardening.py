@@ -71,8 +71,10 @@ def test_signal_response_states_news_status_and_data_age(client: TestClient) -> 
     assert body["news_status"] == "unknown"  # no calendar is configured
     assert body["data_as_of"]
     status = client.get("/risk/status").json()
-    assert status["kill_switch"]["tripped"] is False
-    assert "read-only" in status["kill_switch"]["note"]
+    assert status["kill_switch"]["source"] == "execution_state"
+    assert status["kill_switch"]["tripped"] is None  # no bot configured: unknown, never "clear"
+    assert status["paper_kill_switch"]["configured"] is False
+    assert "not the bot's kill switch" in status["paper_kill_switch"]["note"]
 
 
 def test_cors_preflight_refuses_other_methods_and_headers(client: TestClient) -> None:

@@ -148,8 +148,10 @@ def test_risk_status_reflects_the_paper_kill_switch(frames: MarketFrames, tmp_pa
         clock=_now(frames),
     )
     c = TestClient(create_app(ctx))
-    assert c.get("/risk/status").json()["kill_switch"]["tripped"] is False
+    assert c.get("/risk/status").json()["paper_kill_switch"]["tripped"] is False
     trader.risk.kill_switch.trip("test breach")
-    status = c.get("/risk/status").json()["kill_switch"]
+    body = c.get("/risk/status").json()
+    status = body["paper_kill_switch"]
     assert status["tripped"] is True
     assert status["reason"] == "test breach"
+    assert body["kill_switch"]["tripped"] is None  # the paper switch is not the bot's switch

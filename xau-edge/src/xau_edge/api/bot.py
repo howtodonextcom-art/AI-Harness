@@ -43,6 +43,38 @@ def _tail_jsonl(path: Path, limit: int) -> list[dict[str, Any]]:
         raise HTTPException(status_code=503, detail="a bot log file is unreadable") from exc
 
 
+def read_kill_switch(state_path: Path | None) -> dict[str, Any]:
+    """The persistent kill switch, never raising: anything unreadable is ``tripped: None``.
+
+    Error strings are fixed so no file path leaks to the client.
+    """
+
+    def unknown(error: str) -> dict[str, Any]:
+        return {
+            "source": "execution_state",
+            "tripped": None,
+            "reason": "",
+            "known": False,
+            "error": error,
+        }
+
+    if state_path is None:
+        return unknown("the bot is not configured")
+    if not state_path.exists():
+        return unknown("the execution state does not exist yet")
+    try:
+        tripped, reason = ExecutionState(state_path).kill_switch_state()
+    except (StateError, OSError):
+        return unknown("the execution state is unreadable")
+    return {
+        "source": "execution_state",
+        "tripped": tripped,
+        "reason": reason,
+        "known": True,
+        "error": None,
+    }
+
+
 def add_bot_routes(app: FastAPI, bot: BotContext | None, clock: Callable[[], datetime]) -> None:
     """Register the GET-only ``/bot/*`` routes."""
 

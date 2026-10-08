@@ -217,7 +217,13 @@ export function Dashboard() {
             <dt className="text-slate-500">M5 trigger</dt>
             <dd className="text-right">{regime.M5.bos || regime.M5.choch ? (regime.M5.bos || regime.M5.choch) > 0 ? "Break up" : "Break down" : "No break"}</dd>
             <dt className="text-slate-500">Risk status</dt>
-            <dd className="text-right">{risk.kill_switch.tripped ? "KILL SWITCH TRIPPED" : "Kill switch not tripped (read-only, no executor)"}</dd>
+            <dd className={`text-right ${risk.kill_switch.tripped !== false ? "font-semibold text-red-700 dark:text-red-300" : ""}`}>
+              {risk.kill_switch.tripped === true
+                ? `BOT KILL SWITCH TRIPPED (${risk.kill_switch.reason})`
+                : risk.kill_switch.tripped === false
+                  ? "Bot kill switch not tripped"
+                  : `Bot kill switch UNKNOWN${risk.kill_switch.error ? ` (${risk.kill_switch.error})` : ""}`}
+            </dd>
             <dt className="text-slate-500">News risk</dt>
             <dd className="text-right">{signal.news_status === "unknown" ? "Unknown (no calendar)" : signal.news_status === "risk" ? "High-impact event window" : "Clear"}</dd>
           </dl>

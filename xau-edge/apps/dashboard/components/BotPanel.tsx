@@ -1,6 +1,6 @@
 "use client";
 
-import type { BotCycle, BotJournalEvent, BotStatus } from "@/lib/api";
+import type { BotCycle, BotJournalEvent, BotMode, BotPropFacts, BotStatus, EvidenceLabel } from "@/lib/api";
 
 const SEVERITY_STYLE: Record<string, string> = {
   critical: "border-red-500 bg-red-500/10 text-red-700 dark:text-red-300",
@@ -8,11 +8,51 @@ const SEVERITY_STYLE: Record<string, string> = {
   info: "border-slate-400 bg-slate-500/10 text-slate-600 dark:text-slate-300",
 };
 
-const MODE_LABEL: Record<string, string> = {
+const MODE_LABEL: Record<BotMode, string> = {
   disabled: "Disabled",
   "dry-run": "Dry-run (decides, never sends)",
   demo: "Demo execution",
+  funded: "Funded account execution",
 };
+
+const MODE_BADGE: Record<BotMode, { text: string; style: string }> = {
+  disabled: { text: "DISABLED", style: "border-slate-400 text-slate-600 dark:text-slate-300" },
+  "dry-run": { text: "DRY-RUN", style: "border-slate-400" },
+  demo: { text: "DEMO", style: "border-sky-600 text-sky-700 dark:text-sky-300" },
+  funded: { text: "FUNDED", style: "border-red-700 bg-red-600 font-bold text-white ring-2 ring-red-500/40" },
+};
+
+const EVIDENCE_BADGE: Record<EvidenceLabel, { text: string; style: string }> = {
+  VALIDATED: { text: "VALIDATED", style: "border-green-600 bg-green-500/10 text-green-700 dark:text-green-300" },
+  UNVALIDATED: {
+    text: "UNVALIDATED - owner override, max 0.25%/trade",
+    style: "border-amber-500 bg-amber-500/15 font-semibold text-amber-800 dark:text-amber-300",
+  },
+  NONE: { text: "NONE", style: "border-slate-400 text-slate-600 dark:text-slate-300" },
+};
+
+const MISSING = "—";
+
+function floorDistance(pct: number | null | undefined): React.ReactNode {
+  if (pct == null) return MISSING;
+  const style = pct <= 1 ? "font-semibold text-red-700 dark:text-red-300" : pct <= 2 ? "font-semibold text-amber-700 dark:text-amber-300" : "";
+  return <span className={style}>{`${pct.toFixed(2)}% of capital`}</span>;
+}
+
+function tierLabel(prop: BotPropFacts): string {
+  if (prop.rollout_tier == null) return MISSING;
+  return prop.rollout_tier_name ? `Tier ${prop.rollout_tier} - ${prop.rollout_tier_name}` : `Tier ${prop.rollout_tier}`;
+}
+
+function budgetLabel(prop: BotPropFacts): string {
+  if (prop.requests_today == null && prop.request_budget == null) return MISSING;
+  return `${prop.requests_today ?? MISSING} / ${prop.request_budget ?? MISSING}`;
+}
+
+function killSwitchLabel(ks: BotStatus["kill_switch"]): string {
+  if (ks.tripped) return `TRIPPED (${ks.reason})`;
+  return ks.known ? "clear" : "unknown";
+}
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -52,14 +92,28 @@ export function BotPanel({
   }
   const s = bot.status;
   const lastCycle = s?.last_cycle ?? null;
+  const prop: BotPropFacts = s?.prop ?? {};
+  const mode = s ? (MODE_BADGE[s.mode] ?? { text: s.mode.toUpperCase(), style: "border-slate-400" }) : null;
+  const evidence = EVIDENCE_BADGE[prop.evidence_label ?? "NONE"] ?? EVIDENCE_BADGE.NONE;
   return (
-    <section className={`${box} space-y-4`} aria-label="Demo bot">
+    <section className={`${box} space-y-4`} aria-label="Execution bot">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Demo bot</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {s?.mode === "funded" ? "Funded bot" : "Demo bot"}
+        </h2>
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full border border-slate-400 px-2 py-0.5">
-            Mode: {s ? MODE_LABEL[s.mode] : "no status yet"}
+          <span
+            className={`rounded-full border px-2 py-0.5 ${mode ? mode.style : "border-slate-400"}`}
+            title={s ? MODE_LABEL[s.mode] : undefined}
+            aria-label={`Mode: ${mode ? mode.text : "no status yet"}`}
+          >
+            Mode: {mode ? mode.text : "no status yet"}
           </span>
+          {s && (
+            <span className={`rounded-full border px-2 py-0.5 ${evidence.style}`} aria-label={`Evidence: ${evidence.text}`}>
+              Evidence: {evidence.text}
+            </span>
+          )}
           <span className="rounded-full border border-green-600 px-2 py-0.5 text-green-700 dark:text-green-300">
             Live trading: always off
           </span>
@@ -67,10 +121,12 @@ export function BotPanel({
             className={`rounded-full border px-2 py-0.5 ${
               bot.kill_switch.tripped
                 ? "border-red-500 font-semibold text-red-700 dark:text-red-300"
-                : "border-slate-400"
+                : bot.kill_switch.known
+                  ? "border-slate-400"
+                  : "border-amber-500 text-amber-700 dark:text-amber-300"
             }`}
           >
-            Kill switch: {bot.kill_switch.tripped ? `TRIPPED (${bot.kill_switch.reason})` : bot.kill_switch.known ? "clear" : "unknown"}
+            Kill switch: {killSwitchLabel(bot.kill_switch)}
           </span>
         </div>
       </div>
@@ -102,7 +158,7 @@ export function BotPanel({
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <Row label="Last decision bar" value={lastCycle?.decision_time ? new Date(lastCycle.decision_time).toUTCString().slice(5, 22) : "n/a"} />
             <Row label="Last signal" value={lastCycle ? lastCycle.direction : "n/a"} />
-            <Row label="Order intent" value={lastCycle ? (lastCycle.accepted ? "yes (dry-run)" : "none") : "n/a"} />
+            <Row label="Order intent" value={lastCycle ? (lastCycle.accepted ? (s.mode === "dry-run" ? "yes (dry-run)" : "yes") : "none") : "n/a"} />
             <Row label="Data age" value={lastCycle?.data_age_minutes == null ? "n/a" : `${lastCycle.data_age_minutes.toFixed(0)} min`} />
             <Row
               label="Reconciliation"
@@ -117,6 +173,28 @@ export function BotPanel({
                 : "no refusal reason"}
             </p>
           </div>
+        </div>
+      )}
+
+      {s && (
+        <div aria-label="Prop account">
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Prop account</h3>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm lg:grid-cols-4">
+            <Row label="Strategy" value={prop.strategy_id ?? MISSING} />
+            <Row label="Rollout" value={tierLabel(prop)} />
+            <Row label="Daily floor distance" value={floorDistance(prop.daily_floor_distance_pct)} />
+            <Row label="Max floor distance" value={floorDistance(prop.max_floor_distance_pct)} />
+            <Row label="Requests today" value={budgetLabel(prop)} />
+            <Row label="Trading days" value={prop.trading_days ?? MISSING} />
+            <Row
+              label="Kill switch (state)"
+              value={
+                <span className={bot.kill_switch.tripped ? "font-semibold text-red-700 dark:text-red-300" : bot.kill_switch.known ? "" : "text-amber-700 dark:text-amber-300"}>
+                  {killSwitchLabel(bot.kill_switch)}
+                </span>
+              }
+            />
+          </dl>
         </div>
       )}
 

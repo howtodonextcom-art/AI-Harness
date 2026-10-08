@@ -27,6 +27,7 @@ from xau_edge.execution.status import (
     BotStatus,
     StatusCycle,
     StatusPosition,
+    StatusPropFacts,
     build_status,
     evaluate_health,
     read_status,
@@ -190,6 +191,90 @@ def test_a_corrupt_state_file_gives_503(
     client, bot = _ctx(tmp_path, frames)
     bot.state_path.write_bytes(b"junk" * 100)
     assert client.get("/bot/status").status_code == 503
+
+
+def test_status_exposes_funded_mode_and_prop_facts(
+    frames: MarketFrames,  # noqa: F811
+    tmp_path: Path,
+) -> None:
+    client, bot = _ctx(tmp_path, frames)
+    prop = StatusPropFacts(
+        evidence_label="UNVALIDATED",
+        strategy_id="baseline_b",
+        rollout_tier=1,
+        rollout_tier_name="micro",
+        daily_floor_distance_pct=1.5,
+        max_floor_distance_pct=8.0,
+        requests_today=3,
+        request_budget=50,
+        trading_days=2,
+        kill_switch_tripped=False,
+        kill_switch_reason="",
+    )
+    write_status(bot.status_path, _status(mode="funded", account_demo=False, prop=prop))
+    body = client.get("/bot/status").json()
+    assert body["status"]["mode"] == "funded"
+    assert body["status"]["prop"] == prop.model_dump(mode="json")
+    assert "ACCOUNT_NOT_DEMO" not in [a["code"] for a in body["alerts"]]
+
+
+def test_status_without_prop_facts_gets_the_defaults(
+    frames: MarketFrames,  # noqa: F811
+    tmp_path: Path,
+) -> None:
+    client, bot = _ctx(tmp_path, frames)
+    write_status(bot.status_path, _status(mode="demo"))
+    status = client.get("/bot/status").json()["status"]
+    assert status["mode"] == "demo"
+    assert status["prop"]["evidence_label"] == "NONE"
+    assert status["prop"]["daily_floor_distance_pct"] is None
+
+
+def test_risk_status_reports_the_persistent_kill_switch(
+    frames: MarketFrames,  # noqa: F811
+    tmp_path: Path,
+) -> None:
+    client, bot = _ctx(tmp_path, frames)
+    state = ExecutionState(bot.state_path)
+    body = client.get("/risk/status").json()
+    assert body["kill_switch"] == {
+        "source": "execution_state",
+        "tripped": False,
+        "reason": "",
+        "known": True,
+        "error": None,
+    }
+    assert body["paper_kill_switch"]["configured"] is False
+    state.trip_kill_switch("daily floor breach")
+    switch = client.get("/risk/status").json()["kill_switch"]
+    assert switch["tripped"] is True
+    assert switch["reason"] == "daily floor breach"
+
+
+def test_risk_status_with_no_state_file_is_unknown_not_clear(
+    frames: MarketFrames,  # noqa: F811
+    tmp_path: Path,
+) -> None:
+    client, bot = _ctx(tmp_path, frames)
+    switch = client.get("/risk/status").json()["kill_switch"]
+    assert switch["tripped"] is None
+    assert switch["known"] is False
+    assert switch["error"]
+    assert not bot.state_path.exists()  # reading never creates the database
+
+
+def test_risk_status_with_a_corrupt_state_is_unknown_without_leaking_the_path(
+    frames: MarketFrames,  # noqa: F811
+    tmp_path: Path,
+) -> None:
+    client, bot = _ctx(tmp_path, frames)
+    bot.state_path.write_bytes(b"junk" * 100)
+    response = client.get("/risk/status")
+    assert response.status_code == 200
+    switch = response.json()["kill_switch"]
+    assert switch["tripped"] is None
+    assert switch["error"] == "the execution state is unreadable"
+    assert bot.state_path.name not in response.text
 
 
 def test_no_bot_route_accepts_a_write() -> None:

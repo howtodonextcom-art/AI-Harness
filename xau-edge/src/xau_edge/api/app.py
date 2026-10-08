@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict
 
 from xau_edge import __version__ as package_version
-from xau_edge.api.bot import add_bot_routes
+from xau_edge.api.bot import add_bot_routes, read_kill_switch
 from xau_edge.api.service import (
     SYMBOL,
     ApiContext,
@@ -240,12 +240,16 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
 
     @app.get("/risk/status")
     def risk_status() -> dict[str, Any]:
+        paper_switch = ctx.paper.risk.kill_switch if ctx.paper else None
         return {
             "live_trading": False,
-            "kill_switch": {
-                "tripped": ctx.paper.risk.kill_switch.tripped if ctx.paper else False,
-                "reason": ctx.paper.risk.kill_switch.reason if ctx.paper else "",
-                "note": "read-only application: no executor is running",
+            "kill_switch": read_kill_switch(ctx.bot.state_path if ctx.bot else None),
+            "paper_kill_switch": {
+                "source": "paper_broker",
+                "configured": paper_switch is not None,
+                "tripped": paper_switch.tripped if paper_switch else None,
+                "reason": paper_switch.reason if paper_switch else "",
+                "note": "in-memory paper trader of this API process; not the bot's kill switch",
             },
             "limits": ctx.limits.model_dump(mode="json"),
             "prop_profile": {
