@@ -121,9 +121,39 @@ def run_strategy(
 ) -> StrategyRun:
     """Backtest ``strategy`` on ``period`` (research run, no news calendar) and judge the edge."""
     signals, tf = build_signals(strategy, frames, period)
+    return judge_signals(
+        strategy,
+        signals,
+        tf,
+        frames,
+        period,
+        prop,
+        params=strategy_params(strategy),
+        variants=variants,
+        initial_capital=initial_capital,
+        seed=seed,
+        n_resamples=n_resamples,
+    )
+
+
+def judge_signals(  # noqa: PLR0917 - a run is defined by these independent inputs
+    name: str,
+    signals: pl.DataFrame,
+    signal_timeframe: Timeframe,
+    frames: Frames,
+    period: tuple[datetime, datetime],
+    prop: PropProfile,
+    *,
+    params: dict[str, Any],
+    variants: int,
+    initial_capital: float = 100_000.0,
+    seed: int = 7,
+    n_resamples: int = 2000,
+) -> StrategyRun:
+    """Backtest any signal set on ``period`` and judge it against the seven edge criteria."""
     bars = execution_bars(frames, period)
     config = BacktestConfig(
-        signal_timeframe=tf,
+        signal_timeframe=signal_timeframe,
         initial_capital=initial_capital,
         require_news_calendar=False,
         # research runs must not be thinned by path-dependent per-day throttles either
@@ -158,13 +188,13 @@ def run_strategy(
         n_resamples=n_resamples,
     )
     return StrategyRun(
-        strategy,
+        name,
         period,
         result,
         trades,
         metrics,
         verdict,
         signals.height,
-        strategy_params(strategy),
+        params,
         prop_breaches(result.equity, prop, initial_capital=initial_capital),
     )

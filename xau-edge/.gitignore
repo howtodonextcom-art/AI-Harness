@@ -62,3 +62,6 @@ experiments/runs/
 # Node / dashboard (later sprints)
 node_modules/
 .next/
+
+# Trained model artifacts (binary, local)
+models/

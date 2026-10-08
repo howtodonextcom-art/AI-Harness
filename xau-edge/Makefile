@@ -1,7 +1,7 @@
 .PHONY: setup lint format typecheck test test-integration test-all coverage check
 
 setup:
-	uv sync
+	uv sync --extra ml
 
 lint:
 	uv run ruff check .

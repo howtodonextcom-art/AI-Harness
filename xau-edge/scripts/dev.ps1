@@ -16,7 +16,7 @@ function Invoke-Step([string[]]$Command) {
 }
 
 switch ($Task) {
-    'setup'            { Invoke-Step @('sync') }
+    'setup'            { Invoke-Step @('sync', '--extra', 'ml') }
     'lint'             { Invoke-Step @('run', 'ruff', 'check', '.'); Invoke-Step @('run', 'ruff', 'format', '--check', '.') }
     'format'           { Invoke-Step @('run', 'ruff', 'format', '.'); Invoke-Step @('run', 'ruff', 'check', '--fix', '.') }
     'typecheck'        { Invoke-Step @('run', 'mypy') }

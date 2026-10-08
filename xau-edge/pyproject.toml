@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xau-edge"
-version = "0.9.0"
+version = "0.10.0"
 description = "Probabilistic decision-support and research platform for XAUUSD (research only, no live trading)."
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
@@ -23,6 +23,11 @@ dependencies = [
 [project.optional-dependencies]
 # MetaTrader5 ships Windows-only wheels and talks to a locally running terminal.
 mt5 = ["MetaTrader5>=5.0.45; sys_platform == 'win32'"]
+ml = [
+    "lightgbm>=4.5",
+    "scikit-learn>=1.5",
+    "xgboost>=2.1",
+]
 
 [dependency-groups]
 dev = [
@@ -99,6 +104,11 @@ files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
 module = ["MetaTrader5", "MetaTrader5.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# optional "ml" extra: scikit-learn, xgboost and lightgbm ship no complete type information
+module = ["sklearn", "sklearn.*", "xgboost", "xgboost.*", "lightgbm", "lightgbm.*", "joblib"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

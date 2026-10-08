@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0 - 2026-10-08 (Sprint 10: ML benchmark and calibration)
+
+### Added
+* `models/`: dataset, calibration and scoring, four benchmark models, walk-forward, model signals, artifacts.
+* `evaluation/model_runner.py`, `scripts/run_models.py`; optional `ml` extra (CI installs it).
+* `docs/research/model-evaluation.md`, ADR-0016.
+
+### Result
+* No model beat the base rate out of sample or passed the edge criteria.
+
 ## 0.9.0 - 2026-10-08 (Sprint 9: metrics, edge criteria, checkpoint)
 
 ### Added
