@@ -233,7 +233,7 @@ Thêm một lỗi chỉ lộ ra khi chạy Python 3.12: `ZoneInfo("Europe")` né
 * `fetched_at` trong sidecar không tự chứng thực được; ai có quyền ghi vào kho có thể lùi ngày để
   đổi bản thắng khi trùng timestamp (hash, số dòng, khoảng thời gian thì được kiểm tra).
 * Khoảng đóng cửa tới 28 h kết thúc đúng giờ mở lại vẫn chỉ là cảnh báo (đánh đổi đã ghi rõ).
-* Chưa có bước `pip-audit` trong CI (cần chạy CI thật trước); CI vẫn chưa chạy trên GitHub.
+* Chưa có bước `pip-audit` trong CI. Đính chính: CI **đã** chạy trên GitHub và đạt 6/6 job cho commit Sprint 2 (`5f49e71`); tôi từng ghi sai là chưa chạy. Kết quả cho commit `270e484` xem trên tab Actions.
 * Các reviewer vẫn là sub-agent đọc định nghĩa agent ECC, không phải agent ECC native.
 
 ## 11. Giới hạn của lần kiểm toán này (ban đầu)

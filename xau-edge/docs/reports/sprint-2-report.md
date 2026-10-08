@@ -15,7 +15,7 @@ corrections. Still no features, strategies, or execution; live trading remains i
 | Python versions | 3.12.13, 3.13.13 and 3.14.4: all 173 tests and `mypy --strict` pass on each |
 | Mutation spot-check | 12 hand-made mutants (clock sign flips, completeness rule, bucket width, closure thresholds, coverage boundaries, calendar span, catalog precedence, tolerance boundary); all killed on the first full pass, after two boundary tests were added beforehand |
 | Secrets scan | one finding, see "Open issue: account number" |
-| CI | workflow added; **not yet run on GitHub** |
+| CI | workflow added; its first GitHub run (commit `5f49e71`) passed all 6 jobs (Ubuntu and Windows x Python 3.12-3.14); this was only learned afterwards, see the note below the table |
 
 ## What the live verification established
 
@@ -39,6 +39,9 @@ Full detail: `docs/reports/mt5-verification.md`.
 | Holiday early closes counted as data loss | M5 reported FAILED (1,245 "missing" bars) | `UNSCHEDULED_CLOSURES` warning; 2 genuine single-bar gaps remain as `MISSING_BARS` |
 | Silent history truncation undetectable by row checks | a fetch could lose its first week unnoticed | `check_coverage`; validate the merged dataset of record |
 | `Europe/Athens` accepted as the broker clock | 1 h error for 3-4 weeks a year | `BrokerClock` with `NY+N` |
+
+Note: the CI claim above was corrected afterwards. The public GitHub Actions API showed the run for
+`5f49e71` completed with `success` on Ubuntu and Windows for Python 3.12, 3.13 and 3.14.
 
 ## Files
 
@@ -67,7 +70,7 @@ Size: src 1,554 lines in 23 files; tests 1,516 lines in 23 files; scripts 245 li
 | Look-ahead / leakage | Not applicable yet (no features) | Deferred to Epic 07 |
 | Merge rule | "Newest fetch wins" assumes later broker data is a correction, not a regression | Accepted; duplicates are counted and the dataset id changes |
 | DuckDB SQL surface | Read-only check is a prefix test; external access is disabled at the engine level | Accepted |
-| CI | Never executed on GitHub | Open |
+| CI | Believed unrun at report time; it had in fact run and passed on all 6 matrix jobs | Closed (verified via the public Actions API) |
 
 ## Open issue: account number in `.env.example`
 
@@ -90,4 +93,4 @@ elsewhere, treat it as exposed.
 ## Recommended Sprint 3
 
 See `docs/PROJECT_PLAN.md`: indicators with golden tests, candle/volume/session features,
-M5-based cost inputs, a holiday calendar, and a first run of the CI workflow.
+M5-based cost inputs, a holiday calendar, and (CI already passes) a `pip-audit` step.

@@ -65,7 +65,7 @@ Goal: make the data layer trustworthy against a real broker feed.
 | 5 | `DatasetCatalog`: merge of raw fetches (newest wins), content-hash dataset id, read-only SQL via DuckDB | done |
 | 6 | Broker profile loader and `configs/brokers/ftmo_demo.yaml` with measured values | done |
 | 7 | Validator fixes found with real data: span-aware closures, closure vs data loss, `check_coverage`; ADR-0007/0009 | done |
-| 8 | Python 3.12 and 3.13 tested; CI workflow (ubuntu + windows x 3.12-3.14), actions pinned by SHA | done (CI not yet run on GitHub) |
+| 8 | Python 3.12 and 3.13 tested; CI workflow (ubuntu + windows x 3.12-3.14), actions pinned by SHA | done (CI passed 6/6 jobs on GitHub for the Sprint 2 commit) |
 
 ## ECC delivery loop (applies to every epic from Sprint 3)
 
