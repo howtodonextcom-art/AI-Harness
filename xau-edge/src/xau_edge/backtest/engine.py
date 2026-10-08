@@ -2,6 +2,8 @@
 
 Model (documented in ADR-0015):
 
+* Execution bars are M5 by default; ``BacktestConfig.execution_timeframe`` names another
+  timeframe (the edge program executes on H1 because no M5 history exists before 2025-05).
 * Bars are BID prices; each bar has a spread in points, so ask = bid + spread.
 * A signal decided at ``decision_time`` enters at the open of the first bar at or after it
   (``max_entry_gap`` guards against filling across a market closure).
@@ -36,7 +38,6 @@ from xau_edge.risk.prop_rules import PropProfile
 
 _LOG = logging.getLogger(__name__)
 _PRAGUE = ZoneInfo("Europe/Prague")  # FTMO day boundary is midnight CE(S)T
-_EXEC_MINUTES = 5
 _REQUIRED_SIGNAL = ("decision_time", "direction", "atr", "stop_atr", "target_atr", "max_hold_bars")
 _REQUIRED_BARS = ("timestamp", "open", "high", "low", "close", "spread")
 
@@ -47,6 +48,8 @@ class BacktestConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     signal_timeframe: Timeframe = Timeframe.M15
+    execution_timeframe: Timeframe = Timeframe.M5
+    """Timeframe of the bars passed to ``run_backtest`` (H1 for the pre-2025 research history)."""
     initial_capital: float = Field(default=100_000.0, gt=0)
     costs: CostModel = Field(default_factory=CostModel)
     limits: RiskLimits = Field(default_factory=RiskLimits)
@@ -147,6 +150,7 @@ def run_backtest(  # noqa: PLR0912, PLR0915 - one sequential simulation loop
     n = bars.height
     slip = costs.slippage_points * costs.point
     per_lot = costs.contract_size
+    exec_minutes = config.execution_timeframe.minutes
 
     acct = _Account(
         config.initial_capital,
@@ -232,7 +236,7 @@ def run_backtest(  # noqa: PLR0912, PLR0915 - one sequential simulation loop
         stop = entry - direction * stop_dist
         target = entry + direction * float(row["target_atr"]) * atr
         hold_bars = max(
-            1, int(row["max_hold_bars"] * config.signal_timeframe.minutes) // _EXEC_MINUTES
+            1, int(row["max_hold_bars"] * config.signal_timeframe.minutes) // exec_minutes
         )
         last_bar = min(i + hold_bars - 1, n - 1)
 
