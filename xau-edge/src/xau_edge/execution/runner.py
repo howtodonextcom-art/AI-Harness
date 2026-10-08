@@ -18,6 +18,7 @@ from pathlib import Path
 
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.bridge import SignalBridge
+from xau_edge.execution.reconcile import ReconcileResult
 from xau_edge.observability import log_event
 from xau_edge.risk.engine import AccountState
 from xau_edge.signals.engine import MarketFrames
@@ -103,9 +104,18 @@ class DryRunCycle:
         self.max_data_age = max_data_age
 
     def run(
-        self, frames: MarketFrames, now: datetime, account: AccountState, *, force: bool = False
+        self,
+        frames: MarketFrames,
+        now: datetime,
+        account: AccountState,
+        *,
+        force: bool = False,
+        reconcile: ReconcileResult | None = None,
     ) -> CycleReport:
         """Process the latest closed M15 bar once; returns (and journals) the report."""
+        if reconcile is not None and not reconcile.clean:
+            reasons = tuple(f"RECONCILE_{code}" for code in reconcile.codes)
+            return self._record(self._skip(now, reasons[0], None, None, extra=reasons[1:]))
         latest = frames.m15["timestamp"].max()
         if not isinstance(latest, datetime) or frames.m5.height == 0:
             return self._record(self._skip(now, "DATA_EMPTY", None, None))
@@ -143,6 +153,7 @@ class DryRunCycle:
         age_minutes: float | None,
         *,
         skipped: bool = True,
+        extra: tuple[str, ...] = (),
     ) -> CycleReport:
         return CycleReport(
             recorded_at=now.isoformat(),
@@ -150,7 +161,7 @@ class DryRunCycle:
             direction="WAIT",
             signal_hash="",
             accepted=False,
-            reasons=(reason,),
+            reasons=(reason, *extra),
             intent_id=None,
             dry_run=self.bridge.dry_run,
             data_age_minutes=age_minutes,

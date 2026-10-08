@@ -12,6 +12,7 @@ from tests.unit.api.test_api import frames  # noqa: F401 - fixture import
 from tests.unit.execution.test_bridge import PROP, _account
 from tests.unit.signals.test_decision import _inputs
 from xau_edge.execution.bridge import SignalBridge
+from xau_edge.execution.reconcile import Mismatch, ReconcileResult
 from xau_edge.execution.runner import (
     CycleJournal,
     DryRunCycle,
@@ -180,3 +181,18 @@ def test_the_heartbeat_records_time_and_status(tmp_path: Path) -> None:
     now = datetime(2026, 3, 4, 14, 0, tzinfo=UTC)
     write_heartbeat(path, now, "OK")
     assert json.loads(path.read_text(encoding="utf-8")) == {"at": now.isoformat(), "status": "OK"}
+
+
+def test_a_dirty_reconciliation_refuses_the_cycle_without_consuming_the_bar(
+    tmp_path: Path,
+    frames: MarketFrames,  # noqa: F811
+) -> None:
+    at = _decision_time(frames)
+    now = at + timedelta(minutes=1)
+    cycle = _cycle(tmp_path, frames)
+    dirty = ReconcileResult(False, (Mismatch("LOT_MISMATCH", "x"), Mismatch("SL_MISMATCH", "y")))
+    report = cycle.run(frames, now, _account(), reconcile=dirty)
+    assert report.reasons == ("RECONCILE_LOT_MISMATCH", "RECONCILE_SL_MISMATCH")
+    assert not report.accepted
+    clean = cycle.run(frames, now, _account(), reconcile=ReconcileResult(True, ()))
+    assert clean.accepted  # the bar was not consumed by the refusal

@@ -23,9 +23,12 @@ from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 
+from xau_edge.brokers.mt5_demo.reader import DemoAccountError, DemoReader
 from xau_edge.config import Settings
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.bridge import SignalBridge
+from xau_edge.execution.journal import ExecutionJournal
+from xau_edge.execution.reconcile import Reconciler
 from xau_edge.execution.runner import (
     CycleJournal,
     DryRunCycle,
@@ -41,7 +44,6 @@ from xau_edge.market_data.catalog import DatasetCatalog
 from xau_edge.market_data.mt5.source import (
     Mt5BarSource,
     Mt5Settings,
-    ReadOnlyMt5Client,
     load_mt5_module,
 )
 from xau_edge.market_data.profiles import BrokerProfile
@@ -64,7 +66,7 @@ def generate_signal_for(frames: MarketFrames, registry: ExperimentRegistry, at: 
     return generate_signal(frames, at, registry)
 
 
-def main() -> int:
+def main() -> int:  # noqa: PLR0911 - one exit code per refusal
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
@@ -105,18 +107,26 @@ def main() -> int:
     bridge = SignalBridge(state, risk, safety, magic=magic, dry_run=True)
     registry = ExperimentRegistry("experiments/runs")
     journal = CycleJournal(exec_dir / "cycles.jsonl")
+    audit = ExecutionJournal(settings.demo_journal_path)
+    allowed_accounts = tuple(
+        a.strip() for a in settings.demo_allowed_accounts.split(",") if a.strip()
+    )
+    reconciler = Reconciler(
+        state, magic=magic, symbols=(args.symbol,), allowed_accounts=allowed_accounts
+    )  # observe only: the dry-run never trips the kill switch
     store = RawStore(data_dir / "raw")
 
     mt5 = load_mt5_module()
+    reader = DemoReader(mt5, profile.clock, args.symbol)
     if not mt5.initialize(path=args.terminal_path, timeout=90000):
         print(f"MT5 initialize failed: {mt5.last_error()}")
         (exec_dir / "demo_trader.lock").unlink(missing_ok=True)
         return 2
-    client = ReadOnlyMt5Client(mt5)
     try:
-        info = client.account_info()
-        if info is None or info.trade_mode != client.ACCOUNT_TRADE_MODE_DEMO:
-            print("REFUSING: the connected account is not a DEMO account.")
+        try:
+            reader.account()
+        except DemoAccountError as exc:
+            print(f"REFUSING: {exc}")
             return 3
         mt5.symbol_select(args.symbol, True)
         source = Mt5BarSource(mt5, Mt5Settings(broker_timezone=profile.clock.token))
@@ -141,17 +151,28 @@ def main() -> int:
                 loaded[Timeframe.H1],
                 loaded[Timeframe.H4],
             )
-            account_info = client.account_info()
-            balance = float(account_info.balance)
+            try:
+                snapshot = reader.snapshot(now)
+            except DemoAccountError as exc:
+                print(f"{now:%H:%M:%S} account/positions unavailable ({exc}); cycle skipped")
+                audit.record("snapshot.failed", error=str(exc))
+                write_heartbeat(exec_dir / "heartbeat.json", now, "ACCOUNT_UNAVAILABLE")
+                if args.once:
+                    return 5
+                time.sleep(30)
+                continue
+            reconcile = reconciler.check(snapshot)
+            audit.record("reconcile.result", clean=reconcile.clean, codes=list(reconcile.codes))
+            balance = snapshot.account.balance
             account = AccountState(
                 timestamp=now,
                 initial_capital=balance,
                 balance=balance,
-                equity=float(account_info.equity),
+                equity=snapshot.account.equity,
                 day_start_balance=balance,
                 highest_eod_balance=balance,
-                open_positions=0,  # positions are not read until reconciliation exists
-                open_lots=0.0,
+                open_positions=len(snapshot.positions),
+                open_lots=sum(p.lots for p in snapshot.positions),
                 risk_taken_today=0.0,
                 consecutive_losses=0,
             )
@@ -160,7 +181,7 @@ def main() -> int:
                 print(f"{now:%H:%M:%S} data validation failed for {invalid}; cycle skipped")
                 write_heartbeat(exec_dir / "heartbeat.json", now, "DATA_INVALID")
             else:
-                report = cycle.run(frames, now, account, force=args.force)
+                report = cycle.run(frames, now, account, force=args.force, reconcile=reconcile)
                 print(
                     f"{now:%H:%M:%S} bar {report.decision_time} {report.direction} "
                     f"accepted={report.accepted} reasons={list(report.reasons)}"

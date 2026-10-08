@@ -10,6 +10,7 @@ import pytest
 
 from xau_edge.execution.state import (
     STATE_UNREADABLE,
+    BotPositionRecord,
     DailyLimitError,
     DuplicateSignalError,
     ExecutionState,
@@ -40,7 +41,7 @@ def test_a_new_state_starts_safe(tmp_path: Path) -> None:
     assert not state.is_seen("h1")
     assert state.last_decision_bar() is None
     assert state.daily_order_count("2026-03-04") == 0
-    assert state.get_ticket("i-h1") is None
+    assert state.open_positions() == []
 
 
 def test_the_kill_switch_survives_a_restart_and_keeps_the_first_reason(tmp_path: Path) -> None:
@@ -95,12 +96,29 @@ def test_dry_run_is_remembered_but_does_not_use_the_daily_budget(tmp_path: Path)
     _record(state, "b", dry_run=False, limit=1)
 
 
-def test_tickets_are_stored_per_intent(tmp_path: Path) -> None:
+def _record_position(intent: str = "i1", ticket: str = "100") -> BotPositionRecord:
+    return BotPositionRecord(intent, ticket, "XAUUSD", 1, 0.5, 1990.0, 2010.0, T)
+
+
+def test_bot_positions_persist_and_can_be_closed(tmp_path: Path) -> None:
+    path = tmp_path / "s.sqlite"
+    ExecutionState(path).register_position(_record_position())
+    state = ExecutionState(path)
+    assert state.open_positions() == [_record_position()]
+    state.mark_position_closed("100")
+    assert ExecutionState(path).open_positions() == []
+
+
+def test_registering_twice_or_closing_an_unknown_ticket_is_an_error(tmp_path: Path) -> None:
     state = ExecutionState(tmp_path / "s.sqlite")
-    state.set_ticket("i1", None)
-    assert state.get_ticket("i1") is None
-    state.set_ticket("i1", "12345")
-    assert ExecutionState(tmp_path / "s.sqlite").get_ticket("i1") == "12345"
+    state.register_position(_record_position())
+    with pytest.raises(StateError, match="already"):
+        state.register_position(_record_position(ticket="101"))
+    with pytest.raises(StateError, match="no open"):
+        state.mark_position_closed("999")
+    state.mark_position_closed("100")
+    with pytest.raises(StateError, match="no open"):
+        state.mark_position_closed("100")
 
 
 def test_a_file_that_is_not_a_database_is_refused_not_recreated(tmp_path: Path) -> None:

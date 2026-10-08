@@ -15,15 +15,16 @@ import logging
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Final
+from typing import Final, Literal
 
 from xau_edge.observability import log_event
 from xau_edge.risk.kill_switch import RESET_PHRASE, KillSwitch
 
 _LOG = logging.getLogger(__name__)
-SCHEMA_VERSION: Final = 1
+SCHEMA_VERSION: Final = 2
 STATE_UNREADABLE: Final = "STATE_UNREADABLE"
 
 _SCHEMA: Final = (
@@ -34,12 +35,28 @@ _SCHEMA: Final = (
     " intent_id TEXT NOT NULL, decision_time TEXT NOT NULL, dry_run INTEGER NOT NULL,"
     " created_at TEXT NOT NULL)",
     "CREATE TABLE IF NOT EXISTS daily_orders (day TEXT PRIMARY KEY, count INTEGER NOT NULL)",
-    "CREATE TABLE IF NOT EXISTS tickets (intent_id TEXT PRIMARY KEY, ticket TEXT,"
-    " updated_at TEXT NOT NULL)",
+    "CREATE TABLE IF NOT EXISTS bot_positions (intent_id TEXT PRIMARY KEY, ticket TEXT NOT NULL,"
+    " symbol TEXT NOT NULL, direction INTEGER NOT NULL, lots REAL NOT NULL,"
+    " stop_loss REAL NOT NULL, take_profit REAL NOT NULL, status TEXT NOT NULL,"
+    " opened_at TEXT NOT NULL, updated_at TEXT NOT NULL)",
 )
 _EXPECTED_TABLES: Final = frozenset(
-    {"meta", "kill_switch", "seen_signals", "daily_orders", "tickets"}
+    {"meta", "kill_switch", "seen_signals", "daily_orders", "bot_positions"}
 )
+
+
+@dataclass(frozen=True)
+class BotPositionRecord:
+    """A position the bot opened, as recorded when the broker confirmed it."""
+
+    intent_id: str
+    ticket: str
+    symbol: str
+    direction: Literal[-1, 1]
+    lots: float
+    stop_loss: float
+    take_profit: float
+    opened_at: datetime
 
 
 class StateError(RuntimeError):
@@ -242,25 +259,69 @@ class ExecutionState:
                 (decision_time.isoformat(),),
             )
 
-    # -- broker tickets (placeholder for the demo adapter) -------------------------------------
+    # -- positions the bot opened (for reconciliation) ----------------------------------------
 
-    def set_ticket(self, intent_id: str, ticket: str | None) -> None:
-        """Remember the broker ticket for an intent (``None`` until a broker assigns one)."""
+    def register_position(self, record: BotPositionRecord) -> None:
+        """Remember a position the bot opened; re-registering the same intent is refused."""
         with self._transaction() as conn:
+            if conn.execute(
+                "SELECT 1 FROM bot_positions WHERE intent_id = ?", (record.intent_id,)
+            ).fetchone():
+                msg = f"intent {record.intent_id[:12]} already has a registered position"
+                raise StateError(msg)
             conn.execute(
-                "INSERT INTO tickets (intent_id, ticket, updated_at) VALUES (?, ?, ?)"
-                " ON CONFLICT(intent_id) DO UPDATE SET ticket = excluded.ticket,"
-                " updated_at = excluded.updated_at",
-                (intent_id, ticket, _now()),
+                "INSERT INTO bot_positions (intent_id, ticket, symbol, direction, lots,"
+                " stop_loss, take_profit, status, opened_at, updated_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?)",
+                (
+                    record.intent_id,
+                    record.ticket,
+                    record.symbol,
+                    record.direction,
+                    record.lots,
+                    record.stop_loss,
+                    record.take_profit,
+                    record.opened_at.isoformat(),
+                    _now(),
+                ),
             )
 
-    def get_ticket(self, intent_id: str) -> str | None:
-        """The stored ticket for an intent, if any."""
+    def mark_position_closed(self, ticket: str) -> None:
+        """Record that a bot position is no longer open; an unknown ticket is an error."""
+        with self._transaction() as conn:
+            cursor = conn.execute(
+                "UPDATE bot_positions SET status = 'CLOSED', updated_at = ? WHERE ticket = ?"
+                " AND status = 'OPEN'",
+                (_now(), ticket),
+            )
+            if cursor.rowcount != 1:
+                msg = f"no open bot position with ticket {ticket}"
+                raise StateError(msg)
+
+    def open_positions(self) -> list[BotPositionRecord]:
+        """Positions the bot believes are open."""
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT ticket FROM tickets WHERE intent_id = ?", (intent_id,)
-            ).fetchone()
-        return None if row is None or row[0] is None else str(row[0])
+            rows = conn.execute(
+                "SELECT intent_id, ticket, symbol, direction, lots, stop_loss, take_profit,"
+                " opened_at FROM bot_positions WHERE status = 'OPEN' ORDER BY opened_at"
+            ).fetchall()
+        try:
+            return [
+                BotPositionRecord(
+                    intent_id=str(r[0]),
+                    ticket=str(r[1]),
+                    symbol=str(r[2]),
+                    direction=1 if r[3] == 1 else -1,
+                    lots=float(r[4]),
+                    stop_loss=float(r[5]),
+                    take_profit=float(r[6]),
+                    opened_at=datetime.fromisoformat(r[7]),
+                )
+                for r in rows
+            ]
+        except (ValueError, TypeError) as exc:
+            msg = "a stored bot position is malformed"
+            raise StateError(msg) from exc
 
 
 class PersistentKillSwitch(KillSwitch):

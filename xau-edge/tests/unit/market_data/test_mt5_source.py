@@ -336,6 +336,8 @@ def test_mt5_attributes_used_by_src_and_scripts_are_on_the_allowlist() -> None:
     used: set[str] = set()
     for root in (project / "src", project / "scripts"):
         for path in root.rglob("*.py"):
+            if "brokers" in path.parts:
+                continue  # the demo adapter has its own, stricter test (tests/unit/brokers)
             for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
                 if not isinstance(node, ast.Attribute):
                     continue
