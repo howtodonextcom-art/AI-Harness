@@ -61,7 +61,8 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
-      - name: Type check
-        run: npx tsc --noEmit
+      # The build generates the route types (LayoutProps, next-env.d.ts) that tsc needs.
       - name: Build
         run: npm run build
+      - name: Type check
+        run: npx tsc --noEmit

@@ -174,3 +174,30 @@ def test_sdist_excludes_secret_looking_files_even_inside_included_folders(tmp_pa
         names = {n.split("/", 1)[1] for n in tar.getnames() if "/" in n}
     assert not (set(leaks) & names), sorted(set(leaks) & names)
     assert "configs/brokers/ftmo_demo.yaml" in names  # legitimate configs still ship
+
+
+def test_no_source_or_test_file_is_hidden_by_gitignore() -> None:
+    """A too-broad ignore pattern once hid the whole models package from CI."""
+    if shutil.which("git") is None:
+        pytest.skip("git not available")
+    files = [
+        str(p.relative_to(PROJECT))
+        for folder in ("src", "tests", "scripts", "configs", "docs")
+        for p in (PROJECT / folder).rglob("*")
+        if p.is_file() and "__pycache__" not in p.parts and p.suffix not in {".pyc"}
+    ]
+    result = subprocess.run(
+        ["git", "check-ignore", "--no-index", "-v", "--stdin"],  # noqa: S607
+        input="\n".join(files),
+        capture_output=True,
+        text=True,
+        cwd=PROJECT,
+        check=False,
+    )
+    hidden = [
+        line
+        for line in result.stdout.splitlines()
+        if "\t" in line and not line.split("\t")[1].startswith(("data/", "tests/fixtures/__"))
+    ]
+    allowed = ("hypothesis", "coverage", ".gitkeep")
+    assert not [h for h in hidden if not any(a in h for a in allowed)], hidden

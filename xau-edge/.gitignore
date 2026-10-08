@@ -64,4 +64,4 @@ node_modules/
 .next/
 
 # Trained model artifacts (binary, local)
-models/
+/models/
