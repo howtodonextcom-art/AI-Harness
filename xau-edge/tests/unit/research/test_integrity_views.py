@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -259,3 +259,20 @@ def test_the_real_v2_hypotheses_expose_mde_and_expected_n() -> None:
         assert reg["underpowered_by_design"] is False
         assert reg["mechanism_status"] == "HYPOTHESIZED"
     assert rows["H08"]["registration"]["dropped_variants"]
+
+
+def test_soak_and_calibration_warn_when_their_files_are_stale(repo: Path) -> None:
+    from tests.unit.research.test_service import _cycles  # noqa: PLC0415
+
+    start = datetime(2026, 10, 9, 8, 0, tzinfo=UTC)
+    _cycles(repo, [start])
+    write(repo, "data/execution/calibration.json", json.dumps({"slippage_points_p50": 2.0}))
+    late = ResearchService(repo, clock=lambda: datetime.now(UTC) + timedelta(hours=5))
+    soak = late.soak()
+    assert soak["freshness"]["stale"] is True
+    assert "DỮ LIỆU CŨ" in soak["freshness"]["warning"]
+    fresh = ResearchService(repo, clock=lambda: datetime.now(UTC))
+    assert fresh.soak()["freshness"]["stale"] is False
+    assert fresh.calibration()["freshness"]["stale"] is False
+    far = ResearchService(repo, clock=lambda: datetime.now(UTC) + timedelta(days=60))
+    assert far.calibration()["freshness"]["stale"] is True

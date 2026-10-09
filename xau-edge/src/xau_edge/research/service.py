@@ -48,6 +48,8 @@ BROKER_PROFILE = "configs/brokers/ftmo_demo.yaml"
 NO_EDGE_BANNER = "Không có edge được kiểm định."
 MIN_FORWARD_TRADES = 100
 MAX_SOAK_SPAN_DAYS = 400
+STALE_CYCLES_HOURS = 2.0
+STALE_CALIBRATION_HOURS = 24.0 * 30
 
 SPLITS: tuple[dict[str, Any], ...] = (
     {
@@ -728,6 +730,22 @@ class ResearchService:
             "freeze_records": freezes,
         }
 
+    def _freshness(self, rel: str, limit_hours: float) -> dict[str, Any]:
+        """File age and a staleness warning (a stale or unreadable age is never "fresh")."""
+        age = self.files.age_hours(rel, self.clock())
+        return {
+            "age_hours": None if age is None else round(age, 2),
+            "limit_hours": limit_hours,
+            "stale": age is None or age > limit_hours,
+            "warning": (
+                "KHÔNG RÕ: không đọc được tuổi file"
+                if age is None
+                else f"DỮ LIỆU CŨ: {age:.1f} giờ (giới hạn {limit_hours:g})"
+                if age > limit_hours
+                else ""
+            ),
+        }
+
     def _outcome_state(
         self, split: dict[str, Any], lock_state: str, has_freeze: bool
     ) -> str | None:
@@ -973,6 +991,7 @@ class ResearchService:
             "source": rel,
             "labels": labels,
             "evidence_class": "EXECUTION",
+            "freshness": self._freshness(rel, STALE_CALIBRATION_HOURS),
             "assumed": assumed,
             "measured": measured,
         }
@@ -1063,6 +1082,7 @@ class ResearchService:
             "uptime_over_count": over_count,
             "days_covered": days,
             "measured_until": now.isoformat(),
+            "freshness": self._freshness(cycles_rel, STALE_CYCLES_HOURS),
             "target": {"soak_days": 14, "uptime_min": 0.99, "duplicates_max": 0, "demo_weeks": 4},
             "alerts": alerts,
             "funded_rules": funded,
