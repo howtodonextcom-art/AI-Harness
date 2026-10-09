@@ -44,8 +44,10 @@ class FakeMt5:
     the real module it exposes trading functions, so tests can prove they are unreachable.
     """
 
+    TIMEFRAME_M1 = 1
     TIMEFRAME_M5 = 5
     TIMEFRAME_M15 = 15
+    TIMEFRAME_M30 = 30
     TIMEFRAME_H1 = 16385
     TIMEFRAME_H4 = 16388
     ACCOUNT_TRADE_MODE_DEMO = 0

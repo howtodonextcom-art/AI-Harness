@@ -56,11 +56,21 @@ def _symbol(symbol: str) -> None:
         raise HTTPException(status_code=404, detail=f"unsupported symbol {symbol!r}; only {SYMBOL}")
 
 
+_RESEARCH_TIMEFRAMES = (Timeframe.M5, Timeframe.M15, Timeframe.H1, Timeframe.H4)
+
+
 def _timeframe(value: str) -> Timeframe:
+    """Timeframes of the stored research frames (M1 and M30 live in the trading core only)."""
     try:
-        return Timeframe.parse(value)
+        tf = Timeframe.parse(value)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if tf not in _RESEARCH_TIMEFRAMES:
+        supported = ", ".join(t.value for t in _RESEARCH_TIMEFRAMES)
+        raise HTTPException(
+            status_code=422, detail=f"unsupported timeframe {tf.value}; use {supported}"
+        )
+    return tf
 
 
 def _bounds(ctx: ApiContext) -> tuple[datetime, datetime]:

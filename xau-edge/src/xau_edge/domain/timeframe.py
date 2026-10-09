@@ -5,14 +5,16 @@ from __future__ import annotations
 from datetime import timedelta
 from enum import StrEnum
 
-_MINUTES = {"M5": 5, "M15": 15, "H1": 60, "H4": 240}
+_MINUTES = {"M1": 1, "M5": 5, "M15": 15, "M30": 30, "H1": 60, "H4": 240}
 
 
 class Timeframe(StrEnum):
-    """Bar timeframes supported by the platform (Phase 1 scope)."""
+    """Bar timeframes supported by the platform (M1 and M30 added for the trading core)."""
 
+    M1 = "M1"
     M5 = "M5"
     M15 = "M15"
+    M30 = "M30"
     H1 = "H1"
     H4 = "H4"
 

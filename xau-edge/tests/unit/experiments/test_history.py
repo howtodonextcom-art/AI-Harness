@@ -15,7 +15,7 @@ CLOCK = BrokerClock.parse("NY+7")
 
 
 def test_timeframe_enum_has_no_daily_member() -> None:
-    assert {t.value for t in Timeframe} == {"M5", "M15", "H1", "H4"}
+    assert {t.value for t in Timeframe} == {"M1", "M5", "M15", "M30", "H1", "H4"}
 
 
 def test_fetch_back_walks_backwards_and_stops_after_empty_run() -> None:

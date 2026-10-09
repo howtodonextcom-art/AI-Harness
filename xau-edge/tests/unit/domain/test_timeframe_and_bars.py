@@ -35,7 +35,7 @@ def test_timeframe_minutes_and_delta(tf: Timeframe, minutes: int) -> None:
 def test_timeframe_from_string_is_case_insensitive_and_rejects_unknown() -> None:
     assert Timeframe.parse("h1") is Timeframe.H1
     with pytest.raises(ValueError, match="Unsupported timeframe"):
-        Timeframe.parse("M1")
+        Timeframe.parse("M2")
 
 
 def test_xauusd_instrument_defaults() -> None:
