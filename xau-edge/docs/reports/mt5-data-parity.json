@@ -1,0 +1,143 @@
+{
+  "class": "D (data parity; no market outcome analysed)",
+  "parity": [
+    {
+      "pair": "M1->M5",
+      "native_bars": 19800,
+      "derived_bars": 19800,
+      "compared": 19800,
+      "incomplete_buckets": 2,
+      "native_without_derived": 0,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    },
+    {
+      "pair": "M1->M15",
+      "native_bars": 6671,
+      "derived_bars": 6527,
+      "compared": 6527,
+      "incomplete_buckets": 146,
+      "native_without_derived": 144,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    },
+    {
+      "pair": "M1->M30",
+      "native_bars": 3335,
+      "derived_bars": 3191,
+      "compared": 3191,
+      "incomplete_buckets": 146,
+      "native_without_derived": 144,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    },
+    {
+      "pair": "M1->H1",
+      "native_bars": 1667,
+      "derived_bars": 1522,
+      "compared": 1522,
+      "incomplete_buckets": 147,
+      "native_without_derived": 145,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    },
+    {
+      "pair": "M1->H4",
+      "native_bars": 435,
+      "derived_bars": 290,
+      "compared": 290,
+      "incomplete_buckets": 147,
+      "native_without_derived": 145,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    },
+    {
+      "pair": "M5->H1",
+      "native_bars": 8342,
+      "derived_bars": 7616,
+      "compared": 7616,
+      "incomplete_buckets": 728,
+      "native_without_derived": 726,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    },
+    {
+      "pair": "M5->H4",
+      "native_bars": 2181,
+      "derived_bars": 1455,
+      "compared": 1455,
+      "incomplete_buckets": 728,
+      "native_without_derived": 726,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    },
+    {
+      "pair": "H1->H4",
+      "native_bars": 25439,
+      "derived_bars": 22893,
+      "compared": 22893,
+      "incomplete_buckets": 2547,
+      "native_without_derived": 2546,
+      "open_mismatches": 0,
+      "high_mismatches": 0,
+      "low_mismatches": 0,
+      "close_mismatches": 0,
+      "tick_volume_mismatches": 0,
+      "state": "EXACT"
+    }
+  ],
+  "bar_spread_field": {
+    "M1": {
+      "bars": 20000,
+      "min": 35,
+      "median": 40.0,
+      "p95": 49.0,
+      "max": 120,
+      "zero_share": 0.0
+    },
+    "M15": {
+      "bars": 20000,
+      "min": 0,
+      "median": 40.0,
+      "p95": 58.0,
+      "max": 196,
+      "zero_share": 0.00015
+    },
+    "H1": {
+      "bars": 20000,
+      "min": 0,
+      "median": 21.0,
+      "p95": 45.0,
+      "max": 193,
+      "zero_share": 0.00045
+    }
+  }
+}

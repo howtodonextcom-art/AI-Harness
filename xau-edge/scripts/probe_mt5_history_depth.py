@@ -84,6 +84,7 @@ def main() -> int:
         samples = {}
         for year in (2021, 2022, 2023, 2024, 2025, 2026):
             day = datetime(year, 3, 9, 12, tzinfo=UTC)
+            day += timedelta(days=(1 - day.weekday()) % 7)  # a Tuesday: the market is open
             try:
                 samples[str(year)] = len(
                     feed.ticks_range(mapping.broker_symbol, day, day + timedelta(minutes=10))
