@@ -1,0 +1,217 @@
+{
+  "class": "D (cost attribution; not counted in K; cannot confer evidence)",
+  "profiles": {
+    "gross_mid": {
+      "floor": null,
+      "slip": 0.0,
+      "swap_long": 0.0,
+      "swap_short": 0.0
+    },
+    "recorded_spread_swap0": {
+      "floor": 0.0,
+      "slip": 3.0,
+      "swap_long": 0.0,
+      "swap_short": 0.0
+    },
+    "swap0": {
+      "floor": 30.0,
+      "slip": 3.0,
+      "swap_long": 0.0,
+      "swap_short": 0.0
+    },
+    "swap_mid": {
+      "floor": 30.0,
+      "slip": 3.0,
+      "swap_long": -20.0,
+      "swap_short": -4.2
+    },
+    "as_run": {
+      "floor": 30.0,
+      "slip": 3.0,
+      "swap_long": -76.05,
+      "swap_short": -4.2
+    }
+  },
+  "variants": [
+    {
+      "variant": "H07-PD-e0",
+      "events": 1613,
+      "gross_mid": -0.5982075315261328,
+      "recorded_spread_swap0": -0.6848227656363948,
+      "swap0": -0.6962090841120328,
+      "swap_mid": -0.6974360984318153,
+      "as_run": -0.7001547618146846
+    },
+    {
+      "variant": "H07-PD-e0.25",
+      "events": 1529,
+      "gross_mid": -0.6169348142549922,
+      "recorded_spread_swap0": -0.7027049967051058,
+      "swap0": -0.7141003763839318,
+      "swap_mid": -0.7152448455880722,
+      "as_run": -0.7178396812487465
+    },
+    {
+      "variant": "H07-PD-e0.5",
+      "events": 1409,
+      "gross_mid": -0.6143716603092151,
+      "recorded_spread_swap0": -0.7000338606428052,
+      "swap0": -0.7114298387330742,
+      "swap_mid": -0.712495531261078,
+      "as_run": -0.71493057201327
+    },
+    {
+      "variant": "H07-ASIA-e0",
+      "events": 2144,
+      "gross_mid": -0.14391658321313114,
+      "recorded_spread_swap0": -0.2422157628722073,
+      "swap0": -0.26175611287295314,
+      "swap_mid": -0.2678827576470054,
+      "as_run": -0.28212358729123943
+    },
+    {
+      "variant": "H07-ASIA-e0.25",
+      "events": 1722,
+      "gross_mid": -0.1620206205212719,
+      "recorded_spread_swap0": -0.2598391509859094,
+      "swap0": -0.27931731783613367,
+      "swap_mid": -0.2859820195827797,
+      "as_run": -0.3017299377836324
+    },
+    {
+      "variant": "H07-ASIA-e0.5",
+      "events": 1328,
+      "gross_mid": -0.16847268568845863,
+      "recorded_spread_swap0": -0.2648693957921444,
+      "swap0": -0.2845719763658861,
+      "swap_mid": -0.2916731019816014,
+      "as_run": -0.308501188240852
+    },
+    {
+      "variant": "H08-ASIA-e0",
+      "events": 784,
+      "gross_mid": -0.05861944668745562,
+      "recorded_spread_swap0": -0.14747853148621887,
+      "swap0": -0.17033001468218764,
+      "swap_mid": -0.18188250661332275,
+      "as_run": -0.2093350890298841
+    },
+    {
+      "variant": "H08-ASIA-e0.25",
+      "events": 645,
+      "gross_mid": -0.07080783876488023,
+      "recorded_spread_swap0": -0.15814441736975932,
+      "swap0": -0.18147963845610934,
+      "swap_mid": -0.19370025790500067,
+      "as_run": -0.2229014753632546
+    },
+    {
+      "variant": "H09-ASIA_LONDON-t0.2",
+      "events": 752,
+      "gross_mid": 0.07359020976462292,
+      "recorded_spread_swap0": -0.027008222598391144,
+      "swap0": -0.0445232619547087,
+      "swap_mid": -0.04696139868936368,
+      "as_run": -0.05261012629954458
+    },
+    {
+      "variant": "H09-ASIA_LONDON-t0.3",
+      "events": 1206,
+      "gross_mid": 0.0654828615235199,
+      "recorded_spread_swap0": -0.03472867301264967,
+      "swap0": -0.05218584268881297,
+      "swap_mid": -0.05444467120147863,
+      "as_run": -0.059388406344131006
+    },
+    {
+      "variant": "H09-ASIA_LONDON-t0.4",
+      "events": 1598,
+      "gross_mid": 0.07137622747082502,
+      "recorded_spread_swap0": -0.030588735193604083,
+      "swap0": -0.04762759150479174,
+      "swap_mid": -0.049844309431756,
+      "as_run": -0.05468687174142619
+    },
+    {
+      "variant": "H09-LONDON_NY-t0.2",
+      "events": 625,
+      "gross_mid": -0.024366164268649727,
+      "recorded_spread_swap0": -0.12877226154780205,
+      "swap0": -0.14903855183531842,
+      "swap_mid": -0.1536876922799865,
+      "as_run": -0.1652740337217368
+    },
+    {
+      "variant": "H09-LONDON_NY-t0.3",
+      "events": 1086,
+      "gross_mid": 0.02715313345867017,
+      "recorded_spread_swap0": -0.07704225749585704,
+      "swap0": -0.09642521740119392,
+      "swap_mid": -0.1010665264341761,
+      "as_run": -0.11216505194157614
+    },
+    {
+      "variant": "H09-LONDON_NY-t0.4",
+      "events": 1498,
+      "gross_mid": 0.03364321478110148,
+      "recorded_spread_swap0": -0.07109601219718747,
+      "swap0": -0.09001607562498253,
+      "swap_mid": -0.0944983420637109,
+      "as_run": -0.10518478984561656
+    },
+    {
+      "variant": "H10-c0.8-L20",
+      "events": 662,
+      "gross_mid": -0.14317221247525416,
+      "recorded_spread_swap0": -0.26390553355716206,
+      "swap0": -0.28251238691273906,
+      "swap_mid": -0.28620167039728134,
+      "as_run": -0.29458921714135927
+    },
+    {
+      "variant": "H10-c0.8-L50",
+      "events": 662,
+      "gross_mid": 0.024755170278149843,
+      "recorded_spread_swap0": -0.09492672106118734,
+      "swap0": -0.1143034237391208,
+      "swap_mid": -0.11872124894947333,
+      "as_run": -0.12872188744336505
+    },
+    {
+      "variant": "H10-c0.8-L100",
+      "events": 662,
+      "gross_mid": 0.025462141023507762,
+      "recorded_spread_swap0": -0.09386627552837658,
+      "swap0": -0.11358252243472855,
+      "swap_mid": -0.11801868210585773,
+      "as_run": -0.12789153572131104
+    },
+    {
+      "variant": "H10-c0.9-L20",
+      "events": 1230,
+      "gross_mid": -0.1030774835938789,
+      "recorded_spread_swap0": -0.21447059398153176,
+      "swap0": -0.23324405791356131,
+      "swap_mid": -0.23647048530345954,
+      "as_run": -0.24381662992625336
+    },
+    {
+      "variant": "H10-c0.9-L50",
+      "events": 1230,
+      "gross_mid": -0.0006384592036347063,
+      "recorded_spread_swap0": -0.11157952728767141,
+      "swap0": -0.13071557124548308,
+      "swap_mid": -0.13426813317508876,
+      "as_run": -0.1423623900625992
+    },
+    {
+      "variant": "H10-c0.9-L100",
+      "events": 1230,
+      "gross_mid": 0.008949095308368439,
+      "recorded_spread_swap0": -0.10150163538127467,
+      "swap0": -0.12103947563518558,
+      "swap_mid": -0.12474912928500416,
+      "as_run": -0.13306831636109165
+    }
+  ]
+}

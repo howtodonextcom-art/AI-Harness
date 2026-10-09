@@ -1,0 +1,53 @@
+{
+  "class": "D (data availability probe; no market outcome used)",
+  "probed_at": "2026-10-09T02:13:12.546381+00:00",
+  "symbols_total": 166,
+  "wanted_present": [
+    "AUDUSD",
+    "BTCUSD",
+    "EURUSD",
+    "GBPUSD",
+    "USDCHF",
+    "USDJPY",
+    "XAGUSD",
+    "XAUAUD",
+    "XAUEUR",
+    "XAUUSD"
+  ],
+  "wanted_missing": [
+    "DXY",
+    "GER40",
+    "UKOIL",
+    "US100",
+    "US30",
+    "US500",
+    "USDX",
+    "USOIL",
+    "VIX"
+  ],
+  "gold_like_symbols": [
+    "XAUAUD",
+    "XAUEUR",
+    "XAUUSD"
+  ],
+  "m1_bars_one_week_per_year": {
+    "XAUUSD": {
+      "2025": "INCONCLUSIVE (terminal served at most 1 bar)",
+      "2022": "INCONCLUSIVE (terminal served at most 1 bar)",
+      "2018": "INCONCLUSIVE (terminal served at most 1 bar)",
+      "2012": "INCONCLUSIVE (terminal served at most 1 bar)"
+    }
+  },
+  "ticks_five_minutes_per_sample": {
+    "XAUUSD": {
+      "2025-03": 574,
+      "2023-03": 643,
+      "2022-03": 851,
+      "2021-09": 0,
+      "2021-03": 0,
+      "2020-03": 0,
+      "2019-03": 0,
+      "2015-03": 0
+    }
+  }
+}
