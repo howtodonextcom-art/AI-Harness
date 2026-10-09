@@ -104,6 +104,21 @@ const LOCK_TONE: Record<string, Tone> = {
   "ĐANG TÍCH LŨY": "info",
 };
 
+const OUTCOME_TONE: Record<string, Tone> = {
+  PASS: "info",
+  FAIL: "fail",
+  INCONCLUSIVE: "warn",
+  LOCKED: "neutral",
+  UNKNOWN: "unknown",
+};
+
+/** null => "—" (not a confirmatory split); an unrecognised value is KHÔNG RÕ, never an implicit result. */
+function Outcome({ state }: { state: string | null | undefined }) {
+  if (state === null || state === undefined) return <span aria-label="không áp dụng">—</span>;
+  if (!(state in OUTCOME_TONE)) return <StatusBadge tone="unknown">KHÔNG RÕ ({state})</StatusBadge>;
+  return <StatusBadge tone={OUTCOME_TONE[state]}>{state === "UNKNOWN" ? "KHÔNG RÕ (UNKNOWN)" : state}</StatusBadge>;
+}
+
 function Locks({ locks }: { locks: LocksView }) {
   const rows = locks.locks.filter((l) => ["dev2", "val2", "testH", "holdout", "forward"].includes(l.id));
   return (
@@ -112,7 +127,7 @@ function Locks({ locks }: { locks: LocksView }) {
         <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr>
-              {["Giai đoạn", "Từ", "Đến", "Mục đích", "Trạng thái"].map((c) => (
+              {["Giai đoạn", "Từ", "Đến", "Mục đích", "Trạng thái", "Kết quả (outcome)"].map((c) => (
                 <th key={c} className={th} scope="col">
                   {c}
                 </th>
@@ -131,6 +146,9 @@ function Locks({ locks }: { locks: LocksView }) {
                 <td className={td}>
                   <StatusBadge tone={LOCK_TONE[l.state] ?? "unknown"}>{l.state}</StatusBadge>
                   {l.burned && <span className="ml-1 text-xs text-slate-500">(burned)</span>}
+                </td>
+                <td className={td}>
+                  <Outcome state={l.outcome_state} />
                 </td>
               </tr>
             ))}

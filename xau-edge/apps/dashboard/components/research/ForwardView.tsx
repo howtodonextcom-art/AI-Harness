@@ -2,11 +2,12 @@
 
 import { useCallback, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { EvidenceBadge, LifecycleBadge } from "@/components/research/LifecycleBadge";
+import { EvidenceBadge } from "@/components/research/EvidenceBadge";
+import { LifecycleBadge, ValidationBadge } from "@/components/research/LifecycleBadge";
 import { StatusBadge } from "@/components/research/StatusBadge";
 import { Gate, Panel, RefreshButton, ResearchShell, SourceNote, TableWrap, Txt, Warning, td, th, useLoad } from "@/components/research/ui";
 import { ControlRequestError, newIdempotencyKey, postDemote } from "@/lib/control";
-import { type ForwardView as Forward, type StrategiesView, type StrategyRow, evidenceLabel, fmt, research } from "@/lib/research";
+import { type ForwardView as Forward, type ProspectiveView, type Readiness, type StrategiesView, type StrategyRow, evidenceLabel, fmt, research } from "@/lib/research";
 
 type Target = "WATCH" | "DEGRADED" | "DISABLED";
 
@@ -49,6 +50,12 @@ function DemoteForm({ strategy, onDone }: { strategy: StrategyRow; onDone: () =>
       <form
         className="space-y-3"
         aria-label="Hạ trạng thái chiến lược"
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && !busy) {
+            setReason("");
+            setMessage(null);
+          }
+        }}
         onSubmit={(e) => {
           e.preventDefault();
           if (reason.trim().length > 0) setConfirming(true);
@@ -111,8 +118,83 @@ const EXPECTED_ROWS: [string, string, string, number][] = [
   ["Slippage", "slippage_assumed", "slippage_observed", 2],
 ];
 
+function dec(v: number | null | undefined, digits = 0): string {
+  return typeof v === "number" && Number.isFinite(v) ? v.toFixed(digits) : "KHÔNG RÕ";
+}
+
+/** Never states CONSISTENT / INCONSISTENT unless the effective N is known and reaches the requirement. */
+function Conclusion({ r }: { r: Readiness | null | undefined }) {
+  const c = r?.conclusion;
+  if (!c) return <StatusBadge tone="unknown">KHÔNG RÕ (thiếu readiness)</StatusBadge>;
+  if (c === "INCONCLUSIVE") return <StatusBadge tone="warn">INCONCLUSIVE: chưa đủ để kết luận</StatusBadge>;
+  const eff = r?.effective_n;
+  const need = r?.required_effective_n;
+  const enough = typeof eff === "number" && typeof need === "number" && eff >= need;
+  if ((c === "CONSISTENT" || c === "INCONSISTENT") && enough) {
+    return <StatusBadge tone={c === "CONSISTENT" ? "info" : "fail"}>{c}</StatusBadge>;
+  }
+  return <StatusBadge tone="unknown">KHÔNG RÕ (API báo {c} nhưng N hiệu dụng chưa đạt hoặc thiếu)</StatusBadge>;
+}
+
+function ReadinessCard({ fwd }: { fwd: Forward }) {
+  const r = fwd.readiness;
+  const rows: [string, string, string][] = [
+    ["N thô (số lệnh)", dec(r?.raw_n ?? fwd.n_trades), "chỉ mô tả, không dùng để kết luận"],
+    ["N hiệu dụng", dec(r?.effective_n, 1), "đã trừ phụ thuộc theo ngày"],
+    ["N hiệu dụng cần", dec(r?.required_effective_n), "theo effect mục tiêu và power"],
+    ["Số ngày lịch", dec(r?.calendar_days, 0), `tối thiểu ${dec(r?.minimum_calendar_days, 0)}`],
+    ["Chế độ thị trường đã thấy", dec(r?.regimes_seen), `cần ${dec(r?.regimes_required)}`],
+    ["Power ước tính", typeof r?.power_estimate === "number" ? `${(r.power_estimate * 100).toFixed(0)}%` : "KHÔNG RÕ", "xác suất phát hiện effect mục tiêu"],
+  ];
+  return (
+    <div className="space-y-2" aria-label="Mức sẵn sàng kết luận forward" role="group">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span>Kết luận:</span>
+        <Conclusion r={r} />
+      </div>
+      <TableWrap label="Mức sẵn sàng kết luận forward">
+        <table className="w-full min-w-[420px] text-sm">
+          <caption className="sr-only">N thô, N hiệu dụng so với N cần, số ngày, chế độ thị trường và power</caption>
+          <thead>
+            <tr>
+              {["Đại lượng", "Giá trị", "Ghi chú"].map((c) => (
+                <th key={c} className={th} scope="col">
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, value, note]) => (
+              <tr key={label} className="border-t border-slate-300/50 dark:border-slate-700">
+                <th scope="row" className={`${td} text-left font-normal`}>
+                  {label}
+                </th>
+                <td className={`${td} font-mono`}>{value}</td>
+                <td className={`${td} text-xs text-slate-500`}>{note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableWrap>
+      {r?.reasons && r.reasons.length > 0 && (
+        <ul className="list-disc pl-5 text-xs">
+          {r.reasons.map((x) => (
+            <li key={x}>
+              <Txt>{x}</Txt>
+            </li>
+          ))}
+        </ul>
+      )}
+      {typeof fwd.legacy_reference_trades === "number" && (
+        <p className="text-[11px] text-slate-500">{fwd.legacy_reference_trades} lệnh: mốc tham chiếu cũ, không đủ để kết luận.</p>
+      )}
+    </div>
+  );
+}
+
 function ForwardBody({ fwd, state, k }: { fwd: Forward; state: string; k: string }) {
-  const short = fwd.conclusion === "KHÔNG KẾT LUẬN";
+  const settled = fwd.readiness?.conclusion === "CONSISTENT" || fwd.readiness?.conclusion === "INCONSISTENT";
   const e = fwd.expected_vs_realised;
   return (
     <div className="space-y-4">
@@ -120,13 +202,10 @@ function ForwardBody({ fwd, state, k }: { fwd: Forward; state: string; k: string
         <span>
           n = <strong className="font-mono">{fwd.n_trades}</strong> lệnh · K = <strong className="font-mono">{k}</strong>
         </span>
-        <EvidenceBadge label={evidenceLabel(state)} />
-        {short ? (
-          <StatusBadge tone="warn">KHÔNG KẾT LUẬN (dưới {fwd.min_trades_for_conclusion} lệnh)</StatusBadge>
-        ) : (
-          <StatusBadge tone="info">ĐỦ MẪU (n ≥ {fwd.min_trades_for_conclusion})</StatusBadge>
-        )}
+        <EvidenceBadge cls="EXECUTION" />
+        <ValidationBadge label={evidenceLabel(state)} />
       </div>
+      <ReadinessCard fwd={fwd} />
       <TableWrap label="So sánh kỳ vọng và thực tế">
         <table className="w-full min-w-[480px] text-sm">
           <thead>
@@ -154,7 +233,7 @@ function ForwardBody({ fwd, state, k }: { fwd: Forward; state: string; k: string
           </tbody>
         </table>
       </TableWrap>
-      {short && <Warning>KHÔNG KẾT LUẬN: mẫu forward còn dưới {fwd.min_trades_for_conclusion} lệnh, các số trên chỉ mô tả, không dùng để đánh giá edge.</Warning>}
+      {!settled && <Warning>INCONCLUSIVE: mẫu forward chưa đủ N hiệu dụng, thời gian hoặc chế độ thị trường; các số trên chỉ mô tả, không dùng để đánh giá edge.</Warning>}
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Gợi ý suy giảm (decay)</h3>
         {fwd.decay ? (
@@ -170,7 +249,10 @@ function ForwardBody({ fwd, state, k }: { fwd: Forward; state: string; k: string
                 </li>
               ))}
             </ul>
-            <p className="text-xs text-slate-500">Chỉ là gợi ý: người dùng quyết định có hạ hay không.</p>
+            <p className="text-xs text-slate-500">
+              Chỉ là gợi ý: người dùng quyết định có hạ hay không.
+              {fwd.decay.advisory_only ? " (advisory_only: mẫu chưa đủ để kết luận, gợi ý chỉ mang tính tham khảo.)" : ""}
+            </p>
           </div>
         ) : (
           <p className="mt-1 text-sm text-slate-500">Chưa đánh giá: cần đủ mẫu forward và cận dưới khoảng tin cậy kỳ vọng.</p>
@@ -178,6 +260,42 @@ function ForwardBody({ fwd, state, k }: { fwd: Forward; state: string; k: string
       </div>
       <SourceNote source={fwd.source} />
     </div>
+  );
+}
+
+const PROSPECTIVE_LABEL: Record<string, string> = {
+  ok: "SEALED BEFORE OUTCOME",
+  empty: "NO PROSPECTIVE EVIDENCE YET",
+  invalid: "PROVENANCE INVALID",
+  unknown: "KHÔNG RÕ",
+};
+
+/** The label is derived from `status`; "SEALED BEFORE OUTCOME" is only ever shown when status is ok. */
+function ProspectiveCard({ p }: { p: ProspectiveView }) {
+  const expected = PROSPECTIVE_LABEL[p.status] ?? "KHÔNG RÕ";
+  const label = p.label === expected ? expected : "KHÔNG RÕ";
+  const tone = label === "SEALED BEFORE OUTCOME" ? "info" : label === "NO PROSPECTIVE EVIDENCE YET" ? "neutral" : label === "PROVENANCE INVALID" ? "fail" : "unknown";
+  return (
+    <Panel title="Bằng chứng tiền cứu (prospective)">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <EvidenceBadge cls="PROSPECTIVE" />
+        <StatusBadge tone={tone}>{label}</StatusBadge>
+        <span>
+          tín hiệu = <strong className="font-mono">{p.signals ?? "KHÔNG RÕ"}</strong> · kết quả = <strong className="font-mono">{p.outcomes ?? "KHÔNG RÕ"}</strong>
+        </span>
+      </div>
+      {p.problems && p.problems.length > 0 && (
+        <ul className="mt-2 list-disc pl-5 text-xs [overflow-wrap:anywhere]">
+          {p.problems.map((x) => (
+            <li key={x}>
+              <Txt>{x}</Txt>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-xs text-slate-500">Nhãn chỉ là niêm phong trước kết quả khi chuỗi băm của sổ tiền cứu được xác minh.</p>
+      <SourceNote source={p.source} />
+    </Panel>
   );
 }
 
@@ -236,7 +354,7 @@ function StrategiesBody({ view, k, reload }: { view: StrategiesView; k: string; 
                       <LifecycleBadge state={s.state} />
                     </td>
                     <td className={td}>
-                      <EvidenceBadge label={evidenceLabel(s.state)} />
+                      <ValidationBadge label={evidenceLabel(s.state)} />
                     </td>
                     <td className={`${td} text-xs`}>{s.history.length === 0 ? "—" : `${s.history.length} sự kiện, gần nhất ${s.history[s.history.length - 1].at.slice(0, 10)}`}</td>
                     <td className={`${td} text-xs`}>{s.web_demotable ? "có thể hạ" : "không"}</td>
@@ -269,12 +387,17 @@ export function ForwardView() {
   const overviewLoader = useCallback((s: AbortSignal) => research.overview(s), []);
   const { result, reload } = useLoad(loader);
   const overview = useLoad(overviewLoader).result;
+  const prospectiveLoader = useCallback((s: AbortSignal) => research.prospective(s), []);
+  const prospective = useLoad(prospectiveLoader);
   const k = overview?.kind === "ok" && overview.data.v1.k != null ? String(overview.data.v1.k) : overview === null ? "…" : "KHÔNG RÕ";
   return (
     <ResearchShell current="/research/forward" title="Forward và vòng đời" subtitle="Vòng đời chiến lược, kỳ vọng so với thực tế, gợi ý suy giảm. Thao tác duy nhất của console: hạ trạng thái.">
       <div className="flex justify-end">
         <RefreshButton onClick={reload} />
       </div>
+      <Gate result={prospective.result} what="sổ bằng chứng tiền cứu">
+        {(p) => <ProspectiveCard p={p} />}
+      </Gate>
       <Gate result={result} what="vòng đời chiến lược">
         {(view) => <StrategiesBody view={view} k={k} reload={reload} />}
       </Gate>
