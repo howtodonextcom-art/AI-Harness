@@ -1,8 +1,8 @@
 # Nền tảng dữ liệu thị trường MT5 (FTMO DEMO)
 
-**Trạng thái: PARTIALLY READY** — mọi thành phần chạy và đã kiểm chứng trên terminal thật; còn đúng 1 việc của
-chủ dự án (nâng "Max bars in chart"), vì nó chặn chiều sâu lịch sử của M1/M5/M15/M30/H1. Bảng điểm và cổng
-ở cuối tài liệu.
+**Trạng thái: PARTIALLY READY** — mọi thành phần chạy và đã kiểm chứng trên terminal thật; "Max bars in chart" đã
+nâng lên 10.000.000 và lịch sử sáu khung đã backfill đủ (từ 2004-06-11). Còn đúng 1 việc: một lần đăng xuất/đăng nhập
+thật để xác minh tự khởi động (§7, §8). Bảng cổng ở cuối tài liệu.
 
 Quyết định kiến trúc: `docs/adr/ADR-MT5-MARKET-DATA-PLATFORM.md`. Vận hành: `docs/operations/market-data-operations.md`.
 Nghiên cứu: `docs/research/mt5-data-integration-options.md`, `tradingview-data-role.md`,
@@ -47,29 +47,34 @@ Ngày lễ/đóng cửa sớm (ví dụ 2026-07-03 13:00 NY, 2026-09-07 14:30 NY
 từ nến thiếu của chính broker (`scripts/infer_session_exceptions.py` → `configs/brokers/ftmo_session_exceptions.yaml`)
 nhưng CHỈ chấp nhận khi khớp luật ngày lễ (Mỹ + Thứ Sáu Tốt lành, Giáng sinh, Năm mới; luật theo tháng/thứ, không
 phải danh sách năm cố định). Khoảng thiếu không giải thích được vẫn là khoảng trống dữ liệu (`DATA_GAP`/`UNKNOWN`).
-Kết quả: tỷ lệ bucket bị loại M1→H4 từ **33,6% xuống 0,45%** (chỉ còn 2 bucket biên dữ liệu); xem
-`docs/reports/mt5-data-parity.md`. Giới hạn: mẫu tuần đã kiểm chứng từ 2025; kỷ nguyên cũ (chủ yếu 2010–2020) có lịch
-khác, chưa mô hình hóa, nên các bucket H1→H4 lịch sử đó ghi `UNKNOWN`.
+Quy tắc chặt: chỉ khoảng thiếu **liên tục ≥ 60 phút và ≤ 5 ngày** chạm ngày lễ mới thành cửa sổ đóng cửa; vài phút thiếu
+của thị trường mỏng và lỗ hổng nhiều tuần không bao giờ bị coi là ngày lễ. Với lịch sử đầy đủ 2004→nay có 1.307 cửa sổ
+(≈ 61 ngày lễ + 179 đóng cửa sớm theo M1). Kết quả: trong kỷ nguyên đã kiểm chứng (từ 2025) mọi bucket bị loại đều có lý
+do (`HOLIDAY`, `EARLY_CLOSE`, `DATA_GAP` thật như sự cố CME 2025-11-28, hoặc biên dữ liệu); trước 2025 chúng ghi
+`UNKNOWN` vì lịch broker cũ khác và nến M1/M5 thời kỳ đầu thưa (không thể dựng lại, không bịa). Xem
+`docs/reports/mt5-data-parity.md`.
 
-## 4. Chiều sâu lịch sử (đo 2026-10-09)
+## 4. Chiều sâu lịch sử (đo 2026-10-09, sau khi nâng Max bars)
 
-Backfill v2 (`scripts/backfill_mt5.py`): nến mới nhất rồi lùi theo khối bằng `copy_rates_from`, có xác thực từng
-khối, hash SHA-256 vào sự kiện, chạy lại/tiếp tục được, chống vòng lặp, và gán trạng thái trung thực
-(`COMPLETE_AVAILABLE_HISTORY`, `BROKER_LIMITED`, `TERMINAL_LIMITED`, `INCOMPLETE`, `UNKNOWN`).
+`[Charts] MaxBars` đã đổi 100000 → 10000000 và `scripts/mt5_set_max_bars.py --verify` xác nhận chính terminal báo
+giá trị mới (không tin vào file). Backfill v2 (`scripts/backfill_mt5.py`): nến mới nhất rồi lùi theo khối bằng
+`copy_rates_from`, xác thực từng khối, hash SHA-256 vào sự kiện, chạy lại/tiếp tục được, chống vòng lặp, trạng thái
+trung thực. Kết quả: **cả sáu khung đều `BROKER_LIMITED`**, nghĩa là cap không còn chặn và broker không có gì cũ hơn.
 
-| Khung | Local sớm nhất | Trạng thái |
-|---|---|---|
-| M1 | 2026-06-29 | TERMINAL_LIMITED |
-| M5 | 2025-05-08 | TERMINAL_LIMITED |
-| M15 | 2022-07-18 | TERMINAL_LIMITED |
-| M30 | 2018-05-11 | TERMINAL_LIMITED |
-| H1 | 2010-02-05 | TERMINAL_LIMITED |
-| H4 | 2004-06-11 | BROKER_LIMITED (đủ: không còn gì cũ hơn) |
-| Tick | 2021-10-01 11:32 UTC | server giữ từ đó; đã lưu đủ 205.083.656 tick |
+| Khung | Local sớm nhất | Số nến | Trạng thái |
+|---|---|---|---|
+| M1 | 2004-06-11 04:18 UTC | 7.064.072 | BROKER_LIMITED (đủ) |
+| M5 | 2004-06-11 04:15 | 1.499.955 | BROKER_LIMITED (đủ) |
+| M15 | 2004-06-11 04:15 | 515.609 | BROKER_LIMITED (đủ) |
+| M30 | 2004-06-11 04:00 | 260.713 | BROKER_LIMITED (đủ) |
+| H1 | 2004-06-11 04:00 | 132.226 | BROKER_LIMITED (đủ) |
+| H4 | 2004-06-11 01:00 | 34.232 | BROKER_LIMITED (đủ) |
+| Tick | 2021-10-01 11:32 UTC | 205.083.656 | server giữ từ đó; đã lưu đủ |
 
-Nguyên nhân là `[Charts] MaxBars=100000` của terminal: `copy_rates_from_pos` 100.000 → "Invalid params"; truy vấn theo
-ngày chỉ thêm ~900 nến rồi `Terminal: Call failed`. Không bịa nến thấp từ khung cao; không suy tick từ nến.
-Báo cáo: `docs/reports/mt5-backfill-final.md`.
+Trước khi nâng: M1 chỉ tới 2026-06-29, M5 2025-05, M15 2022-07, M30 2018-05, H1 2010-02. Lưu ý: M1 thời kỳ đầu
+(2004-2012) rất thưa (broker chỉ có nến M1 khi có tick), nên độ phủ theo lịch của M1 là ≈ 90%; điều này là đặc
+tính dữ liệu của broker, không phải thiếu sót của backfill, và không có nến nào bị bịa. Báo cáo chi tiết kèm các
+khoảng trống lớn nhất (đều là cuối tuần lễ): `docs/reports/mt5-backfill-final.md`.
 
 ## 5. Vận hành và giám sát
 
@@ -89,7 +94,8 @@ hash đầu kho, nến mới nhất mỗi khung, tick mới nhất).
 
 ## 7. Giới hạn đã biết
 
-* Chiều sâu M1–H1 chờ chủ dự án nâng Max bars (mục 4); sau đó chạy lại backfill.
+* Khi mở terminal, KHÔNG để collector chạy lúc cần đóng/sửa terminal: collector tự mở lại MT5 mỗi khi nó thoát
+  (`initialize` khởi động terminal). Tắt stack bằng `stop_market_stack.ps1` trước (xem tài liệu vận hành).
 * Tự khởi động mới ở mức **đã cấu hình và đã chạy thử qua Task Scheduler**, chưa **đã xác minh bằng đăng nhập thật**
   (danh sách kiểm tay ở `docs/operations/market-data-operations.md` §6).
 * Chưa thử đóng terminal MT5 thật khi collector chạy (quy tắc: không tự tắt MT5); kịch bản được kiểm bằng test
@@ -102,19 +108,19 @@ hash đầu kho, nến mới nhất mỗi khung, tick mới nhất).
 | Cổng | Trạng thái |
 |---|---|
 | A Terminal | ĐẠT (DEMO, nối được, quote tuổi ≈ 0 s) |
-| B Lịch sử | CHƯA: 5/6 khung TERMINAL_LIMITED (H4 đủ) — cần hành động của chủ dự án |
-| C MaxBars | CHƯA: vẫn 100.000 |
+| B Lịch sử | ĐẠT: 6/6 khung BROKER_LIMITED từ 2004-06-11 (đủ những gì broker phục vụ) |
+| C MaxBars | ĐẠT: terminal báo 10.000.000 (đã xác minh bằng chính terminal, không chỉ file) |
 | D Tick | ĐẠT (kho + retention + backfill 2021-10 → nay + API có giới hạn) |
-| E Lịch | ĐẠT trong kỷ nguyên đã kiểm chứng (bỏ 0 bucket tránh được từ 2025) |
+| E Lịch | ĐẠT trong kỷ nguyên đã kiểm chứng (mọi bucket bỏ từ 2025 đều có lý do; cổng ≥ 60 phút) |
 | F Collector | ĐẠT (giám sát, tự nối lại; MT5 thật đóng/mở: danh sách kiểm tay) |
 | G Khởi động | MỘT PHẦN (đã cấu hình + chạy thử; chưa xác minh đăng nhập thật) |
 | H Sức khỏe | ĐẠT |
 | I API | ĐẠT (tươi, có giới hạn) |
 | J UI | ĐẠT (6 khung, tick volume, spread, trạng thái, chất lượng) |
-| K Parity | ĐẠT (8/8 cặp EXACT) |
-| L Visual | ĐẠT (240/240 nến khớp terminal) |
+| K Parity | ĐẠT (8/8 cặp EXACT, kể cả toàn bộ lịch sử 2004→nay) |
+| L Visual | ĐẠT (312/312 nến khớp terminal, gồm 2005/2012/2019) |
 | M Lưu trữ | ĐẠT (bar + tick sạch) |
 | N Phục hồi | ĐẠT (xem `mt5-chaos-tests.md`) |
 
-Quyết định giao dịch tự động (BUY/SELL, SL/TP, thực thi) vẫn TẠM DỪNG cho đến khi cổng B, C (và G đã xác
-minh) qua.
+Quyết định giao dịch tự động (BUY/SELL, SL/TP, thực thi) vẫn TẠM DỪNG cho đến khi cổng G (tự khởi động) được
+xác minh bằng một lần đăng nhập thật.

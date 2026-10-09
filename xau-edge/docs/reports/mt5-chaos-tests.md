@@ -17,6 +17,7 @@ MT5). Nguyên tắc: **lỗi phải hiện ra, hồi phục sạch, không hỏn
 | I | Hai tiến trình ghi cùng file | khóa ghi liên tiến trình | không mất hàng; khóa treo (tiến trình chết) tự dọn sau 300 s | `test_file_lock_serialises_writers...` |
 | J | Dừng stack | `stop_market_stack.ps1` | mọi tiến trình con (kể cả cây node/uv) bị dừng, cổng 3000/8000 được giải phóng, dữ liệu giữ nguyên | live (đã sửa lỗi cây tiến trình sau khi phát hiện node mồ côi giữ cổng 3000) |
 | K | Collector dừng, trang đang mở | chạy stack không collector, rồi bật collector | trang tự chuyển STALE → hiển thị cách khắc phục → bình thường mà KHÔNG tải lại trang (tuổi tick 1 s) | live (Playwright) + e2e |
+| L | Chủ dự án thoát (File → Exit) terminal thật khi collector chạy | quan sát thật 2026-10-09 | terminal bị collector TỰ MỞ LẠI (pid đổi) và collector nối lại không cần can thiệp: đúng hành vi "không cần chạy lại collector"; hệ quả vận hành được ghi vào §4 tài liệu vận hành (phải tắt stack trước khi sửa/đóng terminal) | live |
 
 ## Lỗi thật tìm ra nhờ các bài thử (đã sửa)
 
@@ -24,6 +25,10 @@ MT5). Nguyên tắc: **lỗi phải hiện ra, hồi phục sạch, không hỏn
 2. Dừng supervisor chỉ giết `npx`, để node mồ côi giữ cổng 3000 → giết cả cây tiến trình; chạy node trực tiếp.
 3. API tin trạng thái "FRESH" mà collector đã chết để lại → API tự tính độ mới từ kho nến + lịch.
 4. Gọi trạng thái/báo giá tốn 0,5–0,9 s vì chuỗi OR hàng trăm cửa sổ ngày lễ → tìm nhị phân (480 → 4 ms).
+5. Kiểm tra bất biến coi mọi file tháng đổi hash là "lịch sử bị sửa", nên báo sai khi backfill THÊM nến cũ vào tháng đầu → giờ
+   phân biệt "file chỉ tăng dòng và không có sự kiện BAR_CHANGED" (hợp lệ) với nến bị đổi (lỗi).
+6. Suy luận ngày lễ từ M1 2004→nay gán nhầm 5.000+ khoảng thiếu phút của thị trường mỏng là "đóng cửa sớm" → chỉ chấp nhận
+   khoảng liên tục ≥ 60 phút và ≤ 5 ngày; kiểm tra cả ngày nằm giữa khoảng (Lễ Tạ ơn nằm giữa hai đầu).
 
 ## Danh sách kiểm tay (không thể tự động hóa an toàn)
 

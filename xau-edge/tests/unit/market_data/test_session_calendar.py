@@ -62,7 +62,7 @@ def test_weekly_template_has_no_absence_without_holes() -> None:
 def test_holiday_early_close_becomes_closure_and_unexplained_gap_does_not() -> None:
     # Labor Day 2026-09-07: the broker stops trading at 14:30 NY (18:30 UTC) until 18:05 NY.
     holiday = (datetime(2026, 9, 7, 18, 30, tzinfo=UTC), datetime(2026, 9, 7, 22, 5, tzinfo=UTC))
-    gap = (datetime(2026, 9, 9, 10, 0, tzinfo=UTC), datetime(2026, 9, 9, 10, 30, tzinfo=UTC))
+    gap = (datetime(2026, 9, 9, 10, 0, tzinfo=UTC), datetime(2026, 9, 9, 11, 30, tzinfo=UTC))
     bars = minute_bars(
         datetime(2026, 9, 6, tzinfo=UTC), datetime(2026, 9, 12, tzinfo=UTC), skip=holiday
     )
@@ -76,7 +76,7 @@ def test_holiday_early_close_becomes_closure_and_unexplained_gap_does_not() -> N
 
 def test_closure_window_makes_resampling_complete_and_gap_is_still_dropped() -> None:
     holiday = (datetime(2026, 9, 7, 18, 30, tzinfo=UTC), datetime(2026, 9, 7, 22, 5, tzinfo=UTC))
-    gap = (datetime(2026, 9, 9, 10, 0, tzinfo=UTC), datetime(2026, 9, 9, 10, 30, tzinfo=UTC))
+    gap = (datetime(2026, 9, 9, 10, 0, tzinfo=UTC), datetime(2026, 9, 9, 11, 30, tzinfo=UTC))
     bars = minute_bars(
         datetime(2026, 9, 6, tzinfo=UTC), datetime(2026, 9, 12, tzinfo=UTC), skip=holiday
     )
@@ -122,3 +122,21 @@ def test_closure_file_round_trip_and_validation(tmp_path: Path) -> None:
 def test_shipped_calendar_loads_with_recent_closures() -> None:
     calendar = ftmo_calendar()
     assert any(w.reason == "EARLY_CLOSE" and w.start.year == 2026 for w in calendar.closures)
+
+
+def test_short_thin_market_gaps_and_multi_week_gaps_are_never_closures() -> None:
+    from datetime import timedelta  # noqa: PLC0415
+
+    bars = minute_bars(datetime(2026, 3, 9, tzinfo=UTC), datetime(2026, 3, 13, tzinfo=UTC))
+    thin = (datetime(2026, 3, 10, 9, 0, tzinfo=UTC), datetime(2026, 3, 10, 9, 40, tzinfo=UTC))
+    cut = bars.filter(~((pl.col("timestamp") >= thin[0]) & (pl.col("timestamp") < thin[1])))
+    assert (
+        find_absences(cut, Timeframe.M1, TEMPLATE) == []
+    )  # 40 minutes: not even reported as a closure
+    # a two-week hole on a day touching a holiday date is data loss, never a "holiday"
+    start = datetime(2026, 11, 20, tzinfo=UTC)
+    long_hole = minute_bars(start, start + timedelta(days=2))
+    later = minute_bars(start + timedelta(days=16), start + timedelta(days=17))
+    absences = find_absences(pl.concat([long_hole, later]), Timeframe.M1, TEMPLATE)
+    assert absences
+    assert {a.reason for a in absences} == {"UNCLASSIFIED"}

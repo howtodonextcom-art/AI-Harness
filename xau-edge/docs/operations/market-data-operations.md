@@ -42,23 +42,24 @@ chính xác lệnh. Độ mới tính theo lịch: khung chỉ "CŨ" khi bỏ l�
 khung khác trễ > 1 nến). Nến H4 đóng cách đây 1 giờ KHÔNG bị coi là cũ. Khung "Chất lượng dữ liệu" mở rộng
 cho độ sâu lịch sử, kho tick, đĩa, toàn vẹn kho nến và sự kiện thay đổi/khoảng trống gần đây.
 
-## 4. "Max bars in chart" (việc duy nhất cần chủ dự án)
+## 4. "Max bars in chart" (đã làm 2026-10-09; ghi lại để lặp lại được)
 
-Terminal đang có `MaxBars=100000` nên M1/M5/M15/M30/H1 không lùi tới hết lịch sử (H4 đủ từ 2004).
+Terminal từng có `MaxBars=100000` nên M1/M5/M15/M30/H1 không lùi tới hết lịch sử. Đã nâng lên 10.000.000. Nếu phải làm lại
+(cài lại terminal, đổi máy):
 
-1. Đóng hẳn terminal FTMO MT5.
-2. `uv run python scripts/mt5_set_max_bars.py` (xem trước, không sửa gì), rồi
-   `uv run python scripts/mt5_set_max_bars.py --value 10000000 --apply` (tự sao lưu, chỉ sửa dòng `MaxBars`,
-   từ chối nếu terminal còn chạy, không in thông tin tài khoản).
-3. Mở lại FTMO MT5, đợi đăng nhập/đồng bộ.
-4. `uv run --extra mt5 python scripts/mt5_set_max_bars.py --verify` (xác minh terminal THỰC SỰ báo giá trị mới và
-   phục vụ nhiều M1 hơn; không tin vào file).
-5. `uv run --extra mt5 python scripts/backfill_mt5.py --write-report` rồi `scripts/verify_market_ledger.py --save-manifest`
-   và `scripts/market_data_parity.py --write`.
+1. **Tắt stack trước**: `.\scripts\stop_market_stack.ps1`. Nếu không, collector sẽ TỰ MỞ LẠI MT5 mỗi khi bạn thoát nó
+   (`initialize` khởi động terminal), và bạn không bao giờ đóng được terminal.
+2. Đóng hẳn terminal FTMO MT5 (File → Exit). Kiểm tra `Get-Process terminal64` không in gì.
+3. `uv run python scripts/mt5_set_max_bars.py` (xem trước), rồi `... --value 10000000 --apply` (tự sao lưu, chỉ sửa dòng
+   `MaxBars`, từ chối nếu terminal còn chạy, không in thông tin tài khoản).
+4. Mở lại terminal DESKTOP (không phải WebTerminal trên trình duyệt), đợi đăng nhập/đồng bộ.
+5. `uv run --extra mt5 python scripts/mt5_set_max_bars.py --verify`: hỏi chính terminal giá trị MaxBars đang hiệu lực
+   (không tin vào file) và số M1 phục vụ.
+6. `uv run --extra mt5 python scripts/backfill_mt5.py --write-report`, rồi `scripts/verify_market_ledger.py --save-manifest`,
+   `scripts/market_data_parity.py --write`, `scripts/verify_visual_parity.py --write`, và bật lại stack.
 
-Trạng thái mỗi khung sau backfill: `COMPLETE_AVAILABLE_HISTORY` / `BROKER_LIMITED` (đủ), `TERMINAL_LIMITED`
-(còn bị cap), `INCOMPLETE` (chạy lại), `UNKNOWN`. Báo cáo: `docs/reports/mt5-backfill-final.{json,md}`.
-Collector vẫn tích lũy dữ liệu mới trong lúc chờ; không mất gì.
+Trạng thái mỗi khung sau backfill: `COMPLETE_AVAILABLE_HISTORY` / `BROKER_LIMITED` (đủ), `TERMINAL_LIMITED` (còn bị cap),
+`INCOMPLETE` (chạy lại), `UNKNOWN`. Báo cáo: `docs/reports/mt5-backfill-final.{json,md}`.
 
 ## 5. Tick, retention, đĩa
 

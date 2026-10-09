@@ -1,104 +1,94 @@
 {
-  "finished_at": "2026-10-09T09:32:42+00:00",
+  "finished_at": "2026-10-09T10:49:22+00:00",
   "server": "FTMO-Demo",
   "broker_symbol": "XAUUSD",
-  "terminal_max_bars": 100000,
+  "terminal_max_bars": 10000000,
   "since_wanted": "2003-01-01T00:00:00+00:00",
   "timeframes": {
     "M1": {
       "timeframe": "M1",
       "requested_oldest": "2003-01-01T00:00:00+00:00",
-      "broker_returned_oldest": "2026-06-29T15:03:00+00:00",
-      "local_oldest": "2026-06-29T15:03:00+00:00",
-      "local_latest": "2026-10-09T09:31:00+00:00",
-      "rows": 100309,
-      "state": "TERMINAL_LIMITED",
-      "reason": "the terminal's 'Max bars in chart' (100000) caps the history it can serve; raise it, restart the terminal and rerun",
-      "chunks": 2,
-      "new_rows": 1075,
-      "duplicates": 98999,
+      "broker_returned_oldest": "2004-06-11T04:18:00+00:00",
+      "local_oldest": "2004-06-11T04:18:00+00:00",
+      "local_latest": "2026-10-09T10:47:00+00:00",
+      "rows": 7064072,
+      "state": "BROKER_LIMITED",
+      "reason": "the cap is not binding and nothing older is served: the broker has no earlier bars",
+      "chunks": 141,
+      "new_rows": 6963689,
+      "duplicates": 98997,
       "changed": 0,
-      "terminal_max_bars": 100000,
-      "notes": [
-        "older request failed: copy_rates_from failed: (-1, 'Terminal: Call failed')"
-      ],
-      "complete": false
+      "terminal_max_bars": 10000000,
+      "notes": [],
+      "complete": true
     },
     "M5": {
       "timeframe": "M5",
       "requested_oldest": "2003-01-01T00:00:00+00:00",
-      "broker_returned_oldest": "2025-05-08T08:40:00+00:00",
-      "local_oldest": "2025-05-08T08:40:00+00:00",
-      "local_latest": "2026-10-09T09:25:00+00:00",
-      "rows": 100048,
-      "state": "TERMINAL_LIMITED",
-      "reason": "the terminal's 'Max bars in chart' (100000) caps the history it can serve; raise it, restart the terminal and rerun",
-      "chunks": 2,
-      "new_rows": 1002,
+      "broker_returned_oldest": "2004-06-11T04:15:00+00:00",
+      "local_oldest": "2004-06-11T04:15:00+00:00",
+      "local_latest": "2026-10-09T10:40:00+00:00",
+      "rows": 1499955,
+      "state": "BROKER_LIMITED",
+      "reason": "the cap is not binding and nothing older is served: the broker has no earlier bars",
+      "chunks": 29,
+      "new_rows": 1399892,
       "duplicates": 98999,
       "changed": 0,
-      "terminal_max_bars": 100000,
-      "notes": [
-        "older request failed: copy_rates_from failed: (-1, 'Terminal: Call failed')"
-      ],
-      "complete": false
+      "terminal_max_bars": 10000000,
+      "notes": [],
+      "complete": true
     },
     "M15": {
       "timeframe": "M15",
       "requested_oldest": "2003-01-01T00:00:00+00:00",
-      "broker_returned_oldest": "2022-07-18T18:00:00+00:00",
-      "local_oldest": "2022-07-18T18:00:00+00:00",
-      "local_latest": "2026-10-09T09:15:00+00:00",
-      "rows": 100016,
-      "state": "TERMINAL_LIMITED",
-      "reason": "the terminal's 'Max bars in chart' (100000) caps the history it can serve; raise it, restart the terminal and rerun",
-      "chunks": 2,
-      "new_rows": 1001,
+      "broker_returned_oldest": "2004-06-11T04:15:00+00:00",
+      "local_oldest": "2004-06-11T04:15:00+00:00",
+      "local_latest": "2026-10-09T10:30:00+00:00",
+      "rows": 515609,
+      "state": "BROKER_LIMITED",
+      "reason": "the cap is not binding and nothing older is served: the broker has no earlier bars",
+      "chunks": 10,
+      "new_rows": 415588,
       "duplicates": 98999,
       "changed": 0,
-      "terminal_max_bars": 100000,
-      "notes": [
-        "older request failed: copy_rates_from failed: (-1, 'Terminal: Call failed')"
-      ],
-      "complete": false
+      "terminal_max_bars": 10000000,
+      "notes": [],
+      "complete": true
     },
     "M30": {
       "timeframe": "M30",
       "requested_oldest": "2003-01-01T00:00:00+00:00",
-      "broker_returned_oldest": "2018-05-11T16:00:00+00:00",
-      "local_oldest": "2018-05-11T16:00:00+00:00",
-      "local_latest": "2026-10-09T09:00:00+00:00",
-      "rows": 100008,
-      "state": "TERMINAL_LIMITED",
-      "reason": "the terminal's 'Max bars in chart' (100000) caps the history it can serve; raise it, restart the terminal and rerun",
-      "chunks": 2,
-      "new_rows": 1001,
+      "broker_returned_oldest": "2004-06-11T04:00:00+00:00",
+      "local_oldest": "2004-06-11T04:00:00+00:00",
+      "local_latest": "2026-10-09T10:00:00+00:00",
+      "rows": 260713,
+      "state": "BROKER_LIMITED",
+      "reason": "the cap is not binding and nothing older is served: the broker has no earlier bars",
+      "chunks": 5,
+      "new_rows": 160703,
       "duplicates": 98999,
       "changed": 0,
-      "terminal_max_bars": 100000,
-      "notes": [
-        "older request failed: copy_rates_from failed: (-1, 'Terminal: Call failed')"
-      ],
-      "complete": false
+      "terminal_max_bars": 10000000,
+      "notes": [],
+      "complete": true
     },
     "H1": {
       "timeframe": "H1",
       "requested_oldest": "2003-01-01T00:00:00+00:00",
-      "broker_returned_oldest": "2010-02-05T00:00:00+00:00",
-      "local_oldest": "2010-02-05T00:00:00+00:00",
-      "local_latest": "2026-10-09T08:00:00+00:00",
-      "rows": 100003,
-      "state": "TERMINAL_LIMITED",
-      "reason": "the terminal's 'Max bars in chart' (100000) caps the history it can serve; raise it, restart the terminal and rerun",
+      "broker_returned_oldest": "2004-06-11T04:00:00+00:00",
+      "local_oldest": "2004-06-11T04:00:00+00:00",
+      "local_latest": "2026-10-09T09:00:00+00:00",
+      "rows": 132226,
+      "state": "BROKER_LIMITED",
+      "reason": "the cap is not binding and nothing older is served: the broker has no earlier bars",
       "chunks": 2,
-      "new_rows": 1000,
+      "new_rows": 32222,
       "duplicates": 98999,
       "changed": 0,
-      "terminal_max_bars": 100000,
-      "notes": [
-        "older request failed: copy_rates_from failed: (-1, 'Terminal: Call failed')"
-      ],
-      "complete": false
+      "terminal_max_bars": 10000000,
+      "notes": [],
+      "complete": true
     },
     "H4": {
       "timeframe": "H4",
@@ -113,7 +103,7 @@
       "new_rows": 0,
       "duplicates": 34232,
       "changed": 0,
-      "terminal_max_bars": 100000,
+      "terminal_max_bars": 10000000,
       "notes": [],
       "complete": true
     }
@@ -121,137 +111,137 @@
   "gaps": {
     "M1": [
       {
-        "after": "2026-07-03T16:59:00+00:00",
-        "before": "2026-07-05T22:05:00+00:00",
-        "hours": 53.1
+        "after": "2005-11-23T17:16:00+00:00",
+        "before": "2005-11-28T06:36:00+00:00",
+        "hours": 109.3
       },
       {
-        "after": "2026-07-10T20:49:00+00:00",
-        "before": "2026-07-12T22:05:00+00:00",
-        "hours": 49.3
+        "after": "2006-11-22T17:00:00+00:00",
+        "before": "2006-11-26T23:07:00+00:00",
+        "hours": 102.1
       },
       {
-        "after": "2026-07-17T20:49:00+00:00",
-        "before": "2026-07-19T22:05:00+00:00",
-        "hours": 49.3
+        "after": "2006-02-17T16:23:00+00:00",
+        "before": "2006-02-21T06:36:00+00:00",
+        "hours": 86.2
       },
       {
-        "after": "2026-07-24T20:49:00+00:00",
-        "before": "2026-07-26T22:05:00+00:00",
-        "hours": 49.3
+        "after": "2005-02-18T16:49:00+00:00",
+        "before": "2005-02-22T06:52:00+00:00",
+        "hours": 86.0
       },
       {
-        "after": "2026-07-31T20:49:00+00:00",
-        "before": "2026-08-02T22:05:00+00:00",
-        "hours": 49.3
+        "after": "2010-11-11T09:03:00+00:00",
+        "before": "2010-11-14T23:05:00+00:00",
+        "hours": 86.0
       }
     ],
     "M5": [
       {
-        "after": "2026-04-02T20:45:00+00:00",
-        "before": "2026-04-05T22:05:00+00:00",
-        "hours": 73.3
+        "after": "2005-11-23T17:15:00+00:00",
+        "before": "2005-11-28T06:35:00+00:00",
+        "hours": 109.3
       },
       {
-        "after": "2025-07-04T16:55:00+00:00",
-        "before": "2025-07-06T22:05:00+00:00",
-        "hours": 53.2
+        "after": "2006-11-22T17:00:00+00:00",
+        "before": "2006-11-26T23:05:00+00:00",
+        "hours": 102.1
       },
       {
-        "after": "2026-06-19T16:55:00+00:00",
-        "before": "2026-06-21T22:05:00+00:00",
-        "hours": 53.2
+        "after": "2006-02-17T16:20:00+00:00",
+        "before": "2006-02-21T06:35:00+00:00",
+        "hours": 86.2
       },
       {
-        "after": "2026-07-03T16:55:00+00:00",
-        "before": "2026-07-05T22:05:00+00:00",
-        "hours": 53.2
+        "after": "2005-02-18T16:45:00+00:00",
+        "before": "2005-02-22T06:50:00+00:00",
+        "hours": 86.1
       },
       {
-        "after": "2025-11-28T19:40:00+00:00",
-        "before": "2025-11-30T23:05:00+00:00",
-        "hours": 51.4
+        "after": "2010-11-11T09:00:00+00:00",
+        "before": "2010-11-14T23:05:00+00:00",
+        "hours": 86.1
       }
     ],
     "M15": [
       {
-        "after": "2022-12-23T21:45:00+00:00",
-        "before": "2022-12-26T23:00:00+00:00",
-        "hours": 73.2
+        "after": "2005-11-23T17:15:00+00:00",
+        "before": "2005-11-28T06:30:00+00:00",
+        "hours": 109.2
       },
       {
-        "after": "2022-12-30T21:45:00+00:00",
-        "before": "2023-01-02T23:00:00+00:00",
-        "hours": 73.2
+        "after": "2006-11-22T17:00:00+00:00",
+        "before": "2006-11-26T23:00:00+00:00",
+        "hours": 102.0
       },
       {
-        "after": "2023-04-06T20:45:00+00:00",
-        "before": "2023-04-09T22:00:00+00:00",
-        "hours": 73.2
+        "after": "2006-02-17T16:15:00+00:00",
+        "before": "2006-02-21T06:30:00+00:00",
+        "hours": 86.2
       },
       {
-        "after": "2023-12-22T21:45:00+00:00",
-        "before": "2023-12-25T23:00:00+00:00",
-        "hours": 73.2
+        "after": "2005-02-18T16:45:00+00:00",
+        "before": "2005-02-22T06:45:00+00:00",
+        "hours": 86.0
       },
-      {
-        "after": "2023-12-29T21:45:00+00:00",
-        "before": "2024-01-01T23:00:00+00:00",
-        "hours": 73.2
-      }
-    ],
-    "M30": [
-      {
-        "after": "2020-12-24T18:30:00+00:00",
-        "before": "2020-12-27T22:00:00+00:00",
-        "hours": 75.5
-      },
-      {
-        "after": "2021-04-01T20:30:00+00:00",
-        "before": "2021-04-04T22:00:00+00:00",
-        "hours": 73.5
-      },
-      {
-        "after": "2021-12-23T21:30:00+00:00",
-        "before": "2021-12-26T23:00:00+00:00",
-        "hours": 73.5
-      },
-      {
-        "after": "2022-04-14T20:30:00+00:00",
-        "before": "2022-04-17T22:00:00+00:00",
-        "hours": 73.5
-      },
-      {
-        "after": "2022-12-23T21:30:00+00:00",
-        "before": "2022-12-26T23:00:00+00:00",
-        "hours": 73.5
-      }
-    ],
-    "H1": [
       {
         "after": "2010-11-11T09:00:00+00:00",
         "before": "2010-11-14T23:00:00+00:00",
         "hours": 86.0
+      }
+    ],
+    "M30": [
+      {
+        "after": "2005-11-23T17:00:00+00:00",
+        "before": "2005-11-28T06:30:00+00:00",
+        "hours": 109.5
       },
       {
-        "after": "2011-04-21T18:00:00+00:00",
-        "before": "2011-04-25T05:00:00+00:00",
-        "hours": 83.0
+        "after": "2006-11-22T17:00:00+00:00",
+        "before": "2006-11-26T23:00:00+00:00",
+        "hours": 102.0
       },
       {
-        "after": "2010-12-10T20:00:00+00:00",
-        "before": "2010-12-14T04:00:00+00:00",
-        "hours": 80.0
+        "after": "2006-02-17T16:00:00+00:00",
+        "before": "2006-02-21T06:30:00+00:00",
+        "hours": 86.5
       },
       {
-        "after": "2015-12-24T16:00:00+00:00",
-        "before": "2015-12-27T22:00:00+00:00",
-        "hours": 78.0
+        "after": "2004-09-03T15:30:00+00:00",
+        "before": "2004-09-07T05:30:00+00:00",
+        "hours": 86.0
       },
       {
-        "after": "2015-12-31T16:00:00+00:00",
-        "before": "2016-01-03T22:00:00+00:00",
-        "hours": 78.0
+        "after": "2004-12-23T16:30:00+00:00",
+        "before": "2004-12-27T06:30:00+00:00",
+        "hours": 86.0
+      }
+    ],
+    "H1": [
+      {
+        "after": "2005-11-23T17:00:00+00:00",
+        "before": "2005-11-28T06:00:00+00:00",
+        "hours": 109.0
+      },
+      {
+        "after": "2006-11-22T17:00:00+00:00",
+        "before": "2006-11-26T23:00:00+00:00",
+        "hours": 102.0
+      },
+      {
+        "after": "2004-09-03T15:00:00+00:00",
+        "before": "2004-09-07T05:00:00+00:00",
+        "hours": 86.0
+      },
+      {
+        "after": "2004-12-23T16:00:00+00:00",
+        "before": "2004-12-27T06:00:00+00:00",
+        "hours": 86.0
+      },
+      {
+        "after": "2005-02-18T16:00:00+00:00",
+        "before": "2005-02-22T06:00:00+00:00",
+        "hours": 86.0
       }
     ],
     "H4": [
@@ -282,5 +272,5 @@
       }
     ]
   },
-  "owner_action_required": "close FTMO MT5 completely, run `uv run python scripts/mt5_set_max_bars.py --value 10000000 --apply`, reopen FTMO MT5 and wait for login/synchronisation, then rerun `uv run --extra mt5 python scripts/backfill_mt5.py --write-report`"
+  "owner_action_required": null
 }

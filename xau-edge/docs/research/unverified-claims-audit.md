@@ -11,11 +11,11 @@ thức, mỗi chỗ không chứng minh được đều ghi "chưa xác minh b�
 
 | # | Khẳng định chưa rõ | Kết quả đo | Bằng chứng |
 |---|---|---|---|
-| 1 | Timestamp trả về là UTC thật hay giờ server? | **Giờ server gắn nhãn UTC**; server = New York + 7 h (UTC+3 vào mùa hè Mỹ). Đổi bằng `BrokerClock NY+7`; tuổi tick ≈ 0 s | `docs/reports/mt5-verification.md`, kiểm tra sống mỗi lần chạy; 240 nến khớp qua đường `zoneinfo` độc lập |
+| 1 | Timestamp trả về là UTC thật hay giờ server? | **Giờ server gắn nhãn UTC**; server = New York + 7 h (UTC+3 vào mùa hè Mỹ). Đổi bằng `BrokerClock NY+7`; tuổi tick ≈ 0 s | `docs/reports/mt5-verification.md`, kiểm tra sống mỗi lần chạy; 312 nến (gồm 2005/2012/2019) khớp qua đường `zoneinfo` độc lập |
 | 2 | Thứ tự trả về của `copy_rates_*`/`copy_ticks_*` | Tăng dần theo thời gian (cũ → mới) | kiểm tra numpy trên 50 nến và 1.150 tick thô |
 | 3 | `datetime` không múi giờ truyền vào Python được hiểu thế nào | **Là giờ cục bộ của máy** (máy này UTC+7: `12:17` trần trả nến 05:17 UTC) | script `verify_visual_parity.py`; mọi mã dự án truyền datetime có múi giờ |
 | 4 | Nến cuối có phải nến đang hình thành | Có (`pos=0` là nến hiện tại); loại bằng đồng hồ + `is_closed` | test `test_feed_latest_bars_excludes_forming_by_default`, trang `/market` đánh dấu riêng |
-| 5 | Giới hạn "Max bars in chart" ảnh hưởng thế nào | Cắt lịch sử M1/M5/M15/M30/H1; 100.000 → "Invalid params", 99.000 chạy; truy vấn theo ngày thêm ~900 nến rồi `Terminal: Call failed` | `mt5-history-depth.json`, `mt5-backfill-final.md` |
+| 5 | Giới hạn "Max bars in chart" ảnh hưởng thế nào | Cắt lịch sử M1/M5/M15/M30/H1; 100.000 → "Invalid params", 99.000 chạy; truy vấn theo ngày thêm ~900 nến rồi `Terminal: Call failed`. Sau khi nâng lên 10.000.000: cả sáu khung lùi tới 2004-06-11 (M1 7,06 triệu nến) | `mt5-history-depth.json`, `mt5-backfill-final.md` |
 | 6 | `last`/`volume` của tick CFD vàng có rỗng không | **Luôn 0** (0% trên 237.306 tick); chỉ có bid/ask | `docs/reports/mt5-tick-storage.md` |
 | 7 | Độ sâu tick | Server giữ từ 2021-10-01 11:32 UTC | backfill 205 triệu tick |
 | 8 | Đồng bộ lịch sử khi gọi lần đầu có thiếu không | Terminal đã đồng bộ trả đủ ngay; vẫn coi lần đầu có thể thiếu và đối chiếu bằng reconcile mỗi lần khởi động | collector reconcile 200 nến/khung |

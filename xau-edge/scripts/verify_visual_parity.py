@@ -37,8 +37,13 @@ def server_wall(utc_dt: datetime) -> datetime:
     return utc_dt.astimezone(NY).replace(tzinfo=None) + timedelta(hours=7)
 
 
-def api_bars(api: str, tf: str, limit: int) -> list[dict[str, Any]]:
+DEEP_YEARS = (2005, 2012, 2019)
+
+
+def api_bars(api: str, tf: str, limit: int, before: str | None = None) -> list[dict[str, Any]]:
     url = f"{api}/md/XAUUSD/bars?timeframe={tf}&limit={limit}&include_forming=false"
+    if before:
+        url += f"&before={before}"
     with urllib.request.urlopen(url, timeout=30) as response:  # noqa: S310 - local API
         return json.loads(response.read())["bars"]  # type: ignore[no-any-return]
 
@@ -68,6 +73,8 @@ def main() -> int:
         for tf in Timeframe:
             constant = getattr(client, f"TIMEFRAME_{tf.value}")
             picked = sample(api_bars(args.api, tf.value, args.limit), args.samples)
+            for year in DEEP_YEARS:  # also the deep history that the MaxBars change unlocked
+                picked += api_bars(args.api, tf.value, 4, before=f"{year}-06-15T00:00:00Z")
             rows: list[dict[str, Any]] = []
             mismatches = 0
             for bar in picked:

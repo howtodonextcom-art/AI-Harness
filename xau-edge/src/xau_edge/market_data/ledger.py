@@ -265,6 +265,17 @@ class BarLedger:
             for m in self.months(symbol, timeframe)
         }
 
+    def file_rows(self, symbol: str, timeframe: Timeframe) -> dict[str, int]:
+        """Row count of every month file (from the parquet footer, no full read)."""
+        out: dict[str, int] = {}
+        for month in self.months(symbol, timeframe):
+            path = self._dir(symbol, timeframe) / f"{month}.parquet"
+            try:
+                out[month] = int(pl.scan_parquet(path).select(pl.len()).collect().item())
+            except (OSError, pl.exceptions.PolarsError):
+                out[month] = -1
+        return out
+
     def manifest(self, symbol: str) -> dict[str, Any]:
         """Per timeframe: rows, first/last bar and the SHA-256 of every month file."""
         out: dict[str, Any] = {"symbol": symbol, "timeframes": {}}
@@ -281,6 +292,7 @@ class BarLedger:
                     "first": self.earliest(symbol, tf),
                     "last": self.latest(symbol, tf),
                     "files": files,
+                    "rows_by_file": self.file_rows(symbol, tf),
                     "dataset_id": hashlib.sha256("|".join(files.values()).encode()).hexdigest()[
                         :16
                     ],

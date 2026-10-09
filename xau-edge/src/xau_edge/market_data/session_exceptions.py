@@ -30,6 +30,10 @@ from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.validators.market_calendar import ClosureWindow, MarketCalendar
 
 Reason = Literal["HOLIDAY", "EARLY_CLOSE", "UNCLASSIFIED"]
+MAX_CLOSURE = timedelta(days=5)
+"""A longer absence is never accepted as a holiday: it is data loss until explained."""
+MIN_CLOSURE = timedelta(minutes=60)
+"""A missing stretch shorter than this is thin trading or data loss, never a holiday."""
 
 
 def easter(year: int) -> date:
@@ -117,6 +121,7 @@ def find_absences(
     calendar: MarketCalendar,
     *,
     ny: str = "America/New_York",
+    min_closure: timedelta = MIN_CLOSURE,
 ) -> list[Absence]:
     """Stretches the weekly template calls OPEN where the broker has no bars, classified."""
     ts = bars["timestamp"].sort()
@@ -124,7 +129,9 @@ def find_absences(
         return []
     step = timeframe.minutes
     frame = pl.DataFrame({"prev": ts.shift(1), "next": ts}).drop_nulls()
-    gaps = frame.filter(pl.col("next") - pl.col("prev") > pl.duration(minutes=step))
+    # an absence is (gap - step); only stretches of at least ``min_closure`` can be a closure
+    threshold = timedelta(minutes=step) + min_closure
+    gaps = frame.filter(pl.col("next") - pl.col("prev") >= threshold)
     zone = ZoneInfo(ny)
     out: list[Absence] = []
     for prev, nxt in gaps.iter_rows():
@@ -133,12 +140,14 @@ def find_absences(
         if not open_slots:
             continue  # fully explained by the weekly template
         first_open, last_open = open_slots[0], open_slots[-1] + timedelta(minutes=step)
-        local_days = {
-            first_open.astimezone(zone).date(),
-            (last_open - timedelta(minutes=1)).astimezone(zone).date(),
-        }
-        holidays = holiday_dates(min(local_days).year) | holiday_dates(max(local_days).year)
-        touched = local_days & holidays
+        if last_open - first_open < min_closure:  # thin market minutes, not a closure
+            out.append(Absence(first_open, last_open, "UNCLASSIFIED", len(open_slots)))
+            continue
+        first_day = first_open.astimezone(zone).date()
+        last_day = (last_open - timedelta(minutes=1)).astimezone(zone).date()
+        local_days = {first_day + timedelta(days=i) for i in range((last_day - first_day).days + 1)}
+        holidays = holiday_dates(first_day.year) | holiday_dates(last_day.year)
+        touched = local_days & holidays if last_open - first_open <= MAX_CLOSURE else set()
         reason: Reason = "UNCLASSIFIED"
         if touched:
             local_first = first_open.astimezone(zone)

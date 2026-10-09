@@ -102,10 +102,26 @@ def verify_bars(
         entry["coverage"] = coverage
         files = ledger.file_hashes(symbol, tf)
         if saved_manifest is not None:
-            old = saved_manifest.get("timeframes", {}).get(tf.value, {}).get("files", {})
-            diff = _manifest_diff(files, old, active=max(files) if files else "")
-            entry["manifest"] = diff
-            moved = diff["changed_historical"] + diff["removed"]
+            saved_tf = saved_manifest.get("timeframes", {}).get(tf.value, {})
+            diff = _manifest_diff(
+                files, saved_tf.get("files", {}), active=max(files) if files else ""
+            )
+            rows_now = ledger.file_rows(symbol, tf)
+            rows_then = saved_tf.get("rows_by_file", {})
+            changes = [
+                e for e in ledger.events(symbol)
+                if e.get("kind") == "BAR_CHANGED" and e.get("timeframe") == tf.value
+                and str(e.get("at", "")) > str(saved_manifest.get("saved_at", ""))
+            ]  # fmt: skip
+            grown, moved = [], []
+            for name in diff["changed_historical"]:
+                legacy = name not in rows_then  # baseline saved before row counts were recorded
+                if (legacy or rows_now.get(name, 0) > rows_then[name]) and not changes:
+                    grown.append(name)  # only ADDED rows (older bars filled in); no bar was changed
+                else:
+                    moved.append(name)
+            moved += diff["removed"]
+            entry["manifest"] = {**diff, "changed_historical": moved, "grown_by_backfill": grown}
             if moved:
                 problems.append(f"historical files changed/removed: {moved}")
         entry["ok"] = not problems
