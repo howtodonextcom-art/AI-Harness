@@ -88,7 +88,7 @@ chuỗi đăng nhập thật chưa chạy tự động. Để đóng mục này:
 | MT5 "MẤT KẾT NỐI" | terminal đóng/chưa đăng nhập/broker ngắt | mở terminal, đăng nhập; collector tự nối lại ≤ 5 s |
 | Báo giá "CŨ" khi thị trường mở | collector chết hoặc broker không có tick | `status_market_stack.ps1`; nếu collector sống, xem log |
 | Nến một khung "CŨ" | collector bị chặn hoặc terminal chậm | xem sự kiện GAP trong khung Chất lượng dữ liệu |
-| `BAR_CHANGED` / DEGRADED | broker sửa nến lịch sử | kho giữ bản cũ và ghi sự kiện; xem `events.jsonl`, quyết định thủ công |
+| `BAR_CHANGED` / DEGRADED | nến lưu sớm khi terminal còn nhận tick muộn, hoặc broker sửa nến | kho giữ bản cũ và ghi sự kiện (mỗi nến một lần). Xem trước: `uv run --extra mt5 python scripts/repair_changed_bars.py`; nếu đúng là nến lưu sớm thì thêm `--apply` (ghi `BAR_REPAIRED`) |
 | Cổng 3000/8000 bị chiếm | tiến trình mồ côi cũ | `stop_market_stack.ps1`; nếu vẫn chiếm, `Get-NetTCPConnection -LocalPort 3000` |
 | Đĩa CRITICAL | đĩa đầy | giải phóng chỗ hoặc `archive_ticks.py` |
 

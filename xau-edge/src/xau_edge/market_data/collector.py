@@ -49,6 +49,8 @@ INITIAL_BARS = {Timeframe.M1: 1500, Timeframe.M5: 600, Timeframe.M15: 400, Timef
 DEFAULT_INITIAL = 300
 MAX_FETCH = 5000
 OVERLAP_BARS = 200
+SETTLE = timedelta(seconds=20)
+"""A just-closed bar is stored only after this long: late ticks may still be arriving."""
 TICK_LAG_LIMIT_SECONDS = 90.0
 ROWS_CACHE_SECONDS = 300.0
 
@@ -261,12 +263,19 @@ class MarketCollector:
         for tf in self.timeframes:
             latest = self.ledger.latest(self.symbol, tf)
             count = self._count_needed(tf, latest)
-            fetched = self.feed.latest_bars(self.mapping.broker_symbol, tf, count)
+            fetched = self._settled(
+                self.feed.latest_bars(self.mapping.broker_symbol, tf, count), tf
+            )
             out[tf.value] = self.ledger.append_closed(
                 self.symbol, tf, fetched, now=self._now(), reason="poll"
             )
             self._note_gap(tf, latest, fetched)
         return out
+
+    def _settled(self, frame: pl.DataFrame, tf: Timeframe) -> pl.DataFrame:
+        """Only bars that closed at least ``SETTLE`` ago (a fresh bar may still lack late ticks)."""
+        cutoff = self._now() - SETTLE
+        return frame.filter(pl.col("timestamp") + pl.duration(minutes=tf.minutes) <= cutoff)
 
     def _note_gap(self, tf: Timeframe, latest: datetime | None, fetched: pl.DataFrame) -> None:
         """Log a GAP when the new bars start well after the last stored bar (market open only)."""
@@ -294,7 +303,7 @@ class MarketCollector:
 
     def reconcile(self, tf: Timeframe, bars: int = OVERLAP_BARS) -> ReconcileReport:
         """Compare the last ``bars`` stored bars with the terminal; store anything missing."""
-        fetched = self.feed.latest_bars(self.mapping.broker_symbol, tf, bars)
+        fetched = self._settled(self.feed.latest_bars(self.mapping.broker_symbol, tf, bars), tf)
         if fetched.height == 0:
             return ReconcileReport(tf.value, 0, 0, 0, 0, 0)
         start = fetched["timestamp"].min()
@@ -367,7 +376,19 @@ class MarketCollector:
             if e.get("kind") in {"BAR_CHANGED", "GAP"}
             and datetime.fromisoformat(e["at"]) > now - timedelta(hours=1)
         ]
-        changes = sum(1 for e in recent if e["kind"] == "BAR_CHANGED")
+        repaired = {
+            (e.get("timeframe"), t)
+            for e in self.ledger.events(self.symbol)
+            if e.get("kind") == "BAR_REPAIRED"
+            for t in [b["timestamp"] for b in e.get("bars", [])]
+        }
+        changes = sum(
+            1
+            for e in recent
+            if e["kind"] == "BAR_CHANGED"
+            for t in e.get("timestamps", [])
+            if (e.get("timeframe"), t) not in repaired
+        )
         disk = disk_report(self.ledger.root, self.symbol)
         tick_store = self._tick_store(now)
         health, reasons, stale = evaluate_health(
@@ -399,7 +420,10 @@ class MarketCollector:
             last_bar_age_seconds=ages,
             stored_rows=rows,
             stale_timeframes=stale,
-            events_last_hour={"changes": changes, "gaps": len(recent) - changes},
+            events_last_hour={
+                "changes": changes,
+                "gaps": sum(1 for e in recent if e["kind"] == "GAP"),
+            },
             note="; ".join(self._errors[-3:]),
             freshness=fresh,
             missed_bars=missed,

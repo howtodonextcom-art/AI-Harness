@@ -375,3 +375,62 @@ def test_demo_guard_is_cached_briefly_but_never_caches_a_failure() -> None:
         feed.guard()
     with pytest.raises(Exception, match="not a DEMO"):
         feed.guard()  # the refusal was not cached either
+
+
+def test_just_closed_bar_waits_for_the_settle_delay(tmp_path: Path) -> None:
+    client = FakeClient()
+    client.now = datetime(2026, 3, 11, 12, 1, 5, tzinfo=UTC)  # the 12:00 bar closed only 5 s ago
+    collector = make_collector(tmp_path, client)
+    collector.poll_bars()
+    latest = collector.ledger.latest("XAUUSD", Timeframe.M1)
+    assert latest == datetime(2026, 3, 11, 11, 59, tzinfo=UTC)  # 12:00 is not stored yet
+    client.now += timedelta(seconds=20)
+    collector.poll_bars()
+    assert collector.ledger.latest("XAUUSD", Timeframe.M1) == datetime(
+        2026, 3, 11, 12, 0, tzinfo=UTC
+    )
+
+
+def test_a_changed_bar_is_reported_once_not_every_poll(tmp_path: Path) -> None:
+    client = FakeClient()
+    collector = make_collector(tmp_path, client)
+    collector.poll_bars()
+    client.bump = 3.0  # the terminal now reports different prices for bars already stored
+    for _ in range(5):
+        collector.poll_bars()
+    events = [e for e in collector.ledger.events("XAUUSD") if e["kind"] == "BAR_CHANGED"]
+    keys = [(e["timeframe"], t) for e in events for t in e["timestamps"]]
+    assert keys
+    assert len(keys) == len(set(keys))  # each differing bar appears in exactly one event
+
+
+def test_audited_repair_replaces_only_flagged_bars_and_clears_the_health_count(
+    tmp_path: Path,
+) -> None:
+    client = FakeClient()
+    collector = make_collector(tmp_path, client)
+    collector.run_once()
+    client.bump = 4.0
+    collector.poll_bars()
+    assert collector.status().events_last_hour["changes"] > 0
+    ledger = collector.ledger
+    flagged_ts = [
+        datetime.fromisoformat(t)
+        for e in ledger.events("XAUUSD")
+        if e["kind"] == "BAR_CHANGED" and e["timeframe"] == "M1"
+        for t in e["timestamps"]
+    ]
+    live = make_feed(client).latest_bars("XAUUSD", Timeframe.M1, 100)
+    live = live.filter(pl.col("timestamp").is_in(flagged_ts))
+    done = ledger.replace_bars("XAUUSD", Timeframe.M1, live, now=client.now)
+    assert len(done) == len(flagged_ts)
+    assert done[0]["old"] != done[0]["new"]
+    repaired = [e for e in ledger.events("XAUUSD") if e["kind"] == "BAR_REPAIRED"]
+    assert repaired
+    assert ledger.replace_bars("XAUUSD", Timeframe.M1, live, now=client.now) == []  # idempotent
+    status = collector.status()
+    m1_changes = [e for e in ledger.events("XAUUSD") if e["kind"] == "BAR_CHANGED"]
+    assert m1_changes  # the history of the difference is kept
+    assert status.events_last_hour["changes"] == sum(
+        len([t for t in e["timestamps"] if e["timeframe"] != "M1"]) for e in m1_changes
+    )

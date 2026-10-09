@@ -30,6 +30,11 @@ MT5). Nguyên tắc: **lỗi phải hiện ra, hồi phục sạch, không hỏn
 6. Suy luận ngày lễ từ M1 2004→nay gán nhầm 5.000+ khoảng thiếu phút của thị trường mỏng là "đóng cửa sớm" → chỉ chấp nhận
    khoảng liên tục ≥ 60 phút và ≤ 5 ngày; kiểm tra cả ngày nằm giữa khoảng (Lễ Tạ ơn nằm giữa hai đầu).
 
+7. Sau lần khởi động lại stack, 1 nến M1 (11:27 UTC) được lưu ngay khi đóng, lúc terminal còn nhận tick muộn (122 so với 148 tick) →
+   thêm thời gian chờ ổn định 20 s; cùng một nến bị ghi `BAR_CHANGED` mỗi 5 s (113 sự kiện) → mỗi nến chỉ báo một lần; thêm
+   `scripts/repair_changed_bars.py` (dry-run mặc định, `BAR_REPAIRED` có giá trị cũ/mới). Đã sửa đúng 1 nến trên dữ liệu thật; các nến M5/M15/M30/H1
+   quanh đó vẫn khớp M1.
+
 ## Danh sách kiểm tay (không thể tự động hóa an toàn)
 
 1. **Đóng terminal MT5 thật khi collector chạy**: trang phải báo MT5/Collector mất kết nối; mở lại terminal, đăng

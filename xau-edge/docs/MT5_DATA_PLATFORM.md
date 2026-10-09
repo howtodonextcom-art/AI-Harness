@@ -30,6 +30,9 @@ Dữ liệu ở `data/market/` (không vào git). Research/backtest/signal/paper
 ## 2. Quy tắc bất biến
 
 * Chỉ nến đã đóng vào kho; nến đang hình thành ở `live.json`/UI, luôn `is_closed=false`.
+* Nến vừa đóng chờ **20 giây** ổn định trước khi lưu (tick đến muộn vẫn có thể bổ sung). Một nến lưu quá sớm bị phát hiện
+  bằng `BAR_CHANGED` (mỗi nến báo một lần) và chỉ được sửa bằng `scripts/repair_changed_bars.py --apply` (ghi `BAR_REPAIRED`
+  với giá trị cũ/mới; nến đã sửa không còn tính là vấn đề).
 * Không ghi đè nến/tick đã lưu; khác biệt → sự kiện (`BAR_CHANGED`, `TICKS_CHANGED`). Ghi nguyên tử dưới khóa
   liên tiến trình; chạy lại idempotent.
 * Khối lượng là **tick volume**. `real_volume` là `UNVERIFIED_LEGACY_REAL_VOLUME` (chỉ khác 0 ở H1/H4 2012-03-28..

@@ -70,6 +70,7 @@ class BarLedger:
 
     def __init__(self, root: Path | str) -> None:
         self.root = Path(root)
+        self._reported: set[tuple[str, str, datetime]] = set()
 
     # -- paths ---------------------------------------------------------------------------------
 
@@ -145,15 +146,80 @@ class BarLedger:
                 merged = pl.concat([stored, fresh]).sort("timestamp")
                 self._write_month(symbol, timeframe, month, merged)
         result = AppendResult(frame.height, new, duplicates, changed, tuple(changed_at))
-        if changed:
+        fresh_changes = [
+            t for t in changed_at if (symbol, timeframe.value, t) not in self._reported
+        ]
+        self._reported.update((symbol, timeframe.value, t) for t in changed_at)
+        if fresh_changes:  # one event per differing bar, not one per poll
             detail = {
                 "timeframe": timeframe.value,
-                "timestamps": [t.isoformat() for t in changed_at[:50]],
-                "count": changed,
+                "timestamps": [t.isoformat() for t in fresh_changes[:50]],
+                "count": len(fresh_changes),
                 "reason": reason,
             }
             self.log_event(symbol, "BAR_CHANGED", detail, now=stamp)
         return result
+
+    def replace_bars(
+        self,
+        symbol: str,
+        timeframe: Timeframe,
+        bars: pl.DataFrame,
+        *,
+        now: datetime | None = None,
+        reason: str = "repair",
+    ) -> list[dict[str, Any]]:
+        """AUDITED replacement of already stored bars (never an insertion, never silent).
+
+        Only bars whose open time is stored AND whose values differ are replaced. Every replacement
+        is recorded in a ``BAR_REPAIRED`` event with the old and the new values. Callers must decide
+        explicitly (``scripts/repair_changed_bars.py --apply``); normal collection never uses it.
+        """
+        self._dir(symbol, timeframe)
+        stamp = now or datetime.now(UTC)
+        changes: list[dict[str, Any]] = []
+        with file_lock(self.root / symbol / ".write.lock"):
+            incoming = coerce_bars(bars).select(_FILE_COLUMNS).unique("timestamp", keep="last")
+            months = incoming.with_columns(
+                pl.col("timestamp").dt.strftime("%Y-%m").alias("_m")
+            ).partition_by("_m", as_dict=True, maintain_order=True)
+            for key, part in months.items():
+                month = str(key[0] if isinstance(key, tuple) else key)
+                stored = self._read_month(symbol, timeframe, month)
+                new = part.drop("_m")
+                joined = new.join(stored, on="timestamp", how="inner", suffix="_old")
+                differs = pl.any_horizontal(
+                    *[pl.col(c) != pl.col(f"{c}_old") for c in PRICE_COLUMNS]
+                )
+                diff = joined.filter(differs)
+                if diff.height == 0:
+                    continue
+                for row in diff.iter_rows(named=True):
+                    changes.append(
+                        {
+                            "timestamp": row["timestamp"].isoformat(),
+                            "old": [row[f"{c}_old"] for c in PRICE_COLUMNS],
+                            "new": [row[c] for c in PRICE_COLUMNS],
+                        }
+                    )
+                keep = stored.join(diff.select("timestamp"), on="timestamp", how="anti")
+                replacement = diff.select(_FILE_COLUMNS)
+                self._write_month(
+                    symbol, timeframe, month, pl.concat([keep, replacement]).sort("timestamp")
+                )
+        if changes:
+            self.log_event(
+                symbol,
+                "BAR_REPAIRED",
+                {
+                    "timeframe": timeframe.value,
+                    "reason": reason,
+                    "count": len(changes),
+                    "bars": changes[:50],
+                },
+                now=stamp,
+            )
+        return changes
 
     def log_event(
         self, symbol: str, kind: str, detail: dict[str, Any], *, now: datetime | None = None
