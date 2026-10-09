@@ -48,12 +48,15 @@ def detect_volume_type(
 
 
 def volume_percentile(volume: ArrayLike, window: int = 100) -> Floats:
-    """Share of the previous ``window`` bars (current included) that are <= the current bar."""
+    """Mid-rank share of the last ``window`` bars (current included) below the current bar.
+
+    Ties count half, so a constant series sits at 0.5 instead of looking extreme.
+    """
     v = np.asarray(volume, dtype=np.float64)
     out = np.full(v.size, np.nan)
     for i in range(window - 1, v.size):
         win = v[i - window + 1 : i + 1]
-        out[i] = float(np.mean(win <= v[i]))
+        out[i] = float((np.sum(win < v[i]) + 0.5 * np.sum(win == v[i])) / win.size)
     return out
 
 

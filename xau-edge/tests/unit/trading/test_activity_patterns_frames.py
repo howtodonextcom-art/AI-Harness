@@ -95,7 +95,8 @@ def test_activity_is_causal() -> None:
 def test_ratio_percentile_and_acceleration_have_the_documented_meaning() -> None:
     v = np.array([10.0] * 30 + [40.0])
     assert volume_ratio(v, 20)[-1] == pytest.approx(4.0)
-    assert volume_percentile(v, 31)[-1] == pytest.approx(1.0)
+    assert volume_percentile(v, 31)[-1] == pytest.approx(30.5 / 31)
+    assert volume_percentile(np.full(40, 7.0), 31)[-1] == pytest.approx(0.5)
     z = np.array([0.0, 0.0, 0.0, 1.0, 2.0])
     assert volume_acceleration(z, 3)[3] == pytest.approx(1.0)
 

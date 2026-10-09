@@ -301,7 +301,11 @@ def _spread_stats(
         return spread, None, None
     recent = m5["spread"].tail(cfg.spread_window).to_numpy().astype(np.float64)
     current = spread if spread is not None else float(recent[-1])
-    pct = float(np.mean(recent <= current)) if recent.size >= 30 else None
+    pct = (
+        float((np.sum(recent < current) + 0.5 * np.sum(recent == current)) / recent.size)
+        if recent.size >= 30
+        else None
+    )
     return current, pct, None
 
 
