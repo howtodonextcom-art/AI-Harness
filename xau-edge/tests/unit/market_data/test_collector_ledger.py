@@ -111,7 +111,7 @@ def make_collector(tmp_path: Path, client: FakeClient) -> MarketCollector:
     feed = make_feed(client)
     return MarketCollector(
         feed, BarLedger(tmp_path), feed.discover_symbol("XAUUSD"), MarketCalendar(),
-        status_path=tmp_path / "status.json", now=lambda: client.now,
+        status_path=tmp_path / "collector_status.json", now=lambda: client.now,
     )  # fmt: skip
 
 
@@ -264,9 +264,9 @@ def test_status_disconnected_and_status_file(tmp_path: Path) -> None:
     collector.run_once()
     client.connected = False
     assert collector.status().health == FeedHealth.DISCONNECTED.value
-    stored = read_status_file(tmp_path / "status.json", now=NOW)
+    stored = read_status_file(tmp_path / "collector_status.json", now=NOW)
     assert stored["collector_running"] is True
-    old = read_status_file(tmp_path / "status.json", now=NOW + timedelta(minutes=5))
+    old = read_status_file(tmp_path / "collector_status.json", now=NOW + timedelta(minutes=5))
     assert old["health"] == FeedHealth.STALE.value and old["collector_running"] is False
     missing = read_status_file(tmp_path / "nope.json")
     assert missing["health"] == FeedHealth.UNKNOWN.value

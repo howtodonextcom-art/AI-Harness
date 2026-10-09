@@ -28,6 +28,8 @@ from xau_edge.market_data.validators.market_calendar import MarketCalendar
 STALE_QUOTE_SECONDS = 30.0
 MAX_BARS = 5000
 MAX_TICKS = 500
+COLLECTOR_RUNNING_SECONDS = 30.0
+COLLECTOR_STOPPED_SECONDS = 600.0
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:
@@ -74,35 +76,116 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 
+    def collector_state(age: float | None) -> str:
+        if age is None:
+            return "STOPPED"
+        if age <= COLLECTOR_RUNNING_SECONDS:
+            return "RUNNING"
+        return "STALE" if age <= COLLECTOR_STOPPED_SECONDS else "STOPPED"
+
+    def quote_view() -> dict[str, Any]:
+        live = _read_json(root / "live.json")
+        status = market_status(now(), cal)
+        closed = status not in (MarketStatus.OPEN, MarketStatus.UNKNOWN)
+        if live is None or not isinstance(live.get("quote"), dict):
+            return {"available": False, "stale": True, "state": "UNAVAILABLE",
+                    "market_status": status.value, "reason": "no quote published yet",
+                    "note": "collector has not published a quote"}  # fmt: skip
+        quote: dict[str, Any] = live["quote"]
+        stamp = quote.get("timestamp")
+        age = (now() - datetime.fromisoformat(stamp)).total_seconds() if stamp else None
+        file_age = (now() - datetime.fromisoformat(live["updated_at"])).total_seconds()
+        collector_alive = file_age <= STALE_QUOTE_SECONDS
+        old = age is None or age > STALE_QUOTE_SECONDS
+        stale = not closed and (old or not collector_alive)
+        if closed:
+            state = "MARKET_CLOSED"
+            reason = f"market is {status.value.lower()}: the last tick is expected to be old"
+        elif not collector_alive:
+            state = "STALE"
+            reason = f"the collector stopped publishing {file_age:.0f}s ago"
+        elif old:
+            state = "STALE"
+            reason = f"market is open but the last tick is {age:.0f}s old"
+        else:
+            state, reason = "FRESH", "last tick is recent"
+        extra = {"available": True, "age_seconds": age, "stale": stale, "source": "FTMO MT5"}
+        extra |= {"market_status": status.value, "collector_age_seconds": file_age}
+        extra |= {"state": state, "reason": reason, "last_tick_time": stamp}
+        return {**quote, **extra}
+
     @app.get("/md/status")
     def md_status() -> dict[str, Any]:
-        status = read_status_file(root / "collector_status.json", now=now())
-        status["market_status"] = market_status(now(), cal).value
-        status["source"] = "FTMO MT5"
-        status["volume_type"] = "TICK_VOLUME"
+        stamp = now()
+        status = read_status_file(root / "collector_status.json", now=stamp)
+        age = status.get("status_age_seconds")
+        collector = collector_state(age if isinstance(age, int | float) else None)
+        market = market_status(stamp, cal)
+        quote = quote_view()
+        fresh = status.get("freshness") or {}
+        if not fresh:
+            bars = "UNKNOWN"
+        elif any(v == "STALE" for v in fresh.values()):
+            bars = "STALE"
+        else:
+            bars = (
+                "FRESH" if market in (MarketStatus.OPEN, MarketStatus.UNKNOWN) else "MARKET_CLOSED"
+            )
+        terminal = "UNKNOWN"
+        if collector == "RUNNING":
+            terminal = "CONNECTED" if status.get("connected") else "DISCONNECTED"
+        action = None
+        if collector != "RUNNING":
+            action = "Run scripts/start_market_stack.ps1 (status_market_stack.ps1 shows why)."
+        elif terminal == "DISCONNECTED":
+            action = "Open the FTMO MT5 terminal and log in; the collector reconnects by itself."
+        status |= {
+            "market_status": market.value, "source": "FTMO MT5", "volume_type": "TICK_VOLUME",
+            "components": {"terminal": terminal, "collector": collector, "api": "CONNECTED",
+                           "market": market.value, "quote": quote["state"], "bars": bars},
+            "recovery_action": action,
+        }  # fmt: skip
         return status
 
     @app.get("/md/{sym}/quote")
     def md_quote(sym: str) -> dict[str, Any]:
         check(sym)
-        live = _read_json(root / "live.json")
-        status = market_status(now(), cal)
-        if live is None or not isinstance(live.get("quote"), dict):
-            return {"available": False, "stale": True, "market_status": status.value,
-                    "note": "collector has not published a quote"}  # fmt: skip
-        quote: dict[str, Any] = live["quote"]
-        stamp = quote.get("timestamp")
-        age = None
-        if stamp:
-            age = (now() - datetime.fromisoformat(stamp)).total_seconds()
-        file_age = (now() - datetime.fromisoformat(live["updated_at"])).total_seconds()
-        trading = status in (MarketStatus.OPEN, MarketStatus.UNKNOWN)
-        stale = trading and (
-            age is None or age > STALE_QUOTE_SECONDS or file_age > STALE_QUOTE_SECONDS
-        )
-        extra = {"available": True, "age_seconds": age, "stale": stale, "source": "FTMO MT5"}
-        extra |= {"market_status": status.value, "collector_age_seconds": file_age}
-        return {**quote, **extra}
+        return quote_view()
+
+    @app.get("/md/{sym}/quality")
+    def md_quality(sym: str) -> dict[str, Any]:
+        check(sym)
+        stamp = now()
+        status = read_status_file(root / "collector_status.json", now=stamp)
+        depth = []
+        for tf in Timeframe:
+            try:
+                first, last = ledger.earliest(symbol, tf), ledger.latest(symbol, tf)
+            except LedgerError:
+                first = last = None
+            depth.append(
+                {
+                    "timeframe": tf.value,
+                    "earliest": None if first is None else first.isoformat(),
+                    "latest": None if last is None else last.isoformat(),
+                    "rows": (status.get("stored_rows") or {}).get(tf.value),
+                    "freshness": (status.get("freshness") or {}).get(tf.value, "UNKNOWN"),
+                }
+            )
+        events = [
+            e for e in ledger.events(symbol)
+            if e.get("kind") in {"BAR_CHANGED", "GAP", "RECONCILE_DIFFERENCES"}
+        ][-10:]  # fmt: skip
+        ticks = status.get("tick_store") or {}
+        return {
+            "history_depth": depth,
+            "recent_events": events,
+            "tick_store": ticks,
+            "disk": status.get("disk") or {},
+            "warnings": status.get("warnings") or [],
+            "collector_health": status.get("health", "UNKNOWN"),
+            "ledger_integrity": _read_json(root / "ledger-verification.json"),
+        }
 
     @app.get("/md/{sym}/bars")
     def md_bars(

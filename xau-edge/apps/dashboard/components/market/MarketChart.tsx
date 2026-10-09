@@ -12,6 +12,7 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import type { MarketBar } from "@/lib/market";
+import { shiftedSeconds, type DisplayZone } from "@/lib/time";
 
 interface Handles {
   chart: IChartApi;
@@ -20,14 +21,13 @@ interface Handles {
   spread: ISeriesApi<"Line">;
 }
 
-const toTime = (iso: string) => (Date.parse(iso) / 1000) as UTCTimestamp;
 
 /**
  * Candlesticks (price pane), TICK volume (second pane) and the bar spread in points (third pane).
  * The chart is created once per timeframe; polling only replaces the data. A still-forming bar is
- * drawn hollow/translucent so it cannot be mistaken for a closed one. Times are UTC.
+ * drawn hollow/translucent so it cannot be mistaken for a closed one. Times are shown in the chosen display zone (default UTC).
  */
-export function MarketChart({ bars, timeframe }: { bars: MarketBar[]; timeframe: string }) {
+export function MarketChart({ bars, timeframe, zone = "UTC" }: { bars: MarketBar[]; timeframe: string; zone?: DisplayZone }) {
   const container = useRef<HTMLDivElement>(null);
   const handles = useRef<Handles | null>(null);
   const fitted = useRef<string | null>(null);
@@ -76,6 +76,7 @@ export function MarketChart({ bars, timeframe }: { bars: MarketBar[]; timeframe:
   useEffect(() => {
     const h = handles.current;
     if (!h) return;
+    const toTime = (iso: string) => shiftedSeconds(iso, zone) as UTCTimestamp;
     h.candles.setData(
       bars.map((b) => {
         const up = b.close >= b.open;
@@ -106,7 +107,7 @@ export function MarketChart({ bars, timeframe }: { bars: MarketBar[]; timeframe:
       h.chart.timeScale().fitContent();
       fitted.current = timeframe;
     }
-  }, [bars, timeframe]);
+  }, [bars, timeframe, zone]);
 
   return (
     <div

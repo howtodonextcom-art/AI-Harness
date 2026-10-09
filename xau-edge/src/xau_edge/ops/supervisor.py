@@ -25,6 +25,8 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
+from xau_edge.market_data.atomic import atomic_write_text
+
 BACKOFF_START = 2.0
 BACKOFF_MAX = 60.0
 STABLE_AFTER = 120.0  # a child that ran this long is healthy again: reset its backoff
@@ -213,9 +215,7 @@ class Supervisor:
         }
 
     def _write_state(self) -> None:
-        tmp = self.state_file.with_suffix(".tmp")
-        tmp.write_text(json.dumps(self.snapshot(), indent=2), encoding="utf-8")
-        tmp.replace(self.state_file)
+        atomic_write_text(self.state_file, json.dumps(self.snapshot(), indent=2))
 
     # -- lifecycle -----------------------------------------------------------------------------
 

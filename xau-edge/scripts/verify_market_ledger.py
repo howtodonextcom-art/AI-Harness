@@ -11,11 +11,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from xau_edge.market_data.atomic import atomic_write_text  # noqa: E402
 from xau_edge.market_data.calendars import ftmo_calendar  # noqa: E402
 from xau_edge.market_data.ledger import BarLedger  # noqa: E402
 from xau_edge.market_data.verification import load_manifest, verify_bars  # noqa: E402
@@ -33,6 +35,12 @@ def main() -> int:
         ledger, args.symbol, ftmo_calendar(), saved_manifest=load_manifest(baseline)
     )
     print(json.dumps(report, indent=2, default=str))
+    summary = {
+        "ok": report["ok"],
+        "verified_at": datetime.now(UTC).isoformat(),
+        "problems": {k: v["problems"] for k, v in report["timeframes"].items() if v["problems"]},
+    }
+    atomic_write_text(args.root / "ledger-verification.json", json.dumps(summary, indent=2))
     if args.save_manifest and report["ok"]:
         baseline.write_text(
             json.dumps(ledger.manifest(args.symbol), indent=2, default=str), encoding="utf-8"

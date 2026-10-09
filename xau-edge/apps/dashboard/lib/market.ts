@@ -28,6 +28,8 @@ export interface BarsResponse {
 export interface QuoteResponse {
   available: boolean;
   stale: boolean;
+  state?: "FRESH" | "STALE" | "MARKET_CLOSED" | "UNAVAILABLE";
+  reason?: string;
   market_status: string;
   bid?: number | null;
   ask?: number | null;
@@ -35,9 +37,19 @@ export interface QuoteResponse {
   spread_price?: number | null;
   spread_points?: number | null;
   timestamp?: string | null;
+  last_tick_time?: string | null;
   age_seconds?: number | null;
   collector_age_seconds?: number;
   note?: string;
+}
+
+export interface Components {
+  terminal: string;
+  collector: string;
+  api: string;
+  market: string;
+  quote: string;
+  bars: string;
 }
 
 export interface MarketStatusResponse {
@@ -48,6 +60,10 @@ export interface MarketStatusResponse {
   server?: string | null;
   source?: string;
   volume_type?: string;
+  components?: Components;
+  recovery_action?: string | null;
+  freshness?: Record<string, string>;
+  warnings?: string[];
 }
 
 export interface MatrixRow {
@@ -63,6 +79,24 @@ export interface MatrixResponse {
   timeframes: MatrixRow[];
 }
 
+export interface DepthRow {
+  timeframe: string;
+  earliest: string | null;
+  latest: string | null;
+  rows: number | null;
+  freshness: string;
+}
+
+export interface QualityResponse {
+  history_depth: DepthRow[];
+  recent_events: { at: string; kind: string; timeframe?: string; count?: number }[];
+  tick_store: { enabled?: boolean; covered_until?: string | null; lag_seconds?: number | null; earliest_covered?: string | null; coverage_windows?: number };
+  disk: { level?: string; free_gb?: number; tick_gb?: number; estimated_days_remaining?: number | null };
+  warnings: string[];
+  collector_health: string;
+  ledger_integrity: { ok?: boolean; verified_at?: string } | null;
+}
+
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, { cache: "no-store" });
   if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
@@ -74,3 +108,4 @@ export const fetchBars = (tf: MarketTimeframe, limit: number, forming: boolean) 
 export const fetchQuote = () => get<QuoteResponse>("/md/XAUUSD/quote");
 export const fetchStatus = () => get<MarketStatusResponse>("/md/status");
 export const fetchMatrix = () => get<MatrixResponse>("/md/XAUUSD/matrix");
+export const fetchQuality = () => get<QualityResponse>("/md/XAUUSD/quality");

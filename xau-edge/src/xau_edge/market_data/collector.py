@@ -23,6 +23,7 @@ import polars as pl
 
 from xau_edge.domain.market import FeedHealth, MarketStatus, Quote
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.market_data.atomic import atomic_write_text
 from xau_edge.market_data.disk import disk_report
 from xau_edge.market_data.freshness import (
     bar_freshness,
@@ -242,10 +243,10 @@ class MarketCollector:
             "forming": self._forming(),
             "ticks": list(self._recent)[-200:],
         }
-        tmp = self.live_path.with_suffix(".tmp")
-        self.live_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp.write_text(json.dumps(payload, default=str), encoding="utf-8")
-        tmp.replace(self.live_path)
+        try:
+            atomic_write_text(self.live_path, json.dumps(payload, default=str))
+        except OSError as exc:  # a locked file must not end collection; the API shows it as stale
+            self._errors.append(f"live.json: {exc}"[:200])
 
     def _count_needed(self, tf: Timeframe, latest: datetime | None) -> int:
         if latest is None:
@@ -423,7 +424,10 @@ class MarketCollector:
     def write_status(self) -> CollectorStatus:
         status = self.status()
         if self.status_path is not None:
-            write_status_file(self.status_path, status)
+            try:
+                write_status_file(self.status_path, status)
+            except OSError as exc:  # keep collecting; a stale status file is shown as stale
+                self._errors.append(f"status file: {exc}"[:200])
         return status
 
     # -- run -----------------------------------------------------------------------------------
@@ -467,10 +471,7 @@ class MarketCollector:
 
 def write_status_file(path: Path, status: CollectorStatus) -> None:
     """Atomic write of the status JSON (readers never see a torn file)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(status.__dict__, indent=2, default=str) + "\n", encoding="utf-8")
-    tmp.replace(path)
+    atomic_write_text(path, json.dumps(status.__dict__, indent=2, default=str) + "\n")
 
 
 def read_status_file(
