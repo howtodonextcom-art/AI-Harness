@@ -369,6 +369,35 @@ class Mt5Feed:
         closes = pl.col("timestamp") + pl.duration(minutes=timeframe.minutes)
         return frame.filter(closes <= self._now())
 
+    def bars_before(
+        self, broker_symbol: str, timeframe: Timeframe, end_exclusive: datetime, count: int
+    ) -> pl.DataFrame:
+        """Up to ``count`` CLOSED bars that open strictly before ``end_exclusive`` (true UTC).
+
+        Date-based (``copy_rates_from``), so it can reach history that the position-based call
+        cannot; it is what the backward backfill walks with. Empty when nothing older is served.
+        """
+        self.guard()
+        constant = getattr(self._client, f"TIMEFRAME_{timeframe.value}", None)
+        if constant is None:
+            msg = f"MT5 client has no constant for timeframe {timeframe.value}"
+            raise RuntimeError(msg)
+        newest_wanted = end_exclusive - timeframe.delta
+        rates = self._client.copy_rates_from(
+            broker_symbol,
+            constant,
+            self._server_wall(newest_wanted),
+            max(1, min(count, MAX_BARS_PER_CALL)),
+        )
+        if rates is None:
+            msg = f"copy_rates_from failed: {self._client.last_error()}"
+            raise RuntimeError(msg)
+        if len(rates) == 0:
+            return empty_bars()
+        frame = self._frame(rates).filter(pl.col("timestamp") < end_exclusive)
+        closes = pl.col("timestamp") + pl.duration(minutes=timeframe.minutes)
+        return frame.filter(closes <= self._now())
+
     def bars_range(
         self,
         broker_symbol: str,
