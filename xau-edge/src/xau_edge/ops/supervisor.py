@@ -79,6 +79,17 @@ def process_alive(pid: int) -> bool:
     return True
 
 
+def kill_tree(process: subprocess.Popen[bytes]) -> None:
+    """Terminate a child AND everything it started (npx -> node, uv -> python, ...)."""
+    if sys.platform == "win32":
+        subprocess.run(  # noqa: S603 - fixed argv
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],  # noqa: S607
+            capture_output=True, check=False,
+        )  # fmt: skip
+    else:
+        process.terminate()
+
+
 def read_pid(path: Path) -> int | None:
     try:
         return int(path.read_text(encoding="utf-8").strip())
@@ -178,6 +189,7 @@ class Supervisor:
         pump = child.pump
         if pump is not None:
             pump.join(timeout=2)
+        kill_tree(process)  # leftovers of a dead wrapper would keep the port busy
         child.process = None
         child.restarts += 1
         child.backoff = (
@@ -227,7 +239,7 @@ class Supervisor:
             process = child.process
             if process is None or process.poll() is not None:
                 continue
-            process.terminate()
+            kill_tree(process)
         deadline = time.monotonic() + grace
         for child in self._children:
             process = child.process

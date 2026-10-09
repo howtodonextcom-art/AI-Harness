@@ -21,6 +21,7 @@ from xau_edge.domain.market import FeedHealth, MarketStatus
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.market_data.collector import read_status_file
+from xau_edge.market_data.freshness import bar_freshness, missed_closed_bars
 from xau_edge.market_data.ledger import BarLedger, LedgerError
 from xau_edge.market_data.session import market_status
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
@@ -114,6 +115,21 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
         extra |= {"state": state, "reason": reason, "last_tick_time": stamp}
         return {**quote, **extra}
 
+    def bars_freshness(stamp: datetime) -> dict[str, str]:
+        """Freshness computed HERE from the ledger and calendar, never taken from the collector.
+
+        A dead collector can only report the state it last saw; the API must notice on its own.
+        """
+        out: dict[str, str] = {}
+        for tf in Timeframe:
+            try:
+                latest = ledger.latest(symbol, tf)
+            except LedgerError:
+                out[tf.value] = "UNKNOWN"
+                continue
+            out[tf.value] = bar_freshness(missed_closed_bars(latest, tf, stamp, cal), tf)
+        return out
+
     @app.get("/md/status")
     def md_status() -> dict[str, Any]:
         stamp = now()
@@ -122,7 +138,8 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
         collector = collector_state(age if isinstance(age, int | float) else None)
         market = market_status(stamp, cal)
         quote = quote_view()
-        fresh = status.get("freshness") or {}
+        fresh = bars_freshness(stamp)
+        status["freshness"] = fresh
         if not fresh:
             bars = "UNKNOWN"
         elif any(v == "STALE" for v in fresh.values()):
@@ -157,6 +174,7 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
         check(sym)
         stamp = now()
         status = read_status_file(root / "collector_status.json", now=stamp)
+        fresh_now = bars_freshness(stamp)
         depth = []
         for tf in Timeframe:
             try:
@@ -169,7 +187,7 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
                     "earliest": None if first is None else first.isoformat(),
                     "latest": None if last is None else last.isoformat(),
                     "rows": (status.get("stored_rows") or {}).get(tf.value),
-                    "freshness": (status.get("freshness") or {}).get(tf.value, "UNKNOWN"),
+                    "freshness": fresh_now.get(tf.value, "UNKNOWN"),
                 }
             )
         events = [

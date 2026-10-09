@@ -52,6 +52,19 @@ def test_stopped_collector_is_stale_with_the_exact_recovery_action(tmp_path: Pat
     assert http.get("/md/status").json()["components"]["collector"] == "STOPPED"
 
 
+def test_api_notices_stale_bars_by_itself_when_the_collector_is_dead(tmp_path: Path) -> None:
+    http, client = build(tmp_path)
+    client.now = NOW + timedelta(minutes=12)  # the collector's own last snapshot still says FRESH
+    body = http.get("/md/status").json()
+    assert body["freshness"]["M1"] == "STALE"
+    assert (
+        body["freshness"]["H4"] == "FRESH"
+    )  # a slow timeframe is not stale just because time passed
+    assert body["components"]["bars"] == "STALE"
+    quality = http.get("/md/XAUUSD/quality").json()
+    assert {d["timeframe"]: d["freshness"] for d in quality["history_depth"]}["M1"] == "STALE"
+
+
 def test_market_closed_quote_is_contextualised_not_broken(tmp_path: Path) -> None:
     http, client = build(tmp_path)
     client.now = NOW + timedelta(days=3)  # a Saturday

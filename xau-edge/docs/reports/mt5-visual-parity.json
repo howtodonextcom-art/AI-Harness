@@ -1,0 +1,4614 @@
+{
+  "checked_at": "2026-10-09T09:20:50.727893+00:00",
+  "timeframes": {
+    "M1": {
+      "sampled": 40,
+      "compared": 40,
+      "mismatches": 0,
+      "not_in_terminal_cache": 0,
+      "rows": [
+        {
+          "time_utc": "2026-10-09T09:17:00+00:00",
+          "broker_time": "2026-10-09T12:17:00",
+          "terminal_ohlc": [
+            4185.3,
+            4186.19,
+            4185.15,
+            4186.13
+          ],
+          "xau_edge_ohlc": [
+            4185.3,
+            4186.19,
+            4185.15,
+            4186.13
+          ],
+          "terminal_tick_volume": 125,
+          "xau_edge_tick_volume": 125,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T09:18:00+00:00",
+          "broker_time": "2026-10-09T12:18:00",
+          "terminal_ohlc": [
+            4186.14,
+            4186.69,
+            4185.57,
+            4186.03
+          ],
+          "xau_edge_ohlc": [
+            4186.14,
+            4186.69,
+            4185.57,
+            4186.03
+          ],
+          "terminal_tick_volume": 118,
+          "xau_edge_tick_volume": 118,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T09:19:00+00:00",
+          "broker_time": "2026-10-09T12:19:00",
+          "terminal_ohlc": [
+            4186.05,
+            4187.16,
+            4185.58,
+            4185.74
+          ],
+          "xau_edge_ohlc": [
+            4186.05,
+            4187.16,
+            4185.58,
+            4185.74
+          ],
+          "terminal_tick_volume": 153,
+          "xau_edge_tick_volume": 153,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-05T17:00:00+00:00",
+          "broker_time": "2026-10-05T20:00:00",
+          "terminal_ohlc": [
+            4130.31,
+            4131.46,
+            4130.31,
+            4131.46
+          ],
+          "xau_edge_ohlc": [
+            4130.31,
+            4131.46,
+            4130.31,
+            4131.46
+          ],
+          "terminal_tick_volume": 199,
+          "xau_edge_tick_volume": 199,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-05T19:15:00+00:00",
+          "broker_time": "2026-10-05T22:15:00",
+          "terminal_ohlc": [
+            4140.67,
+            4141.43,
+            4140.48,
+            4141.2
+          ],
+          "xau_edge_ohlc": [
+            4140.67,
+            4141.43,
+            4140.48,
+            4141.2
+          ],
+          "terminal_tick_volume": 149,
+          "xau_edge_tick_volume": 149,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-05T22:45:00+00:00",
+          "broker_time": "2026-10-06T01:45:00",
+          "terminal_ohlc": [
+            4143.83,
+            4143.83,
+            4143.5,
+            4143.51
+          ],
+          "xau_edge_ohlc": [
+            4143.83,
+            4143.83,
+            4143.5,
+            4143.51
+          ],
+          "terminal_tick_volume": 35,
+          "xau_edge_tick_volume": 35,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T01:00:00+00:00",
+          "broker_time": "2026-10-06T04:00:00",
+          "terminal_ohlc": [
+            4150.74,
+            4152.06,
+            4149.51,
+            4149.59
+          ],
+          "xau_edge_ohlc": [
+            4150.74,
+            4152.06,
+            4149.51,
+            4149.59
+          ],
+          "terminal_tick_volume": 282,
+          "xau_edge_tick_volume": 282,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T03:15:00+00:00",
+          "broker_time": "2026-10-06T06:15:00",
+          "terminal_ohlc": [
+            4128.34,
+            4128.94,
+            4126.52,
+            4128.52
+          ],
+          "xau_edge_ohlc": [
+            4128.34,
+            4128.94,
+            4126.52,
+            4128.52
+          ],
+          "terminal_tick_volume": 157,
+          "xau_edge_tick_volume": 157,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T05:30:00+00:00",
+          "broker_time": "2026-10-06T08:30:00",
+          "terminal_ohlc": [
+            4121.47,
+            4121.51,
+            4120.01,
+            4120.55
+          ],
+          "xau_edge_ohlc": [
+            4121.47,
+            4121.51,
+            4120.01,
+            4120.55
+          ],
+          "terminal_tick_volume": 115,
+          "xau_edge_tick_volume": 115,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T07:45:00+00:00",
+          "broker_time": "2026-10-06T10:45:00",
+          "terminal_ohlc": [
+            4138.17,
+            4140.48,
+            4137.86,
+            4140.48
+          ],
+          "xau_edge_ohlc": [
+            4138.17,
+            4140.48,
+            4137.86,
+            4140.48
+          ],
+          "terminal_tick_volume": 197,
+          "xau_edge_tick_volume": 197,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T10:00:00+00:00",
+          "broker_time": "2026-10-06T13:00:00",
+          "terminal_ohlc": [
+            4152.14,
+            4152.84,
+            4151.99,
+            4152.13
+          ],
+          "xau_edge_ohlc": [
+            4152.14,
+            4152.84,
+            4151.99,
+            4152.13
+          ],
+          "terminal_tick_volume": 144,
+          "xau_edge_tick_volume": 144,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T12:15:00+00:00",
+          "broker_time": "2026-10-06T15:15:00",
+          "terminal_ohlc": [
+            4178.39,
+            4178.54,
+            4176.57,
+            4176.87
+          ],
+          "xau_edge_ohlc": [
+            4178.39,
+            4178.54,
+            4176.57,
+            4176.87
+          ],
+          "terminal_tick_volume": 203,
+          "xau_edge_tick_volume": 203,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T14:30:00+00:00",
+          "broker_time": "2026-10-06T17:30:00",
+          "terminal_ohlc": [
+            4145.93,
+            4146.23,
+            4143.4,
+            4144.45
+          ],
+          "xau_edge_ohlc": [
+            4145.93,
+            4146.23,
+            4143.4,
+            4144.45
+          ],
+          "terminal_tick_volume": 262,
+          "xau_edge_tick_volume": 262,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T16:45:00+00:00",
+          "broker_time": "2026-10-06T19:45:00",
+          "terminal_ohlc": [
+            4160.34,
+            4161.51,
+            4159.8,
+            4160.58
+          ],
+          "xau_edge_ohlc": [
+            4160.34,
+            4161.51,
+            4159.8,
+            4160.58
+          ],
+          "terminal_tick_volume": 172,
+          "xau_edge_tick_volume": 172,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T19:00:00+00:00",
+          "broker_time": "2026-10-06T22:00:00",
+          "terminal_ohlc": [
+            4175.59,
+            4179.32,
+            4175.59,
+            4176.71
+          ],
+          "xau_edge_ohlc": [
+            4175.59,
+            4179.32,
+            4175.59,
+            4176.71
+          ],
+          "terminal_tick_volume": 203,
+          "xau_edge_tick_volume": 203,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T22:30:00+00:00",
+          "broker_time": "2026-10-07T01:30:00",
+          "terminal_ohlc": [
+            4165.72,
+            4165.72,
+            4164.93,
+            4164.94
+          ],
+          "xau_edge_ohlc": [
+            4165.72,
+            4165.72,
+            4164.93,
+            4164.94
+          ],
+          "terminal_tick_volume": 58,
+          "xau_edge_tick_volume": 58,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T00:45:00+00:00",
+          "broker_time": "2026-10-07T03:45:00",
+          "terminal_ohlc": [
+            4162.25,
+            4162.5,
+            4159.98,
+            4160.24
+          ],
+          "xau_edge_ohlc": [
+            4162.25,
+            4162.5,
+            4159.98,
+            4160.24
+          ],
+          "terminal_tick_volume": 183,
+          "xau_edge_tick_volume": 183,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T03:00:00+00:00",
+          "broker_time": "2026-10-07T06:00:00",
+          "terminal_ohlc": [
+            4142.35,
+            4142.35,
+            4141.18,
+            4141.63
+          ],
+          "xau_edge_ohlc": [
+            4142.35,
+            4142.35,
+            4141.18,
+            4141.63
+          ],
+          "terminal_tick_volume": 164,
+          "xau_edge_tick_volume": 164,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T05:15:00+00:00",
+          "broker_time": "2026-10-07T08:15:00",
+          "terminal_ohlc": [
+            4133.99,
+            4134.09,
+            4133.0,
+            4133.46
+          ],
+          "xau_edge_ohlc": [
+            4133.99,
+            4134.09,
+            4133.0,
+            4133.46
+          ],
+          "terminal_tick_volume": 150,
+          "xau_edge_tick_volume": 150,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T07:30:00+00:00",
+          "broker_time": "2026-10-07T10:30:00",
+          "terminal_ohlc": [
+            4132.84,
+            4133.69,
+            4132.34,
+            4133.62
+          ],
+          "xau_edge_ohlc": [
+            4132.84,
+            4133.69,
+            4132.34,
+            4133.62
+          ],
+          "terminal_tick_volume": 191,
+          "xau_edge_tick_volume": 191,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T09:45:00+00:00",
+          "broker_time": "2026-10-07T12:45:00",
+          "terminal_ohlc": [
+            4119.7,
+            4119.7,
+            4118.42,
+            4118.79
+          ],
+          "xau_edge_ohlc": [
+            4119.7,
+            4119.7,
+            4118.42,
+            4118.79
+          ],
+          "terminal_tick_volume": 157,
+          "xau_edge_tick_volume": 157,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T12:00:00+00:00",
+          "broker_time": "2026-10-07T15:00:00",
+          "terminal_ohlc": [
+            4121.51,
+            4123.52,
+            4120.93,
+            4123.05
+          ],
+          "xau_edge_ohlc": [
+            4121.51,
+            4123.52,
+            4120.93,
+            4123.05
+          ],
+          "terminal_tick_volume": 263,
+          "xau_edge_tick_volume": 263,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T14:15:00+00:00",
+          "broker_time": "2026-10-07T17:15:00",
+          "terminal_ohlc": [
+            4097.7,
+            4100.91,
+            4097.46,
+            4098.67
+          ],
+          "xau_edge_ohlc": [
+            4097.7,
+            4100.91,
+            4097.46,
+            4098.67
+          ],
+          "terminal_tick_volume": 281,
+          "xau_edge_tick_volume": 281,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T16:30:00+00:00",
+          "broker_time": "2026-10-07T19:30:00",
+          "terminal_ohlc": [
+            4114.23,
+            4114.97,
+            4113.48,
+            4113.84
+          ],
+          "xau_edge_ohlc": [
+            4114.23,
+            4114.97,
+            4113.48,
+            4113.84
+          ],
+          "terminal_tick_volume": 198,
+          "xau_edge_tick_volume": 198,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T18:45:00+00:00",
+          "broker_time": "2026-10-07T21:45:00",
+          "terminal_ohlc": [
+            4109.9,
+            4110.05,
+            4109.1,
+            4109.31
+          ],
+          "xau_edge_ohlc": [
+            4109.9,
+            4110.05,
+            4109.1,
+            4109.31
+          ],
+          "terminal_tick_volume": 144,
+          "xau_edge_tick_volume": 144,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T22:15:00+00:00",
+          "broker_time": "2026-10-08T01:15:00",
+          "terminal_ohlc": [
+            4108.05,
+            4108.65,
+            4107.88,
+            4108.14
+          ],
+          "xau_edge_ohlc": [
+            4108.05,
+            4108.65,
+            4107.88,
+            4108.14
+          ],
+          "terminal_tick_volume": 63,
+          "xau_edge_tick_volume": 63,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T00:30:00+00:00",
+          "broker_time": "2026-10-08T03:30:00",
+          "terminal_ohlc": [
+            4107.44,
+            4107.44,
+            4106.09,
+            4106.4
+          ],
+          "xau_edge_ohlc": [
+            4107.44,
+            4107.44,
+            4106.09,
+            4106.4
+          ],
+          "terminal_tick_volume": 166,
+          "xau_edge_tick_volume": 166,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T02:45:00+00:00",
+          "broker_time": "2026-10-08T05:45:00",
+          "terminal_ohlc": [
+            4142.79,
+            4142.97,
+            4140.75,
+            4140.85
+          ],
+          "xau_edge_ohlc": [
+            4142.79,
+            4142.97,
+            4140.75,
+            4140.85
+          ],
+          "terminal_tick_volume": 182,
+          "xau_edge_tick_volume": 182,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T05:00:00+00:00",
+          "broker_time": "2026-10-08T08:00:00",
+          "terminal_ohlc": [
+            4133.15,
+            4133.15,
+            4131.72,
+            4131.78
+          ],
+          "xau_edge_ohlc": [
+            4133.15,
+            4133.15,
+            4131.72,
+            4131.78
+          ],
+          "terminal_tick_volume": 183,
+          "xau_edge_tick_volume": 183,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T07:15:00+00:00",
+          "broker_time": "2026-10-08T10:15:00",
+          "terminal_ohlc": [
+            4124.73,
+            4125.36,
+            4123.1,
+            4123.78
+          ],
+          "xau_edge_ohlc": [
+            4124.73,
+            4125.36,
+            4123.1,
+            4123.78
+          ],
+          "terminal_tick_volume": 198,
+          "xau_edge_tick_volume": 198,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T09:30:00+00:00",
+          "broker_time": "2026-10-08T12:30:00",
+          "terminal_ohlc": [
+            4124.28,
+            4125.28,
+            4121.87,
+            4122.62
+          ],
+          "xau_edge_ohlc": [
+            4124.28,
+            4125.28,
+            4121.87,
+            4122.62
+          ],
+          "terminal_tick_volume": 185,
+          "xau_edge_tick_volume": 185,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T11:45:00+00:00",
+          "broker_time": "2026-10-08T14:45:00",
+          "terminal_ohlc": [
+            4122.55,
+            4124.84,
+            4122.46,
+            4124.81
+          ],
+          "xau_edge_ohlc": [
+            4122.55,
+            4124.84,
+            4122.46,
+            4124.81
+          ],
+          "terminal_tick_volume": 215,
+          "xau_edge_tick_volume": 215,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T14:00:00+00:00",
+          "broker_time": "2026-10-08T17:00:00",
+          "terminal_ohlc": [
+            4130.0,
+            4130.13,
+            4128.0,
+            4128.01
+          ],
+          "xau_edge_ohlc": [
+            4130.0,
+            4130.13,
+            4128.0,
+            4128.01
+          ],
+          "terminal_tick_volume": 312,
+          "xau_edge_tick_volume": 312,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T16:15:00+00:00",
+          "broker_time": "2026-10-08T19:15:00",
+          "terminal_ohlc": [
+            4111.9,
+            4112.0,
+            4110.7,
+            4111.54
+          ],
+          "xau_edge_ohlc": [
+            4111.9,
+            4112.0,
+            4110.7,
+            4111.54
+          ],
+          "terminal_tick_volume": 196,
+          "xau_edge_tick_volume": 196,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T18:30:00+00:00",
+          "broker_time": "2026-10-08T21:30:00",
+          "terminal_ohlc": [
+            4125.67,
+            4125.68,
+            4123.05,
+            4123.08
+          ],
+          "xau_edge_ohlc": [
+            4125.67,
+            4125.68,
+            4123.05,
+            4123.08
+          ],
+          "terminal_tick_volume": 251,
+          "xau_edge_tick_volume": 251,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T20:45:00+00:00",
+          "broker_time": "2026-10-08T23:45:00",
+          "terminal_ohlc": [
+            4133.18,
+            4133.91,
+            4133.18,
+            4133.6
+          ],
+          "xau_edge_ohlc": [
+            4133.18,
+            4133.91,
+            4133.18,
+            4133.6
+          ],
+          "terminal_tick_volume": 52,
+          "xau_edge_tick_volume": 52,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T00:15:00+00:00",
+          "broker_time": "2026-10-09T03:15:00",
+          "terminal_ohlc": [
+            4146.13,
+            4148.54,
+            4145.83,
+            4146.42
+          ],
+          "xau_edge_ohlc": [
+            4146.13,
+            4148.54,
+            4145.83,
+            4146.42
+          ],
+          "terminal_tick_volume": 212,
+          "xau_edge_tick_volume": 212,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T02:30:00+00:00",
+          "broker_time": "2026-10-09T05:30:00",
+          "terminal_ohlc": [
+            4170.77,
+            4171.22,
+            4169.63,
+            4169.96
+          ],
+          "xau_edge_ohlc": [
+            4170.77,
+            4171.22,
+            4169.63,
+            4169.96
+          ],
+          "terminal_tick_volume": 211,
+          "xau_edge_tick_volume": 211,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T04:45:00+00:00",
+          "broker_time": "2026-10-09T07:45:00",
+          "terminal_ohlc": [
+            4181.63,
+            4181.63,
+            4180.27,
+            4180.27
+          ],
+          "xau_edge_ohlc": [
+            4181.63,
+            4181.63,
+            4180.27,
+            4180.27
+          ],
+          "terminal_tick_volume": 112,
+          "xau_edge_tick_volume": 112,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T07:00:00+00:00",
+          "broker_time": "2026-10-09T10:00:00",
+          "terminal_ohlc": [
+            4196.09,
+            4197.59,
+            4195.54,
+            4196.11
+          ],
+          "xau_edge_ohlc": [
+            4196.09,
+            4197.59,
+            4195.54,
+            4196.11
+          ],
+          "terminal_tick_volume": 223,
+          "xau_edge_tick_volume": 223,
+          "result": "MATCH"
+        }
+      ]
+    },
+    "M5": {
+      "sampled": 40,
+      "compared": 40,
+      "mismatches": 0,
+      "not_in_terminal_cache": 0,
+      "rows": [
+        {
+          "time_utc": "2026-10-09T09:05:00+00:00",
+          "broker_time": "2026-10-09T12:05:00",
+          "terminal_ohlc": [
+            4185.79,
+            4187.2,
+            4185.14,
+            4185.39
+          ],
+          "xau_edge_ohlc": [
+            4185.79,
+            4187.2,
+            4185.14,
+            4185.39
+          ],
+          "terminal_tick_volume": 654,
+          "xau_edge_tick_volume": 654,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T09:10:00+00:00",
+          "broker_time": "2026-10-09T12:10:00",
+          "terminal_ohlc": [
+            4185.49,
+            4186.52,
+            4185.21,
+            4185.54
+          ],
+          "xau_edge_ohlc": [
+            4185.49,
+            4186.52,
+            4185.21,
+            4185.54
+          ],
+          "terminal_tick_volume": 625,
+          "xau_edge_tick_volume": 625,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T09:15:00+00:00",
+          "broker_time": "2026-10-09T12:15:00",
+          "terminal_ohlc": [
+            4185.67,
+            4187.16,
+            4184.63,
+            4185.74
+          ],
+          "xau_edge_ohlc": [
+            4185.67,
+            4187.16,
+            4184.63,
+            4185.74
+          ],
+          "terminal_tick_volume": 652,
+          "xau_edge_tick_volume": 652,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-15T02:10:00+00:00",
+          "broker_time": "2026-09-15T05:10:00",
+          "terminal_ohlc": [
+            4307.44,
+            4308.1,
+            4305.03,
+            4307.15
+          ],
+          "xau_edge_ohlc": [
+            4307.44,
+            4308.1,
+            4305.03,
+            4307.15
+          ],
+          "terminal_tick_volume": 740,
+          "xau_edge_tick_volume": 740,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-15T13:25:00+00:00",
+          "broker_time": "2026-09-15T16:25:00",
+          "terminal_ohlc": [
+            4292.06,
+            4292.98,
+            4286.56,
+            4287.17
+          ],
+          "xau_edge_ohlc": [
+            4292.06,
+            4292.98,
+            4286.56,
+            4287.17
+          ],
+          "terminal_tick_volume": 1215,
+          "xau_edge_tick_volume": 1215,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-16T01:55:00+00:00",
+          "broker_time": "2026-09-16T04:55:00",
+          "terminal_ohlc": [
+            4285.18,
+            4286.74,
+            4279.84,
+            4282.34
+          ],
+          "xau_edge_ohlc": [
+            4285.18,
+            4286.74,
+            4279.84,
+            4282.34
+          ],
+          "terminal_tick_volume": 869,
+          "xau_edge_tick_volume": 869,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-16T13:10:00+00:00",
+          "broker_time": "2026-09-16T16:10:00",
+          "terminal_ohlc": [
+            4348.34,
+            4357.05,
+            4347.81,
+            4356.39
+          ],
+          "xau_edge_ohlc": [
+            4348.34,
+            4357.05,
+            4347.81,
+            4356.39
+          ],
+          "terminal_tick_volume": 1136,
+          "xau_edge_tick_volume": 1136,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-17T01:40:00+00:00",
+          "broker_time": "2026-09-17T04:40:00",
+          "terminal_ohlc": [
+            4311.83,
+            4312.71,
+            4308.88,
+            4309.12
+          ],
+          "xau_edge_ohlc": [
+            4311.83,
+            4312.71,
+            4308.88,
+            4309.12
+          ],
+          "terminal_tick_volume": 1227,
+          "xau_edge_tick_volume": 1227,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-17T12:55:00+00:00",
+          "broker_time": "2026-09-17T15:55:00",
+          "terminal_ohlc": [
+            4373.95,
+            4373.96,
+            4370.45,
+            4373.2
+          ],
+          "xau_edge_ohlc": [
+            4373.95,
+            4373.96,
+            4370.45,
+            4373.2
+          ],
+          "terminal_tick_volume": 1313,
+          "xau_edge_tick_volume": 1313,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-18T01:25:00+00:00",
+          "broker_time": "2026-09-18T04:25:00",
+          "terminal_ohlc": [
+            4362.07,
+            4363.06,
+            4358.5,
+            4359.67
+          ],
+          "xau_edge_ohlc": [
+            4362.07,
+            4363.06,
+            4358.5,
+            4359.67
+          ],
+          "terminal_tick_volume": 812,
+          "xau_edge_tick_volume": 812,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-18T12:40:00+00:00",
+          "broker_time": "2026-09-18T15:40:00",
+          "terminal_ohlc": [
+            4368.64,
+            4370.68,
+            4366.63,
+            4369.03
+          ],
+          "xau_edge_ohlc": [
+            4368.64,
+            4370.68,
+            4366.63,
+            4369.03
+          ],
+          "terminal_tick_volume": 1122,
+          "xau_edge_tick_volume": 1122,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-21T01:10:00+00:00",
+          "broker_time": "2026-09-21T04:10:00",
+          "terminal_ohlc": [
+            4380.09,
+            4380.42,
+            4376.25,
+            4380.42
+          ],
+          "xau_edge_ohlc": [
+            4380.09,
+            4380.42,
+            4376.25,
+            4380.42
+          ],
+          "terminal_tick_volume": 1101,
+          "xau_edge_tick_volume": 1101,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-21T12:25:00+00:00",
+          "broker_time": "2026-09-21T15:25:00",
+          "terminal_ohlc": [
+            4354.85,
+            4356.53,
+            4351.31,
+            4355.28
+          ],
+          "xau_edge_ohlc": [
+            4354.85,
+            4356.53,
+            4351.31,
+            4355.28
+          ],
+          "terminal_tick_volume": 1064,
+          "xau_edge_tick_volume": 1064,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-22T00:55:00+00:00",
+          "broker_time": "2026-09-22T03:55:00",
+          "terminal_ohlc": [
+            4358.43,
+            4360.22,
+            4357.37,
+            4359.96
+          ],
+          "xau_edge_ohlc": [
+            4358.43,
+            4360.22,
+            4357.37,
+            4359.96
+          ],
+          "terminal_tick_volume": 785,
+          "xau_edge_tick_volume": 785,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-22T12:10:00+00:00",
+          "broker_time": "2026-09-22T15:10:00",
+          "terminal_ohlc": [
+            4320.85,
+            4323.93,
+            4320.85,
+            4323.83
+          ],
+          "xau_edge_ohlc": [
+            4320.85,
+            4323.93,
+            4320.85,
+            4323.83
+          ],
+          "terminal_tick_volume": 966,
+          "xau_edge_tick_volume": 966,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-23T00:40:00+00:00",
+          "broker_time": "2026-09-23T03:40:00",
+          "terminal_ohlc": [
+            4357.29,
+            4359.5,
+            4355.59,
+            4358.98
+          ],
+          "xau_edge_ohlc": [
+            4357.29,
+            4359.5,
+            4355.59,
+            4358.98
+          ],
+          "terminal_tick_volume": 776,
+          "xau_edge_tick_volume": 776,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-23T11:55:00+00:00",
+          "broker_time": "2026-09-23T14:55:00",
+          "terminal_ohlc": [
+            4309.28,
+            4309.79,
+            4308.02,
+            4309.44
+          ],
+          "xau_edge_ohlc": [
+            4309.28,
+            4309.79,
+            4308.02,
+            4309.44
+          ],
+          "terminal_tick_volume": 890,
+          "xau_edge_tick_volume": 890,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-24T00:25:00+00:00",
+          "broker_time": "2026-09-24T03:25:00",
+          "terminal_ohlc": [
+            4287.67,
+            4292.17,
+            4285.92,
+            4291.87
+          ],
+          "xau_edge_ohlc": [
+            4287.67,
+            4292.17,
+            4285.92,
+            4291.87
+          ],
+          "terminal_tick_volume": 804,
+          "xau_edge_tick_volume": 804,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-24T11:40:00+00:00",
+          "broker_time": "2026-09-24T14:40:00",
+          "terminal_ohlc": [
+            4259.5,
+            4261.07,
+            4258.46,
+            4260.53
+          ],
+          "xau_edge_ohlc": [
+            4259.5,
+            4261.07,
+            4258.46,
+            4260.53
+          ],
+          "terminal_tick_volume": 752,
+          "xau_edge_tick_volume": 752,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-25T00:10:00+00:00",
+          "broker_time": "2026-09-25T03:10:00",
+          "terminal_ohlc": [
+            4268.53,
+            4269.24,
+            4265.58,
+            4266.2
+          ],
+          "xau_edge_ohlc": [
+            4268.53,
+            4269.24,
+            4265.58,
+            4266.2
+          ],
+          "terminal_tick_volume": 793,
+          "xau_edge_tick_volume": 793,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-25T11:25:00+00:00",
+          "broker_time": "2026-09-25T14:25:00",
+          "terminal_ohlc": [
+            4309.84,
+            4310.22,
+            4304.55,
+            4304.61
+          ],
+          "xau_edge_ohlc": [
+            4309.84,
+            4310.22,
+            4304.55,
+            4304.61
+          ],
+          "terminal_tick_volume": 985,
+          "xau_edge_tick_volume": 985,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-27T23:55:00+00:00",
+          "broker_time": "2026-09-28T02:55:00",
+          "terminal_ohlc": [
+            4260.38,
+            4262.14,
+            4259.66,
+            4260.18
+          ],
+          "xau_edge_ohlc": [
+            4260.38,
+            4262.14,
+            4259.66,
+            4260.18
+          ],
+          "terminal_tick_volume": 701,
+          "xau_edge_tick_volume": 701,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-28T11:10:00+00:00",
+          "broker_time": "2026-09-28T14:10:00",
+          "terminal_ohlc": [
+            4153.41,
+            4153.64,
+            4148.44,
+            4149.82
+          ],
+          "xau_edge_ohlc": [
+            4153.41,
+            4153.64,
+            4148.44,
+            4149.82
+          ],
+          "terminal_tick_volume": 1010,
+          "xau_edge_tick_volume": 1010,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-28T23:40:00+00:00",
+          "broker_time": "2026-09-29T02:40:00",
+          "terminal_ohlc": [
+            4127.99,
+            4128.04,
+            4125.65,
+            4126.2
+          ],
+          "xau_edge_ohlc": [
+            4127.99,
+            4128.04,
+            4125.65,
+            4126.2
+          ],
+          "terminal_tick_volume": 373,
+          "xau_edge_tick_volume": 373,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-29T10:55:00+00:00",
+          "broker_time": "2026-09-29T13:55:00",
+          "terminal_ohlc": [
+            4151.22,
+            4154.6,
+            4150.52,
+            4153.46
+          ],
+          "xau_edge_ohlc": [
+            4151.22,
+            4154.6,
+            4150.52,
+            4153.46
+          ],
+          "terminal_tick_volume": 808,
+          "xau_edge_tick_volume": 808,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-29T23:25:00+00:00",
+          "broker_time": "2026-09-30T02:25:00",
+          "terminal_ohlc": [
+            4180.66,
+            4181.67,
+            4180.33,
+            4180.66
+          ],
+          "xau_edge_ohlc": [
+            4180.66,
+            4181.67,
+            4180.33,
+            4180.66
+          ],
+          "terminal_tick_volume": 220,
+          "xau_edge_tick_volume": 220,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-30T10:40:00+00:00",
+          "broker_time": "2026-09-30T13:40:00",
+          "terminal_ohlc": [
+            4188.4,
+            4188.75,
+            4183.69,
+            4183.78
+          ],
+          "xau_edge_ohlc": [
+            4188.4,
+            4188.75,
+            4183.69,
+            4183.78
+          ],
+          "terminal_tick_volume": 813,
+          "xau_edge_tick_volume": 813,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-30T23:10:00+00:00",
+          "broker_time": "2026-10-01T02:10:00",
+          "terminal_ohlc": [
+            4152.87,
+            4153.38,
+            4151.93,
+            4152.08
+          ],
+          "xau_edge_ohlc": [
+            4152.87,
+            4153.38,
+            4151.93,
+            4152.08
+          ],
+          "terminal_tick_volume": 277,
+          "xau_edge_tick_volume": 277,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-01T10:25:00+00:00",
+          "broker_time": "2026-10-01T13:25:00",
+          "terminal_ohlc": [
+            4164.92,
+            4167.57,
+            4163.99,
+            4167.57
+          ],
+          "xau_edge_ohlc": [
+            4164.92,
+            4167.57,
+            4163.99,
+            4167.57
+          ],
+          "terminal_tick_volume": 980,
+          "xau_edge_tick_volume": 980,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-01T22:55:00+00:00",
+          "broker_time": "2026-10-02T01:55:00",
+          "terminal_ohlc": [
+            4176.49,
+            4178.84,
+            4176.17,
+            4178.55
+          ],
+          "xau_edge_ohlc": [
+            4176.49,
+            4178.84,
+            4176.17,
+            4178.55
+          ],
+          "terminal_tick_volume": 287,
+          "xau_edge_tick_volume": 287,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-02T10:10:00+00:00",
+          "broker_time": "2026-10-02T13:10:00",
+          "terminal_ohlc": [
+            4177.94,
+            4178.07,
+            4169.8,
+            4171.69
+          ],
+          "xau_edge_ohlc": [
+            4177.94,
+            4178.07,
+            4169.8,
+            4171.69
+          ],
+          "terminal_tick_volume": 1043,
+          "xau_edge_tick_volume": 1043,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-04T22:40:00+00:00",
+          "broker_time": "2026-10-05T01:40:00",
+          "terminal_ohlc": [
+            4142.56,
+            4142.93,
+            4141.67,
+            4142.93
+          ],
+          "xau_edge_ohlc": [
+            4142.56,
+            4142.93,
+            4141.67,
+            4142.93
+          ],
+          "terminal_tick_volume": 233,
+          "xau_edge_tick_volume": 233,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-05T09:55:00+00:00",
+          "broker_time": "2026-10-05T12:55:00",
+          "terminal_ohlc": [
+            4158.32,
+            4159.66,
+            4157.79,
+            4158.43
+          ],
+          "xau_edge_ohlc": [
+            4158.32,
+            4159.66,
+            4157.79,
+            4158.43
+          ],
+          "terminal_tick_volume": 715,
+          "xau_edge_tick_volume": 715,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-05T22:25:00+00:00",
+          "broker_time": "2026-10-06T01:25:00",
+          "terminal_ohlc": [
+            4143.06,
+            4143.23,
+            4142.12,
+            4142.64
+          ],
+          "xau_edge_ohlc": [
+            4143.06,
+            4143.23,
+            4142.12,
+            4142.64
+          ],
+          "terminal_tick_volume": 194,
+          "xau_edge_tick_volume": 194,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T09:40:00+00:00",
+          "broker_time": "2026-10-06T12:40:00",
+          "terminal_ohlc": [
+            4155.07,
+            4156.5,
+            4153.57,
+            4153.74
+          ],
+          "xau_edge_ohlc": [
+            4155.07,
+            4156.5,
+            4153.57,
+            4153.74
+          ],
+          "terminal_tick_volume": 671,
+          "xau_edge_tick_volume": 671,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T22:10:00+00:00",
+          "broker_time": "2026-10-07T01:10:00",
+          "terminal_ohlc": [
+            4165.95,
+            4166.94,
+            4165.88,
+            4166.32
+          ],
+          "xau_edge_ohlc": [
+            4165.95,
+            4166.94,
+            4165.88,
+            4166.32
+          ],
+          "terminal_tick_volume": 336,
+          "xau_edge_tick_volume": 336,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T09:25:00+00:00",
+          "broker_time": "2026-10-07T12:25:00",
+          "terminal_ohlc": [
+            4121.5,
+            4122.97,
+            4120.38,
+            4120.51
+          ],
+          "xau_edge_ohlc": [
+            4121.5,
+            4122.97,
+            4120.38,
+            4120.51
+          ],
+          "terminal_tick_volume": 844,
+          "xau_edge_tick_volume": 844,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T20:40:00+00:00",
+          "broker_time": "2026-10-07T23:40:00",
+          "terminal_ohlc": [
+            4109.35,
+            4109.53,
+            4107.73,
+            4108.85
+          ],
+          "xau_edge_ohlc": [
+            4109.35,
+            4109.53,
+            4107.73,
+            4108.85
+          ],
+          "terminal_tick_volume": 197,
+          "xau_edge_tick_volume": 197,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T09:10:00+00:00",
+          "broker_time": "2026-10-08T12:10:00",
+          "terminal_ohlc": [
+            4128.16,
+            4128.19,
+            4124.55,
+            4125.12
+          ],
+          "xau_edge_ohlc": [
+            4128.16,
+            4128.19,
+            4124.55,
+            4125.12
+          ],
+          "terminal_tick_volume": 785,
+          "xau_edge_tick_volume": 785,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-08T20:25:00+00:00",
+          "broker_time": "2026-10-08T23:25:00",
+          "terminal_ohlc": [
+            4135.27,
+            4135.8,
+            4134.02,
+            4134.03
+          ],
+          "xau_edge_ohlc": [
+            4135.27,
+            4135.8,
+            4134.02,
+            4134.03
+          ],
+          "terminal_tick_volume": 451,
+          "xau_edge_tick_volume": 451,
+          "result": "MATCH"
+        }
+      ]
+    },
+    "M15": {
+      "sampled": 40,
+      "compared": 40,
+      "mismatches": 0,
+      "not_in_terminal_cache": 0,
+      "rows": [
+        {
+          "time_utc": "2026-10-09T08:30:00+00:00",
+          "broker_time": "2026-10-09T11:30:00",
+          "terminal_ohlc": [
+            4198.29,
+            4198.51,
+            4189.26,
+            4191.17
+          ],
+          "xau_edge_ohlc": [
+            4198.29,
+            4198.51,
+            4189.26,
+            4191.17
+          ],
+          "terminal_tick_volume": 2447,
+          "xau_edge_tick_volume": 2447,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T08:45:00+00:00",
+          "broker_time": "2026-10-09T11:45:00",
+          "terminal_ohlc": [
+            4191.18,
+            4191.46,
+            4187.12,
+            4187.68
+          ],
+          "xau_edge_ohlc": [
+            4191.18,
+            4191.46,
+            4187.12,
+            4187.68
+          ],
+          "terminal_tick_volume": 2231,
+          "xau_edge_tick_volume": 2231,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T09:00:00+00:00",
+          "broker_time": "2026-10-09T12:00:00",
+          "terminal_ohlc": [
+            4187.67,
+            4187.98,
+            4185.14,
+            4185.54
+          ],
+          "xau_edge_ohlc": [
+            4187.67,
+            4187.98,
+            4185.14,
+            4185.54
+          ],
+          "terminal_tick_volume": 2009,
+          "xau_edge_tick_volume": 2009,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-26T22:45:00+00:00",
+          "broker_time": "2026-07-27T01:45:00",
+          "terminal_ohlc": [
+            4091.11,
+            4093.46,
+            4088.78,
+            4089.38
+          ],
+          "xau_edge_ohlc": [
+            4091.11,
+            4093.46,
+            4088.78,
+            4089.38
+          ],
+          "terminal_tick_volume": 1112,
+          "xau_edge_tick_volume": 1112,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-28T09:30:00+00:00",
+          "broker_time": "2026-07-28T12:30:00",
+          "terminal_ohlc": [
+            4040.2,
+            4040.21,
+            4029.47,
+            4033.23
+          ],
+          "xau_edge_ohlc": [
+            4040.2,
+            4040.21,
+            4029.47,
+            4033.23
+          ],
+          "terminal_tick_volume": 2577,
+          "xau_edge_tick_volume": 2577,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-29T20:15:00+00:00",
+          "broker_time": "2026-07-29T23:15:00",
+          "terminal_ohlc": [
+            4051.87,
+            4057.2,
+            4043.65,
+            4055.5
+          ],
+          "xau_edge_ohlc": [
+            4051.87,
+            4057.2,
+            4043.65,
+            4055.5
+          ],
+          "terminal_tick_volume": 3390,
+          "xau_edge_tick_volume": 3390,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-31T08:00:00+00:00",
+          "broker_time": "2026-07-31T11:00:00",
+          "terminal_ohlc": [
+            4067.39,
+            4067.57,
+            4061.04,
+            4062.05
+          ],
+          "xau_edge_ohlc": [
+            4067.39,
+            4067.57,
+            4061.04,
+            4062.05
+          ],
+          "terminal_tick_volume": 2756,
+          "xau_edge_tick_volume": 2756,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-03T18:45:00+00:00",
+          "broker_time": "2026-08-03T21:45:00",
+          "terminal_ohlc": [
+            4041.28,
+            4044.91,
+            4040.37,
+            4043.3
+          ],
+          "xau_edge_ohlc": [
+            4041.28,
+            4044.91,
+            4040.37,
+            4043.3
+          ],
+          "terminal_tick_volume": 1579,
+          "xau_edge_tick_volume": 1579,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-05T06:30:00+00:00",
+          "broker_time": "2026-08-05T09:30:00",
+          "terminal_ohlc": [
+            4168.5,
+            4178.12,
+            4166.93,
+            4175.52
+          ],
+          "xau_edge_ohlc": [
+            4168.5,
+            4178.12,
+            4166.93,
+            4175.52
+          ],
+          "terminal_tick_volume": 3165,
+          "xau_edge_tick_volume": 3165,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-06T17:15:00+00:00",
+          "broker_time": "2026-08-06T20:15:00",
+          "terminal_ohlc": [
+            4240.83,
+            4242.59,
+            4238.35,
+            4241.61
+          ],
+          "xau_edge_ohlc": [
+            4240.83,
+            4242.59,
+            4238.35,
+            4241.61
+          ],
+          "terminal_tick_volume": 2937,
+          "xau_edge_tick_volume": 2937,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-10T05:00:00+00:00",
+          "broker_time": "2026-08-10T08:00:00",
+          "terminal_ohlc": [
+            4339.38,
+            4339.61,
+            4333.44,
+            4334.82
+          ],
+          "xau_edge_ohlc": [
+            4339.38,
+            4339.61,
+            4333.44,
+            4334.82
+          ],
+          "terminal_tick_volume": 1649,
+          "xau_edge_tick_volume": 1649,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-11T15:45:00+00:00",
+          "broker_time": "2026-08-11T18:45:00",
+          "terminal_ohlc": [
+            4375.77,
+            4383.67,
+            4374.92,
+            4383.61
+          ],
+          "xau_edge_ohlc": [
+            4375.77,
+            4383.67,
+            4374.92,
+            4383.61
+          ],
+          "terminal_tick_volume": 3384,
+          "xau_edge_tick_volume": 3384,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-13T03:30:00+00:00",
+          "broker_time": "2026-08-13T06:30:00",
+          "terminal_ohlc": [
+            4409.05,
+            4410.29,
+            4405.28,
+            4405.76
+          ],
+          "xau_edge_ohlc": [
+            4409.05,
+            4410.29,
+            4405.28,
+            4405.76
+          ],
+          "terminal_tick_volume": 1683,
+          "xau_edge_tick_volume": 1683,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-14T14:15:00+00:00",
+          "broker_time": "2026-08-14T17:15:00",
+          "terminal_ohlc": [
+            4390.41,
+            4394.44,
+            4385.17,
+            4390.63
+          ],
+          "xau_edge_ohlc": [
+            4390.41,
+            4394.44,
+            4385.17,
+            4390.63
+          ],
+          "terminal_tick_volume": 3965,
+          "xau_edge_tick_volume": 3965,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-18T02:00:00+00:00",
+          "broker_time": "2026-08-18T05:00:00",
+          "terminal_ohlc": [
+            4407.97,
+            4408.08,
+            4398.37,
+            4400.88
+          ],
+          "xau_edge_ohlc": [
+            4407.97,
+            4408.08,
+            4398.37,
+            4400.88
+          ],
+          "terminal_tick_volume": 3231,
+          "xau_edge_tick_volume": 3231,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-19T12:45:00+00:00",
+          "broker_time": "2026-08-19T15:45:00",
+          "terminal_ohlc": [
+            4417.53,
+            4442.18,
+            4411.39,
+            4438.69
+          ],
+          "xau_edge_ohlc": [
+            4417.53,
+            4442.18,
+            4411.39,
+            4438.69
+          ],
+          "terminal_tick_volume": 5636,
+          "xau_edge_tick_volume": 5636,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-21T00:30:00+00:00",
+          "broker_time": "2026-08-21T03:30:00",
+          "terminal_ohlc": [
+            4514.74,
+            4516.99,
+            4510.73,
+            4513.56
+          ],
+          "xau_edge_ohlc": [
+            4514.74,
+            4516.99,
+            4510.73,
+            4513.56
+          ],
+          "terminal_tick_volume": 2643,
+          "xau_edge_tick_volume": 2643,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-24T11:15:00+00:00",
+          "broker_time": "2026-08-24T14:15:00",
+          "terminal_ohlc": [
+            4642.14,
+            4647.32,
+            4640.35,
+            4646.32
+          ],
+          "xau_edge_ohlc": [
+            4642.14,
+            4647.32,
+            4640.35,
+            4646.32
+          ],
+          "terminal_tick_volume": 2380,
+          "xau_edge_tick_volume": 2380,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-25T23:00:00+00:00",
+          "broker_time": "2026-08-26T02:00:00",
+          "terminal_ohlc": [
+            4672.46,
+            4673.31,
+            4667.07,
+            4667.93
+          ],
+          "xau_edge_ohlc": [
+            4672.46,
+            4673.31,
+            4667.07,
+            4667.93
+          ],
+          "terminal_tick_volume": 1432,
+          "xau_edge_tick_volume": 1432,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-27T09:45:00+00:00",
+          "broker_time": "2026-08-27T12:45:00",
+          "terminal_ohlc": [
+            4582.27,
+            4585.74,
+            4578.96,
+            4580.13
+          ],
+          "xau_edge_ohlc": [
+            4582.27,
+            4585.74,
+            4578.96,
+            4580.13
+          ],
+          "terminal_tick_volume": 2533,
+          "xau_edge_tick_volume": 2533,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-28T20:30:00+00:00",
+          "broker_time": "2026-08-28T23:30:00",
+          "terminal_ohlc": [
+            4458.15,
+            4458.15,
+            4453.67,
+            4457.0
+          ],
+          "xau_edge_ohlc": [
+            4458.15,
+            4458.15,
+            4453.67,
+            4457.0
+          ],
+          "terminal_tick_volume": 1175,
+          "xau_edge_tick_volume": 1175,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-01T08:15:00+00:00",
+          "broker_time": "2026-09-01T11:15:00",
+          "terminal_ohlc": [
+            4405.38,
+            4405.64,
+            4381.68,
+            4382.99
+          ],
+          "xau_edge_ohlc": [
+            4405.38,
+            4405.64,
+            4381.68,
+            4382.99
+          ],
+          "terminal_tick_volume": 4297,
+          "xau_edge_tick_volume": 4297,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-02T19:00:00+00:00",
+          "broker_time": "2026-09-02T22:00:00",
+          "terminal_ohlc": [
+            4374.17,
+            4380.13,
+            4371.61,
+            4379.03
+          ],
+          "xau_edge_ohlc": [
+            4374.17,
+            4380.13,
+            4371.61,
+            4379.03
+          ],
+          "terminal_tick_volume": 2676,
+          "xau_edge_tick_volume": 2676,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-04T06:45:00+00:00",
+          "broker_time": "2026-09-04T09:45:00",
+          "terminal_ohlc": [
+            4464.0,
+            4464.3,
+            4460.11,
+            4462.84
+          ],
+          "xau_edge_ohlc": [
+            4464.0,
+            4464.3,
+            4460.11,
+            4462.84
+          ],
+          "terminal_tick_volume": 2870,
+          "xau_edge_tick_volume": 2870,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-07T17:30:00+00:00",
+          "broker_time": "2026-09-07T20:30:00",
+          "terminal_ohlc": [
+            4412.2,
+            4412.46,
+            4409.86,
+            4410.79
+          ],
+          "xau_edge_ohlc": [
+            4412.2,
+            4412.46,
+            4409.86,
+            4410.79
+          ],
+          "terminal_tick_volume": 513,
+          "xau_edge_tick_volume": 513,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-09T07:45:00+00:00",
+          "broker_time": "2026-09-09T10:45:00",
+          "terminal_ohlc": [
+            4410.2,
+            4412.55,
+            4408.28,
+            4409.13
+          ],
+          "xau_edge_ohlc": [
+            4410.2,
+            4412.55,
+            4408.28,
+            4409.13
+          ],
+          "terminal_tick_volume": 2386,
+          "xau_edge_tick_volume": 2386,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-10T18:30:00+00:00",
+          "broker_time": "2026-09-10T21:30:00",
+          "terminal_ohlc": [
+            4338.91,
+            4338.91,
+            4331.68,
+            4333.64
+          ],
+          "xau_edge_ohlc": [
+            4338.91,
+            4338.91,
+            4331.68,
+            4333.64
+          ],
+          "terminal_tick_volume": 3449,
+          "xau_edge_tick_volume": 3449,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-14T06:15:00+00:00",
+          "broker_time": "2026-09-14T09:15:00",
+          "terminal_ohlc": [
+            4329.84,
+            4332.38,
+            4326.81,
+            4330.04
+          ],
+          "xau_edge_ohlc": [
+            4329.84,
+            4332.38,
+            4326.81,
+            4330.04
+          ],
+          "terminal_tick_volume": 2851,
+          "xau_edge_tick_volume": 2851,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-15T17:00:00+00:00",
+          "broker_time": "2026-09-15T20:00:00",
+          "terminal_ohlc": [
+            4295.51,
+            4298.96,
+            4290.16,
+            4295.16
+          ],
+          "xau_edge_ohlc": [
+            4295.51,
+            4298.96,
+            4290.16,
+            4295.16
+          ],
+          "terminal_tick_volume": 2700,
+          "xau_edge_tick_volume": 2700,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-17T04:45:00+00:00",
+          "broker_time": "2026-09-17T07:45:00",
+          "terminal_ohlc": [
+            4295.17,
+            4298.72,
+            4295.14,
+            4297.33
+          ],
+          "xau_edge_ohlc": [
+            4295.17,
+            4298.72,
+            4295.14,
+            4297.33
+          ],
+          "terminal_tick_volume": 1730,
+          "xau_edge_tick_volume": 1730,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-18T15:30:00+00:00",
+          "broker_time": "2026-09-18T18:30:00",
+          "terminal_ohlc": [
+            4356.18,
+            4357.23,
+            4348.68,
+            4354.68
+          ],
+          "xau_edge_ohlc": [
+            4356.18,
+            4357.23,
+            4348.68,
+            4354.68
+          ],
+          "terminal_tick_volume": 3413,
+          "xau_edge_tick_volume": 3413,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-22T03:15:00+00:00",
+          "broker_time": "2026-09-22T06:15:00",
+          "terminal_ohlc": [
+            4345.15,
+            4346.1,
+            4341.19,
+            4345.84
+          ],
+          "xau_edge_ohlc": [
+            4345.15,
+            4346.1,
+            4341.19,
+            4345.84
+          ],
+          "terminal_tick_volume": 2170,
+          "xau_edge_tick_volume": 2170,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-23T14:00:00+00:00",
+          "broker_time": "2026-09-23T17:00:00",
+          "terminal_ohlc": [
+            4283.71,
+            4293.27,
+            4281.95,
+            4283.46
+          ],
+          "xau_edge_ohlc": [
+            4283.71,
+            4293.27,
+            4281.95,
+            4283.46
+          ],
+          "terminal_tick_volume": 4649,
+          "xau_edge_tick_volume": 4649,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-25T01:45:00+00:00",
+          "broker_time": "2026-09-25T04:45:00",
+          "terminal_ohlc": [
+            4292.54,
+            4292.58,
+            4286.39,
+            4287.72
+          ],
+          "xau_edge_ohlc": [
+            4292.54,
+            4292.58,
+            4286.39,
+            4287.72
+          ],
+          "terminal_tick_volume": 2564,
+          "xau_edge_tick_volume": 2564,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-28T12:30:00+00:00",
+          "broker_time": "2026-09-28T15:30:00",
+          "terminal_ohlc": [
+            4153.93,
+            4154.42,
+            4142.9,
+            4144.96
+          ],
+          "xau_edge_ohlc": [
+            4153.93,
+            4154.42,
+            4142.9,
+            4144.96
+          ],
+          "terminal_tick_volume": 3722,
+          "xau_edge_tick_volume": 3722,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-30T00:15:00+00:00",
+          "broker_time": "2026-09-30T03:15:00",
+          "terminal_ohlc": [
+            4183.97,
+            4185.06,
+            4181.22,
+            4182.29
+          ],
+          "xau_edge_ohlc": [
+            4183.97,
+            4185.06,
+            4181.22,
+            4182.29
+          ],
+          "terminal_tick_volume": 2132,
+          "xau_edge_tick_volume": 2132,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-01T11:00:00+00:00",
+          "broker_time": "2026-10-01T14:00:00",
+          "terminal_ohlc": [
+            4175.94,
+            4176.21,
+            4169.03,
+            4169.33
+          ],
+          "xau_edge_ohlc": [
+            4175.94,
+            4176.21,
+            4169.03,
+            4169.33
+          ],
+          "terminal_tick_volume": 3237,
+          "xau_edge_tick_volume": 3237,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-04T22:45:00+00:00",
+          "broker_time": "2026-10-05T01:45:00",
+          "terminal_ohlc": [
+            4142.94,
+            4148.09,
+            4142.94,
+            4147.63
+          ],
+          "xau_edge_ohlc": [
+            4142.94,
+            4148.09,
+            4142.94,
+            4147.63
+          ],
+          "terminal_tick_volume": 816,
+          "xau_edge_tick_volume": 816,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T09:30:00+00:00",
+          "broker_time": "2026-10-06T12:30:00",
+          "terminal_ohlc": [
+            4156.76,
+            4158.05,
+            4153.57,
+            4153.74
+          ],
+          "xau_edge_ohlc": [
+            4156.76,
+            4158.05,
+            4153.57,
+            4153.74
+          ],
+          "terminal_tick_volume": 2396,
+          "xau_edge_tick_volume": 2396,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-07T20:15:00+00:00",
+          "broker_time": "2026-10-07T23:15:00",
+          "terminal_ohlc": [
+            4106.35,
+            4112.84,
+            4105.92,
+            4112.19
+          ],
+          "xau_edge_ohlc": [
+            4106.35,
+            4112.84,
+            4105.92,
+            4112.19
+          ],
+          "terminal_tick_volume": 1159,
+          "xau_edge_tick_volume": 1159,
+          "result": "MATCH"
+        }
+      ]
+    },
+    "M30": {
+      "sampled": 40,
+      "compared": 40,
+      "mismatches": 0,
+      "not_in_terminal_cache": 0,
+      "rows": [
+        {
+          "time_utc": "2026-10-09T07:30:00+00:00",
+          "broker_time": "2026-10-09T10:30:00",
+          "terminal_ohlc": [
+            4194.35,
+            4195.8,
+            4189.64,
+            4194.43
+          ],
+          "xau_edge_ohlc": [
+            4194.35,
+            4195.8,
+            4189.64,
+            4194.43
+          ],
+          "terminal_tick_volume": 4392,
+          "xau_edge_tick_volume": 4392,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T08:00:00+00:00",
+          "broker_time": "2026-10-09T11:00:00",
+          "terminal_ohlc": [
+            4194.84,
+            4201.59,
+            4193.51,
+            4198.35
+          ],
+          "xau_edge_ohlc": [
+            4194.84,
+            4201.59,
+            4193.51,
+            4198.35
+          ],
+          "terminal_tick_volume": 5140,
+          "xau_edge_tick_volume": 5140,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T08:30:00+00:00",
+          "broker_time": "2026-10-09T11:30:00",
+          "terminal_ohlc": [
+            4198.29,
+            4198.51,
+            4187.12,
+            4187.68
+          ],
+          "xau_edge_ohlc": [
+            4198.29,
+            4198.51,
+            4187.12,
+            4187.68
+          ],
+          "terminal_tick_volume": 4678,
+          "xau_edge_tick_volume": 4678,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-11T03:00:00+00:00",
+          "broker_time": "2026-05-11T06:00:00",
+          "terminal_ohlc": [
+            4681.49,
+            4690.17,
+            4674.86,
+            4689.32
+          ],
+          "xau_edge_ohlc": [
+            4681.49,
+            4690.17,
+            4674.86,
+            4689.32
+          ],
+          "terminal_tick_volume": 5296,
+          "xau_edge_tick_volume": 5296,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-14T01:30:00+00:00",
+          "broker_time": "2026-05-14T04:30:00",
+          "terminal_ohlc": [
+            4692.57,
+            4694.82,
+            4683.47,
+            4688.59
+          ],
+          "xau_edge_ohlc": [
+            4692.57,
+            4694.82,
+            4683.47,
+            4688.59
+          ],
+          "terminal_tick_volume": 7335,
+          "xau_edge_tick_volume": 7335,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-19T00:00:00+00:00",
+          "broker_time": "2026-05-19T03:00:00",
+          "terminal_ohlc": [
+            4581.88,
+            4589.12,
+            4568.52,
+            4573.41
+          ],
+          "xau_edge_ohlc": [
+            4581.88,
+            4589.12,
+            4568.52,
+            4573.41
+          ],
+          "terminal_tick_volume": 6579,
+          "xau_edge_tick_volume": 6579,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-21T22:30:00+00:00",
+          "broker_time": "2026-05-22T01:30:00",
+          "terminal_ohlc": [
+            4541.2,
+            4543.44,
+            4539.48,
+            4543.08
+          ],
+          "xau_edge_ohlc": [
+            4541.2,
+            4543.44,
+            4539.48,
+            4543.08
+          ],
+          "terminal_tick_volume": 1397,
+          "xau_edge_tick_volume": 1397,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-26T23:30:00+00:00",
+          "broker_time": "2026-05-27T02:30:00",
+          "terminal_ohlc": [
+            4512.13,
+            4527.97,
+            4511.01,
+            4519.54
+          ],
+          "xau_edge_ohlc": [
+            4512.13,
+            4527.97,
+            4511.01,
+            4519.54
+          ],
+          "terminal_tick_volume": 3730,
+          "xau_edge_tick_volume": 3730,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-31T22:00:00+00:00",
+          "broker_time": "2026-06-01T01:00:00",
+          "terminal_ohlc": [
+            4520.19,
+            4536.33,
+            4519.55,
+            4533.0
+          ],
+          "xau_edge_ohlc": [
+            4520.19,
+            4536.33,
+            4519.55,
+            4533.0
+          ],
+          "terminal_tick_volume": 3438,
+          "xau_edge_tick_volume": 3438,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-03T19:30:00+00:00",
+          "broker_time": "2026-06-03T22:30:00",
+          "terminal_ohlc": [
+            4447.97,
+            4449.57,
+            4443.01,
+            4443.87
+          ],
+          "xau_edge_ohlc": [
+            4447.97,
+            4449.57,
+            4443.01,
+            4443.87
+          ],
+          "terminal_tick_volume": 3965,
+          "xau_edge_tick_volume": 3965,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-08T18:00:00+00:00",
+          "broker_time": "2026-06-08T21:00:00",
+          "terminal_ohlc": [
+            4338.98,
+            4345.8,
+            4338.49,
+            4342.43
+          ],
+          "xau_edge_ohlc": [
+            4338.98,
+            4345.8,
+            4338.49,
+            4342.43
+          ],
+          "terminal_tick_volume": 4895,
+          "xau_edge_tick_volume": 4895,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-11T16:30:00+00:00",
+          "broker_time": "2026-06-11T19:30:00",
+          "terminal_ohlc": [
+            4079.29,
+            4087.67,
+            4077.9,
+            4080.11
+          ],
+          "xau_edge_ohlc": [
+            4079.29,
+            4087.67,
+            4077.9,
+            4080.11
+          ],
+          "terminal_tick_volume": 8177,
+          "xau_edge_tick_volume": 8177,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-16T15:00:00+00:00",
+          "broker_time": "2026-06-16T18:00:00",
+          "terminal_ohlc": [
+            4324.33,
+            4328.45,
+            4320.96,
+            4325.66
+          ],
+          "xau_edge_ohlc": [
+            4324.33,
+            4328.45,
+            4320.96,
+            4325.66
+          ],
+          "terminal_tick_volume": 6904,
+          "xau_edge_tick_volume": 6904,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-19T13:30:00+00:00",
+          "broker_time": "2026-06-19T16:30:00",
+          "terminal_ohlc": [
+            4163.88,
+            4167.91,
+            4150.51,
+            4151.38
+          ],
+          "xau_edge_ohlc": [
+            4163.88,
+            4167.91,
+            4150.51,
+            4151.38
+          ],
+          "terminal_tick_volume": 6016,
+          "xau_edge_tick_volume": 6016,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-24T16:00:00+00:00",
+          "broker_time": "2026-06-24T19:00:00",
+          "terminal_ohlc": [
+            4002.32,
+            4016.84,
+            3995.44,
+            4015.94
+          ],
+          "xau_edge_ohlc": [
+            4002.32,
+            4016.84,
+            3995.44,
+            4015.94
+          ],
+          "terminal_tick_volume": 7979,
+          "xau_edge_tick_volume": 7979,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-29T14:30:00+00:00",
+          "broker_time": "2026-06-29T17:30:00",
+          "terminal_ohlc": [
+            4024.67,
+            4030.22,
+            4017.8,
+            4025.48
+          ],
+          "xau_edge_ohlc": [
+            4024.67,
+            4030.22,
+            4017.8,
+            4025.48
+          ],
+          "terminal_tick_volume": 8526,
+          "xau_edge_tick_volume": 8526,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-02T13:00:00+00:00",
+          "broker_time": "2026-07-02T16:00:00",
+          "terminal_ohlc": [
+            4117.38,
+            4129.63,
+            4109.14,
+            4112.85
+          ],
+          "xau_edge_ohlc": [
+            4117.38,
+            4129.63,
+            4109.14,
+            4112.85
+          ],
+          "terminal_tick_volume": 10005,
+          "xau_edge_tick_volume": 10005,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-07T15:30:00+00:00",
+          "broker_time": "2026-07-07T18:30:00",
+          "terminal_ohlc": [
+            4142.92,
+            4148.2,
+            4135.74,
+            4138.9
+          ],
+          "xau_edge_ohlc": [
+            4142.92,
+            4148.2,
+            4135.74,
+            4138.9
+          ],
+          "terminal_tick_volume": 6264,
+          "xau_edge_tick_volume": 6264,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-10T14:00:00+00:00",
+          "broker_time": "2026-07-10T17:00:00",
+          "terminal_ohlc": [
+            4099.73,
+            4108.72,
+            4097.31,
+            4105.32
+          ],
+          "xau_edge_ohlc": [
+            4099.73,
+            4108.72,
+            4097.31,
+            4105.32
+          ],
+          "terminal_tick_volume": 7064,
+          "xau_edge_tick_volume": 7064,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-15T12:30:00+00:00",
+          "broker_time": "2026-07-15T15:30:00",
+          "terminal_ohlc": [
+            4039.4,
+            4071.36,
+            4039.22,
+            4067.64
+          ],
+          "xau_edge_ohlc": [
+            4039.4,
+            4071.36,
+            4039.22,
+            4067.64
+          ],
+          "terminal_tick_volume": 7933,
+          "xau_edge_tick_volume": 7933,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-20T11:00:00+00:00",
+          "broker_time": "2026-07-20T14:00:00",
+          "terminal_ohlc": [
+            4024.21,
+            4027.12,
+            4019.69,
+            4022.1
+          ],
+          "xau_edge_ohlc": [
+            4024.21,
+            4027.12,
+            4019.69,
+            4022.1
+          ],
+          "terminal_tick_volume": 4752,
+          "xau_edge_tick_volume": 4752,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-23T09:30:00+00:00",
+          "broker_time": "2026-07-23T12:30:00",
+          "terminal_ohlc": [
+            4091.39,
+            4094.1,
+            4088.3,
+            4089.74
+          ],
+          "xau_edge_ohlc": [
+            4091.39,
+            4094.1,
+            4088.3,
+            4089.74
+          ],
+          "terminal_tick_volume": 4435,
+          "xau_edge_tick_volume": 4435,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-28T08:00:00+00:00",
+          "broker_time": "2026-07-28T11:00:00",
+          "terminal_ohlc": [
+            4047.0,
+            4055.04,
+            4042.99,
+            4049.45
+          ],
+          "xau_edge_ohlc": [
+            4047.0,
+            4055.04,
+            4042.99,
+            4049.45
+          ],
+          "terminal_tick_volume": 6425,
+          "xau_edge_tick_volume": 6425,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-31T06:30:00+00:00",
+          "broker_time": "2026-07-31T09:30:00",
+          "terminal_ohlc": [
+            4084.83,
+            4084.92,
+            4076.35,
+            4077.5
+          ],
+          "xau_edge_ohlc": [
+            4084.83,
+            4084.92,
+            4076.35,
+            4077.5
+          ],
+          "terminal_tick_volume": 5418,
+          "xau_edge_tick_volume": 5418,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-05T05:00:00+00:00",
+          "broker_time": "2026-08-05T08:00:00",
+          "terminal_ohlc": [
+            4135.34,
+            4141.94,
+            4134.62,
+            4139.46
+          ],
+          "xau_edge_ohlc": [
+            4135.34,
+            4141.94,
+            4134.62,
+            4139.46
+          ],
+          "terminal_tick_volume": 3334,
+          "xau_edge_tick_volume": 3334,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-10T03:30:00+00:00",
+          "broker_time": "2026-08-10T06:30:00",
+          "terminal_ohlc": [
+            4327.08,
+            4329.73,
+            4324.18,
+            4326.48
+          ],
+          "xau_edge_ohlc": [
+            4327.08,
+            4329.73,
+            4324.18,
+            4326.48
+          ],
+          "terminal_tick_volume": 2820,
+          "xau_edge_tick_volume": 2820,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-13T02:00:00+00:00",
+          "broker_time": "2026-08-13T05:00:00",
+          "terminal_ohlc": [
+            4408.22,
+            4413.93,
+            4405.31,
+            4406.38
+          ],
+          "xau_edge_ohlc": [
+            4408.22,
+            4413.93,
+            4405.31,
+            4406.38
+          ],
+          "terminal_tick_volume": 5251,
+          "xau_edge_tick_volume": 5251,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-18T00:30:00+00:00",
+          "broker_time": "2026-08-18T03:30:00",
+          "terminal_ohlc": [
+            4431.23,
+            4434.81,
+            4428.26,
+            4434.54
+          ],
+          "xau_edge_ohlc": [
+            4431.23,
+            4434.81,
+            4428.26,
+            4434.54
+          ],
+          "terminal_tick_volume": 4360,
+          "xau_edge_tick_volume": 4360,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-20T23:00:00+00:00",
+          "broker_time": "2026-08-21T02:00:00",
+          "terminal_ohlc": [
+            4523.88,
+            4532.59,
+            4522.61,
+            4526.92
+          ],
+          "xau_edge_ohlc": [
+            4523.88,
+            4532.59,
+            4522.61,
+            4526.92
+          ],
+          "terminal_tick_volume": 3295,
+          "xau_edge_tick_volume": 3295,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-25T20:30:00+00:00",
+          "broker_time": "2026-08-25T23:30:00",
+          "terminal_ohlc": [
+            4662.22,
+            4663.98,
+            4656.8,
+            4660.94
+          ],
+          "xau_edge_ohlc": [
+            4662.22,
+            4663.98,
+            4656.8,
+            4660.94
+          ],
+          "terminal_tick_volume": 2156,
+          "xau_edge_tick_volume": 2156,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-28T19:00:00+00:00",
+          "broker_time": "2026-08-28T22:00:00",
+          "terminal_ohlc": [
+            4456.73,
+            4463.44,
+            4452.86,
+            4462.12
+          ],
+          "xau_edge_ohlc": [
+            4456.73,
+            4463.44,
+            4452.86,
+            4462.12
+          ],
+          "terminal_tick_volume": 7601,
+          "xau_edge_tick_volume": 7601,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-02T17:30:00+00:00",
+          "broker_time": "2026-09-02T20:30:00",
+          "terminal_ohlc": [
+            4369.71,
+            4380.56,
+            4366.39,
+            4376.8
+          ],
+          "xau_edge_ohlc": [
+            4369.71,
+            4380.56,
+            4366.39,
+            4376.8
+          ],
+          "terminal_tick_volume": 5781,
+          "xau_edge_tick_volume": 5781,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-07T16:00:00+00:00",
+          "broker_time": "2026-09-07T19:00:00",
+          "terminal_ohlc": [
+            4414.31,
+            4417.13,
+            4412.55,
+            4413.5
+          ],
+          "xau_edge_ohlc": [
+            4414.31,
+            4417.13,
+            4412.55,
+            4413.5
+          ],
+          "terminal_tick_volume": 2200,
+          "xau_edge_tick_volume": 2200,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-10T17:00:00+00:00",
+          "broker_time": "2026-09-10T20:00:00",
+          "terminal_ohlc": [
+            4364.03,
+            4367.6,
+            4359.48,
+            4365.69
+          ],
+          "xau_edge_ohlc": [
+            4364.03,
+            4367.6,
+            4359.48,
+            4365.69
+          ],
+          "terminal_tick_volume": 6651,
+          "xau_edge_tick_volume": 6651,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-15T15:30:00+00:00",
+          "broker_time": "2026-09-15T18:30:00",
+          "terminal_ohlc": [
+            4283.86,
+            4294.57,
+            4281.42,
+            4289.2
+          ],
+          "xau_edge_ohlc": [
+            4283.86,
+            4294.57,
+            4281.42,
+            4289.2
+          ],
+          "terminal_tick_volume": 6504,
+          "xau_edge_tick_volume": 6504,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-18T14:00:00+00:00",
+          "broker_time": "2026-09-18T17:00:00",
+          "terminal_ohlc": [
+            4349.17,
+            4356.41,
+            4342.83,
+            4342.87
+          ],
+          "xau_edge_ohlc": [
+            4349.17,
+            4356.41,
+            4342.83,
+            4342.87
+          ],
+          "terminal_tick_volume": 8649,
+          "xau_edge_tick_volume": 8649,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-23T12:30:00+00:00",
+          "broker_time": "2026-09-23T15:30:00",
+          "terminal_ohlc": [
+            4311.02,
+            4311.02,
+            4300.73,
+            4309.71
+          ],
+          "xau_edge_ohlc": [
+            4311.02,
+            4311.02,
+            4300.73,
+            4309.71
+          ],
+          "terminal_tick_volume": 5826,
+          "xau_edge_tick_volume": 5826,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-28T11:00:00+00:00",
+          "broker_time": "2026-09-28T14:00:00",
+          "terminal_ohlc": [
+            4155.32,
+            4160.08,
+            4148.11,
+            4155.44
+          ],
+          "xau_edge_ohlc": [
+            4155.32,
+            4160.08,
+            4148.11,
+            4155.44
+          ],
+          "terminal_tick_volume": 6424,
+          "xau_edge_tick_volume": 6424,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-01T09:30:00+00:00",
+          "broker_time": "2026-10-01T12:30:00",
+          "terminal_ohlc": [
+            4159.61,
+            4163.52,
+            4153.85,
+            4154.29
+          ],
+          "xau_edge_ohlc": [
+            4159.61,
+            4163.52,
+            4153.85,
+            4154.29
+          ],
+          "terminal_tick_volume": 5308,
+          "xau_edge_tick_volume": 5308,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-06T08:00:00+00:00",
+          "broker_time": "2026-10-06T11:00:00",
+          "terminal_ohlc": [
+            4139.9,
+            4147.21,
+            4137.82,
+            4146.01
+          ],
+          "xau_edge_ohlc": [
+            4139.9,
+            4147.21,
+            4137.82,
+            4146.01
+          ],
+          "terminal_tick_volume": 6008,
+          "xau_edge_tick_volume": 6008,
+          "result": "MATCH"
+        }
+      ]
+    },
+    "H1": {
+      "sampled": 40,
+      "compared": 40,
+      "mismatches": 0,
+      "not_in_terminal_cache": 0,
+      "rows": [
+        {
+          "time_utc": "2026-10-09T06:00:00+00:00",
+          "broker_time": "2026-10-09T09:00:00",
+          "terminal_ohlc": [
+            4193.06,
+            4198.72,
+            4189.2,
+            4196.08
+          ],
+          "xau_edge_ohlc": [
+            4193.06,
+            4198.72,
+            4189.2,
+            4196.08
+          ],
+          "terminal_tick_volume": 10089,
+          "xau_edge_tick_volume": 10089,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T07:00:00+00:00",
+          "broker_time": "2026-10-09T10:00:00",
+          "terminal_ohlc": [
+            4196.09,
+            4198.26,
+            4189.64,
+            4194.43
+          ],
+          "xau_edge_ohlc": [
+            4196.09,
+            4198.26,
+            4189.64,
+            4194.43
+          ],
+          "terminal_tick_volume": 9149,
+          "xau_edge_tick_volume": 9149,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T08:00:00+00:00",
+          "broker_time": "2026-10-09T11:00:00",
+          "terminal_ohlc": [
+            4194.84,
+            4201.59,
+            4187.12,
+            4187.68
+          ],
+          "xau_edge_ohlc": [
+            4194.84,
+            4201.59,
+            4187.12,
+            4187.68
+          ],
+          "terminal_tick_volume": 9818,
+          "xau_edge_tick_volume": 9818,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-12-04T05:00:00+00:00",
+          "broker_time": "2025-12-04T07:00:00",
+          "terminal_ohlc": [
+            4196.77,
+            4198.97,
+            4174.99,
+            4181.08
+          ],
+          "xau_edge_ohlc": [
+            4196.77,
+            4198.97,
+            4174.99,
+            4181.08
+          ],
+          "terminal_tick_volume": 8551,
+          "xau_edge_tick_volume": 8551,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-12-12T02:00:00+00:00",
+          "broker_time": "2025-12-12T04:00:00",
+          "terminal_ohlc": [
+            4270.9,
+            4276.83,
+            4269.35,
+            4270.37
+          ],
+          "xau_edge_ohlc": [
+            4270.9,
+            4276.83,
+            4269.35,
+            4270.37
+          ],
+          "terminal_tick_volume": 8072,
+          "xau_edge_tick_volume": 8072,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-12-21T23:00:00+00:00",
+          "broker_time": "2025-12-22T01:00:00",
+          "terminal_ohlc": [
+            4340.69,
+            4356.04,
+            4339.69,
+            4355.0
+          ],
+          "xau_edge_ohlc": [
+            4340.69,
+            4356.04,
+            4339.69,
+            4355.0
+          ],
+          "terminal_tick_volume": 4442,
+          "xau_edge_tick_volume": 4442,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-12-30T23:00:00+00:00",
+          "broker_time": "2025-12-31T01:00:00",
+          "terminal_ohlc": [
+            4341.02,
+            4346.13,
+            4328.22,
+            4339.03
+          ],
+          "xau_edge_ohlc": [
+            4341.02,
+            4346.13,
+            4328.22,
+            4339.03
+          ],
+          "terminal_tick_volume": 5728,
+          "xau_edge_tick_volume": 5728,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-01-08T19:00:00+00:00",
+          "broker_time": "2026-01-08T21:00:00",
+          "terminal_ohlc": [
+            4449.52,
+            4452.83,
+            4444.56,
+            4452.07
+          ],
+          "xau_edge_ohlc": [
+            4449.52,
+            4452.83,
+            4444.56,
+            4452.07
+          ],
+          "terminal_tick_volume": 7455,
+          "xau_edge_tick_volume": 7455,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-01-16T16:00:00+00:00",
+          "broker_time": "2026-01-16T18:00:00",
+          "terminal_ohlc": [
+            4571.18,
+            4598.92,
+            4568.12,
+            4591.21
+          ],
+          "xau_edge_ohlc": [
+            4571.18,
+            4598.92,
+            4568.12,
+            4591.21
+          ],
+          "terminal_tick_volume": 14991,
+          "xau_edge_tick_volume": 14991,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-01-26T15:00:00+00:00",
+          "broker_time": "2026-01-26T17:00:00",
+          "terminal_ohlc": [
+            5096.18,
+            5097.27,
+            5074.0,
+            5090.98
+          ],
+          "xau_edge_ohlc": [
+            5096.18,
+            5097.27,
+            5074.0,
+            5090.98
+          ],
+          "terminal_tick_volume": 15481,
+          "xau_edge_tick_volume": 15481,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-02-03T12:00:00+00:00",
+          "broker_time": "2026-02-03T14:00:00",
+          "terminal_ohlc": [
+            4916.69,
+            4935.41,
+            4892.18,
+            4913.56
+          ],
+          "xau_edge_ohlc": [
+            4916.69,
+            4935.41,
+            4892.18,
+            4913.56
+          ],
+          "terminal_tick_volume": 11875,
+          "xau_edge_tick_volume": 11875,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-02-11T09:00:00+00:00",
+          "broker_time": "2026-02-11T11:00:00",
+          "terminal_ohlc": [
+            5053.63,
+            5071.84,
+            5047.24,
+            5062.6
+          ],
+          "xau_edge_ohlc": [
+            5053.63,
+            5071.84,
+            5047.24,
+            5062.6
+          ],
+          "terminal_tick_volume": 6233,
+          "xau_edge_tick_volume": 6233,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-02-19T08:00:00+00:00",
+          "broker_time": "2026-02-19T10:00:00",
+          "terminal_ohlc": [
+            5010.26,
+            5021.85,
+            5006.38,
+            5017.02
+          ],
+          "xau_edge_ohlc": [
+            5010.26,
+            5021.85,
+            5006.38,
+            5017.02
+          ],
+          "terminal_tick_volume": 6404,
+          "xau_edge_tick_volume": 6404,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-02-27T05:00:00+00:00",
+          "broker_time": "2026-02-27T07:00:00",
+          "terminal_ohlc": [
+            5181.57,
+            5200.32,
+            5181.25,
+            5197.7
+          ],
+          "xau_edge_ohlc": [
+            5181.57,
+            5200.32,
+            5181.25,
+            5197.7
+          ],
+          "terminal_tick_volume": 7492,
+          "xau_edge_tick_volume": 7492,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-03-09T01:00:00+00:00",
+          "broker_time": "2026-03-09T04:00:00",
+          "terminal_ohlc": [
+            5049.75,
+            5087.32,
+            5014.76,
+            5069.81
+          ],
+          "xau_edge_ohlc": [
+            5049.75,
+            5087.32,
+            5014.76,
+            5069.81
+          ],
+          "terminal_tick_volume": 15538,
+          "xau_edge_tick_volume": 15538,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-03-16T22:00:00+00:00",
+          "broker_time": "2026-03-17T01:00:00",
+          "terminal_ohlc": [
+            5010.84,
+            5015.78,
+            4998.11,
+            5001.91
+          ],
+          "xau_edge_ohlc": [
+            5010.84,
+            5015.78,
+            4998.11,
+            5001.91
+          ],
+          "terminal_tick_volume": 5677,
+          "xau_edge_tick_volume": 5677,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-03-24T18:00:00+00:00",
+          "broker_time": "2026-03-24T21:00:00",
+          "terminal_ohlc": [
+            4388.3,
+            4423.16,
+            4383.78,
+            4389.42
+          ],
+          "xau_edge_ohlc": [
+            4388.3,
+            4423.16,
+            4383.78,
+            4389.42
+          ],
+          "terminal_tick_volume": 15912,
+          "xau_edge_tick_volume": 15912,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-04-01T15:00:00+00:00",
+          "broker_time": "2026-04-01T18:00:00",
+          "terminal_ohlc": [
+            4760.56,
+            4788.02,
+            4758.3,
+            4786.26
+          ],
+          "xau_edge_ohlc": [
+            4760.56,
+            4788.02,
+            4758.3,
+            4786.26
+          ],
+          "terminal_tick_volume": 13708,
+          "xau_edge_tick_volume": 13708,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-04-10T12:00:00+00:00",
+          "broker_time": "2026-04-10T15:00:00",
+          "terminal_ohlc": [
+            4768.55,
+            4782.13,
+            4759.63,
+            4771.71
+          ],
+          "xau_edge_ohlc": [
+            4768.55,
+            4782.13,
+            4759.63,
+            4771.71
+          ],
+          "terminal_tick_volume": 10948,
+          "xau_edge_tick_volume": 10948,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-04-20T09:00:00+00:00",
+          "broker_time": "2026-04-20T12:00:00",
+          "terminal_ohlc": [
+            4795.97,
+            4797.76,
+            4783.3,
+            4791.4
+          ],
+          "xau_edge_ohlc": [
+            4795.97,
+            4797.76,
+            4783.3,
+            4791.4
+          ],
+          "terminal_tick_volume": 9234,
+          "xau_edge_tick_volume": 9234,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-04-28T06:00:00+00:00",
+          "broker_time": "2026-04-28T09:00:00",
+          "terminal_ohlc": [
+            4631.91,
+            4642.68,
+            4623.19,
+            4628.89
+          ],
+          "xau_edge_ohlc": [
+            4631.91,
+            4642.68,
+            4623.19,
+            4628.89
+          ],
+          "terminal_tick_volume": 14744,
+          "xau_edge_tick_volume": 14744,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-06T03:00:00+00:00",
+          "broker_time": "2026-05-06T06:00:00",
+          "terminal_ohlc": [
+            4640.59,
+            4651.63,
+            4638.34,
+            4643.7
+          ],
+          "xau_edge_ohlc": [
+            4640.59,
+            4651.63,
+            4638.34,
+            4643.7
+          ],
+          "terminal_tick_volume": 7398,
+          "xau_edge_tick_volume": 7398,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-14T00:00:00+00:00",
+          "broker_time": "2026-05-14T03:00:00",
+          "terminal_ohlc": [
+            4696.5,
+            4706.64,
+            4689.31,
+            4704.86
+          ],
+          "xau_edge_ohlc": [
+            4696.5,
+            4706.64,
+            4689.31,
+            4704.86
+          ],
+          "terminal_tick_volume": 9420,
+          "xau_edge_tick_volume": 9420,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-21T20:00:00+00:00",
+          "broker_time": "2026-05-21T23:00:00",
+          "terminal_ohlc": [
+            4542.96,
+            4544.67,
+            4540.15,
+            4540.44
+          ],
+          "xau_edge_ohlc": [
+            4542.96,
+            4544.67,
+            4540.15,
+            4540.44
+          ],
+          "terminal_tick_volume": 4425,
+          "xau_edge_tick_volume": 4425,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-29T19:00:00+00:00",
+          "broker_time": "2026-05-29T22:00:00",
+          "terminal_ohlc": [
+            4553.21,
+            4560.11,
+            4542.81,
+            4545.4
+          ],
+          "xau_edge_ohlc": [
+            4553.21,
+            4560.11,
+            4542.81,
+            4545.4
+          ],
+          "terminal_tick_volume": 8890,
+          "xau_edge_tick_volume": 8890,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-08T16:00:00+00:00",
+          "broker_time": "2026-06-08T19:00:00",
+          "terminal_ohlc": [
+            4341.71,
+            4346.24,
+            4337.75,
+            4340.58
+          ],
+          "xau_edge_ohlc": [
+            4341.71,
+            4346.24,
+            4337.75,
+            4340.58
+          ],
+          "terminal_tick_volume": 13436,
+          "xau_edge_tick_volume": 13436,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-16T13:00:00+00:00",
+          "broker_time": "2026-06-16T16:00:00",
+          "terminal_ohlc": [
+            4354.29,
+            4354.67,
+            4331.51,
+            4331.67
+          ],
+          "xau_edge_ohlc": [
+            4354.29,
+            4354.67,
+            4331.51,
+            4331.67
+          ],
+          "terminal_tick_volume": 15666,
+          "xau_edge_tick_volume": 15666,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-24T14:00:00+00:00",
+          "broker_time": "2026-06-24T17:00:00",
+          "terminal_ohlc": [
+            4038.04,
+            4040.91,
+            4002.87,
+            4007.88
+          ],
+          "xau_edge_ohlc": [
+            4038.04,
+            4040.91,
+            4002.87,
+            4007.88
+          ],
+          "terminal_tick_volume": 19767,
+          "xau_edge_tick_volume": 19767,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-02T11:00:00+00:00",
+          "broker_time": "2026-07-02T14:00:00",
+          "terminal_ohlc": [
+            4066.74,
+            4072.13,
+            4057.26,
+            4065.13
+          ],
+          "xau_edge_ohlc": [
+            4066.74,
+            4072.13,
+            4057.26,
+            4065.13
+          ],
+          "terminal_tick_volume": 10115,
+          "xau_edge_tick_volume": 10115,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-10T12:00:00+00:00",
+          "broker_time": "2026-07-10T15:00:00",
+          "terminal_ohlc": [
+            4102.24,
+            4117.41,
+            4097.25,
+            4100.57
+          ],
+          "xau_edge_ohlc": [
+            4102.24,
+            4117.41,
+            4097.25,
+            4100.57
+          ],
+          "terminal_tick_volume": 10437,
+          "xau_edge_tick_volume": 10437,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-20T09:00:00+00:00",
+          "broker_time": "2026-07-20T12:00:00",
+          "terminal_ohlc": [
+            4018.76,
+            4023.17,
+            4014.82,
+            4021.06
+          ],
+          "xau_edge_ohlc": [
+            4018.76,
+            4023.17,
+            4014.82,
+            4021.06
+          ],
+          "terminal_tick_volume": 8841,
+          "xau_edge_tick_volume": 8841,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-28T06:00:00+00:00",
+          "broker_time": "2026-07-28T09:00:00",
+          "terminal_ohlc": [
+            4045.08,
+            4052.25,
+            4042.83,
+            4048.22
+          ],
+          "xau_edge_ohlc": [
+            4045.08,
+            4052.25,
+            4042.83,
+            4048.22
+          ],
+          "terminal_tick_volume": 10881,
+          "xau_edge_tick_volume": 10881,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-05T03:00:00+00:00",
+          "broker_time": "2026-08-05T06:00:00",
+          "terminal_ohlc": [
+            4129.01,
+            4136.32,
+            4126.82,
+            4128.17
+          ],
+          "xau_edge_ohlc": [
+            4129.01,
+            4136.32,
+            4126.82,
+            4128.17
+          ],
+          "terminal_tick_volume": 8503,
+          "xau_edge_tick_volume": 8503,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-13T00:00:00+00:00",
+          "broker_time": "2026-08-13T03:00:00",
+          "terminal_ohlc": [
+            4414.41,
+            4449.59,
+            4412.78,
+            4427.82
+          ],
+          "xau_edge_ohlc": [
+            4414.41,
+            4449.59,
+            4412.78,
+            4427.82
+          ],
+          "terminal_tick_volume": 12751,
+          "xau_edge_tick_volume": 12751,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-20T20:00:00+00:00",
+          "broker_time": "2026-08-20T23:00:00",
+          "terminal_ohlc": [
+            4528.51,
+            4528.97,
+            4516.63,
+            4518.4
+          ],
+          "xau_edge_ohlc": [
+            4528.51,
+            4528.97,
+            4516.63,
+            4518.4
+          ],
+          "terminal_tick_volume": 4577,
+          "xau_edge_tick_volume": 4577,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-28T17:00:00+00:00",
+          "broker_time": "2026-08-28T20:00:00",
+          "terminal_ohlc": [
+            4479.3,
+            4486.44,
+            4460.47,
+            4469.26
+          ],
+          "xau_edge_ohlc": [
+            4479.3,
+            4486.44,
+            4460.47,
+            4469.26
+          ],
+          "terminal_tick_volume": 18367,
+          "xau_edge_tick_volume": 18367,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-07T14:00:00+00:00",
+          "broker_time": "2026-09-07T17:00:00",
+          "terminal_ohlc": [
+            4402.41,
+            4419.41,
+            4401.02,
+            4415.99
+          ],
+          "xau_edge_ohlc": [
+            4402.41,
+            4419.41,
+            4401.02,
+            4415.99
+          ],
+          "terminal_tick_volume": 9185,
+          "xau_edge_tick_volume": 9185,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-15T13:00:00+00:00",
+          "broker_time": "2026-09-15T16:00:00",
+          "terminal_ohlc": [
+            4289.89,
+            4298.25,
+            4283.48,
+            4294.71
+          ],
+          "xau_edge_ohlc": [
+            4289.89,
+            4298.25,
+            4283.48,
+            4294.71
+          ],
+          "terminal_tick_volume": 16134,
+          "xau_edge_tick_volume": 16134,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-23T10:00:00+00:00",
+          "broker_time": "2026-09-23T13:00:00",
+          "terminal_ohlc": [
+            4313.97,
+            4318.8,
+            4312.21,
+            4315.48
+          ],
+          "xau_edge_ohlc": [
+            4313.97,
+            4318.8,
+            4312.21,
+            4315.48
+          ],
+          "terminal_tick_volume": 8220,
+          "xau_edge_tick_volume": 8220,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-01T07:00:00+00:00",
+          "broker_time": "2026-10-01T10:00:00",
+          "terminal_ohlc": [
+            4181.52,
+            4183.33,
+            4154.32,
+            4163.52
+          ],
+          "xau_edge_ohlc": [
+            4181.52,
+            4183.33,
+            4154.32,
+            4163.52
+          ],
+          "terminal_tick_volume": 15259,
+          "xau_edge_tick_volume": 15259,
+          "result": "MATCH"
+        }
+      ]
+    },
+    "H4": {
+      "sampled": 40,
+      "compared": 40,
+      "mismatches": 0,
+      "not_in_terminal_cache": 0,
+      "rows": [
+        {
+          "time_utc": "2026-10-08T21:00:00+00:00",
+          "broker_time": "2026-10-09T00:00:00",
+          "terminal_ohlc": [
+            4132.09,
+            4150.35,
+            4131.73,
+            4143.16
+          ],
+          "xau_edge_ohlc": [
+            4132.09,
+            4150.35,
+            4131.73,
+            4143.16
+          ],
+          "terminal_tick_volume": 17103,
+          "xau_edge_tick_volume": 17103,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T01:00:00+00:00",
+          "broker_time": "2026-10-09T04:00:00",
+          "terminal_ohlc": [
+            4143.15,
+            4185.57,
+            4142.92,
+            4181.74
+          ],
+          "xau_edge_ohlc": [
+            4143.15,
+            4185.57,
+            4142.92,
+            4181.74
+          ],
+          "terminal_tick_volume": 34714,
+          "xau_edge_tick_volume": 34714,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-10-09T05:00:00+00:00",
+          "broker_time": "2026-10-09T08:00:00",
+          "terminal_ohlc": [
+            4181.92,
+            4207.4,
+            4181.92,
+            4187.68
+          ],
+          "xau_edge_ohlc": [
+            4181.92,
+            4207.4,
+            4181.92,
+            4187.68
+          ],
+          "terminal_tick_volume": 39542,
+          "xau_edge_tick_volume": 39542,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2023-07-18T13:00:00+00:00",
+          "broker_time": "2023-07-18T16:00:00",
+          "terminal_ohlc": [
+            1968.84,
+            1984.37,
+            1963.7,
+            1977.94
+          ],
+          "xau_edge_ohlc": [
+            1968.84,
+            1984.37,
+            1963.7,
+            1977.94
+          ],
+          "terminal_tick_volume": 37067,
+          "xau_edge_tick_volume": 37067,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2023-08-18T01:00:00+00:00",
+          "broker_time": "2023-08-18T04:00:00",
+          "terminal_ohlc": [
+            1893.36,
+            1895.14,
+            1891.1,
+            1892.17
+          ],
+          "xau_edge_ohlc": [
+            1893.36,
+            1895.14,
+            1891.1,
+            1892.17
+          ],
+          "terminal_tick_volume": 9559,
+          "xau_edge_tick_volume": 9559,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2023-09-19T13:00:00+00:00",
+          "broker_time": "2023-09-19T16:00:00",
+          "terminal_ohlc": [
+            1935.82,
+            1936.33,
+            1930.83,
+            1930.94
+          ],
+          "xau_edge_ohlc": [
+            1935.82,
+            1936.33,
+            1930.83,
+            1930.94
+          ],
+          "terminal_tick_volume": 19810,
+          "xau_edge_tick_volume": 19810,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2023-10-20T01:00:00+00:00",
+          "broker_time": "2023-10-20T04:00:00",
+          "terminal_ohlc": [
+            1974.94,
+            1981.89,
+            1971.96,
+            1977.16
+          ],
+          "xau_edge_ohlc": [
+            1974.94,
+            1981.89,
+            1971.96,
+            1977.16
+          ],
+          "terminal_tick_volume": 14557,
+          "xau_edge_tick_volume": 14557,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2023-11-21T14:00:00+00:00",
+          "broker_time": "2023-11-21T16:00:00",
+          "terminal_ohlc": [
+            1997.69,
+            2007.51,
+            1997.31,
+            2001.49
+          ],
+          "xau_edge_ohlc": [
+            1997.69,
+            2007.51,
+            1997.31,
+            2001.49
+          ],
+          "terminal_tick_volume": 29917,
+          "xau_edge_tick_volume": 29917,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2023-12-22T02:00:00+00:00",
+          "broker_time": "2023-12-22T04:00:00",
+          "terminal_ohlc": [
+            2048.65,
+            2051.23,
+            2047.14,
+            2048.28
+          ],
+          "xau_edge_ohlc": [
+            2048.65,
+            2051.23,
+            2047.14,
+            2048.28
+          ],
+          "terminal_tick_volume": 11333,
+          "xau_edge_tick_volume": 11333,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-01-25T14:00:00+00:00",
+          "broker_time": "2024-01-25T16:00:00",
+          "terminal_ohlc": [
+            2019.34,
+            2025.18,
+            2012.47,
+            2014.91
+          ],
+          "xau_edge_ohlc": [
+            2019.34,
+            2025.18,
+            2012.47,
+            2014.91
+          ],
+          "terminal_tick_volume": 32864,
+          "xau_edge_tick_volume": 32864,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-02-27T02:00:00+00:00",
+          "broker_time": "2024-02-27T04:00:00",
+          "terminal_ohlc": [
+            2033.64,
+            2034.51,
+            2032.3,
+            2033.63
+          ],
+          "xau_edge_ohlc": [
+            2033.64,
+            2034.51,
+            2032.3,
+            2033.63
+          ],
+          "terminal_tick_volume": 6384,
+          "xau_edge_tick_volume": 6384,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-03-28T13:00:00+00:00",
+          "broker_time": "2024-03-28T16:00:00",
+          "terminal_ohlc": [
+            2215.68,
+            2225.54,
+            2202.24,
+            2220.34
+          ],
+          "xau_edge_ohlc": [
+            2215.68,
+            2225.54,
+            2202.24,
+            2220.34
+          ],
+          "terminal_tick_volume": 41285,
+          "xau_edge_tick_volume": 41285,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-05-01T01:00:00+00:00",
+          "broker_time": "2024-05-01T04:00:00",
+          "terminal_ohlc": [
+            2286.83,
+            2289.42,
+            2281.61,
+            2283.18
+          ],
+          "xau_edge_ohlc": [
+            2286.83,
+            2289.42,
+            2281.61,
+            2283.18
+          ],
+          "terminal_tick_volume": 10804,
+          "xau_edge_tick_volume": 10804,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-05-31T13:00:00+00:00",
+          "broker_time": "2024-05-31T16:00:00",
+          "terminal_ohlc": [
+            2354.71,
+            2359.66,
+            2327.72,
+            2332.83
+          ],
+          "xau_edge_ohlc": [
+            2354.71,
+            2359.66,
+            2327.72,
+            2332.83
+          ],
+          "terminal_tick_volume": 51622,
+          "xau_edge_tick_volume": 51622,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-07-03T01:00:00+00:00",
+          "broker_time": "2024-07-03T04:00:00",
+          "terminal_ohlc": [
+            2330.2,
+            2335.2,
+            2326.83,
+            2334.43
+          ],
+          "xau_edge_ohlc": [
+            2330.2,
+            2335.2,
+            2326.83,
+            2334.43
+          ],
+          "terminal_tick_volume": 15846,
+          "xau_edge_tick_volume": 15846,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-08-02T13:00:00+00:00",
+          "broker_time": "2024-08-02T16:00:00",
+          "terminal_ohlc": [
+            2472.78,
+            2474.32,
+            2410.77,
+            2430.49
+          ],
+          "xau_edge_ohlc": [
+            2472.78,
+            2474.32,
+            2410.77,
+            2430.49
+          ],
+          "terminal_tick_volume": 62780,
+          "xau_edge_tick_volume": 62780,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-09-04T01:00:00+00:00",
+          "broker_time": "2024-09-04T04:00:00",
+          "terminal_ohlc": [
+            2492.27,
+            2496.84,
+            2491.28,
+            2495.88
+          ],
+          "xau_edge_ohlc": [
+            2492.27,
+            2496.84,
+            2491.28,
+            2495.88
+          ],
+          "terminal_tick_volume": 18256,
+          "xau_edge_tick_volume": 18256,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-10-04T13:00:00+00:00",
+          "broker_time": "2024-10-04T16:00:00",
+          "terminal_ohlc": [
+            2638.84,
+            2670.11,
+            2637.48,
+            2645.35
+          ],
+          "xau_edge_ohlc": [
+            2638.84,
+            2670.11,
+            2637.48,
+            2645.35
+          ],
+          "terminal_tick_volume": 53706,
+          "xau_edge_tick_volume": 53706,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-11-06T02:00:00+00:00",
+          "broker_time": "2024-11-06T04:00:00",
+          "terminal_ohlc": [
+            2746.99,
+            2748.27,
+            2730.58,
+            2738.94
+          ],
+          "xau_edge_ohlc": [
+            2746.99,
+            2748.27,
+            2730.58,
+            2738.94
+          ],
+          "terminal_tick_volume": 50043,
+          "xau_edge_tick_volume": 50043,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2024-12-06T14:00:00+00:00",
+          "broker_time": "2024-12-06T16:00:00",
+          "terminal_ohlc": [
+            2635.62,
+            2641.57,
+            2624.02,
+            2634.81
+          ],
+          "xau_edge_ohlc": [
+            2635.62,
+            2641.57,
+            2624.02,
+            2634.81
+          ],
+          "terminal_tick_volume": 37195,
+          "xau_edge_tick_volume": 37195,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-01-10T02:00:00+00:00",
+          "broker_time": "2025-01-10T04:00:00",
+          "terminal_ohlc": [
+            2670.92,
+            2675.78,
+            2670.45,
+            2674.9
+          ],
+          "xau_edge_ohlc": [
+            2670.92,
+            2675.78,
+            2670.45,
+            2674.9
+          ],
+          "terminal_tick_volume": 12898,
+          "xau_edge_tick_volume": 12898,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-02-11T14:00:00+00:00",
+          "broker_time": "2025-02-11T16:00:00",
+          "terminal_ohlc": [
+            2896.48,
+            2908.55,
+            2890.87,
+            2905.54
+          ],
+          "xau_edge_ohlc": [
+            2896.48,
+            2908.55,
+            2890.87,
+            2905.54
+          ],
+          "terminal_tick_volume": 31360,
+          "xau_edge_tick_volume": 31360,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-03-14T01:00:00+00:00",
+          "broker_time": "2025-03-14T04:00:00",
+          "terminal_ohlc": [
+            2986.58,
+            2993.88,
+            2981.6,
+            2985.29
+          ],
+          "xau_edge_ohlc": [
+            2986.58,
+            2993.88,
+            2981.6,
+            2985.29
+          ],
+          "terminal_tick_volume": 18905,
+          "xau_edge_tick_volume": 18905,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-04-15T13:00:00+00:00",
+          "broker_time": "2025-04-15T16:00:00",
+          "terminal_ohlc": [
+            3221.52,
+            3226.83,
+            3211.6,
+            3221.42
+          ],
+          "xau_edge_ohlc": [
+            3221.52,
+            3226.83,
+            3211.6,
+            3221.42
+          ],
+          "terminal_tick_volume": 23124,
+          "xau_edge_tick_volume": 23124,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-05-19T01:00:00+00:00",
+          "broker_time": "2025-05-19T04:00:00",
+          "terminal_ohlc": [
+            3246.32,
+            3246.5,
+            3206.57,
+            3215.84
+          ],
+          "xau_edge_ohlc": [
+            3246.32,
+            3246.5,
+            3206.57,
+            3215.84
+          ],
+          "terminal_tick_volume": 19572,
+          "xau_edge_tick_volume": 19572,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-06-18T13:00:00+00:00",
+          "broker_time": "2025-06-18T16:00:00",
+          "terminal_ohlc": [
+            3386.65,
+            3396.76,
+            3373.7,
+            3390.95
+          ],
+          "xau_edge_ohlc": [
+            3386.65,
+            3396.76,
+            3373.7,
+            3390.95
+          ],
+          "terminal_tick_volume": 23281,
+          "xau_edge_tick_volume": 23281,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-07-21T05:00:00+00:00",
+          "broker_time": "2025-07-21T08:00:00",
+          "terminal_ohlc": [
+            3357.72,
+            3370.7,
+            3357.58,
+            3365.93
+          ],
+          "xau_edge_ohlc": [
+            3357.72,
+            3370.7,
+            3357.58,
+            3365.93
+          ],
+          "terminal_tick_volume": 13981,
+          "xau_edge_tick_volume": 13981,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-08-20T17:00:00+00:00",
+          "broker_time": "2025-08-20T20:00:00",
+          "terminal_ohlc": [
+            3345.13,
+            3349.23,
+            3343.93,
+            3348.18
+          ],
+          "xau_edge_ohlc": [
+            3345.13,
+            3349.23,
+            3343.93,
+            3348.18
+          ],
+          "terminal_tick_volume": 12443,
+          "xau_edge_tick_volume": 12443,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-09-22T05:00:00+00:00",
+          "broker_time": "2025-09-22T08:00:00",
+          "terminal_ohlc": [
+            3692.09,
+            3722.38,
+            3691.89,
+            3720.28
+          ],
+          "xau_edge_ohlc": [
+            3692.09,
+            3722.38,
+            3691.89,
+            3720.28
+          ],
+          "terminal_tick_volume": 24753,
+          "xau_edge_tick_volume": 24753,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-10-22T17:00:00+00:00",
+          "broker_time": "2025-10-22T20:00:00",
+          "terminal_ohlc": [
+            4059.2,
+            4113.3,
+            4043.52,
+            4102.04
+          ],
+          "xau_edge_ohlc": [
+            4059.2,
+            4113.3,
+            4043.52,
+            4102.04
+          ],
+          "terminal_tick_volume": 32216,
+          "xau_edge_tick_volume": 32216,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-11-24T06:00:00+00:00",
+          "broker_time": "2025-11-24T08:00:00",
+          "terminal_ohlc": [
+            4046.23,
+            4074.13,
+            4045.48,
+            4071.81
+          ],
+          "xau_edge_ohlc": [
+            4046.23,
+            4074.13,
+            4045.48,
+            4071.81
+          ],
+          "terminal_tick_volume": 28684,
+          "xau_edge_tick_volume": 28684,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2025-12-24T18:00:00+00:00",
+          "broker_time": "2025-12-24T20:00:00",
+          "terminal_ohlc": [
+            4480.61,
+            4482.49,
+            4477.33,
+            4479.48
+          ],
+          "xau_edge_ohlc": [
+            4480.61,
+            4482.49,
+            4477.33,
+            4479.48
+          ],
+          "terminal_tick_volume": 2950,
+          "xau_edge_tick_volume": 2950,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-01-28T06:00:00+00:00",
+          "broker_time": "2026-01-28T08:00:00",
+          "terminal_ohlc": [
+            5261.28,
+            5311.4,
+            5251.97,
+            5278.02
+          ],
+          "xau_edge_ohlc": [
+            5261.28,
+            5311.4,
+            5251.97,
+            5278.02
+          ],
+          "terminal_tick_volume": 46768,
+          "xau_edge_tick_volume": 46768,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-02-27T18:00:00+00:00",
+          "broker_time": "2026-02-27T20:00:00",
+          "terminal_ohlc": [
+            5234.71,
+            5278.74,
+            5222.49,
+            5277.51
+          ],
+          "xau_edge_ohlc": [
+            5234.71,
+            5278.74,
+            5222.49,
+            5277.51
+          ],
+          "terminal_tick_volume": 35306,
+          "xau_edge_tick_volume": 35306,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-04-01T05:00:00+00:00",
+          "broker_time": "2026-04-01T08:00:00",
+          "terminal_ohlc": [
+            4676.13,
+            4747.48,
+            4674.66,
+            4728.46
+          ],
+          "xau_edge_ohlc": [
+            4676.13,
+            4747.48,
+            4674.66,
+            4728.46
+          ],
+          "terminal_tick_volume": 44864,
+          "xau_edge_tick_volume": 44864,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-05-04T17:00:00+00:00",
+          "broker_time": "2026-05-04T20:00:00",
+          "terminal_ohlc": [
+            4510.42,
+            4531.4,
+            4509.76,
+            4521.4
+          ],
+          "xau_edge_ohlc": [
+            4510.42,
+            4531.4,
+            4509.76,
+            4521.4
+          ],
+          "terminal_tick_volume": 42031,
+          "xau_edge_tick_volume": 42031,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-06-04T05:00:00+00:00",
+          "broker_time": "2026-06-04T08:00:00",
+          "terminal_ohlc": [
+            4480.88,
+            4482.21,
+            4458.39,
+            4463.15
+          ],
+          "xau_edge_ohlc": [
+            4480.88,
+            4482.21,
+            4458.39,
+            4463.15
+          ],
+          "terminal_tick_volume": 39210,
+          "xau_edge_tick_volume": 39210,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-07-07T01:00:00+00:00",
+          "broker_time": "2026-07-07T04:00:00",
+          "terminal_ohlc": [
+            4145.86,
+            4147.88,
+            4124.23,
+            4126.47
+          ],
+          "xau_edge_ohlc": [
+            4145.86,
+            4147.88,
+            4124.23,
+            4126.47
+          ],
+          "terminal_tick_volume": 41262,
+          "xau_edge_tick_volume": 41262,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-08-06T13:00:00+00:00",
+          "broker_time": "2026-08-06T16:00:00",
+          "terminal_ohlc": [
+            4250.03,
+            4275.11,
+            4223.35,
+            4241.31
+          ],
+          "xau_edge_ohlc": [
+            4250.03,
+            4275.11,
+            4223.35,
+            4241.31
+          ],
+          "terminal_tick_volume": 66185,
+          "xau_edge_tick_volume": 66185,
+          "result": "MATCH"
+        },
+        {
+          "time_utc": "2026-09-08T01:00:00+00:00",
+          "broker_time": "2026-09-08T04:00:00",
+          "terminal_ohlc": [
+            4426.16,
+            4442.81,
+            4417.01,
+            4435.94
+          ],
+          "xau_edge_ohlc": [
+            4426.16,
+            4442.81,
+            4417.01,
+            4435.94
+          ],
+          "terminal_tick_volume": 42789,
+          "xau_edge_tick_volume": 42789,
+          "result": "MATCH"
+        }
+      ]
+    }
+  },
+  "ok": true
+}

@@ -29,17 +29,23 @@ def python_argv() -> list[str]:
     return [str(unix)] if unix.exists() else [sys.executable]
 
 
-def build_children(*, api: bool, dashboard: bool, port: int) -> list[ChildSpec]:
+def build_children(
+    *, api: bool, dashboard: bool, port: int, collector: bool = True
+) -> list[ChildSpec]:
     py = python_argv()
-    children = [ChildSpec("collector", [*py, "scripts/run_market_collector.py"], ROOT)]
+    children = []
+    if collector:
+        children.append(ChildSpec("collector", [*py, "scripts/run_market_collector.py"], ROOT))
     if api:
         children.append(ChildSpec("api", [*py, "scripts/serve_api.py", "--port", str(port)], ROOT))
     if dashboard:
-        npx = shutil.which("npx") or "npx"
+        # node directly (no npx/cmd wrapper): one process, so stopping it really frees the port
+        node = shutil.which("node") or "node"
+        entry = ROOT / "apps" / "dashboard" / "node_modules" / "next" / "dist" / "bin" / "next"
         children.append(
             ChildSpec(
                 "dashboard",
-                [npx, "next", "start", "-p", "3000", "-H", "127.0.0.1"],
+                [node, str(entry), "start", "-p", "3000", "-H", "127.0.0.1"],
                 ROOT / "apps" / "dashboard",
             )
         )
@@ -49,11 +55,17 @@ def build_children(*, api: bool, dashboard: bool, port: int) -> list[ChildSpec]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--no-api", action="store_true")
+    parser.add_argument("--no-collector", action="store_true", help="for failure drills only")
     parser.add_argument("--dashboard", action="store_true")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
     supervisor = Supervisor(
-        build_children(api=not args.no_api, dashboard=args.dashboard, port=args.port),
+        build_children(
+            api=not args.no_api,
+            dashboard=args.dashboard,
+            port=args.port,
+            collector=not args.no_collector,
+        ),
         run_dir=ROOT / "data" / "run",
         log_dir=ROOT / "data" / "logs",
     )

@@ -85,6 +85,11 @@ class Mt5Feed:
         self._require_demo = require_demo
         self.stale_seconds = stale_seconds
 
+    @property
+    def client(self) -> ReadOnlyMt5Client:
+        """The read-only client (market-data functions only), e.g. for independent cross-checks."""
+        return self._client
+
     # -- connection and facts ------------------------------------------------------------------
 
     def guard(self) -> None:

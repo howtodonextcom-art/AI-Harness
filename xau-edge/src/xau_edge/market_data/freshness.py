@@ -5,7 +5,7 @@ timeframe is "old" right after the daily break or over a weekend. The question i
 should already have closed (within the calendar's open slots) but are not stored.
 
 ``ALLOWED_LATE`` is how many missed bars are tolerated per timeframe before it is called STALE:
-M1 tolerates 3 (collector poll lag, a slow terminal), M5 2, everything slower 1.
+M1 tolerates 2 (the collector polls every 5 s, so more means trouble), everything else 1.
 """
 
 from __future__ import annotations
@@ -21,8 +21,8 @@ from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
 
 ALLOWED_LATE = {
-    Timeframe.M1: 3,
-    Timeframe.M5: 2,
+    Timeframe.M1: 2,
+    Timeframe.M5: 1,
     Timeframe.M15: 1,
     Timeframe.M30: 1,
     Timeframe.H1: 1,

@@ -1,0 +1,17 @@
+{
+  "requested": [
+    "2021-09-28T00:00:00+00:00",
+    "2026-10-09T09:18:51+00:00"
+  ],
+  "elapsed_seconds": 397.7,
+  "windows": 1618,
+  "ticks_received": 32814321,
+  "ticks_new": 32557995,
+  "conflicts": 0,
+  "unsplittable": [],
+  "errors": [],
+  "earliest_tick": "2021-10-01 11:32:27.927000+00:00",
+  "latest_tick": "2026-10-09 09:22:29.560000+00:00",
+  "coverage_windows": 1,
+  "still_uncovered": []
+}

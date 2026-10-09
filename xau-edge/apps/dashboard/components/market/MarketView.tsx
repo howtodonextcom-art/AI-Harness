@@ -144,7 +144,7 @@ export function MarketView() {
   }, []);
 
   const components = status?.components;
-  const quoteState = quote?.state ?? "UNAVAILABLE";
+  const quoteState = quote ? (quote.state ?? "UNAVAILABLE") : "UNKNOWN";
   const recovery = status?.recovery_action;
   const freshness = status?.freshness ?? {};
 

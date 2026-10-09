@@ -56,6 +56,7 @@ if (-not $mt5) { $problems += 'The MT5 terminal is not running: start it (or run
 if (-not $supAlive) { $problems += 'The supervisor is not running: run .\scripts\start_market_stack.ps1.' }
 elseif ($null -ne $colAge -and $colAge -gt 60) { $problems += "The collector has not updated for $colAge s (it is stuck or the terminal is not connected): see data\logs\collector.log." }
 if ($col -and $col.health -ne 'GOOD') { $problems += "Feed health is $($col.health): $($col.reasons -join '; ')" }
+if ($sup) { foreach ($p in $sup.children.PSObject.Properties) { if (-not $p.Value.alive) { $problems += "Supervised child '$($p.Name)' is DOWN (last exit $($p.Value.last_exit)): see data\logs\$($p.Name).log." } } }
 if (-not $apiUp) { $problems += 'The API is down: the web page cannot load data.' }
 Write-Host ''
 if ($problems.Count -eq 0) { Write-Host 'OK: everything is running and healthy.' }
