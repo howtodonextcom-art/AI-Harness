@@ -1,0 +1,7 @@
+# Edge-decay thresholds (roadmap section 23.4). Committed BEFORE any strategy is deployed; the console
+# only suggests a lower state from these numbers, a person demotes (never promotes) from the web.
+window_trades: 60
+watch_windows_for_degraded: 2
+cost_drift_degraded: 1.5
+drawdown_multiple_disabled: 1.5
+min_trades_for_conclusion: 100

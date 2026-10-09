@@ -29,6 +29,7 @@ from xau_edge.execution.trader import PaperTrader
 from xau_edge.experiments.registry import ExperimentRegistry
 from xau_edge.market_data.catalog import DatasetCatalog
 from xau_edge.observability import configure_logging
+from xau_edge.research.service import ResearchService
 from xau_edge.risk.engine import RiskEngine, RiskLimits
 from xau_edge.risk.prop_rules import load_prop_profile
 from xau_edge.signals.engine import MarketFrames
@@ -77,6 +78,7 @@ def main() -> None:
         prop=prop,
         models_dir=Path("models"),
         paper=paper,
+        research=ResearchService(Path(__file__).resolve().parents[1]),
         bot=BotContext(
             state_path=settings.execution_state_path,
             status_path=Path("data/execution/status.json"),

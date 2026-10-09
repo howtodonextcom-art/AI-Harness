@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict
 from xau_edge import __version__ as package_version
 from xau_edge.api.bot import add_bot_routes, read_kill_switch
 from xau_edge.api.control import mount_control
+from xau_edge.api.research import add_research_routes
 from xau_edge.api.service import (
     SYMBOL,
     ApiContext,
@@ -241,8 +242,15 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
         return {"models": model_records(ctx.models_dir)}
 
     add_bot_routes(app, ctx.bot, ctx.clock)
+    add_research_routes(app, ctx.research)
     if ctx.control is not None:
-        mount_control(app, ctx.control, port=ctx.control_port, allowed_origins=ALLOWED_ORIGINS)
+        mount_control(
+            app,
+            ctx.control,
+            port=ctx.control_port,
+            allowed_origins=ALLOWED_ORIGINS,
+            lifecycle=ctx.research.lifecycle_store if ctx.research else None,
+        )
 
     @app.get("/risk/status")
     def risk_status() -> dict[str, Any]:

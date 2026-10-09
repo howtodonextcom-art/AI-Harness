@@ -34,6 +34,7 @@ from xau_edge.control.runtime_mode import RuntimeModeError
 from xau_edge.control.security import TOKEN_HEADER, check_token
 from xau_edge.control.service import ActionBlockedError, ConfirmationError, ControlService
 from xau_edge.observability import log_event
+from xau_edge.research.lifecycle import LifecycleError, LifecycleStore
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,6 +57,20 @@ class ModeRequest(BaseModel):
 
     mode: Literal["DRY_RUN", "DEMO"]
     confirm: str = Field(default="", max_length=20)
+
+
+DEMOTE_WORD = "DEMOTE"
+
+
+class DemoteRequest(BaseModel):
+    """Lower a strategy's lifecycle state; the target set is fixed and can only go down."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_id: str = Field(min_length=1, max_length=60)
+    to: Literal["WATCH", "DEGRADED", "DISABLED"]
+    reason: str = Field(min_length=1, max_length=200)
+    confirm: str = Field(max_length=20)
 
 
 class ConfirmRequest(BaseModel):
@@ -160,7 +175,11 @@ def _accepted(submit: Callable[[], tuple[Job, bool]]) -> JSONResponse:
     return JSONResponse({"job": job.to_dict(), "replayed": replayed}, status_code=202)
 
 
-def add_control_routes(app: FastAPI, service: ControlService) -> None:
+def add_control_routes(
+    app: FastAPI,
+    service: ControlService,
+    lifecycle: Callable[[], LifecycleStore] | None = None,
+) -> None:
     """The ``/control`` routes, registered on the app itself so the route table shows them all."""
     key_header = Header(default=None, alias=IDEMPOTENCY_HEADER)
 
@@ -225,14 +244,36 @@ def add_control_routes(app: FastAPI, service: ControlService) -> None:
     def smoke(body: ConfirmRequest, key: str | None = key_header) -> JSONResponse:
         return _accepted(lambda: service.smoke(body.confirm, _key(key)))
 
+    @app.post(PREFIX + "/lifecycle/demote")
+    def demote(body: DemoteRequest, key: str | None = key_header) -> JSONResponse:
+        """Move a strategy DOWN (WATCH, DEGRADED, DISABLED). Never up, never a new strategy."""
+        _key(key)
+        if lifecycle is None:
+            return _deny("LIFECYCLE_UNAVAILABLE", "bảng vòng đời chưa được cấu hình", 503)
+        if body.confirm != DEMOTE_WORD:
+            return _deny("CONFIRMATION_MISMATCH", f"gõ đúng chữ {DEMOTE_WORD} để xác nhận", 400)
+        try:
+            event = lifecycle().demote(body.strategy_id, body.to, body.reason, source="web")
+        except LifecycleError as exc:
+            return _deny("DEMOTE_REFUSED", str(exc), 409)
+        service.record_web_event(
+            "lifecycle.demote", strategy_id=event.strategy_id, to=event.to_state
+        )
+        return JSONResponse({"event": event.__dict__}, status_code=200)
+
     @app.post(PREFIX + "/flatten", status_code=202)
     def flatten(body: ConfirmRequest, key: str | None = key_header) -> JSONResponse:
         return _accepted(lambda: service.flatten(body.confirm, _key(key)))
 
 
 def mount_control(
-    app: FastAPI, service: ControlService, *, port: int, allowed_origins: tuple[str, ...]
+    app: FastAPI,
+    service: ControlService,
+    *,
+    port: int,
+    allowed_origins: tuple[str, ...],
+    lifecycle: Callable[[], LifecycleStore] | None = None,
 ) -> None:
     """Add the guard and the routes to ``app``."""
     install_control_guard(app, token=service.token, port=port, allowed_origins=allowed_origins)
-    add_control_routes(app, service)
+    add_control_routes(app, service, lifecycle)

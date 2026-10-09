@@ -22,6 +22,7 @@ from xau_edge.experiments.registry import ExperimentRegistry
 from xau_edge.models.artifact import load_artifact_metadata
 from xau_edge.patterns.representation import pattern_values, window_validity
 from xau_edge.patterns.search import PatternIndex, SearchConfig
+from xau_edge.research.service import ResearchService
 from xau_edge.risk.engine import RiskLimits
 from xau_edge.risk.prop_rules import PropProfile
 from xau_edge.signals.engine import MarketFrames
@@ -78,6 +79,8 @@ class ApiContext:
     signal_provider: Callable[[datetime], Signal] | None = None
     paper: PaperTrader | None = None
     bot: BotContext | None = None
+    research: ResearchService | None = None
+    """The read-only research console backend (ADR-0024)."""
     control: ControlService | None = None
     """The web control plane (ADR-0023); ``None`` keeps the API free of ``/control`` routes."""
     control_port: int = 8000

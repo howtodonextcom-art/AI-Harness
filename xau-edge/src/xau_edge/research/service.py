@@ -1,0 +1,819 @@
+"""The research console's read-only views, assembled from files that already exist.
+
+Every method returns a JSON-safe dict with ``status`` ("ok" or "unknown") and the ``source`` paths
+the numbers came from. A missing or corrupt source gives "unknown", never an implicit "ok". Nothing
+here writes, runs an experiment, opens a locked period or reaches a terminal.
+"""
+
+from __future__ import annotations
+
+import contextlib
+import json
+import re
+from collections import Counter
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import polars as pl
+
+from xau_edge.backtest.costs import CostModel
+from xau_edge.market_data.profiles import BrokerProfile
+from xau_edge.research import decay as decay_mod
+from xau_edge.research import hypotheses as hyp
+from xau_edge.research import power as power_mod
+from xau_edge.research.ledger import LedgerParse, parse_ledger
+from xau_edge.research.lifecycle import LifecycleError, LifecycleStore
+from xau_edge.research.paths import ResearchRoot, SourceUnavailableError, unknown
+
+V1_LEDGER = "docs/research/edge-program/ledger.md"
+V2_LEDGER = "docs/research/edge-program-v2/ledger.md"
+V2_STATE = "docs/research/edge-program-v2/STATE.json"
+VERDICT = "docs/research/edge-program/final-verdict.md"
+ROADMAP = "docs/PROFITABILITY_ROADMAP.md"
+MANIFEST = "docs/research/edge-program/data-manifest.json"
+CLOCK_CERT = "docs/research/edge-program-v2/clock-certificate.json"
+LIFECYCLE = "data/execution/lifecycle.jsonl"
+DECAY_CONFIG = "configs/research/decay.yaml"
+FUNDED_RULES = "configs/prop/ftmo_funded.yaml"
+BROKER_PROFILE = "configs/brokers/ftmo_demo.yaml"
+NO_EDGE_BANNER = "Không có edge được kiểm định."
+MIN_FORWARD_TRADES = 100
+
+SPLITS: tuple[dict[str, Any], ...] = (
+    {
+        "id": "dev2",
+        "name": "Development-2",
+        "from": "2011-01-01",
+        "to": "2018-12-31",
+        "use": "thiết kế, Stage 1",
+        "burned": True,
+    },
+    {
+        "id": "val2",
+        "name": "Validation-2",
+        "from": "2019-01-01",
+        "to": "2021-12-31",
+        "use": "Stage 1/2 cho giả thuyết đã đăng ký",
+        "burned": True,
+    },
+    {
+        "id": "testH",
+        "name": "Test-H",
+        "from": "2022-01-01",
+        "to": "2025-04-30",
+        "use": "xác nhận, MỘT lần cho mỗi ứng viên",
+        "burned": False,
+    },
+    {
+        "id": "holdout",
+        "name": "Holdout",
+        "from": "2026-05-01",
+        "to": "2026-10-07",
+        "use": "cuối cùng, MỘT ứng viên, MỘT lần",
+        "burned": False,
+    },
+    {
+        "id": "forward",
+        "name": "Forward",
+        "from": "2026-10-09",
+        "to": None,
+        "use": "paper rồi demo",
+        "burned": False,
+    },
+    {
+        "id": "recent",
+        "name": "Burned recent",
+        "from": "2025-05-01",
+        "to": "2026-04-30",
+        "use": "chỉ mô tả",
+        "burned": True,
+    },
+)
+PLANNED: tuple[dict[str, str], ...] = (
+    {"id": "H07", "name": "Liquidity-sweep reversal", "batch": "A"},
+    {"id": "H08", "name": "Breakout acceptance / continuation", "batch": "A"},
+    {"id": "H09", "name": "Session-transition structure", "batch": "A"},
+    {"id": "H10", "name": "Conditional volatility expansion", "batch": "A"},
+    {"id": "H11", "name": "Impulse, pullback, re-expansion", "batch": "B"},
+    {"id": "H12", "name": "Market-structure failure", "batch": "B"},
+    {"id": "H13", "name": "Scheduled-news regime", "batch": "B"},
+    {"id": "H14", "name": "Cross-asset confirmation (filter only)", "batch": "B"},
+)
+_SEED_REJECTED = (
+    "baseline_a", "baseline_b", "baseline_c", "analogue_study",
+    "model_logistic", "model_random_forest", "model_xgboost", "model_lightgbm",
+)  # fmt: skip
+_GATES = ("cost_stress", "parameter_stability", "temporal_stability", "broker_robustness")
+_DECISION = re.compile(r"^\|\s*\**(D-\d)\**\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*$")
+
+
+def _safe(source: str, fn: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    try:
+        return fn()
+    except (SourceUnavailableError, LifecycleError, ValueError, KeyError, TypeError) as exc:
+        return unknown(source, str(exc)[:160])
+
+
+class ResearchService:
+    """Read-only views over the repository's research files."""
+
+    def __init__(
+        self, root: Path, clock: Callable[[], datetime] = lambda: datetime.now(UTC)
+    ) -> None:
+        self.files = ResearchRoot(root)
+        self.root = root
+        self.clock = clock
+
+    # -- shared helpers ------------------------------------------------------------------------
+
+    def _ledger(self, rel: str) -> LedgerParse | None:
+        try:
+            return parse_ledger(self.files.read_text(rel))
+        except SourceUnavailableError:
+            return None
+
+    def _state(self) -> dict[str, Any]:
+        try:
+            data = self.files.read_json(V2_STATE)
+        except SourceUnavailableError:
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def _candidate_files(self) -> list[str]:
+        out: list[str] = []
+        for folder in ("experiments/edge_program", "experiments/edge_program_v2"):
+            out += [p for p in self.files.list(folder, "*.json") if not p.endswith("verdict.json")]
+        return out
+
+    def _variants(self) -> dict[str, dict[str, Any]]:
+        """Per variant: periods with base and pessimistic results (from the result files)."""
+        variants: dict[str, dict[str, Any]] = {}
+        for rel in self._candidate_files():
+            try:
+                raw = self.files.read_json(rel)
+            except SourceUnavailableError:
+                continue
+            if not isinstance(raw, dict) or "variant" not in raw or "scenarios" not in raw:
+                continue
+            name = str(raw["variant"])
+            period = raw.get("period", {})
+            period_name = str(period.get("name") if isinstance(period, dict) else period)
+            scen = raw["scenarios"]
+            base, pess = scen.get("base", {}), scen.get("pessimistic", {})
+            verdict = base.get("verdict", {})
+            criteria = {k: v for k, v in verdict.items() if isinstance(v, dict) and "passed" in v}
+            entry = variants.setdefault(
+                name,
+                {"variant": name, "hypothesis": raw.get("hypothesis"), "periods": {}, "files": []},
+            )
+            entry["files"].append(rel)
+            entry["periods"][period_name] = {
+                "trades": base.get("trades"),
+                "mean_net_r_base": base.get("mean_net_r"),
+                "mean_net_r_pessimistic": pess.get("mean_net_r"),
+                "stage_pass": raw.get("stage_pass") is True,
+                "criteria": criteria,
+                "criteria_passed": sum(1 for c in criteria.values() if c["passed"]),
+                "criteria_total": len(criteria),
+                "metrics": {
+                    k: base.get("metrics", {}).get(k)
+                    for k in ("profit_factor", "max_drawdown_r", "win_rate", "net_return")
+                },
+                "variants_k": raw.get("variants_k"),
+                "alpha": raw.get("alpha"),
+                "dataset_ids": raw.get("dataset_ids"),
+                "code_version": raw.get("code_version"),
+                "recorded_at": raw.get("recorded_at"),
+                "registry_id": raw.get("registry_id"),
+            }
+        return variants
+
+    def lifecycle_store(self) -> LifecycleStore:
+        """The lifecycle store (the only thing the web may write to, and only downwards)."""
+        return self._store()
+
+    def _store(self) -> LifecycleStore:
+        seed = dict.fromkeys(_SEED_REJECTED, "REJECTED")
+        for name, entry in self._variants().items():
+            passed = all(p["stage_pass"] for p in entry["periods"].values()) and bool(
+                entry["periods"]
+            )
+            seed[name] = "RESEARCH" if passed else "REJECTED"
+        return LifecycleStore(self.files.resolve(LIFECYCLE), seed)
+
+    # -- W-R1 ----------------------------------------------------------------------------------
+
+    def overview(self) -> dict[str, Any]:
+        v1 = self._ledger(V1_LEDGER)
+        verdict: dict[str, Any]
+        try:
+            text = self.files.read_text(VERDICT)
+            match = re.search(r"Trạng thái:\s*\*\*(.+?)\*\*", text)
+            verdict = (
+                {"status": "ok", "label": match.group(1), "source": VERDICT}
+                if match
+                else unknown(VERDICT, "không đọc được dòng trạng thái")
+            )
+        except SourceUnavailableError as exc:
+            verdict = unknown(VERDICT, str(exc))
+        v1_view: dict[str, Any]
+        if v1 is None:
+            v1_view = unknown(V1_LEDGER, "không đọc được ledger")
+        else:
+            used = sorted({r.hypothesis for r in v1.runs})
+            budget_match = None
+            with contextlib.suppress(SourceUnavailableError):
+                budget_match = re.search(r"(\d+)\s*giả thuyết", self.files.read_text(V1_LEDGER))
+            v1_view = {
+                "status": "ok" if v1.runs else "unknown",
+                "source": V1_LEDGER,
+                "runs": len(v1.runs),
+                "malformed_rows": v1.malformed,
+                "k": v1.k,
+                "k_cap": v1.k_cap,
+                "alpha": v1.alpha,
+                "hypotheses_used": len(used),
+                "hypotheses_budget": int(budget_match.group(1)) if budget_match else None,
+            }
+        state = self._state()
+        v2_ledger = self._ledger(V2_LEDGER)
+        started = bool(state) or v2_ledger is not None
+        v2_view = (
+            {
+                "status": "ok",
+                "started": True,
+                "sprint": state.get("sprint"),
+                "k_declared": state.get("k_declared"),
+                "k_cap": state.get("k_cap", 48),
+                "hypotheses_used": state.get("hypotheses_used"),
+                "hypotheses_budget": state.get("hypotheses_budget", 8),
+                "runs": len(v2_ledger.runs) if v2_ledger else 0,
+                "source": V2_STATE,
+            }
+            if started
+            else {
+                "status": "ok",
+                "started": False,
+                "message": "chưa bắt đầu V2 (cần quyết định D-1 của chủ dự án)",
+                "k_cap": 48,
+                "hypotheses_budget": 8,
+                "source": V2_STATE,
+            }
+        )
+        decisions = self._decisions(state)
+        try:
+            states = self._store().states()
+        except (LifecycleError, SourceUnavailableError):
+            states = {}
+            lifecycle_ok = False
+        else:
+            lifecycle_ok = True
+        validated = [s for s, st in states.items() if st in ("VALIDATED", "FUNDED")]
+        stops: list[str] = []
+        if v1_view.get("status") == "ok":
+            used_n, budget = v1_view.get("hypotheses_used"), v1_view.get("hypotheses_budget")
+            if used_n is not None and budget is not None and used_n >= budget:
+                stops.append("V1: đã dùng hết ngân sách giả thuyết")
+            if (
+                v1_view.get("k") is not None
+                and v1_view.get("k_cap") is not None
+                and v1_view["k"] >= v1_view["k_cap"]
+            ):
+                stops.append("V1: K chạm trần")
+        banner = (
+            NO_EDGE_BANNER
+            if lifecycle_ok and not validated
+            else None
+            if lifecycle_ok
+            else "KHÔNG RÕ: không đọc được vòng đời chiến lược"
+        )
+        return {
+            "status": "ok" if verdict.get("status") == "ok" else "unknown",
+            "generated_at": self.clock().isoformat(),
+            "verdict": verdict,
+            "v1": v1_view,
+            "v2": v2_view,
+            "decisions": decisions,
+            "stop_conditions_reached": stops,
+            "validated_strategies": validated,
+            "banner": banner,
+            "sources": [VERDICT, V1_LEDGER, V2_STATE, ROADMAP],
+        }
+
+    def _decisions(self, state: dict[str, Any]) -> list[dict[str, Any]]:
+        try:
+            text = self.files.read_text(ROADMAP)
+        except SourceUnavailableError:
+            return []
+        given = state.get("decisions", {}) if isinstance(state.get("decisions"), dict) else {}
+        out: list[dict[str, Any]] = []
+        for line in text.splitlines():
+            m = _DECISION.match(line.strip())
+            if m and not m.group(2).lower().startswith("decision"):
+                out.append(
+                    {
+                        "id": m.group(1),
+                        "text": m.group(2),
+                        "recommended": m.group(3),
+                        "state": str(given.get(m.group(1), "pending")),
+                    }
+                )
+        return out
+
+    # -- W-R2 ----------------------------------------------------------------------------------
+
+    def ledger(
+        self,
+        programme: str = "v1",
+        hypothesis: str | None = None,
+        period: str | None = None,
+        scenario: str | None = None,
+    ) -> dict[str, Any]:
+        rel = V2_LEDGER if programme == "v2" else V1_LEDGER
+        parsed = self._ledger(rel)
+        if parsed is None:
+            return unknown(rel, "chưa có ledger" if programme == "v2" else "không đọc được ledger")
+        runs = [
+            r
+            for r in parsed.runs
+            if (hypothesis is None or r.hypothesis == hypothesis)
+            and (period is None or r.period == period)
+            and (scenario is None or scenario in r.scenario)
+        ]
+        counts = Counter(r.verdict or "?" for r in runs)
+        return {
+            "status": "ok",
+            "source": rel,
+            "programme": programme,
+            "k": parsed.k,
+            "k_cap": parsed.k_cap,
+            "alpha": parsed.alpha,
+            "malformed_rows": parsed.malformed,
+            "total_runs": len(parsed.runs),
+            "shown": len(runs),
+            "verdicts": dict(counts),
+            "runs": [r.as_dict() for r in runs],
+            "legacy_k": {"baselines": 3, "programme_1": parsed.k if programme == "v1" else None},
+        }
+
+    def power(self, k: int, n: int, sd: float) -> dict[str, Any]:
+        points = [
+            {"n": m, "mde": power_mod.mde(k, m, sd)} for m in (100, 200, 500, 1000, 2000, 3000)
+        ]
+        return {
+            "status": "ok",
+            "k": k,
+            "n": n,
+            "sd": sd,
+            "alpha": power_mod.BASE_ALPHA / k,
+            "mde": power_mod.mde(k, n, sd),
+            "underpowered_by_design": power_mod.underpowered(k, n, sd),
+            "underpowered_threshold": power_mod.UNDERPOWERED_MDE,
+            "trades_needed": {
+                str(e): power_mod.trades_needed(k, e, sd) for e in (0.05, 0.10, 0.15, 0.20)
+            },
+            "curve": points,
+            "formula": "(z(1-0.05/K) + z(0.8)) * sd / sqrt(n), one-sided, i.i.d. approximation",
+            "source": ROADMAP + " (section 5.1)",
+        }
+
+    # -- W-R3 ----------------------------------------------------------------------------------
+
+    def hypotheses(self) -> dict[str, Any]:
+        rows: list[dict[str, Any]] = []
+        runs: list[Any] = []
+        for rel in (V1_LEDGER, V2_LEDGER):
+            parsed = self._ledger(rel)
+            if parsed:
+                runs += parsed.runs
+        for programme, folder in (("V1", hyp.V1_DIR), ("V2", hyp.V2_DIR)):
+            try:
+                files = self.files.list(folder, "H*.md")
+            except SourceUnavailableError:
+                files = []
+            for rel in files:
+                file = hyp.read_hypothesis(self.files, rel, programme)
+                if file is None:
+                    continue
+                rows.append(
+                    {
+                        "id": file.id,
+                        "programme": programme,
+                        "title": file.title,
+                        "registered": file.registered,
+                        "grid": file.grid,
+                        "path": file.path,
+                        "results": hyp.summarise_results(runs, file.id),
+                        "preregistration": hyp.preregistration_check(
+                            self.files, file, runs, file.id
+                        ),
+                    }
+                )
+        registered = {r["id"] for r in rows if r["programme"] == "V2"}
+        planned = [p for p in PLANNED if p["id"] not in registered]
+        return {
+            "status": "ok",
+            "hypotheses": rows,
+            "planned": planned,
+            "violations": [r["id"] for r in rows if r["preregistration"]["state"] == "VIOLATION"],
+            "source": f"{hyp.V1_DIR}, {hyp.V2_DIR}, {V1_LEDGER}",
+        }
+
+    # -- W-R4 ----------------------------------------------------------------------------------
+
+    def _gates(self, variant: str) -> dict[str, Any]:
+        rel = f"experiments/edge_program_v2/robustness/{variant}.json"
+        try:
+            raw = self.files.read_json(rel)
+        except SourceUnavailableError:
+            return {g: {"state": "CHƯA CHẠY"} for g in _GATES}
+        if not isinstance(raw, dict):
+            return {g: {"state": "KHÔNG RÕ"} for g in _GATES}
+        out: dict[str, Any] = {}
+        for gate in _GATES:
+            item = raw.get(gate)
+            if isinstance(item, dict) and isinstance(item.get("passed"), bool):
+                out[gate] = {
+                    "state": "PASS" if item["passed"] else "FAIL",
+                    "detail": item.get("detail"),
+                }
+            else:
+                out[gate] = {"state": "CHƯA CHẠY"}
+        return out
+
+    def candidates(self) -> dict[str, Any]:
+        variants = self._variants()
+        rows = []
+        for name, entry in sorted(variants.items()):
+            periods = entry["periods"]
+            survivor = bool(periods) and all(p["stage_pass"] for p in periods.values())
+            rows.append(
+                {
+                    "variant": name,
+                    "hypothesis": entry["hypothesis"],
+                    "periods": {
+                        k: {
+                            "trades": v["trades"],
+                            "mean_net_r_base": v["mean_net_r_base"],
+                            "mean_net_r_pessimistic": v["mean_net_r_pessimistic"],
+                            "stage_pass": v["stage_pass"],
+                            "criteria_passed": v["criteria_passed"],
+                            "criteria_total": v["criteria_total"],
+                        }
+                        for k, v in periods.items()
+                    },
+                    "survivor": survivor,
+                    "gates": self._gates(name),
+                }
+            )
+        return {
+            "status": "ok" if rows else "unknown",
+            "source": "experiments/edge_program, experiments/edge_program_v2",
+            "survivors": [r["variant"] for r in rows if r["survivor"]],
+            "variants": rows,
+            "note": (
+                "Một biến thể chỉ là ứng viên khi qua cả hai giai đoạn; "
+                "cổng robustness chưa chạy luôn hiện CHƯA CHẠY."
+            ),
+        }
+
+    def candidate(self, variant: str) -> dict[str, Any]:
+        entry = self._variants().get(variant)
+        if entry is None:
+            return unknown("experiments/edge_program", "không có biến thể này")
+        return {
+            "status": "ok",
+            "variant": variant,
+            "hypothesis": entry["hypothesis"],
+            "periods": entry["periods"],
+            "gates": self._gates(variant),
+            "gross_mid_r": None,
+            "gross_mid_note": "chưa có: cột gross-at-mid thuộc sprint P1 của roadmap",
+            "equity_curve": None,
+            "equity_note": "file kết quả không chứa đường vốn",
+            "sources": entry["files"],
+        }
+
+    # -- W-R5 ----------------------------------------------------------------------------------
+
+    def data(self) -> dict[str, Any]:
+        try:
+            manifest = self.files.read_json(MANIFEST)
+        except SourceUnavailableError as exc:
+            return unknown(MANIFEST, str(exc))
+        frames = []
+        for tf in ("M5", "M15", "H1", "H4"):
+            item = manifest.get(tf) if isinstance(manifest, dict) else None
+            if not isinstance(item, dict):
+                continue
+            issues = item.get("issues", [])
+            frames.append(
+                {
+                    "timeframe": tf,
+                    "rows": item.get("rows"),
+                    "first": item.get("first"),
+                    "last": item.get("last"),
+                    "dataset_id": item.get("dataset_id"),
+                    "validation_passed": item.get("validation_passed"),
+                    "errors": [i for i in issues if i.get("severity") == "ERROR"],
+                    "warnings": [i for i in issues if i.get("severity") != "ERROR"],
+                }
+            )
+        years: list[dict[str, Any]] = []
+        try:
+            cert = self.files.read_json(CLOCK_CERT)
+            cert_years = cert.get("years", {}) if isinstance(cert, dict) else {}
+            cert_ok = True
+        except SourceUnavailableError:
+            cert_years, cert_ok = {}, False
+        for year in range(2010, 2026):
+            item = cert_years.get(str(year)) if isinstance(cert_years, dict) else None
+            certified = bool(isinstance(item, dict) and item.get("certified") is True)
+            years.append(
+                {
+                    "year": year,
+                    "certified": certified,
+                    "state": "CHỨNG NHẬN" if certified else "CHƯA CHỨNG NHẬN",
+                    "offset": item.get("offset") if isinstance(item, dict) else None,
+                }
+            )
+        blocked = [y["year"] for y in years if not y["certified"]]
+        return {
+            "status": "ok",
+            "source": MANIFEST,
+            "generated_at": manifest.get("generated_at") if isinstance(manifest, dict) else None,
+            "frames": frames,
+            "clock_certificate": {
+                "source": CLOCK_CERT,
+                "present": cert_ok,
+                "years": years,
+                "session_hypotheses_blocked_years": blocked,
+                "message": "H09 và mọi giả thuyết theo phiên bị chặn ở các năm chưa chứng nhận"
+                if blocked
+                else "mọi năm đã chứng nhận",
+            },
+        }
+
+    def locks(self) -> dict[str, Any]:
+        try:
+            records = self.files.list("experiments/runs", "*.json")
+        except SourceUnavailableError as exc:
+            return unknown("experiments/runs", str(exc))
+        testh_used = holdout_used = False
+        unreadable = 0
+        for rel in records:
+            try:
+                raw = self.files.read_json(rel)
+            except SourceUnavailableError:
+                unreadable += 1
+                continue
+            if not isinstance(raw, dict):
+                unreadable += 1
+                continue
+            period, family = str(raw.get("period")), str(raw.get("family"))
+            if period == "test" and family == "edge-program":
+                testh_used = True
+            if period == "test" and family in {"backtest", "model", "analogue-study"}:
+                holdout_used = True
+        blind = not records or unreadable > 0
+        try:
+            freezes = self.files.list("docs/research/edge-program-v2", "freeze-*.md")
+        except SourceUnavailableError:
+            freezes = []
+        locks = []
+        for split in SPLITS:
+            state: str
+            if split["id"] == "testH":
+                state = (
+                    "KHÔNG RÕ"
+                    if blind and not testh_used
+                    else "ĐÃ DÙNG"
+                    if testh_used
+                    else "NGUYÊN VẸN"
+                )
+            elif split["id"] == "holdout":
+                state = (
+                    "KHÔNG RÕ"
+                    if blind and not holdout_used
+                    else "ĐÃ DÙNG"
+                    if holdout_used
+                    else "NGUYÊN VẸN"
+                )
+            elif split["id"] == "forward":
+                state = "ĐANG TÍCH LŨY"
+            else:
+                state = "ĐÃ DÙNG THIẾT KẾ" if split["burned"] else "—"
+            locks.append({**split, "state": state})
+        return {
+            "status": "unknown" if blind else "ok",
+            "source": "experiments/runs, docs/PROFITABILITY_ROADMAP.md (section 13.1)",
+            "registry_records": len(records),
+            "unreadable_records": unreadable,
+            "locks": locks,
+            "freeze_records": freezes,
+        }
+
+    # -- W-R6 ----------------------------------------------------------------------------------
+
+    def strategies(self) -> dict[str, Any]:
+        def build() -> dict[str, Any]:
+            store = self._store()
+            states = store.states()
+            rows = [
+                {
+                    "strategy_id": sid,
+                    "state": st,
+                    "history": [e.__dict__ for e in store.history(sid)],
+                    "web_demotable": st
+                    in ("PAPER", "DEMO", "VALIDATED", "FUNDED", "WATCH", "DEGRADED"),
+                }
+                for sid, st in sorted(states.items())
+            ]
+            return {
+                "status": "ok",
+                "source": LIFECYCLE,
+                "strategies": rows,
+                "states": [
+                    "RESEARCH",
+                    "REJECTED",
+                    "PAPER",
+                    "DEMO",
+                    "VALIDATED",
+                    "FUNDED",
+                    "WATCH",
+                    "DEGRADED",
+                    "DISABLED",
+                    "RETIRED",
+                ],
+                "web_rule": (
+                    "Từ web chỉ được HẠ xuống WATCH, DEGRADED hoặc DISABLED; không nâng bậc."
+                ),
+            }
+
+        return _safe(LIFECYCLE, build)
+
+    def forward(self, strategy_id: str) -> dict[str, Any]:
+        if not re.match(r"^[A-Za-z0-9_.\-]{1,60}$", strategy_id):
+            return unknown("data/forward", "mã chiến lược không hợp lệ")
+        rel = f"data/forward/{strategy_id}/summary.json"
+
+        def build() -> dict[str, Any]:
+            raw = self.files.read_json(rel)
+            if not isinstance(raw, dict):
+                msg = "summary không phải đối tượng JSON"
+                raise ValueError(msg)
+            trades = [float(x) for x in raw.get("trades_net_r", [])]
+            config = decay_mod.load_decay_config(self.files.resolve(DECAY_CONFIG))
+            n = int(raw.get("n_trades", len(trades)))
+            conclusion = "KHÔNG KẾT LUẬN" if n < MIN_FORWARD_TRADES else "ĐỦ MẪU"
+            decay = None
+            interval = raw.get("mean_r_expected", {})
+            if (
+                conclusion == "ĐỦ MẪU"
+                and isinstance(interval, dict)
+                and "lo" in interval
+                and trades
+            ):
+                result = decay_mod.evaluate_decay(
+                    trades,
+                    ci_lower=float(interval["lo"]),
+                    validated_max_dd_r=float(raw.get("validated_max_dd_r", 15.0)),
+                    cost_drift=float(raw.get("cost_drift", 1.0)),
+                    config=config,
+                )
+                decay = {
+                    "suggestion": result.suggestion,
+                    "reasons": list(result.reasons),
+                    "window_means": list(result.window_means),
+                    "max_drawdown_r": result.max_drawdown_r,
+                }
+            return {
+                "status": "ok",
+                "source": rel,
+                "strategy_id": strategy_id,
+                "n_trades": n,
+                "min_trades_for_conclusion": MIN_FORWARD_TRADES,
+                "conclusion": conclusion,
+                "expected_vs_realised": {
+                    k: raw.get(k)
+                    for k in (
+                        "signals_per_week_expected",
+                        "signals_per_week_realised",
+                        "mean_r_expected",
+                        "mean_r_realised",
+                        "mfe_expected",
+                        "mfe_realised",
+                        "mae_expected",
+                        "mae_realised",
+                        "spread_assumed",
+                        "spread_observed",
+                        "slippage_assumed",
+                        "slippage_observed",
+                        "latency_ms",
+                    )
+                },
+                "decay": decay,
+                "updated_at": raw.get("updated_at"),
+            }
+
+        out = _safe(rel, build)
+        if out["status"] == "unknown":
+            out["message"] = "KHÔNG CÓ MẪU FORWARD cho chiến lược này"
+        return out
+
+    # -- W-R7 ----------------------------------------------------------------------------------
+
+    def calibration(self) -> dict[str, Any]:
+        costs = CostModel()
+        assumed = {
+            "slippage_points": costs.slippage_points,
+            "commission_per_lot_per_side": costs.commission_per_lot_per_side,
+            "swap_long_points": costs.swap_long_points,
+            "swap_short_points": costs.swap_short_points,
+        }
+        rel = "data/execution/calibration.json"
+        try:
+            measured = self.files.read_json(rel)
+        except SourceUnavailableError:
+            return {
+                "status": "unknown",
+                "source": rel,
+                "assumed": assumed,
+                "measured": None,
+                "message": "chưa đo chi phí thật (sprint P12); các số trên là GIẢ ĐỊNH",
+            }
+        return {"status": "ok", "source": rel, "assumed": assumed, "measured": measured}
+
+    def soak(self) -> dict[str, Any]:
+        cycles_rel = "data/execution/cycles.jsonl"
+        try:
+            lines = self.files.read_text(cycles_rel).splitlines()
+            rows = [json.loads(ln) for ln in lines if ln.strip()]
+        except (SourceUnavailableError, json.JSONDecodeError):
+            return {
+                **unknown(cycles_rel, "chưa có hoặc không đọc được cycles.jsonl"),
+                "alerts": None,
+            }
+        decided = [
+            r["decision_time"] for r in rows if r.get("decision_time") and not r.get("skipped")
+        ]
+        unique = sorted(set(decided))
+        duplicates = len(decided) - len(unique)
+        expected: int | None = None
+        uptime: float | None = None
+        days: float | None = None
+        if len(unique) >= 2:
+            first = datetime.fromisoformat(unique[0])
+            last = datetime.fromisoformat(unique[-1])
+            days = (last - first).total_seconds() / 86400
+            try:
+                cal = BrokerProfile.from_yaml(
+                    self.files.resolve(BROKER_PROFILE)
+                ).validation.calendar
+                stamps = []
+                cursor = first
+                while cursor <= last:
+                    stamps.append(cursor)
+                    cursor += timedelta(minutes=15)
+                frame = pl.DataFrame({"t": stamps}, schema={"t": pl.Datetime("us", "UTC")})
+                closed = frame.select(cal.closed_expr(pl.col("t")).alias("c"))["c"]
+                expected = len(stamps) - int(closed.sum())
+                uptime = min(1.0, len(unique) / expected) if expected else None
+            except (SourceUnavailableError, ValueError, OSError):
+                expected = uptime = None
+        alerts: dict[str, int] | None = None
+        try:
+            alerts = {
+                "lines": len(self.files.read_text("data/execution/alerts.jsonl").splitlines())
+            }
+        except SourceUnavailableError:
+            alerts = None
+        funded: dict[str, Any]
+        try:
+            from xau_edge.funded.rules import load_funded_rules  # noqa: PLC0415 - optional view
+
+            rules = load_funded_rules(self.files.resolve(FUNDED_RULES))
+            pending = rules.pending()
+            funded = {
+                "status": "ok",
+                "source": FUNDED_RULES,
+                "pending": pending,
+                "total": len(rules.rules),
+            }
+        except (SourceUnavailableError, ValueError, OSError):
+            funded = unknown(FUNDED_RULES, "không đọc được luật funded")
+        return {
+            "status": "ok",
+            "source": cycles_rel,
+            "cycles": len(rows),
+            "decided_bars": len(unique),
+            "duplicate_bars": duplicates,
+            "expected_bars": expected,
+            "uptime_m15": uptime,
+            "days_covered": days,
+            "target": {"soak_days": 14, "uptime_min": 0.99, "duplicates_max": 0, "demo_weeks": 4},
+            "alerts": alerts,
+            "funded_rules": funded,
+        }

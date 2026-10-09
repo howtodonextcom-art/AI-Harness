@@ -190,6 +190,8 @@ def test_the_route_table_has_no_funded_or_live_route(client: TestClient) -> None
         ("POST", "/control/mode"),
         ("POST", "/control/smoke"),
         ("POST", "/control/flatten"),
+        # ADR-0024: the only research-console write, a DOWN-only lifecycle demotion
+        ("POST", "/control/lifecycle/demote"),
     }
     paths = " ".join(getattr(r, "path", "") for r in client.app.routes)  # type: ignore[attr-defined]
     for word in ("funded", "live", "reset", "kill_switch", "env"):

@@ -323,6 +323,14 @@ class ControlService:
         path = settings.demo_journal_path if settings else Path("data/execution/journal.jsonl")
         return ExecutionJournal(self.config.resolve(path))
 
+    def record_web_event(self, event: str, **fields: Any) -> None:
+        """Journal an action done through the web (best effort, never raises)."""
+        try:
+            settings = self.deps.load_settings()
+        except Exception:
+            settings = None
+        self._record(settings, event, **fields)
+
     def _record(self, settings: Settings | None, event: str, **fields: Any) -> None:
         try:
             self._journal(settings).record(event, source="web", **fields)
