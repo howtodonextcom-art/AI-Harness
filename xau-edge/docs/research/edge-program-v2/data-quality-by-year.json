@@ -1,0 +1,146 @@
+[
+  {
+    "year": 2010,
+    "bars": 5291,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5061,
+    "bars_inside_closure": 230,
+    "missing_fraction": 0.11859979101358409,
+    "gaps_over_limit": 48
+  },
+  {
+    "year": 2011,
+    "bars": 5726,
+    "expected_open_slots": 5720,
+    "bars_in_open_time": 5485,
+    "bars_inside_closure": 241,
+    "missing_fraction": 0.04108391608391604,
+    "gaps_over_limit": 51
+  },
+  {
+    "year": 2012,
+    "bars": 5981,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5605,
+    "bars_inside_closure": 376,
+    "missing_fraction": 0.023859282479972155,
+    "gaps_over_limit": 52
+  },
+  {
+    "year": 2013,
+    "bars": 6137,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5617,
+    "bars_inside_closure": 520,
+    "missing_fraction": 0.02176941832114243,
+    "gaps_over_limit": 49
+  },
+  {
+    "year": 2014,
+    "bars": 6130,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5617,
+    "bars_inside_closure": 513,
+    "missing_fraction": 0.02176941832114243,
+    "gaps_over_limit": 53
+  },
+  {
+    "year": 2015,
+    "bars": 6101,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5589,
+    "bars_inside_closure": 512,
+    "missing_fraction": 0.026645768025078342,
+    "gaps_over_limit": 52
+  },
+  {
+    "year": 2016,
+    "bars": 6146,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5632,
+    "bars_inside_closure": 514,
+    "missing_fraction": 0.019157088122605415,
+    "gaps_over_limit": 51
+  },
+  {
+    "year": 2017,
+    "bars": 6118,
+    "expected_open_slots": 5720,
+    "bars_in_open_time": 5605,
+    "bars_inside_closure": 513,
+    "missing_fraction": 0.020104895104895104,
+    "gaps_over_limit": 51
+  },
+  {
+    "year": 2018,
+    "bars": 6131,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5617,
+    "bars_inside_closure": 514,
+    "missing_fraction": 0.02176941832114243,
+    "gaps_over_limit": 52
+  },
+  {
+    "year": 2019,
+    "bars": 6129,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5615,
+    "bars_inside_closure": 514,
+    "missing_fraction": 0.022117729014280774,
+    "gaps_over_limit": 52
+  },
+  {
+    "year": 2020,
+    "bars": 6159,
+    "expected_open_slots": 5764,
+    "bars_in_open_time": 5641,
+    "bars_inside_closure": 518,
+    "missing_fraction": 0.021339347675225495,
+    "gaps_over_limit": 52
+  },
+  {
+    "year": 2021,
+    "bars": 5932,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 5651,
+    "bars_inside_closure": 281,
+    "missing_fraction": 0.015848136537791713,
+    "gaps_over_limit": 51
+  },
+  {
+    "year": 2022,
+    "bars": 5914,
+    "expected_open_slots": 5720,
+    "bars_in_open_time": 5656,
+    "bars_inside_closure": 258,
+    "missing_fraction": 0.01118881118881121,
+    "gaps_over_limit": 51
+  },
+  {
+    "year": 2023,
+    "bars": 5893,
+    "expected_open_slots": 5720,
+    "bars_in_open_time": 5636,
+    "bars_inside_closure": 257,
+    "missing_fraction": 0.014685314685314643,
+    "gaps_over_limit": 51
+  },
+  {
+    "year": 2024,
+    "bars": 5937,
+    "expected_open_slots": 5764,
+    "bars_in_open_time": 5678,
+    "bars_inside_closure": 259,
+    "missing_fraction": 0.014920194309507306,
+    "gaps_over_limit": 53
+  },
+  {
+    "year": 2025,
+    "bars": 1930,
+    "expected_open_slots": 5742,
+    "bars_in_open_time": 1845,
+    "bars_inside_closure": 85,
+    "missing_fraction": 0.6786833855799372,
+    "gaps_over_limit": 17
+  }
+]
