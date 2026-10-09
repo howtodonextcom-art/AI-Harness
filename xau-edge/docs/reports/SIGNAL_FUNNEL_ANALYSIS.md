@@ -98,6 +98,46 @@ Spread trung vị 24 điểm; spread/ATR(M5) p50 0.061, p90 0.110 (giới hạn 
 | I bộ lọc thực thi chặn setup hợp lệ | Không đáng kể |
 | J lỗi cài đặt | Không tìm thấy lỗi tính toán; hạn chế thiết kế E/H |
 
-## 10. Kết quả v1.2
+## 10. Kết quả v1.2 (đối chiếu pre-đăng ký, commit `97afc2c`)
 
-Xem mục bổ sung ở cuối tài liệu sau khi chạy (sau commit pre-đăng ký).
+Dữ liệu chấp nhận **chưa từng được xem lúc thiết kế**: E1 2025-08-04→09-01 (5 460 quyết định M5) và E2 2025-12-01→12-29 (5 149), cùng 24 ngày giao dịch mỗi cửa sổ (48 ngày). Công cụ: `scripts/trade_v12_eval.py` (một tiến trình/cửa sổ, tất cả biến thể dùng chung một trạng thái). Chỉ khả thi vận hành; kết quả mô phỏng ở mục 11.
+
+### 10.1 Tần suất (setup riêng biệt)
+
+| Biến thể | E1 (BUY+SELL) | E2 | Gộp | Setup/ngày |
+|---|---|---|---|---|
+| v1.1.0 | 2+3 | 0 | 5 | 0.104 |
+| none (v1.2 code, cả ba thay đổi tắt) | 2+3 | 0 | 5 | 0.104 |
+| A (vòng đời) | 2+2 | 1+0 | 5 | 0.104 |
+| B (hình học M5, bỏ clearance) | 2+4 | 4+1 | 11 | **0.229** |
+| C (biến động → cảnh báo) | 2+3 | 0 | 5 | 0.104 |
+| A+B | 2+2 | 3+1 | 8 | 0.167 |
+| **A+B+C = v1.2** | 2+2 | 3+1 | **8** | **0.167** |
+
+Chẩn đoán thêm (cửa sổ đã xem, KHÔNG dùng để chấp nhận): gỡ veto spread tương đối: v1.1+D 6 (0.125/ngày), v1.2+D 10 (0.208/ngày).
+
+### 10.2 Tiêu chí pre-đăng ký
+
+| # | Tiêu chí | Kết quả |
+|---|---|---|
+| 1 | Nhân quả, không nhìn tương lai | ĐẠT: quyết định tại t không đổi khi cắt bỏ nến sau t (test `test_the_lifecycle_never_looks_ahead`), parity full vs tail |
+| 2 | Xác định + parity | ĐẠT: parity ABC **0 khác biệt / 10 609 quyết định**; hash luồng quyết định lặp lại bằng bản cũ |
+| 3 | Kế hoạch hợp lệ 100% | ĐẠT: 0 vi phạm (SL/TP đúng phía, lot ≥ min và đúng bước, rủi ro ≤0.5%, R/R ≥1.5, stop ≥ mức broker) cho 8 tín hiệu |
+| 4 | Dải [0.25, 8] setup/ngày | **KHÔNG ĐẠT: 0.167** |
+| 5 | Không trùng lặp | ĐẠT: 0 setup có >1 quyết định; 0 trùng cùng hướng cùng nến M15 |
+| 6 | Giải thích được | ĐẠT (phễu suy ra từ quyết định thật) |
+
+**Kết luận theo quy tắc đã đăng ký: v1.2 BỊ LOẠI khỏi vai trò mặc định vận hành** (không đạt tiêu chí 4). Không chỉnh N, hệ số hay ngưỡng để "đạt". v1.1.0 vẫn là mặc định; v1.2.0 vẫn chọn được bằng `XAU_EDGE_BASELINE_VERSION=1.2.0` như một quyết định có chủ đích của chủ dự án (nó đạt mọi tiêu chí trừ dải tần suất).
+
+### 10.3 Diễn giải (không vượt quá dữ liệu)
+
+* **H-B (hình học đúng thang)**: được ủng hộ. Một mình B nâng 5 → 11 setup (2.2×) và là thay đổi duy nhất đưa tần suất gần dải (0.229).
+* **H-A (vòng đời tuần tự)**: KHÔNG được ủng hộ trên E1/E2: A một mình không thêm setup (5 → 5), và A+B (8) *ít hơn* B (11) vì quy tắc "một tín hiệu mỗi pullback" loại các trigger lặp mà B (cùng nến) vẫn phát. Phân bố giai đoạn của v1.2: nhiều setup ARMED hết hạn mà không trigger (E1: EXPIRED 480 so với TRIGGERED 75 lượt quyết định; E2: 763 so với 88).
+* **H-C (biến động là cảnh báo)**: trung tính về tần suất (5 → 5); lợi ích là minh bạch (không che 54% trạng thái).
+* Cổng đứng đầu theo lý do chặn đầu tiên của v1.2: E1: NO_SETUP 2093, SPREAD_TOO_WIDE 1841, NO_DIRECTION 820, TIMEFRAME_CONFLICT 491, NO_TRIGGER 168; E2: NO_SETUP 2554, NO_DIRECTION 1284, SPREAD_TOO_WIDE 530, TIMEFRAME_CONFLICT 449, NO_TRIGGER 267. Sau khi trigger bắn: RR_TOO_LOW 6+9, INVALID_STOP_DISTANCE 5+2, VOLUME_TOO_LOW 4+6.
+* Phân phối 8 tín hiệu v1.2: BUY 5 / SELL 3; phiên: New York 4, London-NY overlap 2, London 1, Asia 1; giờ UTC 2, 9, 14, 15, 16, 18, 18, 20.
+* **Kết luận cấu trúc**: khái niệm setup hiện tại (pullback nông về EMA20 M15 khi cấu trúc M15 còn UP, trigger M5 động lượng, R/R ròng ≥1.5 với mục tiêu bị chặn bởi mức M15) cho khoảng 0.1–0.23 setup/ngày trên XAUUSD (tương đương 1 setup mỗi 4–10 ngày). Với tần suất này, chỉ forward paper không thể thực hành vòng đời ổn định; đó là lý do cần Acceptance Replay. Phần "TIMEFRAME_CONFLICT" 17% ở v1.2 gồm cả pullback sâu (cấu trúc M15 đảo tạm thời) mà định nghĩa hiện tại coi là xung đột — đây là hướng thiết kế mới hợp lý nhất, nhưng phải là v1.3 có pre-đăng ký riêng trên cửa sổ chưa dùng (E3 2025-09-08→10-06, E4 2026-03-09→04-06), không phải chỉnh tại chỗ.
+
+## 11. Kết quả mô phỏng vòng đời paper (THĂM DÒ, dữ liệu đã đốt, không phải bằng chứng edge)
+
+`scripts/trade_acceptance_replay.py` (AUTO_PAPER, bàn paper thật): v1.2 E1: 3 lệnh, 3 SL, −3.02R; v1.2 E2: 4 lệnh, 1 TP + 3 SL, −1.03R; v1.1 E1: 4 lệnh, 1 TP + 2 SL + 1 TIME_EXIT, −0.47R (đã trừ chi phí). Mẫu quá nhỏ để kết luận; **không có lý do để coi kết quả này là dấu hiệu của edge, và nó không bị che giấu**: trong 11 lệnh chỉ 2 chạm TP. Edge validation vẫn 0%.

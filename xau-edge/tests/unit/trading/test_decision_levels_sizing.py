@@ -136,7 +136,7 @@ def test_context_guards_block_with_their_reason() -> None:
         ("risk_limit_hit", Refusal.RISK_LIMIT),
     ):
         value = field == "broker_connected"
-        ctx = DecisionContext(spec=SPEC, equity=100_000.0, **{field: not value})
+        ctx = DecisionContext(spec=SPEC, equity=100_000.0, **{field: not value})  # type: ignore[arg-type]
         assert reason in refusal(decide(state, ctx)), field
 
 

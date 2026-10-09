@@ -36,3 +36,9 @@ Governor: tối đa 1 lệnh mở, ≤2 lệnh/giờ, ≤3/phiên, ≤6/ngày, c
 ## Điều kiện để nâng nhãn
 
 Chỉ khi có đánh giá tiền đăng ký đủ công suất thống kê trên dữ liệu chưa chạm, theo giao thức của `docs/PROFITABILITY_ROADMAP.md`. Kết quả paper hằng ngày **không** đủ.
+
+## Phiên bản v1.2.0 (đã pre-đăng ký, KHÔNG phải mặc định)
+
+`docs/trading/BASELINE_V1_2_PREREGISTRATION.md` (commit `97afc2c`, trước mọi kết quả) đăng ký ba thay đổi theo cơ chế: vòng đời setup `ARMED→TRIGGERED`, hình học kế hoạch theo ATR(M5) bỏ cổng `clearance`, biến động thành cảnh báo. Đo trên cửa sổ chưa từng xem (E1, E2; 48 ngày): **0.167 setup/ngày**, dưới dải kỹ thuật [0.25, 8] đã đăng ký ⇒ **v1.2 không thay v1.1** (các tiêu chí khác đều đạt). Chi tiết: `docs/reports/SIGNAL_FUNNEL_ANALYSIS.md`. v1.1.0 vẫn là mặc định; `XAU_EDGE_BASELINE_VERSION=1.2.0` chọn v1.2 như một quyết định có chủ đích của owner. Không có tham số nào được chỉnh sau khi xem kết quả.
+
+Tần suất đo được của khái niệm setup hiện tại là khoảng 0.1–0.23 setup/ngày (một setup mỗi 4–10 ngày): bàn paper hoạt động đúng nhưng nhiều ngày chỉ WAIT là bình thường. Hướng mở rộng hợp lý (pullback sâu, hiện bị coi là `TIMEFRAME_CONFLICT`) phải là v1.3 pre-đăng ký trên cửa sổ chưa dùng.

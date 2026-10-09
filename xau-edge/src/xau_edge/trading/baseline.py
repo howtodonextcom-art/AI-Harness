@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -39,8 +40,13 @@ from xau_edge.trading.schema import (
 )
 from xau_edge.trading.sizing import SymbolSpec, size_for_risk
 
+if TYPE_CHECKING:
+    from xau_edge.trading.setup_machine import SetupLifecycle
+
 STRATEGY_ID = "xau_mtf_baseline"
-STRATEGY_VERSION = "1.1.0"
+STRATEGY_VERSION = "1.2.0"
+V11 = "1.1.0"
+"""v1.1.0 stays reproducible with ``BaselineConfig(version="1.1.0")`` (default until adopted)."""
 BLOCKING_H4 = {"BUY": "TREND_DOWN", "SELL": "TREND_UP"}
 NEWS_NOT_VERIFIED = "NEWS NOT VERIFIED: no economic calendar, check the news yourself"
 
@@ -50,6 +56,15 @@ class BaselineConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    version: Literal["1.1.0", "1.2.0"] = "1.1.0"
+    """Pre-registered behaviour: 1.2.0 = setup lifecycle, M5-scale plan, volatility as warning."""
+    v12_lifecycle: bool = True
+    v12_m5_geometry: bool = True
+    v12_vol_warning: bool = True
+    """Ablation switches of the three v1.2 changes (attribution only; all True in production)."""
+    spread_veto: bool = True
+    """Diagnostic switch: False drops the relative spread veto (percentile, spread-to-ATR); the
+    spread cost is still priced by the net R/R, and only an abnormal M1 keeps vetoing."""
     levels: LevelConfig = Field(default_factory=LevelConfig)
     risk_pct: float = Field(default=0.25, gt=0, le=1.0)
     min_clear_atr: float = Field(default=1.0, ge=0)
@@ -84,6 +99,8 @@ class DecisionContext:
     bid: float | None = None
     ask: float | None = None
     """Executable quote: BUY enters at the ask, SELL at the bid (else last close +/- spread/2)."""
+    lifecycle: SetupLifecycle | None = None
+    """v1.2 only: the setup lifecycle computed from the closed bars (None for v1.1)."""
 
 
 def m1_execution_state(state: MarketState, direction: int = 0) -> str:
@@ -114,10 +131,10 @@ def _expiry_anchor(state: MarketState) -> tuple[object, object]:
     return m5.bar_open, m5.bar_closed
 
 
-def setup_identity(state: MarketState, side: str) -> str:
+def setup_identity(state: MarketState, side: str, version: str = V11) -> str:
     """Stable while the same M5 trigger bar holds (alerts and paper orders key on this)."""
     opened, _ = _expiry_anchor(state)
-    return make_signal_id({"setup": side, "s": state.symbol, "m5": opened, "v": STRATEGY_VERSION})
+    return make_signal_id({"setup": side, "s": state.symbol, "m5": opened, "v": version})
 
 
 def _volume_state(state: MarketState) -> str:
@@ -132,7 +149,7 @@ def _common(state: MarketState, cfg: BaselineConfig, ctx: DecisionContext) -> di
         "timestamp": state.timestamp,
         "symbol": state.symbol,
         "strategy_id": STRATEGY_ID,
-        "strategy_version": STRATEGY_VERSION,
+        "strategy_version": cfg.version,
         "market_regime": state.h4_regime,
         "h4_bias": state.h4_regime,
         "h1_bias": state.h1_trend,
@@ -142,7 +159,7 @@ def _common(state: MarketState, cfg: BaselineConfig, ctx: DecisionContext) -> di
         "spread": state.spread,
         "volume_state": _volume_state(state),
         "volume_type": state.volume_type,
-        "code_version": STRATEGY_VERSION,
+        "code_version": cfg.version,
         "news_state": state.news_state,
         "spread_state": state.spread_state,
         "volatility_regime": state.volatility_regime,
@@ -166,7 +183,7 @@ def _wait(
             {
                 "t": state.timestamp,
                 "s": state.symbol,
-                "v": STRATEGY_VERSION,
+                "v": cfg.version,
                 "r": [r.value for r in unique],
             }
         ),
@@ -204,7 +221,12 @@ def _gates(  # noqa: PLR0912 - one gate per condition
         else:
             out.append(Refusal.NEWS_UNKNOWN)
     if state.execution_quality == "POOR":
-        out.append(Refusal.SPREAD_TOO_WIDE)
+        if cfg.spread_veto:
+            out.append(Refusal.SPREAD_TOO_WIDE)
+        elif state.m1_micro_state == "ABNORMAL":
+            out.append(Refusal.VOLATILITY_TOO_HIGH)
+        else:
+            warnings.append("SPREAD WIDE: judged by the net R/R, which prices the spread")
     elif state.execution_quality == "UNKNOWN":
         out.append(Refusal.UNKNOWN_STATE)
     if state.volatility_regime == "HIGH" and cfg.block_high_volatility:
@@ -227,6 +249,10 @@ def decide(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the cha
 ) -> TradingSignal:
     """The baseline decision for ``state`` (deterministic: same state, same answer)."""
     cfg = cfg or BaselineConfig()
+    if cfg.version == "1.2.0":
+        from xau_edge.trading.baseline_v12 import decide_v12  # noqa: PLC0415 - avoids a cycle
+
+        return decide_v12(state, ctx, cfg)
     chain = [
         f"H4:{state.h4_regime}",
         f"H1:{state.h1_trend}",
@@ -345,7 +371,7 @@ def decide(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the cha
             {
                 "t": state.timestamp,
                 "s": state.symbol,
-                "v": STRATEGY_VERSION,
+                "v": cfg.version,
                 "d": decision.value,
                 "e": round(entry, 5),
                 "sl": round(stop.price, 5),

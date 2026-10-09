@@ -436,6 +436,7 @@ class PaperDesk:
     def _finalize(self, rec: dict[str, Any], closed: ClosedTrade, reason: str) -> dict[str, Any]:
         risk_distance = abs(rec["fill_price"] - rec["initial_sl"])
         risk_amount = float(rec.get("risk_amount") or 0.0)
+        rec["mfe"], rec["mae"] = self._settled_excursions(rec, closed.exit_price, reason)
         rec.update(
             status=PaperStatus.CLOSED.value,
             closed_at=_iso(closed.exit_time),
@@ -525,8 +526,35 @@ class PaperDesk:
             favourable, adverse = bar.high - entry, entry - bar.low
         else:
             favourable, adverse = entry - (bar.low + spread), (bar.high + spread) - entry
+        rec["mfe_before_bar"], rec["mae_before_bar"] = float(rec["mfe"]), float(rec["mae"])
         rec["mfe"] = max(float(rec["mfe"]), favourable)
         rec["mae"] = max(float(rec["mae"]), adverse)
+
+    @staticmethod
+    def _settled_excursions(
+        rec: dict[str, Any], exit_price: float, reason: str
+    ) -> tuple[float, float]:
+        """(MFE, MAE) in price units as they stood when the trade ended.
+
+        The closing bar's range is counted while the trade is open (a trade that ends on its first
+        bar still has an excursion), but nothing that happened AFTER the exit may be attributed
+        to the trade: a stopped trade cannot have gone further against it than its stop (or the
+        gap fill), and a stop is judged before the target, so the favourable extreme of the bar
+        that stopped it is not credited. A target exit cannot have gone further for it than the
+        target.
+        """
+        side = 1 if rec["side"] == "BUY" else -1
+        mfe, mae = float(rec["mfe"]), float(rec["mae"])
+        if reason == DeskExit.STOP_LOSS.value:
+            adverse_at_exit = (rec["fill_price"] - exit_price) * side
+            mae = min(mae, max(adverse_at_exit, float(rec.get("mae_before_bar", 0.0))))
+            mfe = float(rec.get("mfe_before_bar", mfe))
+        elif reason == DeskExit.TAKE_PROFIT.value:
+            mfe = min(
+                mfe,
+                max((exit_price - rec["fill_price"]) * side, float(rec.get("mfe_before_bar", 0.0))),
+            )
+        return mfe, mae
 
     def _manage(
         self, rec: dict[str, Any], bar: MarketBar, extra: BarExtras

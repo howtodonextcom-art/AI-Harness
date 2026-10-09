@@ -1,15 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TradeChart, type Overlays } from "@/components/trade/TradeChart";
+import { MARKET_TIMEFRAMES, fetchBars, type BarsResponse, type MarketTimeframe } from "@/lib/market";
+import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
 import {
   closePaperTrade,
   fetchDecision,
+  fetchMarkers,
   openPaperTrade,
+  type MarkersResponse,
   type PaperTrade,
   type RiskPlan,
   type TradeView as TradeViewData,
 } from "@/lib/trade";
-import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
 
 const POLL_MS = 3000;
 const STALE_UI_SECONDS = 20;
@@ -78,11 +82,12 @@ function Position({ trade, onClose, busy }: { trade: PaperTrade; onClose: () => 
         <Pill label="PAPER" value={`${trade.side} ${trade.status}`} tone={SIDE_STYLE[trade.side]} />
         <span className="text-xs text-slate-500">{trade.trade_id}</span>
       </div>
-      <Row k="Giá vào" v={fmt(trade.fill_price)} />
-      <Row k="SL / TP" v={`${fmt(trade.initial_sl)} / ${fmt(trade.initial_tp)}`} />
+      <Row k="Giá vào" v={fmt(trade.fill_price)} testId="position-entry" />
+      <Row k="SL / TP" v={`${fmt(trade.sl)} / ${fmt(trade.tp)}`} />
       <Row k="Lot" v={fmt(trade.lots, 2)} />
       <Row k="Giá hiện tại" v={fmt(trade.current_price)} />
-      <Row k="Lãi/lỗ tạm tính" v={<span className={tone}>{money(pnl)} ({fmt(trade.unrealized_r, 2)}R)</span>} testId="position-pnl" />
+      <Row k="R hiện tại" v={fmt(trade.unrealized_r, 2)} testId="position-r" />
+      <Row k="Lãi/lỗ tạm tính" v={<span className={tone}>{money(pnl)}</span>} testId="position-pnl" />
       <Row k="Thời gian giữ" v={`${fmt(trade.duration_minutes, 0)} phút`} />
       <button
         type="button"
@@ -97,6 +102,14 @@ function Position({ trade, onClose, busy }: { trade: PaperTrade; onClose: () => 
   );
 }
 
+const TOGGLES: [keyof Overlays, string][] = [
+  ["signals", "Signals"],
+  ["plan", "Trade Plan"],
+  ["paper", "Paper Trades"],
+  ["structure", "Structure"],
+  ["volume", "Volume"],
+];
+
 /** The one page for a disciplined PAPER trading decision on live FTMO data (no real orders). */
 export function TradeView() {
   const [view, setView] = useState<TradeViewData | null>(null);
@@ -108,6 +121,11 @@ export function TradeView() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: string; text: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [tf, setTf] = useState<MarketTimeframe>("M5");
+  const [bars, setBars] = useState<BarsResponse | null>(null);
+  const [markers, setMarkers] = useState<MarkersResponse | null>(null);
+  const [history, setHistory] = useState(false);
+  const [overlays, setOverlays] = useState<Overlays>({ signals: true, plan: true, paper: true, structure: false, volume: true });
   const inFlight = useRef(false);
 
   useEffect(() => {
@@ -145,8 +163,47 @@ export function TradeView() {
     };
   }, [load]);
 
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+      try {
+        const b = await fetchBars(tf, 400, true);
+        if (alive) setBars(b);
+      } catch {
+        /* the stale banner (decision API) already tells the owner; the chart keeps its last data */
+      }
+    };
+    const first = setTimeout(() => void run(), 0);
+    const id = setInterval(() => void run(), 3000);
+    return () => {
+      alive = false;
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, [tf]);
+
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+      try {
+        const m = await fetchMarkers();
+        if (alive) setMarkers(m);
+      } catch {
+        /* markers are secondary */
+      }
+    };
+    const first = setTimeout(() => void run(), 0);
+    const id = setInterval(() => void run(), 5000);
+    return () => {
+      alive = false;
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, []);
+
   const uiStale = lastOk === null || (now - lastOk) / 1000 > STALE_UI_SECONDS;
   const dataStale = Boolean(view?.market?.open) && ((view?.data_age_seconds ?? 0) > STALE_DATA_SECONDS || Boolean(view?.quote?.stale));
+  const anyStale = uiStale || dataStale;
   const decision = view?.decision;
   const side = decision?.decision ?? "WAIT";
   const expiresMs = decision?.signal_expiry ? Date.parse(decision.signal_expiry) : null;
@@ -154,7 +211,8 @@ export function TradeView() {
   const expired = Boolean(decision?.expired) || (secondsLeft !== null && secondsLeft <= 0 && side !== "WAIT");
   const plan: RiskPlan | undefined = view?.risk_plans?.find((p) => Math.abs(p.risk_pct - risk) < 1e-9);
   const blockers = view?.desk?.blockers ?? [];
-  const canOpen = Boolean(view?.actionable && view?.desk?.can_open && !expired && !uiStale && !dataStale && plan?.ok);
+  const canOpen = Boolean(view?.actionable && view?.desk?.can_open && !expired && !anyStale && plan?.ok);
+  const planLive = side !== "WAIT" && !expired && !anyStale;
 
   const take = async () => {
     if (!decision || !decision.setup_id) return;
@@ -184,8 +242,10 @@ export function TradeView() {
     void load();
   };
 
+  const blockedBy = view?.why_wait?.blocked_by ?? decision?.refusal_reasons ?? [];
+
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-3 px-4 py-4">
+    <main className="mx-auto w-full max-w-7xl space-y-3 px-3 py-3 sm:px-4">
       <header className="flex flex-wrap items-center gap-2">
         <h1 className="text-xl font-bold">XAUUSD · FTMO DEMO</h1>
         <Pill label="" value="PAPER ONLY — không gửi lệnh thật" tone={WARN} testId="paper-only" />
@@ -199,6 +259,7 @@ export function TradeView() {
         )}
         <span data-testid="data-age" className="text-xs text-slate-500">
           dữ liệu: {ageText(view?.data_age_seconds)} · cập nhật {view ? formatInZone(view.generated_at, zone) : "—"} ({zone})
+          {view?.setup?.strategy_version ? ` · baseline v${view.setup.strategy_version}` : ""}
         </span>
       </header>
 
@@ -228,50 +289,110 @@ export function TradeView() {
         </div>
       )}
 
-      {view?.available && decision && (
-        <div className="grid gap-3 lg:grid-cols-3">
-          <div className="space-y-3 lg:col-span-2">
-            <Card title="Quyết định hiện tại" testId="decision-card">
-              <div className="flex flex-wrap items-center gap-3">
-                <span data-testid="decision" className={`rounded-lg border-2 px-5 py-2 text-3xl font-black ${SIDE_STYLE[side]}`}>
-                  {side !== "WAIT" && (expired || dataStale) ? `${side} (${expired ? "hết hạn" : "dữ liệu cũ"})` : side}
-                </span>
-                {side !== "WAIT" && !expired && secondsLeft !== null && (
-                  <span data-testid="expiry" className="text-sm">
-                    còn hiệu lực <b>{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</b>
-                  </span>
-                )}
-                <Pill label="bằng chứng" value="CHƯA KIỂM CHỨNG" tone={WARN} testId="evidence-pill" />
-                {view.news?.warning && <Pill label="tin tức" value="CHƯA XÁC MINH (NEWS NOT VERIFIED)" tone={WARN} testId="news-warning" />}
-              </div>
-              <p data-testid="evidence-text" className="mt-2 text-xs text-slate-500">{view.evidence.label} {view.evidence.research}</p>
-              <ul data-testid="explanation" className="mt-2 list-disc space-y-0.5 pl-5 text-sm">
-                {(view.explanation ?? []).map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              {decision.warnings.length > 0 && (
-                <ul className="mt-1 list-disc pl-5 text-xs text-amber-700 dark:text-amber-300">
-                  {decision.warnings.map((w) => (
-                    <li key={w}>{w}</li>
-                  ))}
-                </ul>
-              )}
-            </Card>
+      <div className="grid gap-3 lg:grid-cols-3">
+        {/* 1. LIVE CHART */}
+        <section data-testid="chart-card" className={`min-w-0 space-y-2 lg:col-span-2 ${anyStale ? "opacity-60" : ""}`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <div role="group" aria-label="Khung thời gian biểu đồ" className="flex gap-1">
+              {MARKET_TIMEFRAMES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  data-testid={`chart-tf-${t}`}
+                  aria-pressed={t === tf}
+                  onClick={() => setTf(t)}
+                  className={`rounded-md border px-2 py-1 text-xs ${t === tf ? "border-sky-600 bg-sky-500/15 font-semibold" : "border-slate-400"}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div role="group" aria-label="Lớp phủ" className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {TOGGLES.map(([key, label]) => (
+                <label key={key} className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    data-testid={`toggle-${key}`}
+                    checked={overlays[key]}
+                    onChange={(e) => setOverlays({ ...overlays, [key]: e.target.checked })}
+                  />
+                  {label}
+                </label>
+              ))}
+              <label className="flex items-center gap-1">
+                <input type="checkbox" data-testid="toggle-history" checked={history} onChange={(e) => setHistory(e.target.checked)} />
+                Paper trade history
+              </label>
+            </div>
+          </div>
+          {/* chart-side multi-timeframe matrix: TF / ROLE / STATE; click = switch the chart */}
+          <div data-testid="matrix" className="grid grid-cols-2 gap-1 text-xs sm:grid-cols-3 lg:grid-cols-6">
+            {(view?.timeframes ?? []).map((r) => (
+              <button
+                key={r.timeframe}
+                type="button"
+                data-testid={`matrix-${r.timeframe}`}
+                onClick={() => setTf(r.timeframe as MarketTimeframe)}
+                className="rounded-md border border-slate-300 px-2 py-1 text-left hover:bg-slate-500/10 dark:border-slate-700"
+                title={`Hiển thị biểu đồ ${r.timeframe}`}
+              >
+                <div className="font-semibold">{r.timeframe} <span className="font-normal text-slate-500">{r.role.split(" ")[0]}</span></div>
+                <div className="truncate">{r.state}</div>
+              </button>
+            ))}
+          </div>
+          <TradeChart
+            bars={bars?.bars ?? []}
+            timeframe={tf}
+            zone={zone}
+            overlays={overlays}
+            view={view}
+            markers={markers}
+            history={history}
+            planLive={planLive}
+          />
+          <p data-testid="volume-line" className="text-xs text-slate-500">
+            Tick volume M1 (không phải volume sàn): {view?.volume?.state ?? "—"} · tương đối {fmt(view?.volume?.m1_relative)} · percentile{" "}
+            {view?.volume?.m1_percentile === null || view?.volume?.m1_percentile === undefined ? "—" : `${(view.volume.m1_percentile * 100).toFixed(0)}%`} · z {fmt(view?.volume?.m1_zscore)}
+          </p>
+        </section>
 
-            {side !== "WAIT" && (
-              <Card title="Kế hoạch lệnh" testId="plan-card">
-                <div className="grid gap-x-6 sm:grid-cols-2">
-                  <Row k="Vào lệnh (MARKET)" v={fmt(decision.entry_price)} testId="plan-entry" />
-                  <Row k="Stop loss" v={fmt(decision.stop_loss)} testId="plan-sl" />
-                  <Row k="Take profit" v={fmt(decision.take_profit)} testId="plan-tp" />
-                  <Row k="R/R (sau phí)" v={fmt(decision.risk_reward)} testId="plan-rr" />
-                  <Row k="Tỉ lệ thắng hòa vốn" v={decision.required_win_rate === null ? "—" : `${(decision.required_win_rate * 100).toFixed(0)}%`} />
-                  <Row k="Mô hình stop" v={decision.stop_model ?? "—"} />
-                </div>
+        {/* 2-4. DECISION, PLAN, POSITION */}
+        <div className="min-w-0 space-y-3">
+          <Card title="Quyết định hiện tại" testId="decision-card">
+            <div className="flex flex-wrap items-center gap-3">
+              <span data-testid="decision" className={`rounded-lg border-2 px-5 py-2 text-3xl font-black ${SIDE_STYLE[side]}`}>
+                {side !== "WAIT" && (expired || dataStale) ? `${side} (${expired ? "hết hạn" : "dữ liệu cũ"})` : side}
+              </span>
+              {side !== "WAIT" && !expired && secondsLeft !== null && (
+                <span data-testid="expiry" className="text-sm">
+                  còn hiệu lực <b>{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</b>
+                </span>
+              )}
+            </div>
+            {side === "WAIT" && view?.available && (
+              <p data-testid="blocked-by" className="mt-2 text-sm">
+                Blocked by: <b>{blockedBy.join(", ") || "—"}</b>
+              </p>
+            )}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Pill label="bằng chứng" value="CHƯA KIỂM CHỨNG" tone={WARN} testId="evidence-pill" />
+              {view?.news?.warning && <Pill label="tin tức" value="CHƯA XÁC MINH (NEWS NOT VERIFIED)" tone={WARN} testId="news-warning" />}
+              {view?.setup?.phase && view.setup.phase !== "NONE" && (
+                <Pill label="setup" value={view.setup.phase} tone={view.setup.phase === "TRIGGERED" ? GOOD : NEUTRAL} testId="setup-phase" />
+              )}
+            </div>
+
+            {side !== "WAIT" && decision && (
+              <div data-testid="plan-card" className="mt-3 border-t border-slate-200 pt-2 dark:border-slate-800">
+                <Row k="Vào lệnh (MARKET)" v={fmt(decision.entry_price)} testId="plan-entry" />
+                <Row k="Stop loss" v={fmt(decision.stop_loss)} testId="plan-sl" />
+                <Row k="Take profit" v={fmt(decision.take_profit)} testId="plan-tp" />
+                <Row k="R/R (sau phí)" v={fmt(decision.risk_reward)} testId="plan-rr" />
+                <Row k="Mô hình stop" v={decision.stop_model ?? "—"} />
                 {decision.invalidation && <p className="mt-1 text-xs text-slate-500">Vô hiệu khi: {decision.invalidation}</p>}
-                <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="Mức rủi ro">
-                  {(view.risk_choices ?? [0.1, 0.25, 0.5]).map((r) => (
+                <div className="mt-2 flex flex-wrap items-center gap-2" role="group" aria-label="Mức rủi ro">
+                  {(view?.risk_choices ?? [0.1, 0.25, 0.5]).map((r) => (
                     <button
                       key={r}
                       type="button"
@@ -283,17 +404,17 @@ export function TradeView() {
                       {r.toFixed(2)}%
                     </button>
                   ))}
-                  <span className="text-xs text-slate-500">vốn paper giả lập ${fmt(view.desk?.account.equity, 0)}</span>
                 </div>
                 {plan ? (
-                  <div className="mt-2" data-testid="risk-plan">
+                  <div className="mt-1" data-testid="risk-plan">
                     <Row k="Lot" v={fmt(plan.lots, 2)} testId="plan-lots" />
                     <Row k="Rủi ro nếu chạm SL" v={money(-plan.loss_at_sl)} />
                     <Row k="Lãi nếu chạm TP" v={money(plan.gain_at_tp)} />
+                    <p className="text-xs text-slate-500">vốn paper giả lập ${fmt(view?.desk?.account.equity, 0)}</p>
                     {plan.errors.length > 0 && <p className="text-sm text-red-600">{plan.errors.join(", ")}</p>}
                   </div>
                 ) : (
-                  <p className="mt-2 text-sm text-slate-500">Chưa tính được lot (thiếu thông số hợp đồng của broker).</p>
+                  <p className="mt-1 text-sm text-slate-500">Chưa tính được lot (thiếu thông số hợp đồng của broker).</p>
                 )}
                 {blockers.length > 0 && (
                   <p data-testid="blockers" className="mt-2 text-sm text-amber-700 dark:text-amber-300">
@@ -320,96 +441,144 @@ export function TradeView() {
                     </button>
                   </div>
                 )}
-              </Card>
-            )}
-
-            <Card title="Khung thời gian" testId="timeframes">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-xs text-slate-500">
-                    <tr>
-                      <th className="pr-3">TF</th>
-                      <th className="pr-3">Vai trò</th>
-                      <th className="pr-3">Trạng thái</th>
-                      <th className="pr-3">Hướng</th>
-                      <th className="pr-3">Tick vol (tương đối)</th>
-                      <th>Dữ liệu</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(view.timeframes ?? []).map((r) => (
-                      <tr key={r.timeframe} data-testid={`tf-${r.timeframe}`} className="border-t border-slate-200 dark:border-slate-800">
-                        <td className="pr-3 font-semibold">{r.timeframe}</td>
-                        <td className="pr-3 text-xs text-slate-500">{r.role}</td>
-                        <td className="pr-3">{r.state}</td>
-                        <td className="pr-3">{biasText(r.bias)}</td>
-                        <td className="pr-3 font-mono">{fmt(r.relative_tick_volume, 2)}</td>
-                        <td className={r.freshness === "FRESH" ? "text-emerald-600" : "text-red-600"}>{r.freshness}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
-            </Card>
-          </div>
-
-          <div className="space-y-3">
-            <Card title="Lệnh paper đang mở" testId="position-card">
-              {view.desk?.position ? (
-                <Position trade={view.desk.position} onClose={closeNow} busy={busy} />
-              ) : (
-                <p className="text-sm text-slate-500">Không có lệnh paper đang mở.</p>
-              )}
-            </Card>
-
-            <Card title="Volume (tick volume)" testId="volume-card">
-              <p data-testid="volume-note" className="mb-1 text-xs text-slate-500">{view.volume?.note}</p>
-              <Row k="Trạng thái M1" v={view.volume?.state ?? "—"} />
-              <Row k="Z-score" v={fmt(view.volume?.m1_zscore)} />
-              <Row k="Tương đối" v={fmt(view.volume?.m1_relative)} />
-              <Row k="Percentile" v={view.volume?.m1_percentile === null || view.volume?.m1_percentile === undefined ? "—" : `${(view.volume.m1_percentile * 100).toFixed(0)}%`} />
-              <Row k="Gia tốc" v={fmt(view.volume?.m1_acceleration)} />
-            </Card>
-
-            <Card title="Cấu trúc & mức giá" testId="structure-card">
-              <Row k="Kháng cự gần" v={fmt(view.structure?.nearest_resistance as number | null)} />
-              <Row k="Hỗ trợ gần" v={fmt(view.structure?.nearest_support as number | null)} />
-              <Row k="PDH / PDL" v={`${fmt(view.structure?.pdh as number | null)} / ${fmt(view.structure?.pdl as number | null)}`} />
-              <Row k="Biến động" v={String(view.structure?.volatility ?? "—")} />
-              <Row k="Phiên" v={String(view.structure?.session ?? "—")} />
-              <Row k="BOS / CHOCH" v={`${view.structure?.bos ?? "—"} / ${view.structure?.choch ?? "—"}`} />
-            </Card>
-
-            <Card title="Tài khoản paper & hôm nay" testId="account-card">
-              <p className="mb-1 text-xs text-slate-500">Vốn giả lập — không phải số dư FTMO.</p>
-              <Row k="Equity" v={money(view.desk?.account.equity)} />
-              <Row k="Số lệnh hôm nay" v={String(view.desk?.today.paper_trades ?? 0)} />
-              <Row k="Thắng / Thua" v={`${view.desk?.today.wins ?? 0} / ${view.desk?.today.losses ?? 0}`} />
-              <Row k="P&L ròng" v={money(view.desk?.today.net_pnl as number | null)} />
-              <Row k="Tổng R" v={fmt(view.desk?.today.net_r as number | null)} />
-            </Card>
-
-            {view.telemetry && (
-              <Card title="Quyết định hôm nay" testId="telemetry-card">
-                <Row k="BUY / SELL / WAIT" v={`${view.telemetry.buy} / ${view.telemetry.sell} / ${view.telemetry.wait}`} />
-                <Row k="Setup khác nhau" v={String(view.telemetry.distinct_setups)} />
-                <Row k="Lý do chặn phổ biến" v={view.telemetry.most_common_blocker ?? "—"} />
-              </Card>
             )}
+          </Card>
 
-            <Card title="Khóa thực thi DEMO" testId="demo-lock">
-              <Pill label="" value={view.demo.status === "LOCKED" ? "ĐANG KHÓA" : "MỞ KHÓA THEO CẤU HÌNH"} tone={view.demo.status === "LOCKED" ? BAD : WARN} />
-              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs">
-                {view.demo.reasons.map((r) => (
-                  <li key={r.code}>
-                    <b>{r.code}</b>: {r.why}
-                  </li>
+          <Card title="Lệnh paper đang mở" testId="position-card">
+            {view?.desk?.position ? (
+              <Position trade={view.desk.position} onClose={closeNow} busy={busy} />
+            ) : (
+              <p className="text-sm text-slate-500">Không có lệnh paper đang mở.</p>
+            )}
+          </Card>
+
+          <details data-testid="why-wait" className="rounded-lg border border-slate-300 p-3 dark:border-slate-700" open={side === "WAIT"}>
+            <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-slate-500">
+              {side === "WAIT" ? "Why WAIT?" : "Chuỗi điều kiện"}
+            </summary>
+            <ul className="mt-2 space-y-0.5 text-sm" data-testid="stages">
+              {(view?.why_wait?.stages ?? []).map((s) => (
+                <li key={s.stage} data-testid={`stage-${s.stage.replace(/[^A-Za-z0-9]+/g, "-")}`} className="flex justify-between">
+                  <span>{s.stage}</span>
+                  <span className={s.status === "PASS" ? "text-emerald-600" : s.status === "FAIL" ? "font-semibold text-red-600" : "text-slate-400"}>
+                    {s.status === "NOT_REACHED" ? "—" : s.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {view?.why_wait?.waiting_for && side === "WAIT" && (
+              <p data-testid="waiting-for" className="mt-2 rounded-md bg-slate-500/10 px-2 py-1 text-sm">
+                Waiting for: <b>{view.why_wait.waiting_for}</b>
+                <span className="block text-xs text-slate-500">Trạng thái giải thích, không phải dự báo hay khuyến nghị.</span>
+              </p>
+            )}
+          </details>
+        </div>
+      </div>
+
+      {view?.available && (
+        <>
+          {/* 5-6. MULTI-TF STATE and REASONS */}
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2">
+              <Card title="Khung thời gian" testId="timeframes">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="text-xs text-slate-500">
+                      <tr>
+                        <th className="pr-3">TF</th>
+                        <th className="pr-3">Vai trò</th>
+                        <th className="pr-3">Trạng thái</th>
+                        <th className="pr-3">Hướng</th>
+                        <th className="pr-3">Tick vol (tương đối)</th>
+                        <th>Dữ liệu</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(view.timeframes ?? []).map((r) => (
+                        <tr key={r.timeframe} data-testid={`tf-${r.timeframe}`} className="border-t border-slate-200 dark:border-slate-800">
+                          <td className="pr-3 font-semibold">{r.timeframe}</td>
+                          <td className="pr-3 text-xs text-slate-500">{r.role}</td>
+                          <td className="pr-3">{r.state}</td>
+                          <td className="pr-3">{biasText(r.bias)}</td>
+                          <td className="pr-3 font-mono">{fmt(r.relative_tick_volume, 2)}</td>
+                          <td className={r.freshness === "FRESH" ? "text-emerald-600" : "text-red-600"}>{r.freshness}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+            <Card title="Lý do" testId="reasons-card">
+              <ul data-testid="explanation" className="list-disc space-y-0.5 pl-5 text-sm">
+                {(view.explanation ?? []).map((line) => (
+                  <li key={line}>{line}</li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-slate-500">Bàn paper không bao giờ gửi lệnh tới MT5. {view.demo.how_to_unlock}</p>
+              {(decision?.warnings ?? []).length > 0 && (
+                <ul className="mt-1 list-disc pl-5 text-xs text-amber-700 dark:text-amber-300">
+                  {decision?.warnings.map((w) => (
+                    <li key={w}>{w}</li>
+                  ))}
+                </ul>
+              )}
+              <p data-testid="evidence-text" className="mt-2 text-xs text-slate-500">{view.evidence.label} {view.evidence.research}</p>
             </Card>
           </div>
-        </div>
+
+          {/* 8. ADVANCED DIAGNOSTICS */}
+          <details data-testid="advanced" className="rounded-lg border border-slate-300 p-3 dark:border-slate-700">
+            <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-slate-500">Chẩn đoán nâng cao</summary>
+            <div className="mt-3 grid gap-3 lg:grid-cols-3">
+              <Card title="Volume (tick volume)" testId="volume-card">
+                <p data-testid="volume-note" className="mb-1 text-xs text-slate-500">{view.volume?.note}</p>
+                <Row k="Trạng thái M1" v={view.volume?.state ?? "—"} />
+                <Row k="Z-score" v={fmt(view.volume?.m1_zscore)} />
+                <Row k="Tương đối" v={fmt(view.volume?.m1_relative)} />
+                <Row k="Gia tốc" v={fmt(view.volume?.m1_acceleration)} />
+              </Card>
+              <Card title="Cấu trúc & mức giá" testId="structure-card">
+                <Row k="Kháng cự gần" v={fmt(view.structure?.nearest_resistance as number | null)} />
+                <Row k="Hỗ trợ gần" v={fmt(view.structure?.nearest_support as number | null)} />
+                <Row k="PDH / PDL" v={`${fmt(view.structure?.pdh as number | null)} / ${fmt(view.structure?.pdl as number | null)}`} />
+                <Row k="Biến động" v={String(view.structure?.volatility ?? "—")} />
+                <Row k="Phiên" v={String(view.structure?.session ?? "—")} />
+                <Row k="BOS / CHOCH" v={`${view.structure?.bos ?? "—"} / ${view.structure?.choch ?? "—"}`} />
+              </Card>
+              <Card title="Tài khoản paper & hôm nay" testId="account-card">
+                <p className="mb-1 text-xs text-slate-500">Vốn giả lập — không phải số dư FTMO.</p>
+                <Row k="Equity" v={money(view.desk?.account.equity)} />
+                <Row k="Số lệnh hôm nay" v={String(view.desk?.today.paper_trades ?? 0)} />
+                <Row k="Thắng / Thua" v={`${view.desk?.today.wins ?? 0} / ${view.desk?.today.losses ?? 0}`} />
+                <Row k="P&L ròng" v={money(view.desk?.today.net_pnl as number | null)} />
+                <Row k="Tổng R" v={fmt(view.desk?.today.net_r as number | null)} />
+              </Card>
+              {view.telemetry && (
+                <Card title="Phễu quyết định hôm nay" testId="telemetry-card">
+                  <Row k="BUY / SELL / WAIT" v={`${view.telemetry.buy} / ${view.telemetry.sell} / ${view.telemetry.wait}`} />
+                  <Row k="Setup khác nhau" v={String(view.telemetry.distinct_setups)} />
+                  <Row k="Lý do chặn phổ biến" v={view.telemetry.most_common_blocker ?? "—"} />
+                  {view.telemetry.setup_phases && (
+                    <Row k="Giai đoạn setup" v={Object.entries(view.telemetry.setup_phases).map(([k, n]) => `${k}:${n}`).join(" ")} />
+                  )}
+                </Card>
+              )}
+              <Card title="Khóa thực thi DEMO" testId="demo-lock">
+                <Pill label="" value={view.demo.status === "LOCKED" ? "ĐANG KHÓA" : "MỞ KHÓA THEO CẤU HÌNH"} tone={view.demo.status === "LOCKED" ? BAD : WARN} />
+                <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs">
+                  {view.demo.reasons.map((r) => (
+                    <li key={r.code}>
+                      <b>{r.code}</b>: {r.why}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs text-slate-500">Bàn paper không bao giờ gửi lệnh tới MT5. {view.demo.how_to_unlock}</p>
+              </Card>
+            </div>
+          </details>
+        </>
       )}
     </main>
   );

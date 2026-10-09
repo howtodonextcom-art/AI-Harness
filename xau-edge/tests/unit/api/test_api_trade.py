@@ -101,3 +101,34 @@ def test_the_only_write_routes_are_the_two_paper_actions(http: TestClient) -> No
         if m not in {"GET", "HEAD", "OPTIONS"}
     }
     assert writes == {("POST", "/trade/paper/open"), ("POST", "/trade/paper/close")}
+
+
+def test_markers_are_built_from_logged_decisions_and_paper_trades_only(http: TestClient) -> None:
+    body = http.get("/trade/markers").json()
+    assert body["simulated"] is True
+    assert body["signals"] == [] and body["paper_trades"] == []
+
+
+def test_the_decision_view_carries_the_funnel_setup_and_alert_summary(http: TestClient) -> None:
+    body = http.get("/trade/decision").json()
+    stages = body["why_wait"]["stages"]
+    assert stages[0]["stage"] == "Market & data"
+    assert {s["status"] for s in stages} <= {"PASS", "FAIL", "NOT_REACHED"}
+    assert body["setup"]["valid_bars"] == 6 and body["setup"]["strategy_version"] == "1.1.0"
+    assert body["alerts"] is None  # the fixture engine has no alert channel
+
+
+def test_the_baseline_version_setting_is_validated_and_auto_paper_is_off_by_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from xau_edge.api.trade import build_trade_engine  # noqa: PLC0415
+
+    monkeypatch.delenv("XAU_EDGE_BASELINE_VERSION", raising=False)
+    monkeypatch.delenv("XAU_EDGE_AUTO_PAPER", raising=False)
+    engine = build_trade_engine(tmp_path / "m", tmp_path / "t")
+    assert engine.config.baseline.version == "1.1.0" and engine.config.auto_paper is False
+    monkeypatch.setenv("XAU_EDGE_BASELINE_VERSION", "1.2.0")
+    assert build_trade_engine(tmp_path / "m", tmp_path / "t").config.baseline.version == "1.2.0"
+    monkeypatch.setenv("XAU_EDGE_BASELINE_VERSION", "9.9")
+    with pytest.raises(ValueError, match="XAU_EDGE_BASELINE_VERSION"):
+        build_trade_engine(tmp_path / "m", tmp_path / "t")

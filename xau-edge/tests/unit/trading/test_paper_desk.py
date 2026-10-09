@@ -386,3 +386,39 @@ def test_telemetry_counts_decisions_and_the_most_common_blocker(tmp_path: Path) 
     assert summary["distinct_setups"] == 1
     assert summary["wait_pct"] == 80.0
     assert T0 < NOW
+
+
+def test_a_stopped_trade_never_shows_an_excursion_beyond_its_stop_or_the_bar_that_stopped_it(
+    tmp_path: Path,
+) -> None:
+    desk = make_desk(tmp_path)
+    rec = opened(desk)
+    entry, sl = rec["fill_price"], rec["sl"]
+    risk = entry - sl
+    # a wild bar: it spikes far above (never credited: the stop is judged first) and far below
+    wild = bars([(1, entry, entry + 3 * risk, sl - 2 * risk, sl - risk)])
+    done = desk.process_bars(wild)[0]
+    assert done["exit_reason"] == "STOP_LOSS"
+    assert done["mae_r"] == pytest.approx(1.0, abs=0.05)  # not 3R: it ended at the stop
+    assert done["mfe_r"] == pytest.approx(0.0, abs=0.01)  # nothing credited from the stopping bar
+
+
+def test_mfe_of_a_stopped_trade_keeps_what_happened_before_the_stopping_bar(tmp_path: Path) -> None:
+    desk = make_desk(tmp_path)
+    rec = opened(desk)
+    entry, sl = rec["fill_price"], rec["sl"]
+    risk = entry - sl
+    desk.process_bars(bars([(1, entry, entry + 0.8 * risk, entry - 0.2 * risk, entry)]))
+    done = desk.process_bars(bars([(2, entry, entry + 5 * risk, sl - 0.5, sl)]))[0]
+    assert done["exit_reason"] == "STOP_LOSS"
+    assert done["mfe_r"] == pytest.approx(0.8, abs=0.1)
+    assert done["mae_r"] <= 1.1
+
+
+def test_a_target_exit_does_not_credit_more_than_the_target(tmp_path: Path) -> None:
+    desk = make_desk(tmp_path)
+    rec = opened(desk)
+    entry, tp = rec["fill_price"], rec["tp"]
+    done = desk.process_bars(bars([(1, entry + 0.1, tp + 10, entry, tp + 5)]))[0]
+    assert done["exit_reason"] == "TAKE_PROFIT"
+    assert done["mfe_r"] == pytest.approx((tp - entry) / (entry - rec["sl"]), abs=0.05)

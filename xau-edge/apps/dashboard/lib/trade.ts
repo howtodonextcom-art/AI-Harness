@@ -16,6 +16,7 @@ export interface TradeDecisionBody {
   entry_price: number | null;
   stop_loss: number | null;
   take_profit: number | null;
+  take_profit_2?: number | null;
   risk_reward: number | null;
   required_win_rate: number | null;
   stop_model: string | null;
@@ -37,6 +38,57 @@ export interface TradeDecisionBody {
   volume_state: string;
   volume_type: string;
   m1_execution_state: string;
+}
+
+export interface WhyWait {
+  stages: { stage: string; status: "PASS" | "FAIL" | "NOT_REACHED" }[];
+  waiting_for: string | null;
+  blocked_by: string[];
+}
+
+export interface SetupInfo {
+  phase: string | null;
+  bars_since_armed: number | null;
+  valid_bars: number;
+  strategy_version: string;
+}
+
+export interface SignalMarker {
+  at: string;
+  bar_time: string;
+  setup_id: string;
+  side: "BUY" | "SELL";
+  entry: number | null;
+  sl: number | null;
+  tp1: number | null;
+  tp2: number | null;
+  rr: number | null;
+  lots: number | null;
+  expires_at: string | null;
+  strategy_version: string;
+  taken: boolean;
+}
+
+export interface PaperMarker {
+  trade_id: string;
+  side: "BUY" | "SELL";
+  status: string;
+  entry_time: string | null;
+  entry_price: number | null;
+  exit_time: string | null;
+  exit_price: number | null;
+  exit_reason: string | null;
+  net_pnl: number | null;
+  r_multiple: number | null;
+  duration_minutes: number | null;
+  sl: number | null;
+  tp: number | null;
+}
+
+export interface MarkersResponse {
+  simulated: boolean;
+  signals: SignalMarker[];
+  paper_trades: PaperMarker[];
 }
 
 export interface TimeframeRow {
@@ -75,8 +127,9 @@ export interface PaperTrade {
   opened_at: string | null;
   closed_at: string | null;
   fill_price: number;
+  sl: number;
   initial_sl: number;
-  initial_tp: number;
+  tp: number;
   lots: number;
   risk_pct: number;
   risk_amount: number | null;
@@ -91,7 +144,7 @@ export interface PaperTrade {
   unrealized_r?: number | null;
   current_price?: number | null;
   market?: Record<string, string | number | null>;
-  decision_snapshot?: Record<string, unknown>;
+  decision?: Record<string, unknown>;
   cancel_reason?: string | null;
 }
 
@@ -107,6 +160,8 @@ export interface TradeView {
   decision?: TradeDecisionBody;
   actionable?: boolean;
   explanation?: string[];
+  why_wait?: WhyWait;
+  setup?: SetupInfo;
   timeframes?: TimeframeRow[];
   volume?: {
     type: string;
@@ -140,6 +195,7 @@ export interface TradeView {
     distinct_setups: number;
     top_refusals: [string, number][];
     most_common_blocker: string | null;
+    setup_phases?: Record<string, number>;
   };
   demo: { status: string; reasons: { code: string; why: string }[]; paper_desk_sends_orders: boolean; how_to_unlock: string };
   problems: string[];
@@ -160,6 +216,7 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 export const fetchDecision = (signal?: AbortSignal) => getJson<TradeView>("/trade/decision", signal);
+export const fetchMarkers = (signal?: AbortSignal) => getJson<MarkersResponse>("/trade/markers?days=7", signal);
 export const fetchJournal = (signal?: AbortSignal) => getJson<JournalResponse>("/trade/journal?limit=500", signal);
 
 export interface ActionError {

@@ -94,7 +94,7 @@ export function JournalView() {
                   <td className="pr-3">{formatInZone(t.opened_at ?? t.created_at, zone)}</td>
                   <td className="pr-3 font-semibold">{t.side}</td>
                   <td className="pr-3 font-mono">{fmt(t.fill_price)}</td>
-                  <td className="pr-3 font-mono">{fmt(t.initial_sl)} / {fmt(t.initial_tp)}</td>
+                  <td className="pr-3 font-mono">{fmt(t.initial_sl)} / {fmt(t.tp)}</td>
                   <td className="pr-3 font-mono">{fmt(t.lots, 2)}</td>
                   <td className="pr-3">{t.status === "CLOSED" ? (t.exit_reason ?? "—") : t.status}</td>
                   <td className="pr-3 font-mono">{fmt(t.r_multiple)}</td>
@@ -110,7 +110,7 @@ export function JournalView() {
                   <tr>
                     <td colSpan={10} className="pb-2">
                       <pre data-testid="journal-detail" className="max-h-64 overflow-auto rounded-md bg-slate-500/10 p-2 text-xs">
-                        {JSON.stringify({ market: t.market, decision: t.decision_snapshot, setup_id: t.setup_id, cancel_reason: t.cancel_reason }, null, 2)}
+                        {JSON.stringify({ market: t.market, decision: t.decision, setup_id: t.setup_id, cancel_reason: t.cancel_reason }, null, 2)}
                       </pre>
                     </td>
                   </tr>

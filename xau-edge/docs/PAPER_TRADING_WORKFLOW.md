@@ -52,3 +52,12 @@ Muốn bật lệnh DEMO thật cần (không thuộc sprint này): mật khẩu
 | WAIT kéo dài | điều kiện chuỗi không thỏa | bình thường; xem "Quyết định hôm nay" để biết lý do phổ biến |
 
 Không nới ngưỡng chỉ vì ít tín hiệu: mọi thay đổi tham số phải qua phiên bản hóa `STRATEGY_VERSION` và đánh giá riêng.
+
+## Cập nhật: biểu đồ, "Why WAIT?" và các thiết lập
+
+* **Biểu đồ** ở đầu `/trade` (mặc định M5; bấm ô khung trong ma trận để đổi khung): đường ENTRY/SL/TP, vị thế paper, marker BUY/SELL/EXIT, công tắc Signals / Trade Plan / Paper Trades / Structure / Volume và "Paper trade history". Chi tiết: `docs/reports/TRADING_CHART_ACCEPTANCE.md`.
+* **Why WAIT?**: từng chặng PASS/FAIL/— và "Waiting for: …" (điều kiện kế tiếp, không phải dự báo).
+* **Phiên bản baseline**: mặc định v1.1.0; `XAU_EDGE_BASELINE_VERSION=1.2.0` để thử v1.2 (xem `OPERATIONAL_BASELINE.md`).
+* **AUTO_PAPER**: `XAU_EDGE_AUTO_PAPER=true` tự mở lệnh PAPER khi có quyết định hành động (mặc định TẮT, xác nhận thủ công). Chỉ chạm bàn paper, không thể tới `order_send`.
+* **Replay nghiệm thu**: `uv run python scripts/trade_acceptance_replay.py --start 2025-12-01 --end 2025-12-29` chạy toàn bộ đường đi trên dữ liệu đã đốt (xem `PAPER_LIFECYCLE_ACCEPTANCE.md`).
+* **Tần suất**: có thể nhiều ngày không có setup; đó là hành vi đúng của baseline đóng băng.

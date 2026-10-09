@@ -27,12 +27,14 @@ from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.trading.baseline import BaselineConfig
 from xau_edge.trading.decision_core import ROLES, SnapshotInputs, evaluate, explain
 from xau_edge.trading.demo_lock import demo_lock_status
+from xau_edge.trading.funnel import stages_from_signal, waiting_for
 from xau_edge.trading.live_source import LiveSnapshot, LiveTradingMarketSource, news_state
-from xau_edge.trading.market_state import MarketState
+from xau_edge.trading.market_state import MarketState, SnapshotMemo
 from xau_edge.trading.paper_desk import BarExtras, DeskRefusal, PaperDesk
 from xau_edge.trading.risk_calc import DEFAULT_RISK_PCT, RISK_CHOICES, calculate
 from xau_edge.trading.schema import TradeDecision, TradingSignal
 from xau_edge.trading.setup_alerts import SetupAlerts
+from xau_edge.trading.setup_machine import VALID_BARS
 from xau_edge.trading.sizing import SymbolSpec
 from xau_edge.trading.telemetry import DecisionTelemetry
 
@@ -54,6 +56,9 @@ class EngineConfig:
     news_calendar_path: str | None = None
     default_risk_pct: float = DEFAULT_RISK_PCT
     code_version: str = "unknown"
+    auto_paper: bool = False
+    """Local setting: open the PAPER desk automatically on an actionable decision. Default OFF.
+    It only ever reaches the paper desk; nothing here can reach an MT5 order function."""
 
 
 def _bias_of(label: str) -> int:
@@ -94,6 +99,7 @@ class TradeEngine:
         self._snap: LiveSnapshot | None = None
         self._last_telemetry_m1: datetime | None = None
         self._errors: list[str] = []
+        self._memo = SnapshotMemo()
 
     # ---- the cadence -------------------------------------------------------------------------
 
@@ -131,13 +137,7 @@ class TradeEngine:
             return True
 
     def _collector_alive(self, now: datetime) -> bool:
-        status = self._read_collector()
-        if status is None:
-            return False
-        try:
-            return (now - datetime.fromisoformat(str(status["updated_at"]))).total_seconds() <= 60.0
-        except (KeyError, ValueError):
-            return False
+        return self.source.collector_alive(now)
 
     def current_quote(self, now: datetime) -> Any:
         return self._live_quote(now)
@@ -146,14 +146,7 @@ class TradeEngine:
         return self._evidence()
 
     def _live_quote(self, now: datetime) -> Any:
-        return self.source._quote(self._read_live(), now)
-
-    def _read_live(self) -> dict[str, Any] | None:
-        try:
-            value = json.loads((self.source.root / "live.json").read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return None
-        return value if isinstance(value, dict) else None
+        return self.source.current_quote(now)
 
     def _recompute(self, now: datetime) -> None:
         snap = self.source.load(now)
@@ -173,7 +166,7 @@ class TradeEngine:
             market_open=snap.market_open,
             data_ok=data_ok,
         )
-        state, signal = evaluate(inputs, self.config.baseline, self.broker_clock)
+        state, signal = evaluate(inputs, self.config.baseline, self.broker_clock, self._memo)
         signal = signal.model_copy(
             update={"generated_at": now, "data_age_seconds": snap.data_age_seconds}
         )
@@ -185,11 +178,27 @@ class TradeEngine:
         if newest is not None and newest != self._last_telemetry_m1:
             self._last_telemetry_m1 = newest  # type: ignore[assignment]
             self.telemetry.append(signal, at=now)
+        if signal.decision is not TradeDecision.WAIT:
+            self.telemetry.append_signal(signal, at=now)
         self._drive_desk(snap, state, now)
+        if self.config.auto_paper:
+            self._auto_open(now)
         if self.alerts is not None:
             taken = {r["setup_id"] for r in self.desk.trades.values()}
             blockers = self.desk.can_open(now, state.session, self.config.default_risk_pct, quote)
             self.alerts.on_decision(signal, now, taken_setups=taken, blocked=bool(blockers))
+
+    def _auto_open(self, now: datetime) -> None:
+        """AUTO_PAPER (local setting, default off): take the current actionable decision."""
+        signal, snap = self._signal, self._snap
+        if signal is None or snap is None or signal.decision is TradeDecision.WAIT:
+            return
+        if not signal.setup_id or not snap.usable:
+            return
+        try:
+            self._open_current(signal.setup_id, self.config.default_risk_pct, now)
+        except DeskRefusal as exc:
+            _LOG.info("auto paper not opened: %s", exc.code)
 
     def _drive_desk(self, snap: LiveSnapshot, state: MarketState, now: datetime) -> None:
         m1 = snap.bars.frames.get(Timeframe.M1)
@@ -222,13 +231,34 @@ class TradeEngine:
 
     # ---- the view the API serves -------------------------------------------------------------
 
+    def _m15_label(self, state: MarketState) -> str:
+        signal = self._signal
+        phase = None if signal is None else signal.metadata.get("setup_phase")
+        base = f"{state.m15_structure} / {state.m15_pullback}"
+        if phase in ("ARMED", "TRIGGERED"):
+            return f"{phase} ({base})"
+        return base
+
+    def _m5_label(self, state: MarketState) -> str:
+        signal = self._signal
+        phase = None if signal is None else signal.metadata.get("setup_phase")
+        if phase == "ARMED":
+            return f"WAITING ({state.m5_momentum})"
+        if (
+            phase == "TRIGGERED"
+            and signal is not None
+            and signal.decision is not TradeDecision.WAIT
+        ):
+            return f"TRIGGERED ({state.m5_momentum})"
+        return state.m5_momentum
+
     def _timeframe_rows(self, state: MarketState, snap: LiveSnapshot) -> list[dict[str, Any]]:
         label = {
             "H4": state.h4_regime,
             "H1": state.h1_trend,
             "M30": state.m30_structure,
-            "M15": f"{state.m15_structure} / {state.m15_pullback}",
-            "M5": state.m5_momentum,
+            "M15": self._m15_label(state),
+            "M5": self._m5_label(state),
             "M1": self._signal.m1_execution_state if self._signal else state.m1_micro_state,
         }
         rows: list[dict[str, Any]] = []
@@ -326,6 +356,17 @@ class TradeEngine:
                 "decision": decision,
                 "actionable": bool(actionable_side and not blockers and snap.usable),
                 "explanation": explain(signal),
+                "why_wait": {
+                    "stages": stages_from_signal(signal),
+                    "waiting_for": waiting_for(signal),
+                    "blocked_by": [r.value for r in signal.refusal_reasons],
+                },
+                "setup": {
+                    "phase": signal.metadata.get("setup_phase"),
+                    "bars_since_armed": signal.metadata.get("setup_bars_since_armed"),
+                    "valid_bars": VALID_BARS,
+                    "strategy_version": signal.strategy_version,
+                },
                 "timeframes": self._timeframe_rows(state, snap),
                 "volume": {
                     "type": "TICK_VOLUME",
@@ -369,6 +410,7 @@ class TradeEngine:
                     "today": self.desk.day_summary(stamp),
                 },
                 "telemetry": self.telemetry.summary(stamp),
+                "alerts": None if self.alerts is None else self.alerts.summary(stamp),
                 "demo": demo,
                 "problems": problems,
                 "engine_errors": self._errors[-3:],
@@ -391,6 +433,10 @@ class TradeEngine:
         with self._lock:
             stamp = now or self._clock()
             self.step(stamp)
+            return self._open_current(setup_id, risk_pct, stamp)
+
+    def _open_current(self, setup_id: str, risk_pct: float, stamp: datetime) -> dict[str, Any]:
+        with self._lock:
             signal, state, snap = self._signal, self._state, self._snap
             if signal is None or state is None or snap is None:
                 raise DeskRefusal("NO_DECISION", "the engine has no decision yet")
@@ -424,6 +470,8 @@ class TradeEngine:
                 "pdh": state.pdh,
                 "pdl": state.pdl,
                 "data_age_seconds": snap.data_age_seconds,
+                "strategy_version": signal.strategy_version,
+                "setup_phase": signal.metadata.get("setup_phase"),
             }
             record = self.desk.open_from_decision(
                 signal, risk_pct=risk_pct, quote=quote, spec=snap.spec, now=stamp, market=market

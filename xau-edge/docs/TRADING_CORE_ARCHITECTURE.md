@@ -75,3 +75,25 @@ Hai POST paper: Host phải là `127.0.0.1:8000`/`localhost:8000`, `Origin` thu�
 ## 8. Song song (parity)
 
 Live, replay và paper cùng gọi `decision_core.evaluate`. `comparable()` gom các trường phải GIỐNG HỆT. Replay chạy hai lần: toàn bộ lịch sử vs đuôi cắt như live (`TAILS`); khác biệt = blocker.
+
+## 9. Baseline v1.2 (thử nghiệm, KHÔNG phải mặc định)
+
+`BaselineConfig.version` chọn hành vi: `1.1.0` (mặc định sản xuất) hoặc `1.2.0` (đã pre-đăng ký trong `docs/trading/BASELINE_V1_2_PREREGISTRATION.md`). Chủ dự án chọn bằng biến môi trường `XAU_EDGE_BASELINE_VERSION`; đã kiểm bằng test cách ly phiên bản (id tín hiệu/setup khác nhau, v1.1 giữ nguyên hình học và cổng).
+
+* **Vòng đời setup** (`setup_machine.py`): hàm thuần từ nến đã đóng, phát lại 36 lần đóng M5 gần nhất qua máy trạng thái `NONE → ARMED → TRIGGERED | EXPIRED | INVALIDATED`; ARMED sống 6 nến M5; một tín hiệu mỗi lần pullback; chỉ nến M5 hiện tại mới được phát tín hiệu. Không lưu trạng thái ẩn, nên live = replay = paper và restart không mất gì.
+* **Hình học kế hoạch theo thang M5**: sàn ATR, đệm cấu trúc, stop tối đa và đệm mục tiêu dùng ATR(M5); cổng `clearance` bị bỏ vì R/R ròng đã bao hàm; các hệ số giữ nguyên.
+* **Biến động là ngữ cảnh**: nhãn LOW/HIGH thành cảnh báo + `entry_quality=CAUTION`; giữ veto cứng cho spread/M1 bất thường, H4 SHOCK|HIGH_VOLATILITY, M1 volatile, stop tối đa.
+
+Kết quả đối chiếu tiêu chí: xem `docs/reports/SIGNAL_FUNNEL_ANALYSIS.md` mục 10. v1.2 **không** đạt dải tần suất đã đăng ký nên không thay v1.1.
+
+## 10. Biểu đồ giao dịch `/trade`
+
+Biểu đồ nến (lightweight-charts) dùng API `/md/XAUUSD/bars` (ledger MT5 chuẩn; 6 khung, mặc định M5). Lớp phủ chỉ đến từ đối tượng server: đường ENTRY/SL/TP1/TP2 từ `decision`; lệnh paper mở (entry, SL, TP, giá hiện tại) từ `desk.position`; marker BUY/SELL từ log quyết định `signals-YYYYMMDD.jsonl`; marker vào/ra lệnh paper từ bản ghi của `PaperDesk` (`/trade/markers`). Frontend không tự suy ra tín hiệu. Trục giá tự co giãn để chứa các đường kế hoạch. Dữ liệu cũ ⇒ biểu đồ mờ và không vẽ kế hoạch. Tooltip marker nêu lý do thoát, P&L, R, thời lượng.
+
+## 11. Acceptance Replay (cô lập)
+
+`replay_source.ReplayMarketSource` phục vụ nến ĐÃ ĐÓNG của dữ liệu đã đốt qua cùng giao diện nguồn live, để chạy đúng `TradeEngine → decision_core → PaperDesk → journal` (không logic riêng). Khác live, ghi rõ: quote = đóng cửa nến M1 gần nhất + spread của nến; mọi khung FRESH; spec broker hiện tại. Từ chối cửa sổ ngoài 2025-05-01..2026-04-30. `AUTO_PAPER` (`XAU_EDGE_AUTO_PAPER`, mặc định tắt) chỉ chạm bàn paper, không thể tới hàm lệnh MT5.
+
+## 12. Hiệu năng của chạy hàng loạt
+
+Đo ngày 2026-10-09: 195 ms/quyết định (v1.2, cProfile) → 50 ms. Nguyên nhân đã sửa: lọc `as_of` bằng polars (32% thời gian) → chỉ mục int64 + cắt zero-copy; snapshot các khung chậm tính lại mỗi quyết định → `SnapshotMemo` theo (khung, nến); 7 biến thể tính lại cùng trạng thái → `evaluate_many` (một trạng thái và một lifecycle cho tất cả); 14 tiến trình không giới hạn → một tiến trình mỗi cửa sổ, ưu tiên BELOW_NORMAL, tối đa `cpu_count/4` worker, tiến độ, checkpoint theo ngày (`--resume`). Kết quả không đổi (hash luồng quyết định ABC 3 ngày bằng bản cũ `1b47cb229b2f5841`; test tương đương trong `test_performance_equivalence.py`).

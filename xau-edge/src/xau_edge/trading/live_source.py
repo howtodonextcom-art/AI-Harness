@@ -175,6 +175,20 @@ class LiveTradingMarketSource:
             return None
         return QuoteView(bid, ask, spread, stamp, max(0.0, (now - stamp).total_seconds()))
 
+    def current_quote(self, now: datetime) -> QuoteView | None:
+        """The latest published quote (``live.json``), with its age at ``now``."""
+        return self._quote(_read_json(self.root / "live.json"), now)
+
+    def collector_alive(self, now: datetime) -> bool:
+        status = _read_json(self.root / "collector_status.json")
+        if status is None:
+            return False
+        try:
+            age = (now - datetime.fromisoformat(str(status["updated_at"]))).total_seconds()
+        except (KeyError, ValueError):
+            return False
+        return age <= COLLECTOR_STALE_SECONDS
+
     def load(self, now: datetime | None = None) -> LiveSnapshot:
         stamp = now or datetime.now(UTC)
         problems: list[str] = []

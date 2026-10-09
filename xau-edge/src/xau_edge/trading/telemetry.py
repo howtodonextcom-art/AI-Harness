@@ -35,6 +35,26 @@ def record_of(signal: TradingSignal, *, at: datetime) -> dict[str, Any]:
         "volatility": signal.volatility_regime,
         "news": signal.news_state,
         "strategy_version": signal.strategy_version,
+        "setup_phase": signal.metadata.get("setup_phase"),
+    }
+
+
+def signal_record(signal: TradingSignal, *, at: datetime) -> dict[str, Any]:
+    """An actionable decision exactly as served (the chart markers come from these)."""
+    return {
+        "at": at.isoformat(),
+        "bar_time": signal.timestamp.isoformat(),
+        "setup_id": signal.setup_id,
+        "decision_id": signal.decision_id,
+        "side": signal.decision.value,
+        "entry": signal.entry_price,
+        "sl": signal.stop_loss,
+        "tp1": signal.take_profit,
+        "tp2": signal.take_profit_2,
+        "rr": signal.risk_reward,
+        "lots": signal.position_size,
+        "expires_at": None if signal.signal_expiry is None else signal.signal_expiry.isoformat(),
+        "strategy_version": signal.strategy_version,
     }
 
 
@@ -52,6 +72,32 @@ class DecisionTelemetry:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record_of(signal, at=at), sort_keys=True) + "\n")
+
+    def _signals_path(self, day: datetime) -> Path:
+        return self.root / f"signals-{day.astimezone(UTC):%Y%m%d}.jsonl"
+
+    def append_signal(self, signal: TradingSignal, *, at: datetime) -> None:
+        """Log an actionable decision once per setup (restart-safe: ids are read back)."""
+        path = self._signals_path(at)
+        if signal.setup_id in {r.get("setup_id") for r in self.read_signals(at)}:
+            return
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(signal_record(signal, at=at), sort_keys=True) + "\n")
+
+    def read_signals(self, day: datetime) -> list[dict[str, Any]]:
+        path = self._signals_path(day)
+        if not path.exists():
+            return []
+        out: list[dict[str, Any]] = []
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict):
+                out.append(value)
+        return out
 
     def read_day(self, day: datetime) -> list[dict[str, Any]]:
         path = self._path(day)
@@ -89,5 +135,6 @@ class DecisionTelemetry:
             "spread_counts": dict(Counter(r["spread_state"] for r in rows)),
             "m1_counts": dict(Counter(r["m1"] for r in rows)),
             "setup_counts": dict(Counter(r["m15"] for r in rows)),
+            "setup_phases": dict(Counter(r.get("setup_phase") or "-" for r in rows)),
             "most_common_blocker": refusals.most_common(1)[0][0] if refusals else None,
         }

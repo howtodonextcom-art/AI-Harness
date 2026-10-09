@@ -242,6 +242,24 @@ def snapshot(df: pl.DataFrame, timeframe: Timeframe, cfg: StateConfig) -> TfSnap
     )
 
 
+class SnapshotMemo:
+    """Per-(timeframe, bar) snapshot cache: a closed bar's snapshot never changes."""
+
+    def __init__(self, limit: int = 4096) -> None:
+        self._data: dict[tuple[str, datetime, float], TfSnapshot | None] = {}
+        self._limit = limit
+
+    def get(self, frame: pl.DataFrame, timeframe: Timeframe, cfg: StateConfig) -> TfSnapshot | None:
+        if frame.height == 0:
+            return None
+        key = (timeframe.value, frame["timestamp"][-1], float(frame["close"][-1]))
+        if key not in self._data:
+            if len(self._data) >= self._limit:
+                self._data.clear()
+            self._data[key] = snapshot(frame, timeframe, cfg)
+        return self._data[key]
+
+
 def previous_day_range(
     h1: pl.DataFrame | None, clock: BrokerClock | None
 ) -> tuple[float | None, float | None]:
@@ -356,6 +374,7 @@ def build_market_state(
     config: StateConfig | None = None,
     broker_clock: BrokerClock | None = None,
     market_open: bool = True,
+    memo: SnapshotMemo | None = None,
 ) -> MarketState:
     """The hierarchical state at ``at`` from closed bars only."""
     cfg = config or StateConfig()
@@ -364,7 +383,13 @@ def build_market_state(
     for tf in bars.available():
         closed = bars.as_of(tf, at)
         frames[tf] = closed
-        snaps[tf] = None if closed is None else snapshot(closed, tf, cfg)
+        snaps[tf] = (
+            None
+            if closed is None
+            else memo.get(closed, tf, cfg)
+            if memo is not None
+            else snapshot(closed, tf, cfg)
+        )
     s = snaps.get
     m1, m5, m15, m30, h1, h4 = (
         s(Timeframe.M1),

@@ -18,10 +18,14 @@ Nguyên tắc: đo thành công bằng câu hỏi "chủ sở hữu có mở m�
 | `/signals` cũ đánh dấu deprecated + chặn dữ liệu cũ | Xong | `api/app.py` |
 | Replay smoke, parity, soak, red team, đo hiệu năng | Xong | `docs/reports/TRADING_CORE_ACCEPTANCE.md` |
 
+## Sprint TRADE-04 (tần suất tín hiệu + biểu đồ)
+
+Đã xong: phễu cổng đầy đủ (`funnel.py`) và phân tích (`SIGNAL_FUNNEL_ANALYSIS.md`); pre-đăng ký và đánh giá v1.2 (bị loại do tần suất 0.167 < 0.25, không chỉnh ngưỡng); vòng đời setup; biểu đồ giao dịch với lớp phủ; Why WAIT; Acceptance Replay; thiết kế lại hiệu năng chạy hàng loạt (195 → 50 ms/quyết định, một tiến trình/cửa sổ, ưu tiên thấp, checkpoint); red team độc lập (kết quả: xem báo cáo nghiệm thu). Còn mở: **Forward acceptance** (chờ setup thật) và quyết định của owner về tần suất (xem báo cáo).
+
 ## Chưa làm / chủ đích để sau
 
 1. **Lịch tin tức kinh tế**: hiện `NEWS_UNKNOWN` (paper cho phép với cảnh báo). Cần nguồn lịch đáng tin trước khi tự động hóa.
-2. **Thực thi DEMO** (`NEXT_DEMO_EXECUTION_PROMPT.md`): mật khẩu trade MT5 (owner), `order_check`/`order_send`, SL/TP trong lệnh, đối chiếu vị thế, tự đóng, hiệu chỉnh trượt giá. KHÔNG làm trong sprint này.
+2. **Di chuyển bot DEMO cũ** (`docs/trading/LEGACY_DEMO_BOT_MIGRATION.md`) rồi **thực thi DEMO** (`NEXT_DEMO_EXECUTION_PROMPT.md`): mật khẩu trade MT5 (owner), `order_check`/`order_send`, SL/TP trong lệnh, đối chiếu vị thế, tự đóng, hiệu chỉnh trượt giá. KHÔNG làm trong sprint này.
 3. **Kiểm chứng edge**: 0%. Cần giao thức tiền đăng ký trên dữ liệu chưa chạm; không suy ra từ kết quả paper.
 4. **Quản lý vị thế nâng cao** (BE/trailing) đã có nhưng TẮT; chỉ bật khi có lý do định lượng ngoài mẫu.
 5. **Đa lệnh/đa symbol**: ngoài phạm vi (1 lệnh, XAUUSD).

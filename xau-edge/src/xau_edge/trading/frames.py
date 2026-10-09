@@ -12,9 +12,10 @@ never assumed.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
+import numpy as np
 import polars as pl
 
 from xau_edge.domain.timeframe import Timeframe
@@ -66,23 +67,61 @@ def forming_bar_open(timeframe: Timeframe, at: datetime) -> datetime:
     return datetime.fromtimestamp(start * 60, tz=at.tzinfo)
 
 
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
+
+
+def _micros(at: datetime) -> int:
+    """Microseconds since the epoch (exact integer arithmetic, no float rounding)."""
+    delta = at.astimezone(UTC) - _EPOCH
+    return (delta.days * 86_400 + delta.seconds) * 1_000_000 + delta.microseconds
+
+
 @dataclass(frozen=True)
 class MultiTfBars:
-    """Frames per timeframe, each with ``available_at``; absent timeframes are simply missing."""
+    """Frames per timeframe, each with ``available_at``; absent timeframes are simply missing.
+
+    ``as_of`` is called hundreds of times per decision (the setup lifecycle replays the recent M5
+    closes), so each frame's ``available_at`` is indexed once as an int64 array and the closed
+    prefix is a zero-copy slice found with a binary search. The result is identical to
+    ``closed_as_of`` (the frames are strictly increasing); a frame that is not sorted falls back
+    to the filter.
+    """
 
     frames: dict[Timeframe, pl.DataFrame]
+    _index: dict[Timeframe, np.ndarray | None] = field(
+        default_factory=dict, init=False, repr=False, compare=False
+    )
+
+    def _positions(self, timeframe: Timeframe) -> np.ndarray | None:
+        if timeframe not in self._index:
+            frame = self.frames[timeframe]
+            if "available_at" not in frame.columns:
+                self._index[timeframe] = None
+            else:
+                arr = frame["available_at"].dt.epoch("us").to_numpy()
+                self._index[timeframe] = arr if bool(np.all(np.diff(arr) > 0)) else None
+        return self._index[timeframe]
+
+    def closed(self, timeframe: Timeframe, at: datetime) -> pl.DataFrame:
+        """``closed_as_of`` for one of this object's frames, via the index."""
+        frame = self.frames[timeframe]
+        positions = self._positions(timeframe)
+        if positions is None:
+            return closed_as_of(frame, at)
+        return frame.head(int(np.searchsorted(positions, _micros(at), side="right")))
 
     def as_of(self, timeframe: Timeframe, at: datetime) -> pl.DataFrame | None:
         """Closed bars of one timeframe at ``at`` (None when that timeframe is not available)."""
-        frame = self.frames.get(timeframe)
-        return None if frame is None else closed_as_of(frame, at)
+        if timeframe not in self.frames:
+            return None
+        return self.closed(timeframe, at)
 
     def available(self) -> tuple[Timeframe, ...]:
         return tuple(tf for tf in ORDER if tf in self.frames)
 
     def truncated(self, at: datetime) -> MultiTfBars:
         """The same bars with everything not yet closed at ``at`` removed (live-style view)."""
-        return MultiTfBars({tf: closed_as_of(df, at) for tf, df in self.frames.items()})
+        return MultiTfBars({tf: self.closed(tf, at) for tf in self.frames})
 
 
 def from_frames(frames: dict[Timeframe, pl.DataFrame]) -> MultiTfBars:

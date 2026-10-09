@@ -125,6 +125,19 @@ class SetupAlerts:
             )
         self._save(now)
 
+    def summary(self, now: datetime) -> dict[str, Any]:
+        """What the UI shows about alerts: how many setups were announced today and the last one."""
+        today = [
+            (k, v) for k, v in self._announced.items()
+            if v["announced_at"][:10] == now.date().isoformat()
+        ]  # fmt: skip
+        last = max(self._announced.items(), key=lambda kv: kv[1]["announced_at"], default=None)
+        return {
+            "announced_today": len(today),
+            "last": None if last is None else {"setup_id": last[0], **last[1]},
+            "channel": "telegram-or-file",
+        }
+
     def on_paper_close(self, trade: dict[str, Any], now: datetime) -> None:
         """PAPER_SL / PAPER_TP (and the other exit reasons) once per trade."""
         reason = str(trade.get("exit_reason", "CLOSED"))

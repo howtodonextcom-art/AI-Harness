@@ -8,15 +8,16 @@ as a parity requirement (a mismatch is a blocker). It performs no I/O and reads 
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
 from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.trading.baseline import BaselineConfig, DecisionContext, decide
 from xau_edge.trading.frames import MultiTfBars
-from xau_edge.trading.market_state import MarketState, build_market_state
+from xau_edge.trading.market_state import MarketState, SnapshotMemo, build_market_state
 from xau_edge.trading.schema import Refusal, TradeDecision, TradingSignal
+from xau_edge.trading.setup_machine import lifecycle
 from xau_edge.trading.sizing import SymbolSpec
 
 ROLES = {
@@ -68,10 +69,18 @@ class SnapshotInputs:
     data_ok: bool
 
 
-def evaluate(
-    inputs: SnapshotInputs, config: BaselineConfig, clock: BrokerClock | None
-) -> tuple[MarketState, TradingSignal]:
-    """The market state and the decision for ``inputs`` (deterministic)."""
+def evaluate_many(
+    inputs: SnapshotInputs,
+    configs: dict[str, BaselineConfig],
+    clock: BrokerClock | None,
+    memo: SnapshotMemo | None = None,
+) -> tuple[MarketState, dict[str, TradingSignal]]:
+    """One market state (and one setup lifecycle) shared by several baseline variants.
+
+    The variants differ only in ``decide``; the market state and the lifecycle are pure functions
+    of the closed bars, so computing them once per decision gives exactly the decisions that
+    ``evaluate`` would give for each variant separately (a test asserts it).
+    """
     state = build_market_state(
         inputs.bars,
         inputs.now,
@@ -79,9 +88,15 @@ def evaluate(
         news_state=inputs.news_state,
         broker_clock=clock,
         market_open=inputs.market_open,
+        memo=memo,
     )
     spec = inputs.spec or SymbolSpec()
-    ctx = DecisionContext(
+    life = (
+        lifecycle(inputs.bars, inputs.now, memo=memo)
+        if any(c.version == "1.2.0" for c in configs.values())
+        else None
+    )  # v1.2 only: a pure function of the closed bars
+    base = DecisionContext(
         spec=spec,
         equity=inputs.equity,
         market_open=inputs.market_open,
@@ -90,7 +105,26 @@ def evaluate(
         bid=inputs.bid,
         ask=inputs.ask,
     )
-    return state, decide(state, ctx, config)
+    signals = {
+        name: decide(
+            state,
+            replace(base, lifecycle=life) if cfg.version == "1.2.0" else base,
+            cfg,
+        )
+        for name, cfg in configs.items()
+    }
+    return state, signals
+
+
+def evaluate(
+    inputs: SnapshotInputs,
+    config: BaselineConfig,
+    clock: BrokerClock | None,
+    memo: SnapshotMemo | None = None,
+) -> tuple[MarketState, TradingSignal]:
+    """The market state and the decision for ``inputs`` (deterministic)."""
+    state, signals = evaluate_many(inputs, {"v": config}, clock, memo)
+    return state, signals["v"]
 
 
 def comparable(signal: TradingSignal) -> dict[str, Any]:

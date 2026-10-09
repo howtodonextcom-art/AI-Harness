@@ -9,8 +9,9 @@ browser tab on another site from posting to it.
 
 from __future__ import annotations
 
+import os
 import threading
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -20,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.ops.notifier import build_dispatcher
 from xau_edge.strategies.edge_program import SERVER_CLOCK
+from xau_edge.trading.baseline import BaselineConfig
 from xau_edge.trading.engine import EngineConfig, TradeEngine
 from xau_edge.trading.live_source import LiveTradingMarketSource
 from xau_edge.trading.paper_desk import DeskConfig, DeskRefusal, PaperDesk
@@ -40,10 +42,20 @@ def build_trade_engine(
         build_dispatcher(fallback_path=trade_root / "alerts.jsonl"),
         trade_root / "alerts_state.json",
     )
+    version = os.environ.get("XAU_EDGE_BASELINE_VERSION", "1.1.0")
+    if version not in ("1.1.0", "1.2.0"):
+        msg = f"XAU_EDGE_BASELINE_VERSION must be 1.1.0 or 1.2.0, not {version!r}"
+        raise ValueError(msg)
+    auto_paper = os.environ.get("XAU_EDGE_AUTO_PAPER", "false").lower() == "true"
     return TradeEngine(
         source,
         desk,
-        EngineConfig(root=trade_root, code_version=code_version),
+        EngineConfig(
+            root=trade_root,
+            code_version=code_version,
+            baseline=BaselineConfig(allow_unknown_news=True, version=version),
+            auto_paper=auto_paper,  # paper desk only: nothing here can reach an MT5 order function
+        ),
         broker_clock=SERVER_CLOCK,
         alerts=alerts,
     )
@@ -144,6 +156,37 @@ def add_trade_routes(
             "trades": engine.desk.closed_trades()[:limit],
             "evidence": engine.evidence(),
         }
+
+    @app.get("/trade/markers")
+    def markers(days: Annotated[int, Query(ge=1, le=14)] = 3) -> dict[str, Any]:
+        """Chart markers from the REAL objects: logged actionable decisions and paper trades."""
+        now = datetime.now(UTC)
+        taken = {t["setup_id"] for t in engine.desk.trades.values()}
+        signals: list[dict[str, Any]] = []
+        for back in range(days):
+            for record in engine.telemetry.read_signals(now - timedelta(days=back)):
+                signals.append({**record, "taken": record["setup_id"] in taken})
+        paper = [
+            {
+                "trade_id": t["trade_id"],
+                "side": t["side"],
+                "status": t["status"],
+                "entry_time": t.get("opened_at"),
+                "entry_price": t.get("fill_price"),
+                "exit_time": t.get("closed_at"),
+                "exit_price": t.get("exit_price"),
+                "exit_reason": t.get("exit_reason"),
+                "net_pnl": t.get("net_pnl"),
+                "r_multiple": t.get("r_multiple"),
+                "duration_minutes": t.get("duration_minutes"),
+                "sl": t.get("sl"),
+                "initial_sl": t.get("initial_sl"),
+                "tp": t.get("tp"),
+            }
+            for t in engine.desk.trades.values()
+            if t["status"] in ("OPEN", "CLOSED")
+        ]
+        return {"simulated": True, "signals": signals, "paper_trades": paper}
 
     @app.get("/trade/telemetry")
     def telemetry() -> dict[str, Any]:
