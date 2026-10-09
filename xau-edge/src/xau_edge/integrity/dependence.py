@@ -161,6 +161,17 @@ def block_bootstrap_ci(
     return float(lo), float(hi)
 
 
+def stationary_indices(rng: np.random.Generator, n: int, p: float) -> NDArray[np.int64]:
+    """One Politis-Romano resample: restart at a random point with probability ``p``."""
+    idx = np.empty(n, dtype=np.int64)
+    idx[0] = rng.integers(n)
+    restart = rng.random(n) < p
+    fresh = rng.integers(0, n, size=n)
+    for i in range(1, n):
+        idx[i] = fresh[i] if restart[i] else (idx[i - 1] + 1) % n
+    return idx
+
+
 def stationary_bootstrap_ci(
     values: NDArray[np.float64],
     *,
@@ -179,12 +190,7 @@ def stationary_bootstrap_ci(
     p = 1.0 / mean_block
     means = np.empty(draws)
     for d in range(draws):
-        idx = np.empty(n, dtype=np.int64)
-        idx[0] = rng.integers(n)
-        restart = rng.random(n) < p
-        fresh = rng.integers(0, n, size=n)
-        for i in range(1, n):
-            idx[i] = fresh[i] if restart[i] else (idx[i - 1] + 1) % n
+        idx = stationary_indices(rng, n, p)
         means[d] = values[idx].mean()
     tail = (1 - level) / 2
     lo, hi = np.quantile(means, [tail, 1 - tail])
