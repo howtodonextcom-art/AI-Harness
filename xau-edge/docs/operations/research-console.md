@@ -21,11 +21,13 @@ gõ chữ `DEMOTE`). Không bật thì phần đọc vẫn dùng được.
 |---|---|---|
 | `/research` | kết luận (B), K, ngân sách giả thuyết, điều kiện dừng, quyết định D-1..D-5 | `docs/research/edge-program/{final-verdict,ledger}.md`, `docs/research/edge-program-v2/STATE.json`, Phụ lục A của roadmap |
 | `/research/ledger` | từng lần chạy, bộ đếm K, alpha, MDE | `ledger.md` (V1) và `edge-program-v2/ledger.md` (V2), công thức mục 5.1 của roadmap |
-| `/research/hypotheses` | H01..H14, đăng ký trước hay chưa | `hypotheses/H*.md`, ledger, `git log` (chỉ đọc) |
+| `/research/hypotheses` | H01..H14, đăng ký trước hay chưa, N kỳ vọng, MDE, K lúc đăng ký, cơ chế `HYPOTHESIZED`, commit đăng ký và commit kết quả đầu | `hypotheses/H*.md` và `H*.registration.json` (MDE tính lại, không lưu), ledger, `git log` (chỉ đọc) |
+| `/research/evidence` | kết quả Stage 1 (SCREENING) từng biến thể: attribution, placebo, phụ thuộc, công suất, intrabar, kỷ nguyên, nhãn được phép hiển thị; hiệu chuẩn cổng | `experiments/edge_program_v2_stage1/**`, `edge-program-v2/gate-calibration.json` |
+| `/research/lineage` | dòng dõi 10 tầng từ nguồn thô tới thực thi, tầng rỗng hiện TRỐNG | `edge-program-v2/lineage.json` (băm nội dung, kiểm lại khi đọc) |
 | `/research/candidates` | 7 tiêu chí, gross-mid so với net, 4 cổng robustness | `experiments/edge_program*/**.json`, `experiments/edge_program_v2/robustness/<biến thể>.json` |
 | `/research/data` | bảng dữ liệu, chứng nhận giờ broker theo năm, khóa dữ liệu | `data-manifest.json`, `edge-program-v2/clock-certificate.json`, `experiments/runs` |
-| `/research/forward` | vòng đời chiến lược, kỳ vọng so với thực tế, gợi ý suy giảm | `data/execution/lifecycle.jsonl`, `data/forward/<id>/summary.json`, `configs/research/decay.yaml` |
-| `/research/operations` | chi phí giả định so với đo được, soak, luật funded còn chờ | `data/execution/{calibration.json,cycles.jsonl,alerts.jsonl}`, `configs/prop/ftmo_funded.yaml` |
+| `/research/forward` | vòng đời chiến lược, kỳ vọng so với thực tế, sẵn sàng theo N hiệu dụng, sổ tiên nghiệm, gợi ý suy giảm | `data/execution/lifecycle.jsonl`, `data/forward/<id>/summary.json`, `data/forward/prospective.jsonl`, `configs/research/decay.yaml` |
+| `/research/operations` | chi phí giả định so với đo được, soak, luật funded còn chờ, định nghĩa tier rollout | `data/execution/{calibration.json,cycles.jsonl,alerts.jsonl}`, `configs/prop/ftmo_funded.yaml`, `configs/execution/rollout.yaml` |
 
 ## Ý nghĩa các nhãn
 
@@ -34,22 +36,27 @@ gõ chữ `DEMOTE`). Không bật thì phần đọc vẫn dùng được.
   trọn vẹn và không có lần dùng nào.
 * **CHƯA CHẠY** (cổng robustness): chưa có kết quả; không phải PASS.
 * **VI PHẠM ĐĂNG KÝ TRƯỚC**: file giả thuyết được commit sau lần chạy đầu tiên của nó.
-* **KHÔNG KẾT LUẬN**: forward dưới 100 lệnh.
+* **INCONCLUSIVE** (forward): chưa đủ N hiệu dụng, thời gian lịch hoặc chế độ thị trường; 100 lệnh chỉ là mốc tham chiếu cũ, không đủ để kết luận.
+* **SCREENING / VALIDATION / CONFIRMATORY / HOLDOUT / PROSPECTIVE / EXECUTION**: lớp bằng chứng của một con số; không lớp nào tự nâng cấp. Nhãn VALIDATED chỉ hiện khi đủ bằng chứng (`can_display`), nếu không hiện lý do bị từ chối.
+* **SEALED BEFORE OUTCOME** / **NO PROSPECTIVE EVIDENCE YET** / **PROVENANCE INVALID**: trạng thái sổ tiên nghiệm; chỉ chuỗi băm kiểm chứng được mới hiện nhãn đầu.
+* **LOCKED / PASS / FAIL / INCONCLUSIVE / UNKNOWN** (Test-H, holdout): kết quả không có freeze record luôn là UNKNOWN.
 * **GIẢ ĐỊNH**: chi phí chưa được đo trên tài khoản demo (sprint P12).
 * **CHƯA CHỨNG NHẬN** (năm): giờ broker của năm đó chưa được xác minh; giả thuyết theo phiên bị chặn.
 
 ## `STATE.json` của Edge Program V2 (chủ dự án hoặc code nghiên cứu ghi, web chỉ đọc)
 
 ```json
-{"sprint": "P0", "k_declared": 0, "k_cap": 48, "hypotheses_used": 0, "hypotheses_budget": 8,
+{"sprint": "...", "k_cap": 48, "hypotheses_budget": 8,
  "decisions": {"D-1": "approved"}}
 ```
 
-Chưa có file này nghĩa là "chưa bắt đầu V2"; các quyết định hiện là `pending` cho đến khi bạn ghi.
+K của V2 lấy từ `edge-program-v2/ledger.md` (nguồn sự thật), không từ file này. Chưa có file và chưa có ledger nghĩa là "chưa bắt đầu V2"; các quyết định là `pending` cho đến khi bạn ghi.
+
+Hợp đồng nguồn của từng trường: `docs/architecture/research-source-of-truth.md` (ADR-0025).
 
 ## An toàn
 
 Đường dẫn chỉ được nằm trong `docs/research`, `docs/evals`, `docs/reports`, `docs/operations`,
-`experiments`, `data/execution`, `data/forward`, `configs`; không đọc `.env*`, cơ sở dữ liệu, khóa hay
+`experiments`, `data/execution`, `data/forward`, `configs`; mọi view có khối `provenance` (thời điểm tạo, commit mã); Host lạ bị chặn khi control plane bật; không đọc `.env*`, cơ sở dữ liệu, khóa hay
 token; không có đường dẫn tuyệt đối trong câu trả lời; mọi route `/research` và `/lifecycle` chỉ GET.
 Có test cho từng điều trên (`tests/unit/research/`).
