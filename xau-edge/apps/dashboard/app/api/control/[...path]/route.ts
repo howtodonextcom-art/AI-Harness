@@ -13,7 +13,7 @@ const TOKEN_FILE =
   process.env.XAU_EDGE_CONTROL_TOKEN_FILE ?? path.resolve(process.cwd(), "..", "..", "data", "execution", "control_token");
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const GET_PATHS = [/^status$/, /^preflight$/, /^bot$/, /^jobs$/, /^jobs\/[a-f0-9]{32}$/, /^journal$/];
-const POST_PATHS = new Set(["bot/start", "bot/stop", "bot/restart", "mode", "smoke", "flatten"]);
+const POST_PATHS = new Set(["bot/start", "bot/stop", "bot/restart", "mode", "smoke", "flatten", "lifecycle/demote"]);
 const MAX_BODY = 2048;
 
 function deny(status: number, code: string, message: string): Response {

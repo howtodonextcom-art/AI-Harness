@@ -141,3 +141,29 @@ export async function postControl(path: string, body: Record<string, string>, ke
 export function newIdempotencyKey(): string {
   return crypto.randomUUID().replaceAll("-", "");
 }
+
+export interface DemoteEvent {
+  strategy_id: string;
+  from_state: string;
+  to_state: string;
+  at: string;
+  source: string;
+  reason: string;
+}
+
+/**
+ * The ONLY write of the research console (ADR-0024): lower a strategy to WATCH, DEGRADED or
+ * DISABLED. The server refuses anything else, and the body can name nothing but these fields.
+ */
+export async function postDemote(
+  body: { strategy_id: string; to: "WATCH" | "DEGRADED" | "DISABLED"; reason: string; confirm: string },
+  key: string,
+): Promise<{ event: DemoteEvent }> {
+  const res = await fetch(`${BASE}/lifecycle/demote`, {
+    method: "POST",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json", "Idempotency-Key": key },
+    body: JSON.stringify(body),
+  });
+  return parse<{ event: DemoteEvent }>(res);
+}
