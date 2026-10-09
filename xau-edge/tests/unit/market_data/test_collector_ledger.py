@@ -335,3 +335,43 @@ def test_evaluate_health_stale_timeframe_only_matters_while_trading() -> None:
     assert health == FeedHealth.DEGRADED and bad == []
     assert any("disk" in r for r in reasons)
     assert any("tick ingestion" in r for r in reasons)
+
+
+def test_ledger_tail_equals_load_tail_and_reads_few_months(tmp_path: Path) -> None:
+    ledger = BarLedger(tmp_path)
+    frame = bars(
+        datetime(2025, 11, 1, tzinfo=UTC), 120, minutes=60 * 24
+    )  # four months of D1-like bars
+    ledger.append_closed("XAUUSD", Timeframe.H4, frame, now=NOW)
+    assert ledger.tail("XAUUSD", Timeframe.H4, 10).equals(
+        ledger.load("XAUUSD", Timeframe.H4).tail(10)
+    )
+    cut = datetime(2026, 1, 15, tzinfo=UTC)
+    expected = ledger.load("XAUUSD", Timeframe.H4, end=cut).tail(7)
+    assert ledger.tail("XAUUSD", Timeframe.H4, 7, end=cut).equals(expected)
+    assert ledger.tail("XAUUSD", Timeframe.H4, 5, end=datetime(2020, 1, 1, tzinfo=UTC)).height == 0
+
+
+def test_demo_guard_is_cached_briefly_but_never_caches_a_failure() -> None:
+    client = FakeClient()
+    calls = {"n": 0}
+    original = client.account_info
+
+    def counting() -> object:
+        calls["n"] += 1
+        return original()
+
+    client.account_info = counting  # type: ignore[method-assign]
+    feed = make_feed(client)
+    for _ in range(10):
+        feed.guard()
+    assert calls["n"] == 1  # one account_info call, not ten
+    client.now += timedelta(seconds=31)  # the cache expired: it asks again
+    feed.guard()
+    assert calls["n"] == 2
+    client.trade_mode = 2  # the account turned into a live one
+    client.now += timedelta(seconds=31)
+    with pytest.raises(Exception, match="not a DEMO"):
+        feed.guard()
+    with pytest.raises(Exception, match="not a DEMO"):
+        feed.guard()  # the refusal was not cached either

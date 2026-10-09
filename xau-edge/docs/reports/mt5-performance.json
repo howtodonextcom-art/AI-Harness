@@ -1,0 +1,82 @@
+{
+  "api": [
+    {
+      "url": "/md/status",
+      "median_ms": 15.6,
+      "p95_ms": 17.5,
+      "cpu_ms_median": 15.6,
+      "bytes": 1899
+    },
+    {
+      "url": "/md/XAUUSD/quote",
+      "median_ms": 4.5,
+      "p95_ms": 4.8,
+      "cpu_ms_median": 0.0,
+      "bytes": 453
+    },
+    {
+      "url": "/md/XAUUSD/matrix",
+      "median_ms": 11.6,
+      "p95_ms": 13.2,
+      "cpu_ms_median": 15.6,
+      "bytes": 899
+    },
+    {
+      "url": "/md/XAUUSD/quality",
+      "median_ms": 33.7,
+      "p95_ms": 39.3,
+      "cpu_ms_median": 31.2,
+      "bytes": 3086
+    },
+    {
+      "url": "/md/XAUUSD/bars?timeframe=M1&limit=500&include_forming=true",
+      "median_ms": 8.0,
+      "p95_ms": 9.2,
+      "cpu_ms_median": 15.6,
+      "bytes": 72003
+    },
+    {
+      "url": "/md/XAUUSD/bars?timeframe=M1&limit=5000&include_forming=true",
+      "median_ms": 21.5,
+      "p95_ms": 25.9,
+      "cpu_ms_median": 15.6,
+      "bytes": 717448
+    },
+    {
+      "url": "/md/XAUUSD/bars?timeframe=M15&limit=500&include_forming=true",
+      "median_ms": 7.2,
+      "p95_ms": 8.4,
+      "cpu_ms_median": 7.8,
+      "bytes": 72529
+    },
+    {
+      "url": "/md/XAUUSD/bars?timeframe=H4&limit=5000",
+      "median_ms": 57.2,
+      "p95_ms": 66.8,
+      "cpu_ms_median": 62.5,
+      "bytes": 726257
+    },
+    {
+      "url": "/md/XAUUSD/ticks?limit=200",
+      "median_ms": 3.0,
+      "p95_ms": 4.4,
+      "cpu_ms_median": 0.0,
+      "bytes": 21206
+    }
+  ],
+  "mt5": {
+    "seconds": 20.0,
+    "mt5_calls_per_second": {
+      "account_info": 0.2,
+      "copy_rates_from_pos": 7.8,
+      "copy_ticks_range": 0.2,
+      "symbol_info": 1.0,
+      "symbol_info_tick": 1.0,
+      "terminal_info": 0.2,
+      "version": 0.2
+    },
+    "total_calls_per_second": 10.6,
+    "collector_steady_state_cpu_percent_of_one_core": 3.3,
+    "startup_reconcile_cpu_seconds": 0.38
+  }
+}

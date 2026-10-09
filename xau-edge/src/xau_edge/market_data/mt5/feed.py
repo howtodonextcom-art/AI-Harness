@@ -30,6 +30,7 @@ from xau_edge.market_data.mt5.source import (
 
 DEFAULT_STALE_SECONDS = 30.0
 MAX_TICKS_PER_CALL = 200_000
+GUARD_TTL = timedelta(seconds=30)
 MAX_BARS_PER_CALL = 99_000
 _MIN_AGE = -5.0  # a tick newer than "now" by more than this means the clock offset is wrong
 
@@ -84,6 +85,7 @@ class Mt5Feed:
         self._now = now
         self._require_demo = require_demo
         self.stale_seconds = stale_seconds
+        self._guard_ok_until: datetime | None = None
 
     @property
     def client(self) -> ReadOnlyMt5Client:
@@ -93,13 +95,22 @@ class Mt5Feed:
     # -- connection and facts ------------------------------------------------------------------
 
     def guard(self) -> None:
-        """Refuse anything but a DEMO account (a live password also trades)."""
+        """Refuse anything but a DEMO account (a live password also trades).
+
+        The positive answer is cached for ``GUARD_TTL`` (a DEMO account cannot become live within
+        seconds; this stops one ``account_info`` call per data call). Any failure is never cached.
+        """
         if not self._require_demo:
+            return
+        stamp = self._now()
+        if self._guard_ok_until is not None and stamp < self._guard_ok_until:
             return
         info = self._client.account_info()
         if info is None or info.trade_mode != self._client.ACCOUNT_TRADE_MODE_DEMO:
+            self._guard_ok_until = None
             msg = "refusing to use MT5: the connected account is not a DEMO account"
             raise Mt5AccountError(msg)
+        self._guard_ok_until = stamp + GUARD_TTL
 
     def facts(self) -> TerminalFacts:
         """Terminal build, connection and server label; never credentials or balances."""

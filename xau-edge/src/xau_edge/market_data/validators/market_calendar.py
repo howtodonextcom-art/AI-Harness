@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+import numpy as np
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -74,6 +75,31 @@ class MarketCalendar(BaseModel):
             raise ValueError(msg) from exc
         return value
 
+    def _in_closure(self, ts: pl.Expr) -> pl.Expr:
+        """True inside any closure window: one binary search per row, not one comparison per window.
+
+        An OR-chain over hundreds of windows cost ~0.5 s per status call; this is O(log n).
+        """
+        spans = sorted((w.start.astimezone(UTC), w.end.astimezone(UTC)) for w in self.closures)
+        merged: list[list[int]] = []
+        for start, end in spans:
+            a, b = int(start.timestamp() * 1e6), int(end.timestamp() * 1e6)
+            if merged and a <= merged[-1][1]:
+                merged[-1][1] = max(merged[-1][1], b)
+            else:
+                merged.append([a, b])
+        starts = np.array([m[0] for m in merged], dtype=np.int64)
+        ends = np.array([m[1] for m in merged], dtype=np.int64)
+
+        def inside(series: pl.Series) -> pl.Series:
+            t = series.fill_null(0).to_numpy()
+            idx = np.searchsorted(starts, t, side="right") - 1
+            hit = (idx >= 0) & (t < ends[np.clip(idx, 0, None)])
+            return pl.Series(hit)
+
+        micros = ts.dt.convert_time_zone("UTC").dt.epoch("us")
+        return micros.map_batches(inside, return_dtype=pl.Boolean)
+
     def closed_span_expr(self, ts: pl.Expr, span_minutes: int) -> pl.Expr:
         """True where a bar covering ``[ts, ts + span)`` lies entirely inside a closure.
 
@@ -110,9 +136,5 @@ class MarketCalendar(BaseModel):
             )
             closed = closed | in_break
         if self.closures:
-            utc = ts.dt.convert_time_zone("UTC")
-            for window in self.closures:
-                begin = window.start.astimezone(UTC)
-                finish = window.end.astimezone(UTC)
-                closed = closed | ((utc >= pl.lit(begin)) & (utc < pl.lit(finish)))
+            closed = closed | self._in_closure(ts)
         return closed

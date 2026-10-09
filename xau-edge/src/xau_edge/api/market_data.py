@@ -10,7 +10,7 @@ Closed bars are the default; the forming bar is added only on request and is mar
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -24,11 +24,14 @@ from xau_edge.market_data.collector import read_status_file
 from xau_edge.market_data.freshness import bar_freshness, missed_closed_bars
 from xau_edge.market_data.ledger import BarLedger, LedgerError
 from xau_edge.market_data.session import market_status
+from xau_edge.market_data.tick_ledger import TickLedger, TickLedgerError
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
 
 STALE_QUOTE_SECONDS = 30.0
 MAX_BARS = 5000
 MAX_TICKS = 500
+MAX_HISTORY_TICKS = 5000
+MAX_HISTORY_SPAN = timedelta(hours=1)
 COLLECTOR_RUNNING_SECONDS = 30.0
 COLLECTOR_STOPPED_SECONDS = 600.0
 
@@ -39,6 +42,16 @@ def _read_json(path: Path) -> dict[str, Any] | None:
     except (OSError, ValueError):
         return None
     return value if isinstance(value, dict) else None
+
+
+def _parse_utc(value: str, name: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"{name} must be ISO-8601") from exc
+    if parsed.tzinfo is None:
+        raise HTTPException(status_code=422, detail=f"{name} needs a timezone, e.g. ...Z")
+    return parsed.astimezone(UTC)
 
 
 def _bar_rows(frame: pl.DataFrame, *, closed: bool) -> list[dict[str, Any]]:
@@ -62,6 +75,7 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
 ) -> None:
     """Mount the GET-only market data routes (``root`` is the ledger/collector directory)."""
     ledger = BarLedger(root)
+    tick_ledger = TickLedger(root)
     cal = calendar or ftmo_calendar()
 
     def now() -> datetime:
@@ -224,7 +238,7 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
             if end.tzinfo is None:
                 raise HTTPException(status_code=422, detail="before needs a timezone")
         try:
-            frame = ledger.load(symbol, tf, end=end).tail(limit)
+            frame = ledger.tail(symbol, tf, limit, end=end)
         except LedgerError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         bars = _bar_rows(frame, closed=True)
@@ -252,6 +266,43 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
         check(sym)
         live = _read_json(root / "live.json") or {}
         return {"symbol": symbol, "ticks": (live.get("ticks") or [])[-limit:], "source": "FTMO MT5"}
+
+    @app.get("/md/{sym}/ticks/history")
+    def md_ticks_history(
+        sym: str,
+        start: Annotated[str, Query(alias="from")],
+        end: Annotated[str, Query(alias="to")],
+        limit: Annotated[int, Query(ge=1, le=MAX_HISTORY_TICKS)] = 2000,
+    ) -> dict[str, Any]:
+        """Stored ticks in ``[from, to)``, strictly bounded in span and rows (no bulk export)."""
+        check(sym)
+        lo, hi = _parse_utc(start, "from"), _parse_utc(end, "to")
+        if hi <= lo:
+            raise HTTPException(status_code=422, detail="to must be after from")
+        if hi - lo > MAX_HISTORY_SPAN:
+            raise HTTPException(
+                status_code=422,
+                detail=f"span too large: at most {MAX_HISTORY_SPAN.total_seconds() / 60:.0f} min",
+            )
+        try:
+            frame = tick_ledger.load(symbol, lo, hi, limit=limit + 1)
+            gaps = tick_ledger.uncovered(symbol, lo, hi)
+        except TickLedgerError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        truncated = frame.height > limit
+        frame = frame.head(limit)
+        rows = [
+            [r["timestamp_msc"], r["bid"], r["ask"], r["last"], r["flags"]]
+            for r in frame.iter_rows(named=True)
+        ]
+        return {
+            "symbol": symbol, "from": lo.isoformat(), "to": hi.isoformat(),
+            "columns": ["time_msc_utc", "bid", "ask", "last", "flags"],
+            "ticks": rows, "truncated": truncated,
+            "fully_covered": not gaps,
+            "uncovered": [[a.isoformat(), b.isoformat()] for a, b in gaps],
+            "source": "FTMO MT5",
+        }  # fmt: skip
 
     @app.get("/md/{sym}/matrix")
     def md_matrix(sym: str) -> dict[str, Any]:

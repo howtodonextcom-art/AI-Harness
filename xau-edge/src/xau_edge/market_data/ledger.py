@@ -217,6 +217,27 @@ class BarLedger:
             frame = frame.filter(pl.col("timestamp") < end)
         return frame
 
+    def tail(
+        self, symbol: str, timeframe: Timeframe, limit: int, end: datetime | None = None
+    ) -> pl.DataFrame:
+        """Newest ``limit`` stored bars before ``end``; reads only as many month files as needed."""
+        months = self.months(symbol, timeframe)
+        if end is not None:
+            months = [m for m in months if m <= _month_key(end)]
+        parts: list[pl.DataFrame] = []
+        rows = 0
+        for month in reversed(months):
+            frame = self._read_month(symbol, timeframe, month)
+            if end is not None:
+                frame = frame.filter(pl.col("timestamp") < end)
+            parts.append(frame)
+            rows += frame.height
+            if rows >= limit:
+                break
+        if not parts:
+            return empty_bars().select(_FILE_COLUMNS)
+        return pl.concat(parts).unique("timestamp", keep="first").sort("timestamp").tail(limit)
+
     def latest(self, symbol: str, timeframe: Timeframe) -> datetime | None:
         """Open time of the newest stored bar."""
         months = self.months(symbol, timeframe)

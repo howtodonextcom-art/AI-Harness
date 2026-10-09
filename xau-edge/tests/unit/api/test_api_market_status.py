@@ -140,3 +140,38 @@ def test_corrupt_status_file_is_unknown_not_a_crash(tmp_path: Path) -> None:
     body = http.get("/md/status").json()
     assert body["components"]["collector"] == "STOPPED"
     assert pytest.approx(1.0) == 1.0
+
+
+def test_historical_ticks_are_bounded_and_report_coverage(tmp_path: Path) -> None:
+    from datetime import UTC, datetime  # noqa: PLC0415
+
+    from tests.unit.market_data.test_tick_ledger import ticks, window  # noqa: PLC0415
+    from xau_edge.market_data.tick_ledger import TickLedger  # noqa: PLC0415
+
+    http, client = build(tmp_path)
+    start = datetime(2026, 3, 11, 10, tzinfo=UTC)
+    TickLedger(tmp_path).append("XAUUSD", ticks(start, 200), window(start, 10), now=client.now)
+    q: dict[str, str | int] = {
+        "from": "2026-03-11T10:00:00Z",
+        "to": "2026-03-11T10:30:00Z",
+        "limit": 50,
+    }
+    body = http.get("/md/XAUUSD/ticks/history", params=q).json()
+    assert len(body["ticks"]) == 50
+    assert body["truncated"] is True
+    assert body["fully_covered"] is False  # only the first ten minutes were fetched
+    assert body["uncovered"][0][0].startswith("2026-03-11T10:10")
+    narrow: dict[str, str | int] = {
+        "from": "2026-03-11T10:00:00Z",
+        "to": "2026-03-11T10:05:00Z",
+        "limit": 5000,
+    }
+    assert http.get("/md/XAUUSD/ticks/history", params=narrow).json()["fully_covered"] is True
+    too_wide = {"from": "2026-03-11T00:00:00Z", "to": "2026-03-11T06:00:00Z"}
+    assert http.get("/md/XAUUSD/ticks/history", params=too_wide).status_code == 422
+    too_many = {"from": narrow["from"], "to": narrow["to"], "limit": 100000}
+    assert http.get("/md/XAUUSD/ticks/history", params=too_many).status_code == 422
+    backwards = {"from": "2026-03-11T10:05:00Z", "to": "2026-03-11T10:00:00Z"}
+    assert http.get("/md/XAUUSD/ticks/history", params=backwards).status_code == 422
+    naive = {"from": "2026-03-11T10:00:00", "to": "2026-03-11T10:05:00"}
+    assert http.get("/md/XAUUSD/ticks/history", params=naive).status_code == 422
