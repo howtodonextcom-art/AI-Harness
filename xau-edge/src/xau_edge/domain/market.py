@@ -16,6 +16,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from xau_edge.domain.timeframe import Timeframe
 
+REAL_VOLUME_POLICY = (
+    "UNVERIFIED_LEGACY_REAL_VOLUME: real_volume is non-zero only in an imported H1/H4 era "
+    "(2012-03-28..2018-02-09) with unproven meaning; it is never displayed or used. "
+    "tick_volume is the only volume."
+)
+
 
 class VolumeType(StrEnum):
     """What a feed's volume fields mean (decided from the data, never assumed)."""

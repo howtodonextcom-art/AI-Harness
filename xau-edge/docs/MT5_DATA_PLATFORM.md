@@ -1,109 +1,120 @@
 # Nền tảng dữ liệu thị trường MT5 (FTMO DEMO)
 
-Trạng thái: **PARTIALLY READY** — hạ tầng chạy và đã kiểm chứng trên terminal thật; còn 1 hành động
-của chủ dự án (nâng "Max bars in chart") để có đủ chiều sâu lịch sử cho M1/M5/M15/M30/H1.
+**Trạng thái: PARTIALLY READY** — mọi thành phần chạy và đã kiểm chứng trên terminal thật; còn đúng 1 việc của
+chủ dự án (nâng "Max bars in chart"), vì nó chặn chiều sâu lịch sử của M1/M5/M15/M30/H1. Bảng điểm và cổng
+ở cuối tài liệu.
 
-Quyết định kiến trúc: xem `docs/adr/ADR-MT5-MARKET-DATA-PLATFORM.md`. Nghiên cứu phương án:
-`docs/research/mt5-data-integration-options.md`, vai trò TradingView: `docs/research/tradingview-data-role.md`.
+Quyết định kiến trúc: `docs/adr/ADR-MT5-MARKET-DATA-PLATFORM.md`. Vận hành: `docs/operations/market-data-operations.md`.
+Nghiên cứu: `docs/research/mt5-data-integration-options.md`, `tradingview-data-role.md`,
+`unverified-claims-audit.md`. Báo cáo: `docs/reports/mt5-data-parity.md`, `mt5-spread-semantics.md`,
+`mt5-tick-storage.md`, `mt5-backfill-final.md`, `mt5-chaos-tests.md`, `mt5-performance.json`.
 
 ## 1. Luồng dữ liệu
 
 ```
 FTMO MT5 terminal (đã đăng nhập, DEMO)
-   └─ ReadOnlyMt5Client (allowlist: chỉ hàm dữ liệu)         src/xau_edge/market_data/mt5/source.py
-       └─ Mt5Feed (quote, tick, bar, symbol, đồng hồ broker)  .../mt5/feed.py
-           └─ MarketCollector (vòng quote ~1s + vòng bar ~5s)  src/xau_edge/market_data/collector.py
-               ├─ BarLedger: nến ĐÃ ĐÓNG, parquet theo tháng  src/xau_edge/market_data/ledger.py
-               ├─ live.json: quote, nến đang hình thành, tick gần đây
-               └─ collector_status.json: sức khỏe (GOOD/DEGRADED/STALE/DISCONNECTED/UNKNOWN)
-                   └─ API /md/*  (chỉ GET, không mở kết nối MT5)  src/xau_edge/api/market_data.py
-                       └─ Web /market (nến + tick volume + spread)  apps/dashboard/app/market
+ └─ ReadOnlyMt5Client (allowlist: chỉ hàm dữ liệu; guard DEMO có cache 30 s, lỗi không bao giờ cache)
+     └─ Mt5Feed: quote, tick, nến, symbol, đồng hồ broker (NY+7)          market_data/mt5/feed.py
+         └─ MarketCollector (supervisor chạy mãi, tự nối lại)             market_data/collector.py
+             ├─ BarLedger   nến ĐÃ ĐÓNG, parquet theo tháng, khóa ghi      market_data/ledger.py
+             ├─ TickLedger  tick thô, parquet theo ngày UTC + coverage     market_data/tick_ledger.py
+             ├─ live.json (quote, nến đang hình thành, 200 tick gần nhất), collector_status.json
+             └─ sự kiện BAR_CHANGED / GAP / RECONCILED / TICKS_CHANGED (events.jsonl, phân đoạn không xóa)
+ API /md/* (chỉ GET, KHÔNG mở kết nối MT5, tự tính độ mới)              api/market_data.py
+ └─ Web /market (nến + tick volume + spread + 6 viên trạng thái + chất lượng dữ liệu + múi giờ)
 ```
 
-Thư mục dữ liệu: `data/market/` (không vào git). Research/backtest/signal/paper/demo đều đọc cùng
-một lớp bar chuẩn (`domain/market.py`, `CANONICAL_BAR_COLUMNS`), mặc định **chỉ nến đã đóng**.
+Dữ liệu ở `data/market/` (không vào git). Research/backtest/signal/paper/demo đọc cùng lớp nến chuẩn
+(`domain/market.py`), mặc định chỉ nến đã đóng.
 
 ## 2. Quy tắc bất biến
 
-* Chỉ nến đã đóng vào kho; nến đang hình thành chỉ ở `live.json`/UI và luôn gắn `is_closed=false`.
-* Kho không bao giờ ghi đè nến đã lưu. Nến cùng thời điểm mở nhưng khác giá = sự kiện `BAR_CHANGED`
-  (giữ nguyên bản đã lưu, ghi vào `events.jsonl`). Ghi file nguyên tử (tạm + đổi tên), chạy lại là idempotent.
-* Khối lượng là **tick volume**. `real_volume` chỉ khác 0 trong H1/H4 2012-03-28..2018-02-09 (dữ liệu
-  nhập cũ, ngữ nghĩa chưa xác minh) → không dùng. Không bao giờ gắn nhãn tick volume là real volume.
-* Client dữ liệu không có `order_send`, `order_check`, `positions_get`, `orders_get`,
-  `history_deals_get`, `history_orders_get`; test fail nếu mã nguồn chạm tên ngoài allowlist.
-  Tài khoản không phải DEMO → từ chối (fail closed). Không truyền/in/ghi mật khẩu, login, số dư.
-* Thị trường đóng (cuối tuần, rollover) không phải lỗi dữ liệu; nhưng khi lịch báo "mở" mà không có
-  tick/nến mới → `STALE`, không bao giờ im lặng coi là tốt (ngày lễ calendar chưa biết cũng rơi vào đây).
+* Chỉ nến đã đóng vào kho; nến đang hình thành ở `live.json`/UI, luôn `is_closed=false`.
+* Không ghi đè nến/tick đã lưu; khác biệt → sự kiện (`BAR_CHANGED`, `TICKS_CHANGED`). Ghi nguyên tử dưới khóa
+  liên tiến trình; chạy lại idempotent.
+* Khối lượng là **tick volume**. `real_volume` là `UNVERIFIED_LEGACY_REAL_VOLUME` (chỉ khác 0 ở H1/H4 2012-03-28..
+  2018-02-09): không hiển thị, không dùng. `last`/`volume` của tick luôn 0 với CFD vàng.
+* Client dữ liệu không có `order_send`, `order_check`, `positions_get`, `orders_get`, `history_deals_get`,
+  `history_orders_get`; test cấm tên hàm giao dịch. Tài khoản không DEMO → từ chối. Không mật khẩu/login/số dư.
+* Thị trường đóng không phải lỗi dữ liệu; mở mà không có tick/nến mới → CŨ, không bao giờ im lặng là tốt.
+* TradingView không phải nguồn dữ liệu; MT5 FTMO là nguồn thật duy nhất.
 
-## 3. Vận hành
+## 3. Lịch phiên FTMO
 
-```
-uv run --extra mt5 python scripts/diagnose_mt5_environment.py     # terminal, package (không kết nối)
-uv run --extra mt5 python scripts/mt5_connection_probe.py --write # kết nối, symbol, độ sâu, tick
-uv run --extra mt5 python scripts/probe_mt5_history_depth.py --write
-uv run --extra mt5 python scripts/backfill_mt5.py --write-report  # nạp lịch sử (idempotent)
-uv run --extra mt5 python scripts/run_market_collector.py         # chạy liên tục (Ctrl+C để dừng)
-uv run python scripts/check_market_data_health.py                 # exit 0 chỉ khi GOOD
-uv run python scripts/snapshot_market.py                          # snapshot bất biến có hash
-uv run python scripts/market_data_parity.py --write               # parity native vs resample
-uv run python scripts/serve_api.py                                # API + /md/*
-```
+Đo thực tế (M1 từ 2026-06-30): đóng 16:50 và mở lại 18:05 giờ New York mỗi ngày (thứ Sáu 16:50 → Chủ nhật
+18:05), theo giờ mùa hè/đông của Mỹ (broker = New York + 7 h cố định). Nằm trong `configs/brokers/ftmo_demo.yaml`.
+Ngày lễ/đóng cửa sớm (ví dụ 2026-07-03 13:00 NY, 2026-09-07 14:30 NY) KHÔNG nằm trong mẫu tuần: chúng được suy ra
+từ nến thiếu của chính broker (`scripts/infer_session_exceptions.py` → `configs/brokers/ftmo_session_exceptions.yaml`)
+nhưng CHỈ chấp nhận khi khớp luật ngày lễ (Mỹ + Thứ Sáu Tốt lành, Giáng sinh, Năm mới; luật theo tháng/thứ, không
+phải danh sách năm cố định). Khoảng thiếu không giải thích được vẫn là khoảng trống dữ liệu (`DATA_GAP`/`UNKNOWN`).
+Kết quả: tỷ lệ bucket bị loại M1→H4 từ **33,6% xuống 0,45%** (chỉ còn 2 bucket biên dữ liệu); xem
+`docs/reports/mt5-data-parity.md`. Giới hạn: mẫu tuần đã kiểm chứng từ 2025; kỷ nguyên cũ (chủ yếu 2010–2020) có lịch
+khác, chưa mô hình hóa, nên các bucket H1→H4 lịch sử đó ghi `UNKNOWN`.
 
-Collector tự `reconcile` 200 nến cuối của mọi khung khi khởi động và mỗi 10 phút; mất kết nối →
-trạng thái `DISCONNECTED`, tự kết nối lại sau 5 s. Sau khi khởi động lại máy: mở terminal FTMO
-(đăng nhập sẵn), rồi chạy lại collector (có thể đặt vào Task Scheduler "At log on" — chưa cài, cần
-quyết định của chủ dự án).
+## 4. Chiều sâu lịch sử (đo 2026-10-09)
 
-## 4. API (chỉ GET)
+Backfill v2 (`scripts/backfill_mt5.py`): nến mới nhất rồi lùi theo khối bằng `copy_rates_from`, có xác thực từng
+khối, hash SHA-256 vào sự kiện, chạy lại/tiếp tục được, chống vòng lặp, và gán trạng thái trung thực
+(`COMPLETE_AVAILABLE_HISTORY`, `BROKER_LIMITED`, `TERMINAL_LIMITED`, `INCOMPLETE`, `UNKNOWN`).
 
-| Endpoint | Nội dung |
-|---|---|
-| `/md/status` | sức khỏe collector, trạng thái phiên, nhãn nguồn |
-| `/md/{symbol}/quote` | bid/ask/mid/spread, tuổi tick, `stale` |
-| `/md/{symbol}/bars?timeframe&limit&before&include_forming` | nến đã đóng (+ nến đang hình thành khi yêu cầu, `is_closed=false`) |
-| `/md/{symbol}/ticks?limit` | ≤500 tick gần nhất (bộ đệm của collector) |
-| `/md/{symbol}/matrix` | nến đóng gần nhất và độ mới của 6 khung |
-
-Giao thức: polling (UI ~1 s quote, ~3 s nến). Không dùng SSE/WebSocket: đơn giản, chịu được restart.
-
-## 5. Chiều sâu lịch sử (đo thực tế, 2026-10-09)
-
-| Khung | Sớm nhất lưu được | Ghi chú |
+| Khung | Local sớm nhất | Trạng thái |
 |---|---|---|
-| M1 | 2026-06-30 | bị cắt bởi Max bars |
-| M5 | 2025-05-14 | bị cắt |
-| M15 | 2022-08-02 | bị cắt |
-| M30 | 2018-06-12 | bị cắt |
-| H1 | 2010-04-09 | bị cắt |
-| H4 | 2004-06-11 | đầy đủ |
-| Tick | ≈ 2021-10-01 | server giữ; chưa lưu (xem giới hạn) |
+| M1 | 2026-06-29 | TERMINAL_LIMITED |
+| M5 | 2025-05-08 | TERMINAL_LIMITED |
+| M15 | 2022-07-18 | TERMINAL_LIMITED |
+| M30 | 2018-05-11 | TERMINAL_LIMITED |
+| H1 | 2010-02-05 | TERMINAL_LIMITED |
+| H4 | 2004-06-11 | BROKER_LIMITED (đủ: không còn gì cũ hơn) |
+| Tick | 2021-10-01 11:32 UTC | server giữ từ đó; đã lưu đủ 205.083.656 tick |
 
-Nguyên nhân: `[Charts] MaxBars=100000` trong `common.ini` của terminal (không phải server thiếu dữ liệu).
-`copy_rates_from_pos` với count 100000 trả "Invalid params"; 99000 chạy được.
+Nguyên nhân là `[Charts] MaxBars=100000` của terminal: `copy_rates_from_pos` 100.000 → "Invalid params"; truy vấn theo
+ngày chỉ thêm ~900 nến rồi `Terminal: Call failed`. Không bịa nến thấp từ khung cao; không suy tick từ nến.
+Báo cáo: `docs/reports/mt5-backfill-final.md`.
 
-## 6. Hành động của chủ dự án
+## 5. Vận hành và giám sát
 
-Nâng "Max bars in chart" (Tools → Options → Charts) lên Unlimited hoặc ≥ 10.000.000, **đóng hẳn rồi mở
-lại** terminal, sau đó chạy lại `scripts/backfill_mt5.py`. (Hoặc dùng `scripts/mt5_set_max_bars.py
---apply` khi terminal đã đóng; script chỉ sửa dòng `MaxBars`, có backup.) Trong lúc chờ, collector tích
-lũy M1 từ nay về sau nên không mất dữ liệu mới.
+Một supervisor (`scripts/run_market_stack.py`) giữ collector + API + dashboard; Task Scheduler khi đăng nhập
+chạy `start_market_stack.ps1` (mở terminal trước). Collector tự kết nối lại khi terminal vắng/khởi động muộn/mất
+kết nối và reconcile 200 nến mỗi khung ở mỗi phiên mới. Sức khỏe: GOOD / DEGRADED / STALE / DISCONNECTED /
+UNKNOWN; độ mới tính theo lịch (số nến mở cửa bị bỏ lỡ), đĩa và độ trễ ghi tick được báo trước khi hỏng.
+Đo thật: collector ≈ 3,3% một lõi, ≈ 11 lệnh gọi MT5/giây; API: báo giá 4 ms, trạng thái 18 ms, 500 nến M1 8 ms,
+5.000 nến H4 57 ms (`mt5-performance.json`).
+
+## 6. Kiểm tra toàn vẹn
+
+`scripts/verify_market_ledger.py` (đọc được, lược đồ, thứ tự, trùng, OHLC hợp lý, bất biến so với manifest, độ phủ
+theo lịch) và `scripts/verify_tick_ledger.py` (hash, thứ tự, trùng, ask < bid, tick ngoài ngày). Hiện cả hai sạch.
+`scripts/snapshot_market.py` ghi snapshot bất biến kèm provenance (nguồn, build terminal, server, symbol, thời điểm UTC,
+hash đầu kho, nến mới nhất mỗi khung, tick mới nhất).
 
 ## 7. Giới hạn đã biết
 
-* Chưa lưu tick lịch sử vào kho (chỉ bộ đệm 500 tick gần nhất ở `live.json`); cần quyết định lưu trữ.
-* `MarketCalendar` mặc định không mô hình hóa giờ nghỉ hằng ngày của FTMO và ngày lễ → ~2% bucket
-  khi resample bị loại là "không đủ nến" (được báo cáo, không điền giả). Không ảnh hưởng parity.
-* `last` thường rỗng với CFD vàng (chỉ có bid/ask). Spread theo nến là điểm (points), xem
-  `docs/reports/mt5-spread-semantics.md`.
-* Kết nối chạy bằng phiên đăng nhập sẵn của terminal; chưa dùng mật khẩu investor (không cần với cách này).
-* So khớp hình ảnh với biểu đồ FTMO bằng mắt chưa thực hiện tự động; parity số liệu OHLC/tick volume giữa
-  nguồn native và nguồn dẫn xuất khớp 100% (`docs/reports/mt5-data-parity.md`).
-* 13 khẳng định trong tài liệu nghiên cứu nhúng ở `docs/research/*` chưa được xác minh từ nguồn chính
-  thức; chỉ các kết luận đo thực tế ở đây được coi là sự thật của dự án.
+* Chiều sâu M1–H1 chờ chủ dự án nâng Max bars (mục 4); sau đó chạy lại backfill.
+* Tự khởi động mới ở mức **đã cấu hình và đã chạy thử qua Task Scheduler**, chưa **đã xác minh bằng đăng nhập thật**
+  (danh sách kiểm tay ở `docs/operations/market-data-operations.md` §6).
+* Chưa thử đóng terminal MT5 thật khi collector chạy (quy tắc: không tự tắt MT5); kịch bản được kiểm bằng test
+  mô phỏng và nằm trong danh sách kiểm tay.
+* Kỷ nguyên lịch cũ trước 2021 chưa mô hình hóa (bucket `UNKNOWN`, không ảnh hưởng nến native).
+* Dùng phiên đăng nhập của terminal; không dùng mật khẩu investor.
 
-## 8. Cổng chặn (trước khi mở lại việc ra quyết định giao dịch)
+## 8. Cổng
 
-Quyết định BUY/SELL tự động, nghiên cứu chiến lược mới, tự động SL/TP và mọi thực thi vẫn **tạm dừng**
-(commit `618e0d8`, `af4cd53` giữ baseline UNVALIDATED). Chỉ mở lại sau khi chủ dự án nâng Max bars và
-backfill đủ sâu được xác nhận.
+| Cổng | Trạng thái |
+|---|---|
+| A Terminal | ĐẠT (DEMO, nối được, quote tuổi ≈ 0 s) |
+| B Lịch sử | CHƯA: 5/6 khung TERMINAL_LIMITED (H4 đủ) — cần hành động của chủ dự án |
+| C MaxBars | CHƯA: vẫn 100.000 |
+| D Tick | ĐẠT (kho + retention + backfill 2021-10 → nay + API có giới hạn) |
+| E Lịch | ĐẠT trong kỷ nguyên đã kiểm chứng (bỏ 0 bucket tránh được từ 2025) |
+| F Collector | ĐẠT (giám sát, tự nối lại; MT5 thật đóng/mở: danh sách kiểm tay) |
+| G Khởi động | MỘT PHẦN (đã cấu hình + chạy thử; chưa xác minh đăng nhập thật) |
+| H Sức khỏe | ĐẠT |
+| I API | ĐẠT (tươi, có giới hạn) |
+| J UI | ĐẠT (6 khung, tick volume, spread, trạng thái, chất lượng) |
+| K Parity | ĐẠT (8/8 cặp EXACT) |
+| L Visual | ĐẠT (240/240 nến khớp terminal) |
+| M Lưu trữ | ĐẠT (bar + tick sạch) |
+| N Phục hồi | ĐẠT (xem `mt5-chaos-tests.md`) |
+
+Quyết định giao dịch tự động (BUY/SELL, SL/TP, thực thi) vẫn TẠM DỪNG cho đến khi cổng B, C (và G đã xác
+minh) qua.

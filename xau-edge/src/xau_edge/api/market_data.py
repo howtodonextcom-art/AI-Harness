@@ -17,7 +17,7 @@ from typing import Annotated, Any
 import polars as pl
 from fastapi import FastAPI, HTTPException, Query
 
-from xau_edge.domain.market import FeedHealth, MarketStatus
+from xau_edge.domain.market import REAL_VOLUME_POLICY, FeedHealth, MarketStatus
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.market_data.collector import read_status_file
@@ -256,7 +256,8 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
                 )  # fmt: skip
         return {
             "symbol": symbol, "timeframe": tf.value, "source": "FTMO MT5",
-            "volume_type": "TICK_VOLUME", "closed_only": not include_forming, "bars": bars,
+            "volume_type": "TICK_VOLUME", "real_volume_policy": REAL_VOLUME_POLICY,
+            "closed_only": not include_forming, "bars": bars,
         }  # fmt: skip
 
     @app.get("/md/{sym}/ticks")

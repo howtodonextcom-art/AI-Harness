@@ -98,6 +98,7 @@ class CollectorStatus:
     disk: dict[str, Any] = field(default_factory=dict)
     tick_store: dict[str, Any] = field(default_factory=dict)
     tick_errors: int = 0
+    terminal_build: int | None = None
 
 
 def evaluate_health(
@@ -406,6 +407,7 @@ class MarketCollector:
             disk=disk,
             tick_store=tick_store,
             tick_errors=self._tick_errors,
+            terminal_build=facts.build,
         )
 
     def _tick_store(self, now: datetime) -> dict[str, Any]:
