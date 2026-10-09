@@ -109,6 +109,8 @@ def may_promote(source: EvidenceClass, target: EvidenceClass) -> bool:
     VALIDATION first). CONFIRMATORY and HOLDOUT need their own frozen-test records, so they are
     reached only by running that test, never by promotion.
     """
+    if source is target:
+        return True
     if source in NEVER_VALIDATING:
         return _RANK[target] <= _RANK[source]
     if target in {
