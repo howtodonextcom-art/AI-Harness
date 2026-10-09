@@ -95,6 +95,7 @@ def main() -> None:
     parser.add_argument("--end", default="2025-12-01")
     parser.add_argument("--root", default="data/market")
     parser.add_argument("--out", default="data/trade/reports/replay_smoke.json")
+    parser.add_argument("--skip-parity", action="store_true", help="faster: no live-tail pass")
     args = parser.parse_args()
     start, end = _day(args.start), _day(args.end)
     if start < BURNED_FROM or end > BURNED_TO:
@@ -118,6 +119,8 @@ def main() -> None:
     m1 = bars.frames[Timeframe.M1]
     counts: Counter[str] = Counter()
     refusals: Counter[str] = Counter()
+    sole: Counter[str] = Counter()
+    h1_directional = 0
     problems: Counter[str] = Counter()
     mismatches: list[dict[str, Any]] = []
     setups: set[str] = set()
@@ -137,12 +140,16 @@ def main() -> None:
             _tail_view(bars, at), at, bid, ask, spread, spec, EQUITY, "UNKNOWN", True, True
         )
         state_full, full = evaluate(full_in, cfg, SERVER_CLOCK)
-        _, tail = evaluate(tail_in, cfg, SERVER_CLOCK)
+        tail = full if args.skip_parity else evaluate(tail_in, cfg, SERVER_CLOCK)[1]
         if comparable(full) != comparable(tail):
             mismatches.append(
                 {"at": at.isoformat(), "full": comparable(full), "live": comparable(tail)}
             )
         counts[full.decision.value] += 1
+        if len(full.refusal_reasons) == 1:
+            sole[full.refusal_reasons[0].value] += 1
+        if full.h1_bias in ("BULLISH", "BEARISH"):
+            h1_directional += 1
         refusals.update(r.value for r in full.refusal_reasons)
         # the desk: monitor what happened since the last decision, then maybe take this one
         new = m1.filter((pl.col("timestamp") > desk.last_bar) & (pl.col("available_at") <= at))
@@ -181,6 +188,8 @@ def main() -> None:
         "counts": dict(counts),
         "distinct_setups": len(setups),
         "top_refusals": refusals.most_common(10),
+        "decisions_with_exactly_one_blocker": sole.most_common(10),
+        "decisions_with_h1_direction": h1_directional,
         "plan_invariant_violations": dict(problems),
         "parity_mismatches": len(mismatches),
         "parity_examples": mismatches[:3],

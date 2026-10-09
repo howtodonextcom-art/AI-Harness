@@ -208,3 +208,31 @@ def test_demo_lock_lists_reasons_and_never_a_secret(monkeypatch: pytest.MonkeyPa
     assert {"TRADING_NOT_ALLOWED", "DEMO_TRADING_DISABLED"} <= codes
     assert status["paper_desk_sends_orders"] is False
     assert NOW  # fixture import is used for the clock only
+
+
+def test_engine_paper_open_then_manual_close_end_to_end(
+    engine: tuple[TradeEngine, FakeClient],
+) -> None:
+    eng, client = engine
+    live_path = eng.source.root / "live.json"
+    live = json.loads(live_path.read_text(encoding="utf-8"))
+    live["symbol_spec"] = {
+        "point": 0.01, "trade_tick_size": 0.01, "trade_tick_value": 1.0,
+        "trade_contract_size": 100.0, "volume_min": 0.01, "volume_max": 100.0,
+        "volume_step": 0.01, "trade_stops_level": 0, "trade_freeze_level": 0, "digits": 2,
+    }  # fmt: skip
+    live_path.write_text(json.dumps(live), encoding="utf-8")
+    eng.step()
+    signal = _buy(eng)
+    eng._signal = signal
+    snap = eng._snap
+    assert snap is not None and snap.usable and snap.spec is not None
+    record = eng.paper_open(setup_id=signal.setup_id, risk_pct=0.25, now=client.now)
+    assert record["status"] == "OPEN" and record["side"] == "BUY"
+    assert record["market"]["volume_type"] == "TICK_VOLUME"  # provenance travels with the trade
+    with pytest.raises(Exception, match=r"DECISION_CHANGED|ALREADY|OPEN|RISK"):
+        eng.paper_open(setup_id=signal.setup_id, risk_pct=0.25, now=client.now)
+    closed = eng.paper_close(record["trade_id"], now=client.now)
+    assert closed["status"] == "CLOSED" and closed["exit_reason"] == "MANUAL_CLOSE"
+    with pytest.raises(Exception, match="NOT_OPEN"):
+        eng.paper_close(record["trade_id"], now=client.now)
