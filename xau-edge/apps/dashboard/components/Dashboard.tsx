@@ -141,6 +141,9 @@ export function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-500">
+          <Link href="/market" className="rounded-md border border-sky-600 px-3 py-1 text-sky-700 dark:text-sky-300">
+            Thị trường MT5
+          </Link>
           <Link href="/research" className="rounded-md border border-sky-600 px-3 py-1 text-sky-700 dark:text-sky-300">
             Research
           </Link>
