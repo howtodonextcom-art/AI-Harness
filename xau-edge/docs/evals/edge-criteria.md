@@ -122,3 +122,16 @@ giai đoạn được lấy từ giai đoạn trước. 4 fold của tiêu chí 
   tăng độ phân giải của đuôi, không đổi tiêu chí.
 * PASS = 7 tiêu chí đều đạt VÀ kịch bản bi quan (slippage x2) có mean net R > 0 trên cùng giai đoạn.
   Điều kiện bi quan là điều kiện cần bổ sung, không thay thế tiêu chí nào.
+
+## Phụ lục V2 (2026-10-09, chỉ thêm, không đổi tiêu chí nào ở trên)
+
+* **Stage 1 (sàng lọc)** của Edge Program V2: Holm-Bonferroni family-wise 0.10 trên các biến thể đã đăng
+  ký, kèm điều kiện bi quan. Stage 1 chỉ là SCREENING: không tạo bằng chứng. Bảy tiêu chí ở trên giữ
+  nguyên cho Stage 2 và Test-H.
+* **Lớp bằng chứng** (`DESCRIPTIVE`, `EXPLORATORY`, `SCREENING`, `VALIDATION`, `CONFIRMATORY`, `HOLDOUT`,
+  `PROSPECTIVE`, `EXECUTION`): một kết quả chỉ được hiển thị là VALIDATED hoặc CONFIRMATORY PASS khi đủ
+  bằng chứng cho lớp đó (ADR-0025).
+* **Công suất báo cáo theo N hiệu dụng**, không theo N thô; MDE trên +0.20R tại K đã đăng ký là
+  "underpowered-by-design" và biến thể đó bị loại trước khi tốn K.
+* Mọi phiên bản mới của ngưỡng cổng robustness phải có tài liệu có phiên bản, được duyệt và chỉ áp dụng
+  cho thí nghiệm đăng ký sau đó (xem `docs/research/gate-calibration.md`).
