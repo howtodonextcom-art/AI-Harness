@@ -46,6 +46,10 @@ Tạo lại: `SCREENSHOTS=1 npx playwright test e2e/screenshots.spec.ts` (trong 
 * UI đọc `initial_tp` trong khi desk ghi `tp` (TP của lệnh thật hiện "—", không có đường TP) — sửa, xem `PAPER_LIFECYCLE_ACCEPTANCE.md`.
 * Mũi tên "hướng" lệch nhãn trạng thái và percentile sai thang (trước đó) — đã sửa.
 
+## 3b. Sửa thêm sau đánh giá độc lập
+
+Marker BUY/SELL nay nằm trên **nến M5 trigger** (trước đây là giờ quyết định, tức nến hình thành kế tiếp); biểu đồ bỏ thời gian lặp/lùi khi đổi giờ mùa hè ở múi BROKER/LOCAL thay vì lỗi; nhãn đường cấu trúc là "M15 RES/SUP"; banner AUTO_PAPER khi bật; mũi tên hướng từ nhãn thô; hiệu lực tín hiệu hiển thị không dài hơn lần đóng M5 kế tiếp.
+
 ## 4. Giới hạn
 
 Ký hiệu trên canvas (marker, nhãn đường) là canvas nên kiểm tự động dựa vào legend/danh sách marker trong DOM (cùng dữ liệu được vẽ) thay vì pixel; ảnh chụp dùng để rà soát thị giác. Không cố đạt chức năng TradingView; không có công cụ vẽ. Thời gian hiển thị theo múi giờ chọn (mặc định UTC).

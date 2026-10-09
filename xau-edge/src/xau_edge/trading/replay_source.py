@@ -64,7 +64,9 @@ class ReplayMarketSource(LiveTradingMarketSource):
         ledger = BarLedger(self.root)
         self.frames = from_frames(
             {
-                tf: ledger.load(symbol, tf, start - w, end + timedelta(days=1))
+                tf: ledger.load(
+                    symbol, tf, max(start - w, BURNED_FROM), min(end + timedelta(days=1), BURNED_TO)
+                )
                 for tf, w in WARMUP.items()
             }
         ).frames

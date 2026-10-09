@@ -80,7 +80,21 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
   const fitted = useRef<string | null>(null);
   const [hover, setHover] = useState<string[]>([]);
 
-  const times = useMemo(() => bars.map((b) => shiftedSeconds(b.time, zone)), [bars, zone]);
+  // lightweight-charts needs strictly increasing times: a DST fall-back in the BROKER / LOCAL
+  // display zone can repeat or reverse an hour, so repeated times are dropped (never crash)
+  const series = useMemo(() => {
+    const out: { bar: MarketBar; time: number }[] = [];
+    let last = -Infinity;
+    for (const bar of bars) {
+      const time = shiftedSeconds(bar.time, zone);
+      if (time > last) {
+        out.push({ bar, time });
+        last = time;
+      }
+    }
+    return out;
+  }, [bars, zone]);
+  const times = useMemo(() => series.map((s) => s.time), [series]);
 
   // marker texts by bar time (for the hover tooltip) and the markers themselves
   const { chartMarkers, notes, markerList } = useMemo(() => {
@@ -214,17 +228,17 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
     const h = handles.current;
     if (!h) return;
     h.candles.setData(
-      bars.map((b, i) => {
+      series.map(({ bar: b, time: t }) => {
         const base = b.close >= b.open ? GREEN : RED;
-        const time = times[i] as UTCTimestamp;
+        const time = t as UTCTimestamp;
         return b.is_closed
           ? { time, open: b.open, high: b.high, low: b.low, close: b.close }
           : { time, open: b.open, high: b.high, low: b.low, close: b.close, color: `${base}55`, borderColor: base, wickColor: base };
       }),
     );
     h.volume.setData(
-      bars.map((b, i) => ({
-        time: times[i] as UTCTimestamp,
+      series.map(({ bar: b, time: t }) => ({
+        time: t as UTCTimestamp,
         value: b.tick_volume,
         color: b.is_closed ? (b.close >= b.open ? `${GREEN}99` : `${RED}99`) : `${GREY}66`,
       })),
@@ -233,7 +247,7 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
       h.chart.timeScale().fitContent();
       fitted.current = timeframe;
     }
-  }, [bars, times, timeframe]);
+  }, [bars, series, timeframe]);
 
   useEffect(() => {
     handles.current?.plugin.setMarkers(chartMarkers);
@@ -266,8 +280,8 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
     }
     if (overlays.structure && view?.structure) {
       const st = view.structure;
-      add(st.nearest_resistance as number | null, "RES", GREY, LineStyle.Dotted);
-      add(st.nearest_support as number | null, "SUP", GREY, LineStyle.Dotted);
+      add(st.nearest_resistance as number | null, "M15 RES", GREY, LineStyle.Dotted);
+      add(st.nearest_support as number | null, "M15 SUP", GREY, LineStyle.Dotted);
       add(st.pdh as number | null, "PDH", "#7c3aed", LineStyle.SparseDotted);
       add(st.pdl as number | null, "PDL", "#7c3aed", LineStyle.SparseDotted);
     }

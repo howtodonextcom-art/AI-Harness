@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 import time
 from collections import Counter
@@ -28,6 +29,7 @@ from signal_funnel_dump import BURNED_FROM, BURNED_TO, EQUITY, WARMUP, tail_view
 
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.ledger import BarLedger
+from xau_edge.ops.code_version import current_code_version
 from xau_edge.ops.priority import default_workers, lower_priority
 from xau_edge.strategies.edge_program import SERVER_CLOCK
 from xau_edge.trading.baseline import BaselineConfig
@@ -46,10 +48,13 @@ VARIANTS: dict[str, dict[str, Any]] = {
     "C": {"version": "1.2.0", "v12_lifecycle": False, "v12_m5_geometry": False},
     "AB": {"version": "1.2.0", "v12_vol_warning": False},
     "ABC": {"version": "1.2.0"},
+    "ABC1": {"version": "1.2.1"},
     "D": {"version": "1.1.0", "spread_veto": False},
     "ABCD": {"version": "1.2.0", "spread_veto": False},
 }  # fmt: skip
 PROGRESS_EVERY = 500
+FULL_DAY_DECISIONS = 200
+"""A "full trading day" has at least this many M5 closes (Sunday stubs and holidays do not)."""
 
 
 def plan_problems(signal: Any, spec: SymbolSpec, equity: float) -> list[str]:
@@ -72,6 +77,25 @@ def plan_problems(signal: Any, spec: SymbolSpec, equity: float) -> list[str]:
     if signal.risk_reward < 1.5 - 1e-9:
         out.append("RR_BELOW_MINIMUM")
     return out
+
+
+def _m15_bar_of_trigger(close: datetime) -> str:
+    """Open of the M15 bar that contains the trigger bar (the M5 bar that closed at ``close``)."""
+    opened = close - timedelta(minutes=5)
+    return opened.replace(minute=opened.minute - opened.minute % 15).isoformat()
+
+
+def poisson_ci(events: int, exposure: float) -> tuple[float, float]:
+    """Approximate 95% interval of a Poisson rate (Wilson-Hilferty form of the exact interval)."""
+
+    def chi(z: float, k: float) -> float:
+        if k <= 0:
+            return 0.0
+        return k * (1 - 2 / (9 * k) + z * math.sqrt(2 / (9 * k))) ** 3
+
+    low = chi(-1.96, 2 * events) / 2 / exposure
+    high = chi(1.96, 2 * (events + 1)) / 2 / exposure
+    return round(low, 3), round(high, 3)
 
 
 def _new_acc() -> dict[str, Any]:
@@ -100,18 +124,24 @@ def run_window(job: dict[str, Any]) -> str:
     ledger = BarLedger(Path(job["root"]))
     bars = from_frames(
         {
-            tf: ledger.load("XAUUSD", tf, start - w, end + timedelta(days=1))
+            tf: ledger.load(
+                "XAUUSD", tf, max(start - w, BURNED_FROM), min(end + timedelta(days=1), BURNED_TO)
+            )
             for tf, w in WARMUP.items()
         }
     )
     live = json.loads((Path(job["root"]) / "live.json").read_text(encoding="utf-8"))
-    spec = spec_from_broker(live.get("symbol_spec")) or SymbolSpec()
+    spec = spec_from_broker(live.get("symbol_spec"))
+    if spec is None:
+        msg = "no symbol_spec in live.json: refusing to evaluate with a default contract"
+        raise SystemExit(msg)
     configs = {n: BaselineConfig(allow_unknown_news=True, **VARIANTS[n]) for n in names}
     memo = SnapshotMemo(limit=200_000)
     rows = bars.frames[Timeframe.M5].filter(
         (pl.col("available_at") >= start) & (pl.col("available_at") < end)
     )
     acc = {n: _new_acc() for n in names}
+    day_counts: dict[str, int] = {}
     done_days: list[str] = []
     resumed = False
     if job["resume"] and ckpt_path.exists():
@@ -127,6 +157,7 @@ def run_window(job: dict[str, Any]) -> str:
     for row in rows.iter_rows(named=True):
         at = row["available_at"]
         day = at.strftime("%Y-%m-%d")
+        day_counts[day] = day_counts.get(day, 0) + 1
         if day != current_day:
             if current_day is not None and current_day not in done_days:
                 for n in names:
@@ -147,13 +178,13 @@ def run_window(job: dict[str, Any]) -> str:
         )  # fmt: skip
         state, signals = evaluate_many(inputs, configs, SERVER_CLOCK, memo)
         full_signal = None
-        if job["parity"] and "ABC" in signals:
+        if job["parity"] and "ABC1" in signals:
             full_in = SnapshotInputs(
                 bars.truncated(at), at, close, close + spread * spec.point, spread, spec,
                 EQUITY, "UNKNOWN", True, True,
             )  # fmt: skip
-            _, many = evaluate_many(full_in, {"ABC": configs["ABC"]}, SERVER_CLOCK, memo)
-            full_signal = many["ABC"]
+            _, many = evaluate_many(full_in, {"ABC1": configs["ABC1"]}, SERVER_CLOCK, memo)
+            full_signal = many["ABC1"]
         for n, signal in signals.items():
             a = acc[n]
             blob = json.dumps(comparable(signal), sort_keys=True, default=str).encode()
@@ -173,12 +204,13 @@ def run_window(job: dict[str, Any]) -> str:
                         "at": at.isoformat(), "side": signal.decision.value,
                         "setup_id": signal.setup_id,
                         "armed": signal.metadata.get("setup_bars_since_armed"),
-                        "m15_bar": at.replace(minute=at.minute - at.minute % 15).isoformat(),
+                        "m15_bar": _m15_bar_of_trigger(at),
+                        "m15_label": signal.metadata.get("m15_structure"),
                         "rr": signal.risk_reward, "quality": signal.entry_quality,
                     }
                 )  # fmt: skip
             if (
-                n == "ABC"
+                n == "ABC1"
                 and full_signal is not None
                 and comparable(full_signal) != comparable(signal)
             ):
@@ -196,6 +228,7 @@ def run_window(job: dict[str, Any]) -> str:
         for n in names:
             acc[n]["day_hashes"].append(day_digest[n].hexdigest()[:16])
         done_days.append(current_day)
+    full_days = sum(1 for n in day_counts.values() if n >= FULL_DAY_DECISIONS)
     reports: dict[str, Any] = {}
     for n in names:
         a = acc[n]
@@ -207,10 +240,14 @@ def run_window(job: dict[str, Any]) -> str:
             "window": [job["start"], job["end"]],
             "decisions": sum(a["counts"].values()),
             "counts": a["counts"],
-            "trading_days": len(done_days),
+            "days_with_any_close": len(done_days),
+            "full_trading_days": full_days,
             "signal_decisions": n_sig,
             "distinct_setups": len(ids),
             "distinct_setups_per_day": round(len(ids) / max(1, len(done_days)), 3),
+            "distinct_setups_per_full_day": round(len(ids) / max(1, full_days), 3),
+            "poisson_95ci_per_full_day": poisson_ci(len(ids), max(1, full_days)),
+            "code_version": current_code_version(),
             "setup_ids_with_more_than_one_decision": sum(1 for v in ids.values() if v > 1),
             "same_side_same_m15_bar_decisions": sum(1 for v in same_m15.values() if v > 1),
             "setup_phase_counts": a["phases"],
@@ -219,7 +256,7 @@ def run_window(job: dict[str, Any]) -> str:
             "sessions": a["sessions"],
             "hours_utc": dict(sorted(a["hours"].items(), key=lambda kv: int(kv[0]))),
             "parity_mismatches": a["parity_mismatches"]
-            if (job["parity"] and n == "ABC")
+            if (job["parity"] and n == "ABC1")
             else "not run",
             "day_hashes_sha": hashlib.sha256("".join(a["day_hashes"]).encode()).hexdigest()[:16],
             "stream_hash": "n/a (resumed)" if resumed else stream[n].hexdigest()[:16],

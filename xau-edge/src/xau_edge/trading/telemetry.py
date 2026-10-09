@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -39,11 +39,13 @@ def record_of(signal: TradingSignal, *, at: datetime) -> dict[str, Any]:
     }
 
 
-def signal_record(signal: TradingSignal, *, at: datetime) -> dict[str, Any]:
+def signal_record(
+    signal: TradingSignal, *, at: datetime, bar_time: datetime | None = None
+) -> dict[str, Any]:
     """An actionable decision exactly as served (the chart markers come from these)."""
     return {
         "at": at.isoformat(),
-        "bar_time": signal.timestamp.isoformat(),
+        "bar_time": (bar_time or signal.timestamp).isoformat(),  # the trigger bar when known
         "setup_id": signal.setup_id,
         "decision_id": signal.decision_id,
         "side": signal.decision.value,
@@ -76,14 +78,19 @@ class DecisionTelemetry:
     def _signals_path(self, day: datetime) -> Path:
         return self.root / f"signals-{day.astimezone(UTC):%Y%m%d}.jsonl"
 
-    def append_signal(self, signal: TradingSignal, *, at: datetime) -> None:
+    def append_signal(
+        self, signal: TradingSignal, *, at: datetime, bar_time: datetime | None = None
+    ) -> None:
         """Log an actionable decision once per setup (restart-safe: ids are read back)."""
         path = self._signals_path(at)
-        if signal.setup_id in {r.get("setup_id") for r in self.read_signals(at)}:
+        known = {r.get("setup_id") for r in self.read_signals(at)}
+        known |= {r.get("setup_id") for r in self.read_signals(at - timedelta(days=1))}
+        if signal.setup_id in known:  # also across midnight UTC
             return
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(signal_record(signal, at=at), sort_keys=True) + "\n")
+            record = signal_record(signal, at=at, bar_time=bar_time)
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
 
     def read_signals(self, day: datetime) -> list[dict[str, Any]]:
         path = self._signals_path(day)

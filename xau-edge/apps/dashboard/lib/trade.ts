@@ -162,6 +162,7 @@ export interface TradeView {
   explanation?: string[];
   why_wait?: WhyWait;
   setup?: SetupInfo;
+  auto_paper?: boolean;
   timeframes?: TimeframeRow[];
   volume?: {
     type: string;

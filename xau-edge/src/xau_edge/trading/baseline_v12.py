@@ -39,7 +39,7 @@ from xau_edge.trading.schema import (
     TradingSignal,
     make_signal_id,
 )
-from xau_edge.trading.setup_machine import SetupPhase
+from xau_edge.trading.setup_machine import SetupLifecycle, SetupPhase
 from xau_edge.trading.sizing import size_for_risk
 
 
@@ -99,7 +99,12 @@ def decide_v12(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the
     if state.h4_regime == BLOCKING_H4[side]:
         return wait(Refusal.TIMEFRAME_CONFLICT, f"H4 vetoes {side}")
     with_trend, against = ("UP", "DOWN") if direction > 0 else ("DOWN", "UP")
-    if state.m15_structure == against:
+    turned = (
+        state.m15_structure in (against, f"REVERSAL_{against}")
+        if cfg.version == "1.2.1"
+        else state.m15_structure == against
+    )
+    if turned:
         return wait(Refusal.TIMEFRAME_CONFLICT, "M15 against H1")
     # 3. SETUP lifecycle (M30 is context only)
     if cfg.v12_lifecycle:
@@ -189,19 +194,16 @@ def decide_v12(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the
         f"stop={stop.model} {stop.distance:.2f} (ATR M5 {atr:.2f})",
         f"net_rr={targets.net_rr:.2f}",
     )
-    identity = make_signal_id(
-        {
-            "setup": side,
-            "s": state.symbol,
-            "armed": None if lc is None else lc.armed_at,
-            "trigger": None
-            if lc is None
-            else lc.trigger_at
-            if cfg.v12_lifecycle
-            else state.timestamp,
-            "v": cfg.version,
-        }
-    )
+    key: dict[str, object] = {
+        "setup": side,
+        "s": state.symbol,
+        "armed": None if lc is None else lc.armed_at,
+        "trigger": _trigger_key(state, lc, cfg),
+        "v": cfg.version,
+    }
+    if _flags(cfg):
+        key["flags"] = _flags(cfg)  # ablations never share an id with the production variant
+    identity = make_signal_id(key)
     return TradingSignal(
         signal_id=make_signal_id(
             {
@@ -212,6 +214,7 @@ def decide_v12(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the
                 "e": round(entry, 5),
                 "sl": round(stop.price, 5),
                 "tp": round(targets.tp1, 5),
+                **({"flags": _flags(cfg)} if _flags(cfg) else {}),
             }
         ),
         decision=decision,
@@ -242,6 +245,31 @@ def decide_v12(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the
             "capped_by_structure": str(targets.capped_by_structure),
             "setup_phase": "SAME_BAR" if lc is None else lc.phase.value,
             "setup_bars_since_armed": None if lc is None else lc.bars_since_armed,
+            "m15_structure": state.m15_structure,
+            "variant_flags": _flags(cfg),
         },
         **_common(state, cfg, ctx),
     )
+
+
+def _flags(cfg: BaselineConfig) -> str:
+    """Non-default ablation switches (empty for the production configuration)."""
+    off = [
+        name
+        for name, on in (
+            ("lifecycle", cfg.v12_lifecycle),
+            ("m5_geometry", cfg.v12_m5_geometry),
+            ("vol_warning", cfg.v12_vol_warning),
+            ("spread_veto", cfg.spread_veto),
+        )
+        if not on
+    ]
+    return ",".join(f"no_{n}" for n in off)
+
+
+def _trigger_key(state: MarketState, lc: SetupLifecycle | None, cfg: BaselineConfig) -> object:
+    """Identity of the trigger bar: the lifecycle's, or (ablation) the M5 bar that triggered."""
+    if lc is not None and cfg.v12_lifecycle:
+        return lc.trigger_at
+    m5 = state.snapshots.get("M5")
+    return state.timestamp if m5 is None else m5.bar_open

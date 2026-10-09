@@ -422,3 +422,57 @@ def test_a_target_exit_does_not_credit_more_than_the_target(tmp_path: Path) -> N
     done = desk.process_bars(bars([(1, entry + 0.1, tp + 10, entry, tp + 5)]))[0]
     assert done["exit_reason"] == "TAKE_PROFIT"
     assert done["mfe_r"] == pytest.approx((tp - entry) / (entry - rec["sl"]), abs=0.05)
+
+
+def _opened_mid_bar(desk: PaperDesk) -> dict[str, Any]:
+    return desk.open_from_decision(
+        buy(), risk_pct=0.25, quote=Q(), spec=SPEC, now=NOW + timedelta(seconds=30)
+    )
+
+
+def test_a_stop_hit_inside_the_minute_of_the_fill_is_not_missed(tmp_path: Path) -> None:
+    desk = make_desk(tmp_path)
+    rec = _opened_mid_bar(desk)
+    entry, sl = rec["fill_price"], rec["sl"]
+    # the minute that contains the fill: it dives through the stop and recovers by its close
+    done = desk.process_bars(bars([(0, entry, entry + 0.2, sl - 0.5, entry + 0.1)]))
+    assert len(done) == 1 and done[0]["exit_reason"] == "STOP_LOSS"
+
+
+def test_a_target_touched_inside_the_minute_of_the_fill_is_not_credited(tmp_path: Path) -> None:
+    desk = make_desk(tmp_path)
+    rec = _opened_mid_bar(desk)
+    entry, tp = rec["fill_price"], rec["tp"]
+    done = desk.process_bars(bars([(0, entry, tp + 1.0, entry - 0.1, entry + 0.1)]))
+    assert (
+        done == [] and desk.open_trade() is not None
+    )  # favourable extremes of that minute are ignored
+    # and the position is not managed (no exit by time, no stop moves) on that bar
+    assert desk.open_trade()["mfe"] == pytest.approx(0.0, abs=1e-9)  # type: ignore[index]
+
+
+def test_a_corrupt_state_file_is_set_aside_and_reported_not_silently_replaced(
+    tmp_path: Path,
+) -> None:
+    desk = make_desk(tmp_path)
+    opened(desk)
+    (tmp_path / "paper_desk.json").write_text("{not json", encoding="utf-8")
+    fresh = make_desk(tmp_path)
+    assert fresh.trades == {}
+    assert fresh.load_error is not None and "EMPTY" in fresh.load_error
+    assert list(tmp_path.glob("paper_desk.json.corrupt-*"))  # the broken file is kept for forensics
+
+
+def test_a_fill_that_crashes_leaves_a_cancelled_trade_not_a_stuck_pending_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    desk = make_desk(tmp_path)
+
+    def boom(_order: object) -> object:
+        raise KeyError("unexpected broker failure")
+
+    monkeypatch.setattr(desk.broker, "submit_order", boom)
+    rec = opened(desk)
+    assert rec["status"] == PaperStatus.CANCELLED
+    assert desk.open_trade() is None
+    assert all(r["status"] != PaperStatus.PENDING for r in desk.trades.values())

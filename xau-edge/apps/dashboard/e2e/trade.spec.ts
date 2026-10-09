@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import realTrade from "./fixtures/real_paper_trade.json";
-import { EMPTY_MARKERS, LAST_OPEN, STEP, TFS, barOpen, iso, legend, mock, view } from "./fixtures/trade";
+import { EMPTY_MARKERS, LAST_OPEN, STEP, TFS, bars, barOpen, iso, legend, mock, view } from "./fixtures/trade";
 
 /** Trade + Journal pages e2e against the production build; /trade/* and /md/* are mocked in the browser. */
 
@@ -130,9 +130,9 @@ test("an open paper position draws entry, SL, TP and now, with live R and P&L", 
 test("structure overlay is optional and uses the server levels", async ({ page }) => {
   await mock(page, view({}, "WAIT"));
   await page.goto("/trade");
-  await expect(page.getByTestId("line-RES")).toHaveCount(0);
+  await expect(page.getByTestId("line-M15-RES")).toHaveCount(0);
   await page.getByTestId("toggle-structure").check();
-  await expect(page.getByTestId("line-RES")).toHaveText("RES 2120.00");
+  await expect(page.getByTestId("line-M15-RES")).toHaveText("M15 RES 2120.00");
   await expect(page.getByTestId("line-PDH")).toHaveText("PDH 2125.00");
   await expect(page.getByTestId("line-PDL")).toHaveText("PDL 2080.00");
 });
@@ -276,4 +276,32 @@ test("a REAL desk record (from an acceptance replay) renders its TP/SL, R and ma
   await expect(page.getByTestId("line-PAPER-TP")).toHaveText(`PAPER TP ${closed.tp.toFixed(2)}`);
   await expect(page.getByTestId("line-PAPER-SL")).toHaveText(`PAPER SL ${closed.sl.toFixed(2)}`);
   await expect(page.getByTestId("line-PAPER-ENTRY")).toHaveText(`PAPER ENTRY ${closed.fill_price.toFixed(2)}`);
+});
+
+test("AUTO_PAPER is visible when it is on and absent when it is off", async ({ page }) => {
+  await mock(page, view({ auto_paper: true }, "WAIT"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("auto-paper-banner")).toContainText("AUTO_PAPER");
+  await mock(page, view({ auto_paper: false }, "WAIT"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("auto-paper-banner")).toHaveCount(0);
+});
+
+test("a signal marker is drawn on the trigger bar and the series survives repeated times", async ({ page }) => {
+  const at = barOpen(3);
+  const markers = {
+    simulated: true,
+    signals: [{ at: iso(0), bar_time: at, setup_id: "s1aaaaaaaa", side: "BUY", entry: 2100.5, sl: 2095.5, tp1: 2110.5, tp2: null, rr: 1.9, lots: 0.5, expires_at: null, strategy_version: "1.2.1", taken: false }],
+    paper_trades: [],
+  };
+  await mock(page, view({}, "WAIT"), markers);
+  await page.route("**/md/XAUUSD/bars**", (route) => {
+    const b = bars("M5");
+    b.bars.splice(50, 0, { ...b.bars[50] }); // a repeated time (as at a DST fall-back)
+    return route.fulfill({ json: b });
+  });
+  await page.goto("/trade");
+  const marker = page.getByTestId("chart-markers").locator("li").first();
+  await expect(marker).toHaveAttribute("data-bar-time", at);
+  await expect(page.getByTestId("trade-chart")).toBeVisible();
 });

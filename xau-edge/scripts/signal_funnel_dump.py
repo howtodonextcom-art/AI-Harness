@@ -58,7 +58,9 @@ def main() -> None:
     ledger = BarLedger(Path(args.root))
     bars = from_frames(
         {
-            tf: ledger.load("XAUUSD", tf, start - w, end + timedelta(days=1))
+            tf: ledger.load(
+                "XAUUSD", tf, max(start - w, BURNED_FROM), min(end + timedelta(days=1), BURNED_TO)
+            )
             for tf, w in WARMUP.items()
         }
     )

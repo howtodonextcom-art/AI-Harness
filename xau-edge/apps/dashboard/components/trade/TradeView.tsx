@@ -283,6 +283,11 @@ export function TradeView() {
           {p}
         </div>
       ))}
+      {view?.auto_paper && (
+        <div role="status" data-testid="auto-paper-banner" className={`rounded-md border px-3 py-1.5 text-sm ${WARN}`}>
+          AUTO_PAPER đang BẬT: lệnh PAPER sẽ tự mở khi có quyết định hành động (chỉ bàn paper, không bao giờ gửi lệnh tới MT5).
+        </div>
+      )}
       {message && (
         <div role="status" data-testid="action-message" className={`rounded-md border px-3 py-2 text-sm ${message.tone}`}>
           {message.text}

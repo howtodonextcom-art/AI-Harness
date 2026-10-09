@@ -11,7 +11,7 @@ FORBIDDEN_IMPORTS = [
     r"xau_edge\.market_data\.catalog",
     r"xau_edge\.market_data\.raw_store",
     r"xau_edge\.signals\.(engine|evidence)",
-    r"xau_edge\.brokers\.mt5_demo\.(orders|trade)",
+    r"xau_edge\.brokers\.mt5_demo\.(executor|orders|trade)",
     r"MetaTrader5",
 ]
 

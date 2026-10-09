@@ -155,6 +155,7 @@ class PaperDesk:
         self.trades: dict[str, dict[str, Any]] = {}
         self.governor = TradeGovernor(self.config.governor)
         self.last_bar: datetime | None = None
+        self.load_error: str | None = None
         self._load()
 
     # ---- persistence -------------------------------------------------------------------------
@@ -177,17 +178,38 @@ class PaperDesk:
         }
         atomic_write_text(self._state_path, json.dumps(payload, default=str))
 
+    def _set_aside(self, why: str) -> None:
+        """Keep an unreadable state file for forensics and say so (never silently start empty)."""
+        stamp = f"{self._clock():%Y%m%dT%H%M%S}"
+        aside = self._state_path.with_name(f"{self._state_path.name}.corrupt-{stamp}")
+        try:
+            self._state_path.replace(aside)
+        except OSError:
+            aside = self._state_path
+        self.load_error = (
+            f"paper desk state was unreadable ({why}); it was set aside as {aside.name} and the "
+            "desk started EMPTY: earlier paper trades are only in paper_journal.jsonl"
+        )
+        _LOG.error(self.load_error)
+
     def _load(self) -> None:
+        if not self._state_path.exists():
+            return
         try:
             raw = json.loads(self._state_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        except OSError:
+            return
+        except ValueError as exc:
+            self._set_aside(type(exc).__name__)
             return
         try:
             self.broker.import_state(raw["broker"])
             self.trades = dict(raw["trades"])
             self.last_bar = _parse(raw.get("last_bar"))
         except (KeyError, TypeError, ValueError) as exc:
-            _LOG.error("paper desk state unreadable (%s); starting empty", type(exc).__name__)
+            self._set_aside(type(exc).__name__)
+            self.trades = {}
+            self.last_bar = None
             return
         for rec in self.trades.values():  # rebuild the governor's memory
             if rec["status"] in (PaperStatus.OPEN, PaperStatus.CLOSED):
@@ -398,8 +420,10 @@ class PaperDesk:
         )
         try:
             position = self.broker.submit_order(order)
-        except (ValueError, RuntimeError) as exc:
-            return self._cancel(record, f"FILL_REJECTED: {exc}"[:200], now)
+        except (
+            Exception
+        ) as exc:  # a trade must never stay PENDING (it would block its setup forever)
+            return self._cancel(record, f"FILL_REJECTED: {type(exc).__name__}: {exc}"[:200], now)
         record.update(
             status=PaperStatus.OPEN.value,
             position_id=position.position_id,
@@ -485,8 +509,8 @@ class PaperDesk:
             if rec is None:
                 continue
             entered = _parse(rec["opened_at"]) or opened
-            if opened < entered:
-                continue  # the bar in which the entry happened mixes pre-entry prices: skipped
+            if opened + timedelta(minutes=1) <= entered:
+                continue  # a bar that closed before the entry
             bar = MarketBar(
                 time=opened + timedelta(minutes=1),
                 open=float(row["open"]),
@@ -495,6 +519,12 @@ class PaperDesk:
                 close=float(row["close"]),
                 spread_points=float(row["spread"]),
             )
+            entry_bar = opened < entered
+            if entry_bar:
+                # the bar that contains the fill mixes pre-entry prices: judge it PESSIMISTICALLY
+                # (only the adverse side counts, the favourable extreme is ignored) and never
+                # manage the position on it
+                bar = self._adverse_only(rec, bar)
             self._track_excursion(rec, bar)  # this bar's range counts even if it closes the trade
             for closed in self.broker.update_market(bar):
                 target = next(
@@ -508,7 +538,7 @@ class PaperDesk:
                         )
                     )
             rec = self.open_trade()
-            if rec is None:
+            if rec is None or entry_bar:
                 continue
             extra = BarExtras(
                 atr, swing_low, swing_high, bool((invalidated or {}).get(rec["side"], False))
@@ -518,6 +548,20 @@ class PaperDesk:
                 finished.append(closed_now)
         self._save()
         return finished
+
+    @staticmethod
+    def _adverse_only(rec: dict[str, Any], bar: MarketBar) -> MarketBar:
+        """The bar of the fill with the favourable side removed (stops can fire, targets cannot)."""
+        fill = float(rec["fill_price"])
+        if rec["side"] == "BUY":
+            return MarketBar(
+                time=bar.time, open=fill, high=fill, low=min(bar.low, fill),
+                close=min(bar.close, fill), spread_points=bar.spread_points,
+            )  # fmt: skip
+        return MarketBar(
+            time=bar.time, open=fill, high=max(bar.high, fill), low=fill,
+            close=max(bar.close, fill), spread_points=bar.spread_points,
+        )  # fmt: skip
 
     def _track_excursion(self, rec: dict[str, Any], bar: MarketBar) -> None:
         spread = bar.spread_points * self.broker.costs.point

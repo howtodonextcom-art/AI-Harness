@@ -261,18 +261,28 @@ class SnapshotMemo:
 
 
 def previous_day_range(
-    h1: pl.DataFrame | None, clock: BrokerClock | None
+    h1: pl.DataFrame | None, clock: BrokerClock | None, at: datetime | None = None
 ) -> tuple[float | None, float | None]:
-    """High and low of the previous BROKER day (server wall-clock date) from closed H1 bars."""
+    """High and low of the previous BROKER day (server wall-clock date) from closed H1 bars.
+
+    "Previous" is relative to the server date of ``at`` (the decision time), so it is right in the
+    first server hour of a day, before any H1 bar of the new day has closed.
+    """
     if h1 is None or h1.height < 48 or clock is None:
         return None, None
     wall = clock.utc_to_server(h1["timestamp"])
     frame = h1.with_columns(wall.dt.date().alias("_day"))
     days = frame["_day"].unique().sort()
-    if days.len() < 2:
+    if at is not None:
+        today = clock.utc_to_server(pl.Series("t", [at], dtype=pl.Datetime("us", "UTC"))).dt.date()[
+            0
+        ]
+        earlier = days.filter(days < today)
+    else:
+        earlier = days[:-1]
+    if earlier.len() < 1:
         return None, None
-    previous = days[-2]
-    day = frame.filter(pl.col("_day") == previous)
+    day = frame.filter(pl.col("_day") == earlier[-1])
     if day.height == 0:
         return None, None
     return float(day["high"].max()), float(day["low"].min())  # type: ignore[arg-type]
@@ -469,7 +479,7 @@ def build_market_state(
     if base_frame is not None and base_frame.height:
         real = base_frame["real_volume"].to_numpy() if "real_volume" in base_frame.columns else None
         volume_type = detect_volume_type(base_frame["tick_volume"].to_numpy(), real).value
-    pdh, pdl = previous_day_range(frames.get(Timeframe.H1), broker_clock)
+    pdh, pdl = previous_day_range(frames.get(Timeframe.H1), broker_clock, at)
     return MarketState(
         timestamp=at,
         symbol=symbol,

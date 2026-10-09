@@ -25,7 +25,7 @@ Rules (pre-registered in ``docs/trading/BASELINE_V1_2_PREREGISTRATION.md``):
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import StrEnum
 
 import polars as pl
@@ -76,7 +76,11 @@ class _Labels:
 
 
 def _labels_at(
-    bars: MultiTfBars, at: datetime, cfg: StateConfig, memo: SnapshotMemo
+    bars: MultiTfBars,
+    at: datetime,
+    cfg: StateConfig,
+    memo: SnapshotMemo,
+    strict: bool = False,
 ) -> _Labels | None:
     snaps: dict[Timeframe, TfSnapshot | None] = {}
     for tf in _TFS:
@@ -91,11 +95,12 @@ def _labels_at(
     structure = _structure_label(snaps[Timeframe.M15])
     pullback = _pullback(snaps[Timeframe.M15])
     with_trend, against = ("UP", "DOWN") if side > 0 else ("DOWN", "UP")
+    turned = structure in (against, f"REVERSAL_{against}") if strict else structure == against
     want = "PULLBACK_IN_UPTREND" if side > 0 else "PULLBACK_IN_DOWNTREND"
     return _Labels(
         side=side,
         ready=structure == with_trend and pullback == want,
-        against=structure == against,
+        against=turned,
         trigger=_m5_momentum(snaps[Timeframe.M5]) == with_trend,
     )
 
@@ -108,6 +113,7 @@ def lifecycle(
     memo: SnapshotMemo | None = None,
     valid_bars: int = VALID_BARS,
     lookback: int = LOOKBACK,
+    hardened: bool = False,
 ) -> SetupLifecycle:
     """The setup lifecycle at ``at`` from closed bars only."""
     cfg = cfg or StateConfig()
@@ -122,7 +128,7 @@ def lifecycle(
     reason = "no setup"
     ready_prev: bool | None = None
     for idx, close in enumerate(closes):
-        lab = _labels_at(bars, close, cfg, memo)
+        lab = _labels_at(bars, close, cfg, memo, hardened)
         if lab is None:
             return SetupLifecycle(SetupPhase.NONE, 0, None, None, None, False, "missing timeframe")
         if phase is SetupPhase.ARMED:
@@ -132,6 +138,12 @@ def lifecycle(
                 phase, reason = SetupPhase.INVALIDATED, "M15 structure turned against the setup"
             elif armed_idx is not None and idx - armed_idx > valid_bars:
                 phase, reason = SetupPhase.EXPIRED, f"no M5 trigger within {valid_bars} bars"
+            elif (
+                hardened
+                and armed_idx is not None
+                and close - closes[armed_idx] > timedelta(minutes=5 * valid_bars)
+            ):
+                phase, reason = SetupPhase.EXPIRED, "the setup aged out across a gap in the data"
         elif phase is SetupPhase.TRIGGERED and (not lab.ready or lab.side != side):
             phase, reason = SetupPhase.NONE, "pullback finished"
         edge = lab.ready and (ready_prev is None or ready_prev is False)

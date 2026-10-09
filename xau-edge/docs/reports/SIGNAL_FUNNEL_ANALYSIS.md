@@ -138,6 +138,25 @@ Chẩn đoán thêm (cửa sổ đã xem, KHÔNG dùng để chấp nhận): g�
 * Phân phối 8 tín hiệu v1.2: BUY 5 / SELL 3; phiên: New York 4, London-NY overlap 2, London 1, Asia 1; giờ UTC 2, 9, 14, 15, 16, 18, 18, 20.
 * **Kết luận cấu trúc**: khái niệm setup hiện tại (pullback nông về EMA20 M15 khi cấu trúc M15 còn UP, trigger M5 động lượng, R/R ròng ≥1.5 với mục tiêu bị chặn bởi mức M15) cho khoảng 0.1–0.23 setup/ngày trên XAUUSD (tương đương 1 setup mỗi 4–10 ngày). Với tần suất này, chỉ forward paper không thể thực hành vòng đời ổn định; đó là lý do cần Acceptance Replay. Phần "TIMEFRAME_CONFLICT" 17% ở v1.2 gồm cả pullback sâu (cấu trúc M15 đảo tạm thời) mà định nghĩa hiện tại coi là xung đột — đây là hướng thiết kế mới hợp lý nhất, nhưng phải là v1.3 có pre-đăng ký riêng trên cửa sổ chưa dùng (E3 2025-09-08→10-06, E4 2026-03-09→04-06), không phải chỉnh tại chỗ.
 
+### 10.4 Sau đánh giá độc lập: v1.2.1 và định nghĩa ngày (chạy lại, cùng cửa sổ E1/E2)
+
+`docs/reports/INDEPENDENT_REVIEW_TRADE04.md` tìm ra một lỗ hổng HIGH (setup vẫn bắn sau CHoCH ngược) và lỗi đo lường. Bản sửa hành vi là **v1.2.1** (v1.2.0 giữ nguyên, tái lập bằng hash). Chạy lại bộ đánh giá với mã đã commit-trước-khi-chạy (`code_version` được ghi trong JSON):
+
+| Biến thể | Setup (E1, E2) | Gộp | /ngày có nến (48) | /ngày đầy đủ (40) | Poisson 95% (/ngày đầy đủ) |
+|---|---|---|---|---|---|
+| v1.1.0 | 5, 0 | 5 | 0.104 | 0.128 | 0.04–0.30 |
+| B (một mình) | 6, 5 | 11 | 0.229 | 0.282 | 0.14–0.51 |
+| v1.2.0 (ABC) | 4, 4 | 8 | 0.167 | 0.205 | 0.09–0.40 |
+| **v1.2.1 (ABC1)** | 4, 4 | **8** | **0.167** | **0.205** | 0.09–0.40 |
+| (chẩn đoán, không đăng ký) ABCD = ABC + bỏ veto spread | 5, 5 | 10 | 0.208 | 0.256 | 0.12–0.47 |
+
+* **Hồi quy**: luồng quyết định v1.1 và v1.2.0 giống từng bit lần chạy đầu (hash luồng và hash từng ngày bằng nhau) sau toàn bộ tối ưu hóa và sửa lỗi; v1.2.1 có parity 0/10 609 và 0 vi phạm kế hoạch.
+* **Lỗ hổng #1 không tạo tín hiệu sai ở E1/E2**: v1.2.1 phát đúng 8 tín hiệu như v1.2.0 (cả 8 có nhãn M15 UP/DOWN); khác biệt chỉ ở trạng thái (INVALIDATED 185 và 223 lượt quyết định).
+* **"Ngày giao dịch" chưa được định nghĩa trong pre-đăng ký.** Theo cả hai định nghĩa (48 ngày có nến hoặc 40 ngày đầy đủ ≥200 lần đóng M5), v1.2.x ở dưới 0.25 (0.167 và 0.205): kết luận "không thay v1.1" **không đổi**. Nhưng khoảng tin cậy 95% của v1.2.x (0.09–0.40) chứa 0.25: với 8 sự kiện, số liệu **không đủ để khẳng định tần suất thật thấp hơn 0.25**; quy tắc đã đăng ký là quy tắc điểm và được tuân thủ nguyên văn.
+* **Không chọn theo kết quả**: biến thể B một mình (0.229/0.282) và ABCD (0.256) vượt hoặc chạm dải theo một định nghĩa ngày, nhưng chúng không phải ứng viên đã đăng ký; chọn chúng bây giờ sẽ là chọn sau khi xem kết quả. Mọi ứng viên mới phải được pre-đăng ký và đánh giá trên cửa sổ khác (E3 2025-09-08→10-06, E4 2026-03-09→04-06).
+* Diễn giải mục 10.3 chỉ mang tính **gợi ý** (số sự kiện 5–11 trên 40–48 ngày): H-B (hình học đúng thang) là thay đổi có tác động lớn nhất; H-A (vòng đời) không cho thấy tăng tần suất; H-C trung tính.
+* Giới hạn đo (đã nêu cho reviewer): tần suất ở đây tính tại lần đóng M5; live quyết định mỗi nến M1 nên con số là cận dưới cho live; E1/E2 không còn là dữ liệu chưa xem.
+
 ## 11. Kết quả mô phỏng vòng đời paper (THĂM DÒ, dữ liệu đã đốt, không phải bằng chứng edge)
 
 `scripts/trade_acceptance_replay.py` (AUTO_PAPER, bàn paper thật): v1.2 E1: 3 lệnh, 3 SL, −3.02R; v1.2 E2: 4 lệnh, 1 TP + 3 SL, −1.03R; v1.1 E1: 4 lệnh, 1 TP + 2 SL + 1 TIME_EXIT, −0.47R (đã trừ chi phí). Mẫu quá nhỏ để kết luận; **không có lý do để coi kết quả này là dấu hiệu của edge, và nó không bị che giấu**: trong 11 lệnh chỉ 2 chạm TP. Edge validation vẫn 0%.

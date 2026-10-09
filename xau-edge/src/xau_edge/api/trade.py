@@ -9,16 +9,18 @@ browser tab on another site from posting to it.
 
 from __future__ import annotations
 
+import logging
 import os
 import threading
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from xau_edge.market_data.calendars import ftmo_calendar
+from xau_edge.ops.code_version import current_code_version
 from xau_edge.ops.notifier import build_dispatcher
 from xau_edge.strategies.edge_program import SERVER_CLOCK
 from xau_edge.trading.baseline import BaselineConfig
@@ -28,14 +30,16 @@ from xau_edge.trading.paper_desk import DeskConfig, DeskRefusal, PaperDesk
 from xau_edge.trading.risk_calc import RISK_CHOICES
 from xau_edge.trading.setup_alerts import SetupAlerts
 
+_LOG = logging.getLogger(__name__)
 DESK_HEADER = "x-paper-desk"
 STEP_SECONDS = 5.0
 
 
 def build_trade_engine(
-    market_root: Path, trade_root: Path, *, code_version: str = "unknown"
+    market_root: Path, trade_root: Path, *, code_version: str | None = None
 ) -> TradeEngine:
     """The production wiring: collector files in, paper desk + journal + alerts out."""
+    code_version = code_version or current_code_version()
     source = LiveTradingMarketSource(market_root, ftmo_calendar())
     desk = PaperDesk(trade_root, DeskConfig(), code_version=code_version)
     alerts = SetupAlerts(
@@ -43,8 +47,8 @@ def build_trade_engine(
         trade_root / "alerts_state.json",
     )
     version = os.environ.get("XAU_EDGE_BASELINE_VERSION", "1.1.0")
-    if version not in ("1.1.0", "1.2.0"):
-        msg = f"XAU_EDGE_BASELINE_VERSION must be 1.1.0 or 1.2.0, not {version!r}"
+    if version not in ("1.1.0", "1.2.0", "1.2.1"):
+        msg = f"XAU_EDGE_BASELINE_VERSION must be 1.1.0, 1.2.0 or 1.2.1, not {version!r}"
         raise ValueError(msg)
     auto_paper = os.environ.get("XAU_EDGE_AUTO_PAPER", "false").lower() == "true"
     return TradeEngine(
@@ -78,7 +82,10 @@ class EngineRunner:
 
     def _run(self) -> None:
         while not self._stop.is_set():
-            self.engine.step()
+            try:
+                self.engine.step()
+            except Exception:
+                _LOG.exception("trade engine step failed")
             self._stop.wait(self.interval)
 
 
@@ -115,12 +122,20 @@ def add_trade_routes(
         if request.headers.get(DESK_HEADER) != "1":
             raise HTTPException(status_code=403, detail={"code": "MISSING_DESK_HEADER"})
 
-    @app.get("/trade/decision")
+    def local_host(request: Request) -> None:
+        """Reads are local too (a DNS-rebinding page must not read the desk)."""
+        if request.headers.get("host", "").lower() not in hosts:
+            raise HTTPException(status_code=403, detail={"code": "BAD_HOST"})
+
+    reader = [Depends(local_host)]
+
+    @app.get("/trade/decision", dependencies=reader)
     def decision() -> dict[str, Any]:
+        """The current decision. It also advances the engine to now (it never touches MT5)."""
         engine.step()
         return engine.view()
 
-    @app.get("/trade/risk")
+    @app.get("/trade/risk", dependencies=reader)
     def risk(
         entry: Annotated[float, Query(gt=0)],
         stop_loss: Annotated[float, Query(gt=0)],
@@ -136,32 +151,36 @@ def add_trade_routes(
             take_profit=take_profit,
         )
 
-    @app.get("/trade/paper")
+    @app.get("/trade/paper", dependencies=reader)
     def paper() -> dict[str, Any]:
         now = datetime.now(UTC)
-        quote = engine.current_quote(now)
-        return {
-            "simulated": True,
-            "risk_choices": list(RISK_CHOICES),
-            "account": engine.desk.account(quote, now),
-            "position": engine.desk.position_view(quote, now),
-            "today": engine.desk.day_summary(now),
-        }
+        with engine.lock:
+            quote = engine.current_quote(now)
+            return {
+                "simulated": True,
+                "risk_choices": list(RISK_CHOICES),
+                "account": engine.desk.account(quote, now),
+                "position": engine.desk.position_view(quote, now),
+                "today": engine.desk.day_summary(now),
+            }
 
-    @app.get("/trade/journal")
+    @app.get("/trade/journal", dependencies=reader)
     def journal(limit: Annotated[int, Query(ge=1, le=1000)] = 100) -> dict[str, Any]:
-        return {
-            "simulated": True,
-            "open": engine.desk.open_trade(),
-            "trades": engine.desk.closed_trades()[:limit],
-            "evidence": engine.evidence(),
-        }
+        with engine.lock:
+            return {
+                "simulated": True,
+                "open": engine.desk.open_trade(),
+                "trades": engine.desk.closed_trades()[:limit],
+                "evidence": engine.evidence(),
+            }
 
-    @app.get("/trade/markers")
+    @app.get("/trade/markers", dependencies=reader)
     def markers(days: Annotated[int, Query(ge=1, le=14)] = 3) -> dict[str, Any]:
         """Chart markers from the REAL objects: logged actionable decisions and paper trades."""
         now = datetime.now(UTC)
-        taken = {t["setup_id"] for t in engine.desk.trades.values()}
+        with engine.lock:
+            trades = list(engine.desk.trades.values())
+        taken = {t["setup_id"] for t in trades}
         signals: list[dict[str, Any]] = []
         for back in range(days):
             for record in engine.telemetry.read_signals(now - timedelta(days=back)):
@@ -183,12 +202,12 @@ def add_trade_routes(
                 "initial_sl": t.get("initial_sl"),
                 "tp": t.get("tp"),
             }
-            for t in engine.desk.trades.values()
+            for t in trades
             if t["status"] in ("OPEN", "CLOSED")
         ]
         return {"simulated": True, "signals": signals, "paper_trades": paper}
 
-    @app.get("/trade/telemetry")
+    @app.get("/trade/telemetry", dependencies=reader)
     def telemetry() -> dict[str, Any]:
         return engine.telemetry.summary(datetime.now(UTC))
 

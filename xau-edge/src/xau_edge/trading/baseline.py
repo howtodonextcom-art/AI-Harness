@@ -44,8 +44,10 @@ if TYPE_CHECKING:
     from xau_edge.trading.setup_machine import SetupLifecycle
 
 STRATEGY_ID = "xau_mtf_baseline"
-STRATEGY_VERSION = "1.2.0"
 V11 = "1.1.0"
+STRATEGY_VERSION = V11
+"""The default behaviour. 1.2.0 / 1.2.1 are opt-in (see BaselineConfig.version)."""
+LIFECYCLE_VERSIONS = ("1.2.0", "1.2.1")
 """v1.1.0 stays reproducible with ``BaselineConfig(version="1.1.0")`` (default until adopted)."""
 BLOCKING_H4 = {"BUY": "TREND_DOWN", "SELL": "TREND_UP"}
 NEWS_NOT_VERIFIED = "NEWS NOT VERIFIED: no economic calendar, check the news yourself"
@@ -56,8 +58,9 @@ class BaselineConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    version: Literal["1.1.0", "1.2.0"] = "1.1.0"
-    """Pre-registered behaviour: 1.2.0 = setup lifecycle, M5-scale plan, volatility as warning."""
+    version: Literal["1.1.0", "1.2.0", "1.2.1"] = "1.1.0"
+    """1.2.0 = pre-registered lifecycle, M5 geometry, volatility warning. 1.2.1 = the same plus the
+    review fixes: a CHoCH against the setup invalidates it and a setup cannot survive a data gap."""
     v12_lifecycle: bool = True
     v12_m5_geometry: bool = True
     v12_vol_warning: bool = True
@@ -221,7 +224,9 @@ def _gates(  # noqa: PLR0912 - one gate per condition
         else:
             out.append(Refusal.NEWS_UNKNOWN)
     if state.execution_quality == "POOR":
-        if cfg.spread_veto:
+        if cfg.version == "1.2.1" and state.m1_micro_state == "ABNORMAL":
+            out.append(Refusal.VOLATILITY_TOO_HIGH)  # an abnormal M1 is not a spread problem
+        elif cfg.spread_veto:
             out.append(Refusal.SPREAD_TOO_WIDE)
         elif state.m1_micro_state == "ABNORMAL":
             out.append(Refusal.VOLATILITY_TOO_HIGH)
@@ -249,7 +254,7 @@ def decide(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the cha
 ) -> TradingSignal:
     """The baseline decision for ``state`` (deterministic: same state, same answer)."""
     cfg = cfg or BaselineConfig()
-    if cfg.version == "1.2.0":
+    if cfg.version in LIFECYCLE_VERSIONS:
         from xau_edge.trading.baseline_v12 import decide_v12  # noqa: PLC0415 - avoids a cycle
 
         return decide_v12(state, ctx, cfg)

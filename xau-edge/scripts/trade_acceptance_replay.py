@@ -21,6 +21,7 @@ import polars as pl
 
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.calendars import ftmo_calendar
+from xau_edge.ops.code_version import current_code_version
 from xau_edge.ops.priority import lower_priority
 from xau_edge.strategies.edge_program import SERVER_CLOCK
 from xau_edge.trading.baseline import BaselineConfig
@@ -33,7 +34,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--start", required=True)
     parser.add_argument("--end", required=True)
-    parser.add_argument("--version", default="1.2.0", choices=["1.1.0", "1.2.0"])
+    parser.add_argument("--version", default="1.2.0", choices=["1.1.0", "1.2.0", "1.2.1"])
     parser.add_argument("--root", default="data/market")
     parser.add_argument("--out", default="data/trade/acceptance")
     args = parser.parse_args()
@@ -120,6 +121,7 @@ def main() -> None:
     report: dict[str, Any] = {
         "mode": "PAPER ACCEPTANCE REPLAY (burned data, not live, not an edge test)",
         "version": args.version,
+        "code_version": current_code_version(),
         "window": [args.start, args.end],
         "decisions": dict(decisions),
         "paper_trades": len(trades),

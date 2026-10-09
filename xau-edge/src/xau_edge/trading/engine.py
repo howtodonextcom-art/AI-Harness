@@ -17,7 +17,7 @@ import logging
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -61,12 +61,26 @@ class EngineConfig:
     It only ever reaches the paper desk; nothing here can reach an MT5 order function."""
 
 
-def _bias_of(label: str) -> int:
-    """+1 / -1 / 0 from the state label shown next to it (the arrow can never disagree)."""
-    upper = label.upper()
-    if upper.startswith(("BULL", "UP", "TREND_UP")):
+def cap_validity(signal: TradingSignal, last_m5_close: datetime) -> TradingSignal:
+    """A signal is actionable only until the next M5 close.
+
+    The lifecycle fires on the trigger bar (v1.1 changes the setup id with the next bar), so the
+    baseline's 15-minute expiry would overstate how long the plan can be taken: never show it as
+    valid longer than it can be.
+    """
+    if signal.decision is TradeDecision.WAIT or signal.signal_expiry is None:
+        return signal
+    return signal.model_copy(
+        update={"signal_expiry": min(signal.signal_expiry, last_m5_close + timedelta(minutes=5))}
+    )
+
+
+def _bias_of(raw: str) -> int:
+    """+1 / -1 / 0 from a RAW state label (never from a display string such as "ARMED (UP / …)")."""
+    upper = raw.upper()
+    if upper in {"BULLISH", "UP", "REVERSAL_UP", "TREND_UP", "ACTIVE_UP"}:
         return 1
-    if upper.startswith(("BEAR", "DOWN", "TREND_DOWN")):
+    if upper in {"BEARISH", "DOWN", "REVERSAL_DOWN", "TREND_DOWN", "ACTIVE_DOWN"}:
         return -1
     return 0
 
@@ -116,18 +130,18 @@ class TradeEngine:
         """Advance to ``now``; returns True when the decision was recomputed."""
         with self._lock:
             stamp = now or self._clock()
-            latest = self.source.latest_m1_open()
-            live = self._live_quote(stamp)
-            from xau_edge.market_data.session import market_status  # noqa: PLC0415
-
-            status = market_status(stamp, self.source.calendar)
-            bucket = None if live is None else int(live.spread_points // SPREAD_BUCKET_POINTS)
-            alive = self._collector_alive(stamp)
-            key = (latest, status.value, bucket, None if live is None else live.stale, alive)
-            if key == self._key and self._signal is not None:
-                return False
-            self._key = key
             try:
+                from xau_edge.market_data.session import market_status  # noqa: PLC0415
+
+                latest = self.source.latest_m1_open()
+                live = self._live_quote(stamp)
+                status = market_status(stamp, self.source.calendar)
+                bucket = None if live is None else int(live.spread_points // SPREAD_BUCKET_POINTS)
+                alive = self._collector_alive(stamp)
+                key = (latest, status.value, bucket, None if live is None else live.stale, alive)
+                if key == self._key and self._signal is not None:
+                    return False
+                self._key = key
                 self._recompute(stamp)
             except Exception as exc:  # the loop must survive a bad cycle; the error is visible
                 self._errors.append(f"{type(exc).__name__}: {exc}"[:300])
@@ -135,6 +149,11 @@ class TradeEngine:
                 self._key = None
                 return False
             return True
+
+    @property
+    def lock(self) -> threading.RLock:
+        """Held by readers that iterate the desk while the engine thread may be mutating it."""
+        return self._lock
 
     def _collector_alive(self, now: datetime) -> bool:
         return self.source.collector_alive(now)
@@ -170,6 +189,9 @@ class TradeEngine:
         signal = signal.model_copy(
             update={"generated_at": now, "data_age_seconds": snap.data_age_seconds}
         )
+        m5s = state.snapshots.get("M5")
+        if m5s is not None:
+            signal = cap_validity(signal, m5s.bar_closed)
         self._snap, self._state, self._signal = snap, state, signal
         latest_m1 = snap.bars.frames.get(Timeframe.M1)
         newest = (
@@ -179,7 +201,10 @@ class TradeEngine:
             self._last_telemetry_m1 = newest  # type: ignore[assignment]
             self.telemetry.append(signal, at=now)
         if signal.decision is not TradeDecision.WAIT:
-            self.telemetry.append_signal(signal, at=now)
+            m5_bar = state.snapshots.get("M5")
+            self.telemetry.append_signal(
+                signal, at=now, bar_time=None if m5_bar is None else m5_bar.bar_open
+            )
         self._drive_desk(snap, state, now)
         if self.config.auto_paper:
             self._auto_open(now)
@@ -261,6 +286,14 @@ class TradeEngine:
             "M5": self._m5_label(state),
             "M1": self._signal.m1_execution_state if self._signal else state.m1_micro_state,
         }
+        raw = {
+            "H4": state.h4_regime,
+            "H1": state.h1_trend,
+            "M30": state.m30_structure,
+            "M15": state.m15_structure,
+            "M5": state.m5_momentum,
+            "M1": state.m1_micro_state,
+        }
         rows: list[dict[str, Any]] = []
         for name in ("H4", "H1", "M30", "M15", "M5", "M1"):
             s = state.snapshots.get(name)
@@ -269,7 +302,7 @@ class TradeEngine:
                     "timeframe": name,
                     "role": ROLES[name],
                     "state": label[name],
-                    "bias": None if s is None else _bias_of(label[name]),
+                    "bias": None if s is None else _bias_of(raw[name]),
                     "atr": None if s is None else s.atr,
                     "relative_tick_volume": None if s is None else s.volume_ratio,
                     "volume_zscore": None if s is None else s.volume_zscore,
@@ -330,6 +363,8 @@ class TradeEngine:
                 else max(0.0, (signal.signal_expiry - stamp).total_seconds())
             )
             problems = list(snap.problems)
+            if self.desk.load_error:
+                problems.append(self.desk.load_error)
             if not snap.market_open:
                 problems = [p for p in problems if "collector" not in p and "quote" not in p]
             return {
@@ -411,6 +446,7 @@ class TradeEngine:
                 },
                 "telemetry": self.telemetry.summary(stamp),
                 "alerts": None if self.alerts is None else self.alerts.summary(stamp),
+                "auto_paper": self.config.auto_paper,
                 "demo": demo,
                 "problems": problems,
                 "engine_errors": self._errors[-3:],
@@ -482,6 +518,7 @@ class TradeEngine:
     def paper_close(self, trade_id: str, now: datetime | None = None) -> dict[str, Any]:
         with self._lock:
             stamp = now or self._clock()
+            self.step(stamp)  # process the bars that closed since the last cycle first
             quote = self._live_quote(stamp)
             if quote is None or quote.stale:
                 raise DeskRefusal("QUOTE_STALE", "no fresh quote to close against")

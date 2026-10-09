@@ -13,7 +13,12 @@ from datetime import datetime
 from typing import Any
 
 from xau_edge.market_data.broker_clock import BrokerClock
-from xau_edge.trading.baseline import BaselineConfig, DecisionContext, decide
+from xau_edge.trading.baseline import (
+    LIFECYCLE_VERSIONS,
+    BaselineConfig,
+    DecisionContext,
+    decide,
+)
 from xau_edge.trading.frames import MultiTfBars
 from xau_edge.trading.market_state import MarketState, SnapshotMemo, build_market_state
 from xau_edge.trading.schema import Refusal, TradeDecision, TradingSignal
@@ -91,11 +96,12 @@ def evaluate_many(
         memo=memo,
     )
     spec = inputs.spec or SymbolSpec()
-    life = (
-        lifecycle(inputs.bars, inputs.now, memo=memo)
-        if any(c.version == "1.2.0" for c in configs.values())
-        else None
-    )  # v1.2 only: a pure function of the closed bars
+    lives: dict[bool, Any] = {}  # lifecycle per "hardened" flag, only when a variant needs it
+    for cfg in configs.values():
+        if cfg.version in LIFECYCLE_VERSIONS:
+            hardened = cfg.version == "1.2.1"
+            if hardened not in lives:
+                lives[hardened] = lifecycle(inputs.bars, inputs.now, memo=memo, hardened=hardened)
     base = DecisionContext(
         spec=spec,
         equity=inputs.equity,
@@ -108,7 +114,9 @@ def evaluate_many(
     signals = {
         name: decide(
             state,
-            replace(base, lifecycle=life) if cfg.version == "1.2.0" else base,
+            replace(base, lifecycle=lives[cfg.version == "1.2.1"])
+            if cfg.version in LIFECYCLE_VERSIONS
+            else base,
             cfg,
         )
         for name, cfg in configs.items()

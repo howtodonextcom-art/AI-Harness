@@ -78,7 +78,7 @@ Live, replay và paper cùng gọi `decision_core.evaluate`. `comparable()` gom 
 
 ## 9. Baseline v1.2 (thử nghiệm, KHÔNG phải mặc định)
 
-`BaselineConfig.version` chọn hành vi: `1.1.0` (mặc định sản xuất) hoặc `1.2.0` (đã pre-đăng ký trong `docs/trading/BASELINE_V1_2_PREREGISTRATION.md`). Chủ dự án chọn bằng biến môi trường `XAU_EDGE_BASELINE_VERSION`; đã kiểm bằng test cách ly phiên bản (id tín hiệu/setup khác nhau, v1.1 giữ nguyên hình học và cổng).
+`BaselineConfig.version` chọn hành vi: `1.1.0` (mặc định sản xuất), `1.2.0` (đã pre-đăng ký trong `docs/trading/BASELINE_V1_2_PREREGISTRATION.md`) hoặc `1.2.1` (cùng v1.2.0 cộng các sửa lỗi sau đánh giá độc lập: CHoCH ngược làm setup mất hiệu lực, setup không sống qua khoảng trống dữ liệu, M1 bất thường báo đúng lý do). Chủ dự án chọn bằng biến môi trường `XAU_EDGE_BASELINE_VERSION`; đã kiểm bằng test cách ly phiên bản (id tín hiệu/setup khác nhau, v1.1 giữ nguyên hình học và cổng).
 
 * **Vòng đời setup** (`setup_machine.py`): hàm thuần từ nến đã đóng, phát lại 36 lần đóng M5 gần nhất qua máy trạng thái `NONE → ARMED → TRIGGERED | EXPIRED | INVALIDATED`; ARMED sống 6 nến M5; một tín hiệu mỗi lần pullback; chỉ nến M5 hiện tại mới được phát tín hiệu. Không lưu trạng thái ẩn, nên live = replay = paper và restart không mất gì.
 * **Hình học kế hoạch theo thang M5**: sàn ATR, đệm cấu trúc, stop tối đa và đệm mục tiêu dùng ATR(M5); cổng `clearance` bị bỏ vì R/R ròng đã bao hàm; các hệ số giữ nguyên.

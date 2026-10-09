@@ -17,6 +17,7 @@ from xau_edge.trading import setup_machine
 from xau_edge.trading.baseline import BaselineConfig, DecisionContext, decide
 from xau_edge.trading.frames import MultiTfBars
 from xau_edge.trading.funnel import STAGE_NAMES, stages_from_signal, waiting_for
+from xau_edge.trading.market_state import SnapshotMemo, StateConfig
 from xau_edge.trading.schema import Refusal, TradeDecision
 from xau_edge.trading.setup_machine import SetupLifecycle, SetupPhase, lifecycle
 from xau_edge.trading.telemetry import DecisionTelemetry
@@ -51,7 +52,9 @@ def scripted(
     base = len(closes) - len(script)
     by_close = {closes[base + i]: script[i] for i in range(len(script))}
 
-    def fake(_bars: MultiTfBars, at: datetime, _cfg: object, _memo: object) -> object:
+    def fake(
+        _bars: MultiTfBars, at: datetime, _cfg: object, _memo: object, _strict: bool = False
+    ) -> object:
         side, ready, against, trigger = by_close.get(at, (0, False, False, False))
         return setup_machine._Labels(side, ready, against, trigger)
 
@@ -302,3 +305,90 @@ def test_actionable_decisions_are_logged_once_per_setup_and_survive_a_restart(
 
 def test_helpers_import_is_used() -> None:
     assert helpers.T0 is not None
+
+
+# -- v1.2.1: the review fixes (v1.2.0 keeps its pre-registered behaviour) -------------------------
+
+V121 = BaselineConfig(version="1.2.1")
+
+
+def test_a_choch_against_the_setup_is_against_in_121_but_not_in_120(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars = multi_tf(minutes=60 * 24 * 3)
+    at = bars.frames[Timeframe.M5]["available_at"][-1]
+    monkeypatch.setattr(setup_machine, "_h1_trend", lambda _s: "BULLISH")
+    monkeypatch.setattr(setup_machine, "_structure_label", lambda _s: "REVERSAL_DOWN")
+    monkeypatch.setattr(setup_machine, "_pullback", lambda _s: "NONE")
+    monkeypatch.setattr(setup_machine, "_m5_momentum", lambda _s: "UP")
+    memo = SnapshotMemo()
+    cfg = StateConfig()
+    old = setup_machine._labels_at(bars, at, cfg, memo)
+    new = setup_machine._labels_at(bars, at, cfg, memo, True)
+    assert old is not None and new is not None
+    assert old.against is False and new.against is True
+
+
+def test_a_buy_is_refused_after_a_bearish_choch_in_121_only() -> None:
+    state = aligned_state(m15_structure="REVERSAL_DOWN")
+    trig = ctx(life(SetupPhase.TRIGGERED, fires=True))
+    assert decide(state, trig, V12).decision is TradeDecision.BUY  # the pre-registered behaviour
+    refused = decide(state, trig, V121)
+    assert refused.decision is TradeDecision.WAIT
+    assert refused.refusal_reasons[0] is Refusal.TIMEFRAME_CONFLICT
+    sell = aligned_state(h1_trend="BEARISH", m15_structure="REVERSAL_UP")
+    assert decide(sell, ctx(life(SetupPhase.TRIGGERED, fires=True, side=-1)), V121).decision is (
+        TradeDecision.WAIT
+    )
+
+
+def test_an_armed_setup_cannot_survive_a_gap_in_the_data_in_121(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars = multi_tf(minutes=60 * 24 * 8)
+    m5 = bars.frames[Timeframe.M5]
+    closes = m5["available_at"].to_list()
+    a = len(closes) - 600
+    gapped = m5.filter(
+        (m5["available_at"] <= closes[a + 1]) | (m5["available_at"] >= closes[a + 500])
+    )
+    holed = MultiTfBars({**bars.frames, Timeframe.M5: gapped})
+    kept = gapped["available_at"].to_list()
+    i = kept.index(closes[a + 1])
+    script = {kept[i - 1]: R, kept[i + 1]: T}  # armed before the hole, trigger just after it
+
+    def fake(
+        _bars: MultiTfBars, at: datetime, _cfg: object, _memo: object, _strict: bool = False
+    ) -> object:
+        side, ready, against, trigger = script.get(at, (1, False, False, False))
+        return setup_machine._Labels(side, ready, against, trigger)
+
+    monkeypatch.setattr(setup_machine, "_labels_at", fake)
+    at = kept[i + 1]
+    plain = lifecycle(holed, at)
+    hard = lifecycle(holed, at, hardened=True)
+    assert plain.fires  # 1.2.0 counts bars, so the trigger after the hole still fires
+    assert not hard.fires and hard.phase is SetupPhase.EXPIRED
+
+
+def test_an_abnormal_m1_is_reported_as_volatility_not_spread_in_121() -> None:
+    state = aligned_state(m1_micro_state="ABNORMAL", execution_quality="POOR")
+    trig = ctx(life(SetupPhase.TRIGGERED, fires=True))
+    assert decide(state, trig, V12).refusal_reasons[0] is Refusal.SPREAD_TOO_WIDE
+    assert decide(state, trig, V121).refusal_reasons[0] is Refusal.VOLATILITY_TOO_HIGH
+    wide = aligned_state(execution_quality="POOR")  # a real spread problem keeps its own reason
+    assert decide(wide, trig, V121).refusal_reasons[0] is Refusal.SPREAD_TOO_WIDE
+
+
+def test_ablation_variants_never_share_ids_with_the_production_variant() -> None:
+    trig = ctx(life(SetupPhase.TRIGGERED, fires=True))
+    prod = decide(aligned_state(), trig, V121)
+    plain = decide(aligned_state(), trig, BaselineConfig(version="1.2.1", v12_vol_warning=False))
+    assert prod.signal_id != plain.signal_id and prod.setup_id != plain.setup_id
+    assert (
+        prod.metadata["variant_flags"] == "" and plain.metadata["variant_flags"] == "no_vol_warning"
+    )
+    no_lifecycle = BaselineConfig(version="1.2.1", v12_lifecycle=False)
+    a = decide(aligned_state(), trig, no_lifecycle)
+    b = decide(aligned_state(), trig, no_lifecycle)
+    assert a.setup_id == b.setup_id  # stable, not derived from the polling time
