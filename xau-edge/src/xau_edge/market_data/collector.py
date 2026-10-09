@@ -23,9 +23,17 @@ import polars as pl
 
 from xau_edge.domain.market import FeedHealth, MarketStatus, Quote
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.market_data.disk import disk_report
+from xau_edge.market_data.freshness import (
+    bar_freshness,
+    consistency_warnings,
+    missed_closed_bars,
+)
 from xau_edge.market_data.ledger import AppendResult, BarLedger
 from xau_edge.market_data.mt5.feed import Mt5Feed, SymbolMapping
 from xau_edge.market_data.session import market_status
+from xau_edge.market_data.tick_collection import ingest_recent
+from xau_edge.market_data.tick_ledger import TickLedger
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
 
 ALL_TIMEFRAMES = (
@@ -40,6 +48,8 @@ INITIAL_BARS = {Timeframe.M1: 1500, Timeframe.M5: 600, Timeframe.M15: 400, Timef
 DEFAULT_INITIAL = 300
 MAX_FETCH = 5000
 OVERLAP_BARS = 200
+TICK_LAG_LIMIT_SECONDS = 90.0
+ROWS_CACHE_SECONDS = 300.0
 
 
 def _utc_now() -> datetime:
@@ -81,6 +91,12 @@ class CollectorStatus:
     stale_timeframes: list[str]
     events_last_hour: dict[str, int] = field(default_factory=dict)
     note: str = ""
+    freshness: dict[str, str] = field(default_factory=dict)
+    missed_bars: dict[str, int | None] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    disk: dict[str, Any] = field(default_factory=dict)
+    tick_store: dict[str, Any] = field(default_factory=dict)
+    tick_errors: int = 0
 
 
 def evaluate_health(
@@ -89,44 +105,45 @@ def evaluate_health(
     demo: bool,
     market: MarketStatus,
     quote: Quote | None,
-    bar_age_seconds: dict[str, float | None],
-    timeframes: dict[str, int],
+    freshness: dict[str, str],
     recent_changes: int,
     store_ok: bool,
+    disk_level: str = "GOOD",
+    tick_lag_seconds: float | None = None,
 ) -> tuple[FeedHealth, list[str], list[str]]:
-    """GOOD, DEGRADED, STALE, DISCONNECTED or UNKNOWN, with reasons and stale timeframes."""
-    reasons: list[str] = []
-    stale: list[str] = []
+    """GOOD, DEGRADED, STALE, DISCONNECTED or UNKNOWN, with every reason and the stale timeframes.
+
+    Freshness is calendar-aware (see ``freshness``): a timeframe is STALE only when it missed bars
+    the market was open for. A closed market is never a failure by itself.
+    """
     if not connected:
         return FeedHealth.DISCONNECTED, ["terminal not connected"], []
     if not demo:
         return FeedHealth.UNKNOWN, ["account is not a DEMO account"], []
-    if not store_ok:
-        reasons.append("bar store unreadable")
+    stale_reasons: list[str] = []
+    soft_reasons: list[str] = []
     trading = market in (MarketStatus.OPEN, MarketStatus.UNKNOWN)
+    if not store_ok:
+        stale_reasons.append("bar store unreadable")
     if trading and (quote is None or quote.timestamp is None or quote.stale):
-        reasons.append("quote is stale or missing while the market should be open")
-    for tf, limit_minutes in timeframes.items():
-        age = bar_age_seconds.get(tf)
-        if age is None:
-            if trading:
-                stale.append(tf)
-        elif trading and age > limit_minutes * 60:
-            stale.append(tf)
+        stale_reasons.append("quote is stale or missing while the market should be open")
+    stale = [
+        tf
+        for tf, state in freshness.items()
+        if state == "STALE" or (trading and state == "UNKNOWN")
+    ]
     if stale:
-        reasons.append("stale timeframes: " + ", ".join(stale))
+        stale_reasons.append("stale timeframes: " + ", ".join(stale))
     if recent_changes:
-        reasons.append(f"{recent_changes} stored bar(s) differ from the terminal")
-    if any("stale" in r or "unreadable" in r for r in reasons):
-        return (
-            FeedHealth.STALE
-            if not store_ok or stale or (quote is None or quote.stale)
-            else FeedHealth.DEGRADED,
-            reasons,
-            stale,
-        )
-    if reasons:
-        return FeedHealth.DEGRADED, reasons, stale
+        soft_reasons.append(f"{recent_changes} stored bar(s) differ from the terminal")
+    if disk_level == "CRITICAL":
+        soft_reasons.append("disk space is critically low")
+    if trading and tick_lag_seconds is not None and tick_lag_seconds > TICK_LAG_LIMIT_SECONDS:
+        soft_reasons.append(f"tick ingestion is {tick_lag_seconds:.0f}s behind")
+    if stale_reasons:
+        return FeedHealth.STALE, stale_reasons + soft_reasons, stale
+    if soft_reasons:
+        return FeedHealth.DEGRADED, soft_reasons, stale
     return FeedHealth.GOOD, ["all checks passed"], stale
 
 
@@ -143,6 +160,7 @@ class MarketCollector:
         timeframes: tuple[Timeframe, ...] = ALL_TIMEFRAMES,
         status_path: Path | None = None,
         now: Callable[[], datetime] = _utc_now,
+        tick_ledger: TickLedger | None = None,
     ) -> None:
         self.feed = feed
         self.ledger = ledger
@@ -151,7 +169,11 @@ class MarketCollector:
         self.timeframes = timeframes
         self.status_path = status_path
         self._now = now
+        self.tick_ledger = tick_ledger
         self._last_quote: Quote | None = None
+        self._tick_errors = 0
+        self._rows_cache: dict[str, tuple[datetime, int]] = {}
+        self._last_forming: dict[str, dict[str, Any]] | None = None
         self._errors: list[str] = []
         self._recent: deque[dict[str, Any]] = deque(maxlen=500)
         self.live_path = None if status_path is None else status_path.with_name("live.json")
@@ -175,6 +197,21 @@ class MarketCollector:
             )  # fmt: skip
         return quote
 
+    def poll_ticks(self) -> int:
+        """Store ticks up to ``now - 3 s`` (live ingestion); returns the new tick count."""
+        if self.tick_ledger is None:
+            return 0
+        try:
+            stats = ingest_recent(
+                self.feed, self.tick_ledger, symbol=self.symbol,
+                broker_symbol=self.mapping.broker_symbol, now=self._now(),
+            )  # fmt: skip
+        except RuntimeError as exc:
+            self._tick_errors += 1
+            self._errors.append(f"tick ingest: {exc}"[:200])
+            return 0
+        return stats.ticks_new
+
     def forming_bars(self) -> dict[str, dict[str, Any]]:
         """The currently forming bar of every timeframe (UI only; never stored)."""
         out: dict[str, dict[str, Any]] = {}
@@ -191,6 +228,10 @@ class MarketCollector:
                 }
         return out
 
+    def _forming(self) -> dict[str, dict[str, Any]]:
+        self._last_forming = self.forming_bars()
+        return self._last_forming
+
     def write_live(self) -> None:
         """Atomically publish the latest quote, forming bars and recent ticks for the API/UI."""
         if self.live_path is None or self._last_quote is None:
@@ -198,7 +239,7 @@ class MarketCollector:
         payload = {
             "updated_at": self._now().isoformat(),
             "quote": json.loads(self._last_quote.model_dump_json()),
-            "forming": self.forming_bars(),
+            "forming": self._forming(),
             "ticks": list(self._recent)[-200:],
         }
         tmp = self.live_path.with_suffix(".tmp")
@@ -289,6 +330,15 @@ class MarketCollector:
 
     # -- status --------------------------------------------------------------------------------
 
+    def _stored_rows(self, tf: Timeframe, now: datetime) -> int:
+        """Row count per timeframe, cached: reading 100k rows every few seconds is wasteful."""
+        cached = self._rows_cache.get(tf.value)
+        if cached is not None and (now - cached[0]).total_seconds() < ROWS_CACHE_SECONDS:
+            return cached[1]
+        rows = self.ledger.load(self.symbol, tf).height
+        self._rows_cache[tf.value] = (now, rows)
+        return rows
+
     def status(self) -> CollectorStatus:
         now = self._now()
         facts = self.feed.facts()
@@ -296,16 +346,19 @@ class MarketCollector:
         last_closed: dict[str, str | None] = {}
         ages: dict[str, float | None] = {}
         rows: dict[str, int] = {}
+        missed: dict[str, int | None] = {}
+        fresh: dict[str, str] = {}
         store_ok = True
         for tf in self.timeframes:
             try:
                 latest = self.ledger.latest(self.symbol, tf)
-                rows[tf.value] = self.ledger.load(self.symbol, tf).height if latest else 0
+                rows[tf.value] = self._stored_rows(tf, now) if latest else 0
             except RuntimeError:
                 store_ok, latest = False, None
             last_closed[tf.value] = None if latest is None else (latest + tf.delta).isoformat()
             ages[tf.value] = None if latest is None else (now - (latest + tf.delta)).total_seconds()
-        limits = {tf.value: max(3 * tf.minutes, 5) for tf in self.timeframes}
+            missed[tf.value] = missed_closed_bars(latest, tf, now, self.calendar)
+            fresh[tf.value] = bar_freshness(missed[tf.value], tf)
         recent = [
             e
             for e in self.ledger.events(self.symbol)
@@ -313,17 +366,23 @@ class MarketCollector:
             and datetime.fromisoformat(e["at"]) > now - timedelta(hours=1)
         ]
         changes = sum(1 for e in recent if e["kind"] == "BAR_CHANGED")
+        disk = disk_report(self.ledger.root, self.symbol)
+        tick_store = self._tick_store(now)
         health, reasons, stale = evaluate_health(
             connected=bool(facts.connected),
             demo=facts.demo,
             market=market,
             quote=self._last_quote,
-            bar_age_seconds=ages,
-            timeframes=limits,
+            freshness=fresh,
             recent_changes=changes,
             store_ok=store_ok,
+            disk_level=str(disk["level"]),
+            tick_lag_seconds=tick_store.get("lag_seconds"),
         )
         quote = self._last_quote
+        warnings = consistency_warnings(quote, self._last_forming)
+        if disk["level"] == "WARN":
+            warnings.append("disk space is getting low")
         return CollectorStatus(
             updated_at=now.isoformat(),
             health=health.value,
@@ -340,7 +399,26 @@ class MarketCollector:
             stale_timeframes=stale,
             events_last_hour={"changes": changes, "gaps": len(recent) - changes},
             note="; ".join(self._errors[-3:]),
+            freshness=fresh,
+            missed_bars=missed,
+            warnings=warnings,
+            disk=disk,
+            tick_store=tick_store,
+            tick_errors=self._tick_errors,
         )
+
+    def _tick_store(self, now: datetime) -> dict[str, Any]:
+        if self.tick_ledger is None:
+            return {"enabled": False}
+        covered = self.tick_ledger.coverage(self.symbol)
+        until = max((b for _, b in covered), default=None)
+        return {
+            "enabled": True,
+            "covered_until": None if until is None else until.isoformat(),
+            "lag_seconds": None if until is None else (now - until).total_seconds(),
+            "coverage_windows": len(covered),
+            "earliest_covered": None if not covered else covered[0][0].isoformat(),
+        }
 
     def write_status(self) -> CollectorStatus:
         status = self.status()
@@ -354,6 +432,7 @@ class MarketCollector:
         """One quote refresh and one bar poll (used by tests and by ``--once``)."""
         self.poll_quote()
         self.poll_bars()
+        self.poll_ticks()
         self.write_live()
         return self.write_status()
 
@@ -377,6 +456,7 @@ class MarketCollector:
             t = clock()
             if t >= next_bar:
                 self.poll_bars()
+                self.poll_ticks()
                 next_bar = t + bar_interval
                 self.write_status()
             if t >= next_reconcile:

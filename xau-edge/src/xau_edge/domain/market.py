@@ -68,6 +68,31 @@ CANONICAL_BAR_COLUMNS = (
 )
 
 
+TICK_COLUMNS = ("timestamp_msc", "timestamp", "bid", "ask", "last", "volume", "flags")
+
+
+def empty_ticks() -> pl.DataFrame:
+    """A tick frame with the canonical schema and no rows."""
+    return pl.DataFrame(
+        schema={
+            "timestamp_msc": pl.Int64,
+            "timestamp": pl.Datetime("ms", "UTC"),
+            "bid": pl.Float64,
+            "ask": pl.Float64,
+            "last": pl.Float64,
+            "volume": pl.Int64,
+            "flags": pl.Int64,
+        }
+    )
+
+
+def conform_ticks(frame: pl.DataFrame) -> pl.DataFrame:
+    """Cast a tick frame to the canonical schema (millisecond UTC timestamp, fixed dtypes)."""
+    if frame.height == 0:
+        return empty_ticks()
+    return frame.select(TICK_COLUMNS).cast(empty_ticks().schema)
+
+
 class Tick(BaseModel):
     """One tick; only the fields the feed really provided are populated."""
 

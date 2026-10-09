@@ -17,7 +17,6 @@ This is the current/incremental layer; the research raw store (``RawStore``) sta
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,6 +26,8 @@ import polars as pl
 
 from xau_edge.domain.bars import coerce_bars, empty_bars
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.market_data.event_log import append_event, read_events
+from xau_edge.market_data.locking import file_lock
 
 PRICE_COLUMNS = ("open", "high", "low", "close", "tick_volume", "real_volume")
 _FILE_COLUMNS = (
@@ -93,6 +94,19 @@ class BarLedger:
         reason: str = "append",
     ) -> AppendResult:
         """Merge ``bars`` (closed only) into the monthly files; never overwrite a stored bar."""
+        self._dir(symbol, timeframe)  # validates the symbol before anything touches the disk
+        with file_lock(self.root / symbol / ".write.lock"):
+            return self._append_locked(symbol, timeframe, bars, now=now, reason=reason)
+
+    def _append_locked(
+        self,
+        symbol: str,
+        timeframe: Timeframe,
+        bars: pl.DataFrame,
+        *,
+        now: datetime | None,
+        reason: str,
+    ) -> AppendResult:
         stamp = now or datetime.now(UTC)
         if bars.height == 0:
             return AppendResult(0, 0, 0, 0, ())
@@ -145,24 +159,12 @@ class BarLedger:
         self, symbol: str, kind: str, detail: dict[str, Any], *, now: datetime | None = None
     ) -> None:
         """Append one JSON line to the symbol's event log (reconciliation, gaps, reconnects)."""
-        path = self._events(symbol)
-        path.parent.mkdir(parents=True, exist_ok=True)
         row = {"at": (now or datetime.now(UTC)).isoformat(), "kind": kind, **detail}
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(row, sort_keys=True, default=str) + "\n")
+        append_event(self._events(symbol), row)
 
     def events(self, symbol: str) -> list[dict[str, Any]]:
-        """All logged events (bad lines are skipped, not trusted)."""
-        path = self._events(symbol)
-        if not path.exists():
-            return []
-        out: list[dict[str, Any]] = []
-        for line in path.read_text(encoding="utf-8").splitlines():
-            try:
-                out.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-        return out
+        """All logged events across segments (bad lines are skipped, not trusted)."""
+        return read_events(self._events(symbol))
 
     # -- reading -------------------------------------------------------------------------------
 
@@ -232,6 +234,15 @@ class BarLedger:
         return None
 
     # -- integrity -----------------------------------------------------------------------------
+
+    def file_hashes(self, symbol: str, timeframe: Timeframe) -> dict[str, str]:
+        """SHA-256 of every month file (bytes only: works even when a file is unreadable)."""
+        return {
+            m: hashlib.sha256(
+                (self._dir(symbol, timeframe) / f"{m}.parquet").read_bytes()
+            ).hexdigest()
+            for m in self.months(symbol, timeframe)
+        }
 
     def manifest(self, symbol: str) -> dict[str, Any]:
         """Per timeframe: rows, first/last bar and the SHA-256 of every month file."""

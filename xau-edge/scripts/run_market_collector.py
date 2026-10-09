@@ -28,6 +28,7 @@ from xau_edge.market_data.collector import (  # noqa: E402
 )
 from xau_edge.market_data.ledger import BarLedger  # noqa: E402
 from xau_edge.market_data.mt5.runtime import DEFAULT_TERMINAL, open_feed  # noqa: E402
+from xau_edge.market_data.tick_ledger import TickLedger  # noqa: E402
 
 DEFAULT_ROOT = ROOT / "data" / "market"
 
@@ -69,7 +70,12 @@ def main() -> int:
                 mapping = feed.discover_symbol(args.symbol)
                 feed.select(mapping.broker_symbol)
                 collector = MarketCollector(
-                    feed, BarLedger(args.root), mapping, ftmo_calendar(), status_path=status_path
+                    feed,
+                    BarLedger(args.root),
+                    mapping,
+                    ftmo_calendar(),
+                    status_path=status_path,
+                    tick_ledger=TickLedger(args.root),
                 )
                 if args.once:
                     collector.reconcile_all()

@@ -288,7 +288,7 @@ def test_run_loop_stops_and_never_calls_trading_functions(tmp_path: Path) -> Non
 def test_evaluate_health_closed_market_is_not_stale() -> None:
     health, _, stale = evaluate_health(
         connected=True, demo=True, market=MarketStatus.CLOSED, quote=None,
-        bar_age_seconds={"M1": 99999.0}, timeframes={"M1": 5}, recent_changes=0, store_ok=True,
+        freshness={"M1": "FRESH"}, recent_changes=0, store_ok=True,
     )  # fmt: skip
     assert health == FeedHealth.GOOD and stale == []
 
@@ -296,7 +296,7 @@ def test_evaluate_health_closed_market_is_not_stale() -> None:
 def test_evaluate_health_non_demo_is_unknown() -> None:
     health, reasons, _ = evaluate_health(
         connected=True, demo=False, market=MarketStatus.OPEN, quote=None,
-        bar_age_seconds={}, timeframes={}, recent_changes=0, store_ok=True,
+        freshness={}, recent_changes=0, store_ok=True,
     )  # fmt: skip
     assert health == FeedHealth.UNKNOWN and "DEMO" in reasons[0]
 
@@ -304,7 +304,7 @@ def test_evaluate_health_non_demo_is_unknown() -> None:
 def test_evaluate_health_changed_bars_degrade() -> None:
     health, _, _ = evaluate_health(
         connected=True, demo=True, market=MarketStatus.CLOSED, quote=None,
-        bar_age_seconds={}, timeframes={}, recent_changes=2, store_ok=True,
+        freshness={}, recent_changes=2, store_ok=True,
     )  # fmt: skip
     assert health == FeedHealth.DEGRADED
 
@@ -313,4 +313,25 @@ def test_market_status_weekend_open_and_naive() -> None:
     cal = MarketCalendar()
     assert market_status(datetime(2026, 3, 11, 12, tzinfo=UTC), cal) == MarketStatus.OPEN
     assert market_status(datetime(2026, 3, 14, 12, tzinfo=UTC), cal) == MarketStatus.CLOSED
-    assert market_status(datetime(2026, 3, 11, 12), cal)  # noqa: DTZ001 == MarketStatus.UNKNOWN
+    naive = datetime(2026, 3, 11, 12)  # noqa: DTZ001
+    assert market_status(naive, cal) == MarketStatus.UNKNOWN
+
+
+def test_evaluate_health_stale_timeframe_only_matters_while_trading() -> None:
+    stale = {"M1": "STALE", "H4": "FRESH"}
+    closed, _, _ = evaluate_health(
+        connected=True, demo=True, market=MarketStatus.CLOSED, quote=None,
+        freshness=stale, recent_changes=0, store_ok=True,
+    )  # fmt: skip
+    assert closed == FeedHealth.STALE  # the freshness input already encodes missed open bars
+    ok_quote = make_feed(FakeClient()).quote(
+        make_feed(FakeClient()).discover_symbol("XAUUSD"), MarketStatus.OPEN
+    )
+    health, reasons, bad = evaluate_health(
+        connected=True, demo=True, market=MarketStatus.OPEN, quote=ok_quote,
+        freshness={"M1": "FRESH", "H4": "FRESH"}, recent_changes=0, store_ok=True,
+        disk_level="CRITICAL", tick_lag_seconds=500.0,
+    )  # fmt: skip
+    assert health == FeedHealth.DEGRADED and bad == []
+    assert any("disk" in r for r in reasons)
+    assert any("tick ingestion" in r for r in reasons)

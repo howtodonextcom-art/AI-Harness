@@ -12,14 +12,14 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import numpy as np
 import polars as pl
 
 from xau_edge.domain.bars import coerce_bars, empty_bars
-from xau_edge.domain.market import MarketStatus, Quote, Tick
+from xau_edge.domain.market import MarketStatus, Quote, Tick, conform_ticks, empty_ticks
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.market_data.mt5.source import (
@@ -227,6 +227,64 @@ class Mt5Feed:
             msg = f"copy_ticks_range failed: {self._client.last_error()}"
             raise RuntimeError(msg)
         return self._ticks(broker_symbol, raw[:limit])
+
+    def ticks_frame(
+        self, broker_symbol: str, start: datetime, end: datetime, *, limit: int = MAX_TICKS_PER_CALL
+    ) -> tuple[pl.DataFrame, bool]:
+        """Ticks in ``[start, end)`` as a frame (vectorised) and whether ``limit`` cut it short.
+
+        Columns: ``timestamp_msc`` (true-UTC epoch milliseconds), ``timestamp`` (UTC), ``bid``,
+        ``ask``, ``last``, ``volume``, ``flags`` (``volume_real`` when the terminal provides it).
+        A truncated window must be split by the caller; nothing is silently dropped here.
+        """
+        self.guard()
+        limit = max(1, min(limit, MAX_TICKS_PER_CALL))
+        if end <= start:
+            return empty_ticks(), False
+        # The terminal works in whole seconds: over-fetch one second each side, then cut exactly.
+        pad = timedelta(seconds=1)
+        raw = self._client.copy_ticks_range(
+            broker_symbol,
+            self._server_wall(start.replace(microsecond=0) - pad),
+            self._server_wall(end.replace(microsecond=0) + pad + pad),
+            self._client.COPY_TICKS_ALL,
+        )
+        if raw is None:
+            msg = f"copy_ticks_range failed: {self._client.last_error()}"
+            raise RuntimeError(msg)
+        truncated = len(raw) > limit
+        raw = raw[:limit]
+        if len(raw) == 0:
+            return empty_ticks(), False
+        names = raw.dtype.names or ()
+        msc = (
+            raw["time_msc"].astype("int64")
+            if "time_msc" in names
+            else raw["time"].astype("int64") * 1000
+        )
+        naive = pl.from_epoch(pl.Series(msc), time_unit="ms").cast(pl.Datetime("us"))
+        utc = self._clock.server_to_utc(naive, strict=False)
+        offset_ms = (utc.cast(pl.Int64) // 1000) - msc  # the broker offset in ms (whole hours)
+        frame = pl.DataFrame(
+            {
+                "timestamp_msc": pl.Series(msc) + offset_ms,
+                "bid": raw["bid"].astype("float64"),
+                "ask": raw["ask"].astype("float64"),
+                "last": raw["last"].astype("float64"),
+                "volume": raw["volume"].astype("int64") if "volume" in names else 0,
+                "flags": raw["flags"].astype("int64") if "flags" in names else 0,
+            }
+        ).with_columns(
+            pl.from_epoch("timestamp_msc", time_unit="ms")
+            .dt.replace_time_zone("UTC")
+            .alias("timestamp")
+        )
+        start_ms = int(start.timestamp() * 1000)
+        end_ms = int(end.timestamp() * 1000)
+        frame = frame.filter(
+            (pl.col("timestamp_msc") >= start_ms) & (pl.col("timestamp_msc") < end_ms)
+        )
+        return conform_ticks(frame.drop_nulls("timestamp_msc")), truncated
 
     def ticks_from(self, broker_symbol: str, start: datetime, count: int) -> list[Tick]:
         """Up to ``count`` ticks from ``start`` onwards."""
