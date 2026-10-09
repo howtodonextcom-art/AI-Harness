@@ -98,6 +98,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "S105", "S106"]
 "tests/unit/market_data/test_collector_ledger.py" = ["PT018"]
+"tests/unit/api/test_api_market_data.py" = ["PT018"]
 # Operator scripts print results and are long procedural flows by nature.
 "scripts/**" = ["T201", "E501", "PLR0915", "PLR0912"]
 "src/xau_edge/execution/cli.py" = ["T201"]

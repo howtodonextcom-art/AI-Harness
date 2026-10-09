@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import math
 import time
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -152,6 +153,8 @@ class MarketCollector:
         self._now = now
         self._last_quote: Quote | None = None
         self._errors: list[str] = []
+        self._recent: deque[dict[str, Any]] = deque(maxlen=500)
+        self.live_path = None if status_path is None else status_path.with_name("live.json")
 
     @property
     def symbol(self) -> str:
@@ -163,7 +166,45 @@ class MarketCollector:
         status = market_status(self._now(), self.calendar)
         quote = self.feed.quote(self.mapping, status)
         self._last_quote = quote
+        if quote.timestamp is not None and (
+            not self._recent or self._recent[-1]["time"] != quote.timestamp.isoformat()
+        ):
+            self._recent.append(
+                {"time": quote.timestamp.isoformat(), "bid": quote.bid, "ask": quote.ask,
+                 "spread_points": quote.spread_points}
+            )  # fmt: skip
         return quote
+
+    def forming_bars(self) -> dict[str, dict[str, Any]]:
+        """The currently forming bar of every timeframe (UI only; never stored)."""
+        out: dict[str, dict[str, Any]] = {}
+        for tf in self.timeframes:
+            frame = self.feed.latest_bars(self.mapping.broker_symbol, tf, 1, include_forming=True)
+            if frame.height == 0:
+                continue
+            row = frame.row(0, named=True)
+            if row["timestamp"] + tf.delta > self._now():
+                out[tf.value] = {
+                    **row,
+                    "timestamp": row["timestamp"].isoformat(),
+                    "is_closed": False,
+                }
+        return out
+
+    def write_live(self) -> None:
+        """Atomically publish the latest quote, forming bars and recent ticks for the API/UI."""
+        if self.live_path is None or self._last_quote is None:
+            return
+        payload = {
+            "updated_at": self._now().isoformat(),
+            "quote": json.loads(self._last_quote.model_dump_json()),
+            "forming": self.forming_bars(),
+            "ticks": list(self._recent)[-200:],
+        }
+        tmp = self.live_path.with_suffix(".tmp")
+        self.live_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(json.dumps(payload, default=str), encoding="utf-8")
+        tmp.replace(self.live_path)
 
     def _count_needed(self, tf: Timeframe, latest: datetime | None) -> int:
         if latest is None:
@@ -313,6 +354,7 @@ class MarketCollector:
         """One quote refresh and one bar poll (used by tests and by ``--once``)."""
         self.poll_quote()
         self.poll_bars()
+        self.write_live()
         return self.write_status()
 
     def run(
@@ -331,6 +373,7 @@ class MarketCollector:
         next_reconcile += reconcile_interval
         while not stop():
             self.poll_quote()
+            self.write_live()
             t = clock()
             if t >= next_bar:
                 self.poll_bars()

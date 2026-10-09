@@ -110,7 +110,7 @@ def make_feed(client: FakeClient) -> Mt5Feed:
 def make_collector(tmp_path: Path, client: FakeClient) -> MarketCollector:
     feed = make_feed(client)
     return MarketCollector(
-        feed, BarLedger(tmp_path / "bars"), feed.discover_symbol("XAUUSD"), MarketCalendar(),
+        feed, BarLedger(tmp_path), feed.discover_symbol("XAUUSD"), MarketCalendar(),
         status_path=tmp_path / "status.json", now=lambda: client.now,
     )  # fmt: skip
 

@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict
 from xau_edge import __version__ as package_version
 from xau_edge.api.bot import add_bot_routes, read_kill_switch
 from xau_edge.api.control import mount_control
+from xau_edge.api.market_data import add_market_data_routes
 from xau_edge.api.research import add_research_routes, install_research_host_guard
 from xau_edge.api.service import (
     SYMBOL,
@@ -252,6 +253,8 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
         return {"models": model_records(ctx.models_dir)}
 
     add_bot_routes(app, ctx.bot, ctx.clock)
+    if ctx.market_root is not None:
+        add_market_data_routes(app, ctx.market_root, clock=ctx.clock)
     if ctx.research is not None:
         install_research_host_guard(app, ctx.control_port)
     add_research_routes(app, ctx.research)

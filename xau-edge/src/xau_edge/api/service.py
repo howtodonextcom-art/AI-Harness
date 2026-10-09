@@ -84,6 +84,8 @@ class ApiContext:
     control: ControlService | None = None
     """The web control plane (ADR-0023); ``None`` keeps the API free of ``/control`` routes."""
     control_port: int = 8000
+    market_root: Path | None = None
+    """MT5 bar ledger and collector files directory (``/md/*``); ``None`` omits the routes."""
     clock: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
     max_data_age_minutes: int = 45
     _paper_lock: threading.Lock = field(default_factory=threading.Lock)

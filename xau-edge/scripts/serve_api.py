@@ -89,6 +89,7 @@ def main() -> None:
         journal_path=journal,
         control=control,
         control_port=args.port,
+        market_root=Path("data/market"),
     )
     uvicorn.run(create_app(ctx), host="127.0.0.1", port=args.port, log_level="info")
 
