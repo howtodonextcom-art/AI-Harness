@@ -287,6 +287,10 @@ def test_a_doctored_real_result_is_detected_and_never_labelled_validated(tmp_pat
         REAL / "experiments" / "edge_program_v2_stage1",
         root / "experiments" / "edge_program_v2_stage1",
     )
+    shutil.copytree(
+        REAL / "docs" / "research" / "edge-program-v2",
+        root / "docs" / "research" / "edge-program-v2",
+    )
     clean = _service(root).stage1()
     assert clean["status"] == "ok"
     assert all(r["result_intact"] for r in clean["variants"])

@@ -18,6 +18,7 @@ from xau_edge.integrity.canonical import canonical_hash
 from xau_edge.integrity.evidence import EvidenceClass, Label, Proof, can_display
 from xau_edge.integrity.identity import IdentityError, RunManifest
 from xau_edge.integrity.registration import HypothesisRegistration, derive, validate
+from xau_edge.research.ledger import parse_ledger
 from xau_edge.research.paths import ResearchRoot, SourceUnavailableError, unknown
 
 STAGE1_DIR = "experiments/edge_program_v2_stage1"
@@ -99,6 +100,14 @@ def _manifest_ids(files: ResearchRoot) -> dict[str, tuple[str, str]]:
     return ids
 
 
+def _ledger_registry_ids(files: ResearchRoot) -> set[str]:
+    """Registry ids recorded in the V2 ledger (empty when it cannot be read: nothing is intact)."""
+    try:
+        return {r.registry_id for r in parse_ledger(files.read_text(V2_LEDGER)).runs}
+    except SourceUnavailableError:
+        return set()
+
+
 def stage1(files: ResearchRoot, clock: datetime) -> dict[str, Any]:
     """Batch A / Stage 1 results (SCREENING): table with provenance and label permissions."""
     try:
@@ -113,6 +122,7 @@ def stage1(files: ResearchRoot, clock: datetime) -> dict[str, Any]:
         return {"status": "empty", "source": STAGE1_DIR, "message": "chưa có kết quả Stage 1",
                 "variants": [], "generated_at": clock.isoformat()}  # fmt: skip
     verified = _manifest_ids(files)
+    ledger_ids = _ledger_registry_ids(files)
     rows: list[dict[str, Any]] = []
     problems: list[str] = []
     for rel in names:
@@ -130,7 +140,9 @@ def stage1(files: ResearchRoot, clock: datetime) -> dict[str, Any]:
             continue
         dep, power = study.get("dependence", {}), study.get("power", {})
         recorded = verified.get(raw["experiment_id"])
-        intact = recorded is not None and canonical_hash(raw)[:16] == recorded[0]
+        digest = canonical_hash(raw)[:16]
+        # the manifest AND the append-only, git-tracked ledger must both vouch for this exact result
+        intact = recorded is not None and digest == recorded[0] and digest in ledger_ids
         has_manifest = intact
         if recorded is not None and not intact:
             problems.append(f"{rel}: kết quả khác với hash đã ghi trong manifest (đã bị sửa)")

@@ -46,3 +46,12 @@ def test_a_corrupt_middle_line_still_fails_closed(tmp_path: Path) -> None:
     path.write_text("garbage\n" + path.read_text(encoding="utf-8"), encoding="utf-8")
     with pytest.raises(LifecycleError):
         store.states()
+
+
+def test_a_complete_last_event_that_only_lost_its_newline_is_kept(tmp_path: Path) -> None:
+    path = tmp_path / "l.jsonl"
+    store = LifecycleStore(path, SEED)
+    store.demote("A", "WATCH", "first", "web")
+    path.write_text(path.read_text(encoding="utf-8").rstrip("\n"), encoding="utf-8")
+    store.demote("B", "DISABLED", "second", "web")
+    assert store.states() == {"A": "WATCH", "B": "DISABLED"}

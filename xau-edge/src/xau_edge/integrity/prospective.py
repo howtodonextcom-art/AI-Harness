@@ -135,6 +135,7 @@ def verify(path: Path, *, check_anchor: bool = True) -> VerifyResult:  # noqa: P
     earliest_of: dict[str, datetime] = {}
     answered: set[str] = set()
     previous = GENESIS
+    hashes: list[str] = []
     last_time: datetime | None = None
     signals = outcomes = 0
     for number, text in enumerate(lines, start=1):
@@ -150,7 +151,7 @@ def verify(path: Path, *, check_anchor: bool = True) -> VerifyResult:  # noqa: P
             problems.append(f"line {number}: record hash does not match its content (modified)")
         if record.get("previous_record_hash") != previous:
             problems.append(f"line {number}: broken chain")
-        previous = str(record.get("record_hash", ""))
+        hashes.append(previous := str(record.get("record_hash", "")))
         rid = str(record.get("record_id", ""))
         if not rid:
             problems.append(f"line {number}: no record_id")
@@ -197,12 +198,22 @@ def verify(path: Path, *, check_anchor: bool = True) -> VerifyResult:  # noqa: P
         else:
             problems.append(f"line {number}: unknown kind {kind!r}")
     anchor = _read_anchor(path) if check_anchor else None
-    if anchor is not None and (anchor["records"], anchor["head"]) != (len(lines), previous):
-        if len(lines) < anchor["records"]:
+    unanchored = False
+    if check_anchor and anchor is None and lines:
+        unanchored = True  # a non-empty ledger without its anchor cannot be trusted
+    elif anchor is not None and (anchor["records"], anchor["head"]) != (len(lines), previous):
+        crashed_before_anchor = (
+            len(lines) >= 2 and anchor["records"] == len(lines) - 1 and anchor["head"] == hashes[-2]
+        )  # a crash after the newest record was written but before the anchor was updated
+        if crashed_before_anchor:
+            pass
+        elif len(lines) < anchor["records"]:
             problems.append("ledger has fewer records than its last anchor (tail truncated)")
         else:
             problems.append("ledger head differs from its last anchor (rewritten)")
-    status = INVALID if problems else VALID
+    status = INVALID if problems else (UNKNOWN if unanchored else VALID)
+    if unanchored and not problems:
+        problems.append("anchor file is missing for a non-empty ledger")
     return VerifyResult(status, len(lines), signals, outcomes, tuple(problems), previous)
 
 
@@ -270,7 +281,10 @@ class ProspectiveLedger:
 
     def _write_anchor(self, state: VerifyResult) -> None:
         body = json.dumps({"records": state.records, "head": state.head_hash})
-        anchor_path(self.path).write_text(body + chr(10), encoding="utf-8")
+        target = anchor_path(self.path)
+        tmp = target.with_suffix(target.suffix + ".tmp")
+        tmp.write_text(body + chr(10), encoding="utf-8")
+        tmp.replace(target)  # atomic: a crash leaves the old or the new anchor, never a torn one
 
     def _rollback(self, trial: str) -> None:
         lines = self.path.read_text(encoding="utf-8").splitlines()

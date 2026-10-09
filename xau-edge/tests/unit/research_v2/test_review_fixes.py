@@ -87,3 +87,40 @@ def test_the_freeze_checklist_command_refuses_every_candidate_today() -> None:
         decision = module.decide("H09-ASIA_LONDON-t0.2", split)
         assert decision.allowed is False
         assert any("Stage 2" in r for r in decision.reasons)
+
+
+def test_doctoring_both_the_result_and_its_manifest_is_caught_by_the_ledger(tmp_path: Path) -> None:
+    import shutil  # noqa: PLC0415
+
+    from xau_edge.integrity.canonical import canonical_hash, canonical_json  # noqa: PLC0415
+    from xau_edge.integrity.identity import RunManifest  # noqa: PLC0415
+
+    real = Path(__file__).parents[3]
+    root = tmp_path / "repo"
+    shutil.copytree(
+        real / "experiments" / "edge_program_v2_stage1",
+        root / "experiments" / "edge_program_v2_stage1",
+    )
+    shutil.copytree(
+        real / "docs" / "research" / "edge-program-v2",
+        root / "docs" / "research" / "edge-program-v2",
+    )
+    folder = root / "experiments" / "edge_program_v2_stage1"
+    target = folder / "H07-PD-e0_dev2.json"
+    doc = json.loads(target.read_text(encoding="utf-8"))
+    old_id = doc["experiment_id"]
+    doc["screening"]["stage1_survivor"] = True
+    target.write_text(json.dumps(doc), encoding="utf-8")
+    for path in (folder / "manifests").glob("*.json"):
+        manifest = RunManifest.model_validate_json(path.read_text(encoding="utf-8"))
+        if manifest.identity.experiment_id != old_id:
+            continue
+        forged = manifest.model_copy(update={"output_hashes": {"result": canonical_hash(doc)[:16]}})
+        path.unlink()
+        (folder / "manifests" / f"{forged.manifest_id}.json").write_text(
+            canonical_json(forged.model_dump(mode="json")), encoding="utf-8"
+        )
+    view = ResearchService(root).stage1()
+    row = next(r for r in view["variants"] if r["variant"] == "H07-PD-e0")
+    assert row["result_intact"] is False
+    assert row["survivor"] is False

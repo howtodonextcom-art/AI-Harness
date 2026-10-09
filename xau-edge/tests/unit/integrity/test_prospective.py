@@ -218,3 +218,35 @@ def test_an_outcome_before_the_earliest_resolution_or_a_second_outcome_is_refuse
         ledger.append(outcome(3, 1, "2026-10-09T13:00:00+00:00"))
     with pytest.raises(LedgerError, match="unknown signal"):
         ledger.append(outcome(4, 2, "2026-10-09T14:00:00+00:00"))  # s2 does not exist
+
+
+def test_a_missing_anchor_makes_a_non_empty_ledger_unknown_not_valid(tmp_path: Path) -> None:
+    path = tmp_path / "l.jsonl"
+    ledger = ProspectiveLedger(path)
+    ledger.append(signal(1))
+    ledger.append(signal(2, "2026-10-09T10:15:00+00:00"))
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text(lines[0] + "\n", encoding="utf-8")  # truncate
+    (tmp_path / "l.jsonl.head").unlink()  # and remove the anchor
+    result = verify(path)
+    assert result.status == UNKNOWN
+    assert not result.sealed_before_outcome
+
+
+def test_a_crash_between_the_append_and_the_anchor_does_not_brick_the_ledger(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "l.jsonl"
+    ledger = ProspectiveLedger(path)
+    ledger.append(signal(1))
+
+    def boom(self: ProspectiveLedger, state: object) -> None:
+        raise OSError("disk full")
+
+    monkeypatch.setattr(ProspectiveLedger, "_write_anchor", boom)
+    with pytest.raises(OSError, match="disk full"):
+        ledger.append(signal(2, "2026-10-09T10:15:00+00:00"))
+    monkeypatch.undo()
+    assert verify(path).status == VALID  # one record ahead of its anchor: tolerated
+    ledger.append(signal(3, "2026-10-09T10:30:00+00:00"))
+    assert verify(path).status == VALID

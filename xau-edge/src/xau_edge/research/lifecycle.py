@@ -201,8 +201,13 @@ class LifecycleStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         existing = self.path.read_text(encoding="utf-8") if self.path.exists() else ""
         if existing and not existing.endswith("\n"):
-            # drop the torn (incomplete) last line so the journal stays well formed
-            kept = existing.rsplit("\n", 1)[0] + "\n" if "\n" in existing else ""
+            last = existing.rsplit("\n", 1)[-1]
+            try:
+                json.loads(last)
+                kept = existing + "\n"  # a complete event that only lost its newline: keep it
+            except json.JSONDecodeError:
+                # a torn (incomplete) last line: drop it so the journal stays well formed
+                kept = existing.rsplit("\n", 1)[0] + "\n" if "\n" in existing else ""
             tmp = self.path.with_suffix(".tmp")
             tmp.write_text(kept, encoding="utf-8")
             tmp.replace(self.path)
