@@ -1,0 +1,47 @@
+{
+  "hypothesis_id": "H07",
+  "title": "Liquidity-sweep reversal (quét thanh khoản rồi đảo chiều)",
+  "batch": "A",
+  "economic_rationale": "Stop và lệnh chờ tập trung quanh đỉnh/đáy ngày trước và đỉnh/đáy phiên Asia. Khi giá chọc qua mức đó rồi đóng cửa trở lại bên trong, lực mua/bán kích hoạt bởi stop có thể đã cạn và giá quay lại.",
+  "mechanism_status": "HYPOTHESIZED",
+  "observed_pattern": "Hành vi thống kê của giá sau khi chọc qua mức và đóng lại bên trong (đo được từ OHLC).",
+  "hypothesized_explanation": "Quét stop và cạn kiệt thanh khoản. OHLC không chứng minh ý định của bất kỳ bên nào; đây là giả thuyết giải thích, không phải sự thật đã quan sát.",
+  "event_state_machine": "Mức L (PDH, PDL, ASIAH, ASIAL). BREACH: bar đầu tiên của ngày (một sự kiện mỗi mức mỗi ngày) có high > L (hoặc low < L). REJECTED: trong m = 3 bar tính từ bar breach (gồm chính nó) có bar đóng cửa trở lại bên trong L ít nhất eps x ATR. Khi REJECTED quyết định tại giá đóng bar đó, hướng ngược với cú quét. Nếu không REJECTED trong m bar thì không có sự kiện H07. Mỗi mức chỉ có breach đầu tiên trong ngày.",
+  "availability_timing": "Quyết định tại giá đóng của bar H1 hoàn tất quy tắc; chỉ dùng bar đã đóng (chỉ số <= bar quyết định). Mức ngày trước chỉ tồn tại sau khi ngày giao dịch (17:00 New York) kết thúc; mức Asia chỉ tồn tại từ bar H1 mở lúc 07:00 UTC của cùng ngày UTC.",
+  "entry_timing": "Vào lệnh tại giá mở của bar H1 kế tiếp. Bỏ qua (và đếm là ENTRY_GAP) nếu bar kế tiếp mở sau bar quyết định hơn 90 phút.",
+  "label": "Triple barrier đã đóng băng của chương trình: mục tiêu +2a, stop -1a (a = ATR14 tại bar quyết định, 1R = 1a), timeout 24 bar H1 (thoát tại giá đóng bar cuối); báo cáo gross-at-mid và net R, MFE, MAE, số bar giữ.",
+  "barrier_rules": "Cả hai rào trong cùng một bar: stop trước (kết quả chính, bi quan) và ghi nhận AMBIGUOUS cùng kết quả lạc quan. Gap qua stop: khớp tại giá mở (xấu hơn). Gap qua mục tiêu: khớp tại mục tiêu.",
+  "expected_event_count": 1328,
+  "effective_event_count_estimate": 1038,
+  "expected_sd": 1.3,
+  "power_target": 0.8,
+  "k_at_registration": 20,
+  "parameter_grid": {
+    "level_set": [
+      "PD",
+      "ASIA"
+    ],
+    "eps": [
+      0.0,
+      0.25,
+      0.5
+    ]
+  },
+  "variant_ids": [
+    "H07-PD-e0",
+    "H07-PD-e0.25",
+    "H07-PD-e0.5",
+    "H07-ASIA-e0",
+    "H07-ASIA-e0.25",
+    "H07-ASIA-e0.5"
+  ],
+  "falsification_condition": "Không biến thể nào có kiểm định Holm (family-wise 0.10 trên 20 biến thể) bác bỏ H0 (mean net R <= 0) cùng mean net R bi quan > 0 trên Development-2.",
+  "failure_conditions": "Mean net R base <= 0 hoặc khoảng tin cậy day-block chứa 0 và Holm không bác bỏ; hoặc dương nhưng ERA_DEPENDENT / INTRABAR_SENSITIVE / DEPENDENCE_SENSITIVE (không thăng cấp).",
+  "placebo_plan": "Placebo cùng giờ UTC: N mốc ngẫu nhiên (N = số sự kiện) lấy từ các bar cùng giờ UTC, hướng ngẫu nhiên, 1000 lần, seed 7. Chẩn đoán (percentile thực nghiệm của kết quả thật), không phải tiêu chí đạt/trượt.",
+  "attribution_plan": "Phản thực tế trên cùng mốc thời gian: B hướng ngẫu nhiên (kỳ vọng), C luôn long, D luôn short, E hướng ngược, F mốc ngẫu nhiên cùng giờ; ước lượng Timing, Direction, Drift; mô tả, không khẳng định nhân quả.",
+  "cost_scenarios": "Như Programme 1 để so sánh được: spread = max(ghi nhận, 30) points; slippage 3 points (base) và 6 points (bi quan) mỗi lần khớp; swap theo CostModel hiện tại (anachronism bi quan, ghi rõ); báo cáo gross-at-mid, net base, net bi quan; độ nhạy swap 0/-20/-76 là chẩn đoán Class D.",
+  "structural_break_report": "Báo cáo hiệu ứng theo kỷ nguyên (trước 2021 và từ 2021, ranh giới thay đổi đồng hồ/lịch phiên) và quét dịch chuyển trung bình; gắn ERA_DEPENDENT nếu dương ở dưới nửa số kỷ nguyên, âm có ý nghĩa ở một kỷ nguyên, hoặc một kỷ nguyên chiếm trên 60% lợi nhuận.",
+  "intrabar_policy": "Kết quả chính luôn bi quan. Báo cáo số bar mơ hồ, tỷ lệ mơ hồ, hai cận; INTRABAR_SENSITIVE nếu dấu của trung bình đổi giữa hai cận hoặc tỷ lệ mơ hồ trên 10%; khi đó cần xác nhận bằng dữ liệu khung thời gian nhỏ hơn trước mọi thăng cấp.",
+  "event_counts_source": "docs/research/edge-program-v2/event-counts-dev2.json (Class D, chỉ đếm sự kiện trên Development-2, chưa tính kết quả)",
+  "dropped_variants": []
+}

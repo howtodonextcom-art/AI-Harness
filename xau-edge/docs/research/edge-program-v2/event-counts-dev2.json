@@ -1,0 +1,416 @@
+{
+  "class": "D (event frequencies on Development-2; no outcomes computed)",
+  "dataset_ids": {
+    "H1": "8e64dd6561015b72",
+    "H4": "b438f1794bd11402"
+  },
+  "variants": [
+    {
+      "variant": "H07-PD-e0",
+      "hypothesis": "H07",
+      "events": 1613,
+      "unique_days": 1427,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 147,
+        "2012": 182,
+        "2013": 201,
+        "2014": 206,
+        "2015": 202,
+        "2016": 224,
+        "2017": 227,
+        "2018": 224
+      }
+    },
+    {
+      "variant": "H07-PD-e0.25",
+      "hypothesis": "H07",
+      "events": 1529,
+      "unique_days": 1348,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 116,
+        "2012": 163,
+        "2013": 199,
+        "2014": 202,
+        "2015": 194,
+        "2016": 215,
+        "2017": 220,
+        "2018": 220
+      }
+    },
+    {
+      "variant": "H07-PD-e0.5",
+      "hypothesis": "H07",
+      "events": 1409,
+      "unique_days": 1235,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 88,
+        "2012": 141,
+        "2013": 186,
+        "2014": 195,
+        "2015": 185,
+        "2016": 196,
+        "2017": 206,
+        "2018": 212
+      }
+    },
+    {
+      "variant": "H07-ASIA-e0",
+      "hypothesis": "H07",
+      "events": 2144,
+      "unique_days": 1503,
+      "excluded_clock_unsafe": 216,
+      "by_year": {
+        "2011": 217,
+        "2012": 283,
+        "2013": 257,
+        "2014": 285,
+        "2015": 253,
+        "2016": 283,
+        "2017": 286,
+        "2018": 280
+      }
+    },
+    {
+      "variant": "H07-ASIA-e0.25",
+      "hypothesis": "H07",
+      "events": 1722,
+      "unique_days": 1266,
+      "excluded_clock_unsafe": 216,
+      "by_year": {
+        "2011": 181,
+        "2012": 235,
+        "2013": 198,
+        "2014": 242,
+        "2015": 203,
+        "2016": 227,
+        "2017": 206,
+        "2018": 230
+      }
+    },
+    {
+      "variant": "H07-ASIA-e0.5",
+      "hypothesis": "H07",
+      "events": 1328,
+      "unique_days": 1038,
+      "excluded_clock_unsafe": 216,
+      "by_year": {
+        "2011": 150,
+        "2012": 186,
+        "2013": 147,
+        "2014": 184,
+        "2015": 159,
+        "2016": 170,
+        "2017": 150,
+        "2018": 182
+      }
+    },
+    {
+      "variant": "H08-PD-e0",
+      "hypothesis": "H08",
+      "events": 168,
+      "unique_days": 167,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 76,
+        "2012": 44,
+        "2013": 8,
+        "2014": 9,
+        "2015": 7,
+        "2016": 6,
+        "2017": 14,
+        "2018": 4
+      }
+    },
+    {
+      "variant": "H08-PD-e0.25",
+      "hypothesis": "H08",
+      "events": 137,
+      "unique_days": 136,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 66,
+        "2012": 38,
+        "2013": 7,
+        "2014": 7,
+        "2015": 3,
+        "2016": 2,
+        "2017": 12,
+        "2018": 2
+      }
+    },
+    {
+      "variant": "H08-PD-e0.5",
+      "hypothesis": "H08",
+      "events": 107,
+      "unique_days": 106,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 53,
+        "2012": 30,
+        "2013": 6,
+        "2014": 6,
+        "2015": 3,
+        "2017": 8,
+        "2018": 1
+      }
+    },
+    {
+      "variant": "H08-ASIA-e0",
+      "hypothesis": "H08",
+      "events": 784,
+      "unique_days": 755,
+      "excluded_clock_unsafe": 216,
+      "by_year": {
+        "2011": 102,
+        "2012": 102,
+        "2013": 115,
+        "2014": 87,
+        "2015": 96,
+        "2016": 92,
+        "2017": 100,
+        "2018": 90
+      }
+    },
+    {
+      "variant": "H08-ASIA-e0.25",
+      "hypothesis": "H08",
+      "events": 645,
+      "unique_days": 624,
+      "excluded_clock_unsafe": 216,
+      "by_year": {
+        "2011": 87,
+        "2012": 82,
+        "2013": 93,
+        "2014": 75,
+        "2015": 80,
+        "2016": 79,
+        "2017": 71,
+        "2018": 78
+      }
+    },
+    {
+      "variant": "H08-ASIA-e0.5",
+      "hypothesis": "H08",
+      "events": 498,
+      "unique_days": 482,
+      "excluded_clock_unsafe": 216,
+      "by_year": {
+        "2011": 73,
+        "2012": 68,
+        "2013": 67,
+        "2014": 60,
+        "2015": 61,
+        "2016": 57,
+        "2017": 55,
+        "2018": 57
+      }
+    },
+    {
+      "variant": "H09-ASIA_LONDON-t0.2",
+      "hypothesis": "H09",
+      "events": 752,
+      "unique_days": 752,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 100,
+        "2012": 90,
+        "2013": 82,
+        "2014": 88,
+        "2015": 86,
+        "2016": 104,
+        "2017": 91,
+        "2018": 111
+      }
+    },
+    {
+      "variant": "H09-ASIA_LONDON-t0.3",
+      "hypothesis": "H09",
+      "events": 1206,
+      "unique_days": 1206,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 149,
+        "2012": 154,
+        "2013": 138,
+        "2014": 147,
+        "2015": 146,
+        "2016": 159,
+        "2017": 145,
+        "2018": 168
+      }
+    },
+    {
+      "variant": "H09-ASIA_LONDON-t0.4",
+      "hypothesis": "H09",
+      "events": 1598,
+      "unique_days": 1598,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 201,
+        "2012": 187,
+        "2013": 189,
+        "2014": 205,
+        "2015": 202,
+        "2016": 203,
+        "2017": 197,
+        "2018": 214
+      }
+    },
+    {
+      "variant": "H09-LONDON_NY-t0.2",
+      "hypothesis": "H09",
+      "events": 625,
+      "unique_days": 625,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 80,
+        "2012": 58,
+        "2013": 76,
+        "2014": 82,
+        "2015": 71,
+        "2016": 86,
+        "2017": 71,
+        "2018": 101
+      }
+    },
+    {
+      "variant": "H09-LONDON_NY-t0.3",
+      "hypothesis": "H09",
+      "events": 1086,
+      "unique_days": 1086,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 129,
+        "2012": 126,
+        "2013": 142,
+        "2014": 141,
+        "2015": 125,
+        "2016": 137,
+        "2017": 129,
+        "2018": 157
+      }
+    },
+    {
+      "variant": "H09-LONDON_NY-t0.4",
+      "hypothesis": "H09",
+      "events": 1498,
+      "unique_days": 1498,
+      "excluded_clock_unsafe": 148,
+      "by_year": {
+        "2011": 194,
+        "2012": 177,
+        "2013": 189,
+        "2014": 192,
+        "2015": 175,
+        "2016": 186,
+        "2017": 191,
+        "2018": 194
+      }
+    },
+    {
+      "variant": "H10-c0.8-L20",
+      "hypothesis": "H10",
+      "events": 662,
+      "unique_days": 661,
+      "excluded_clock_unsafe": 47,
+      "by_year": {
+        "2011": 81,
+        "2012": 79,
+        "2013": 94,
+        "2014": 89,
+        "2015": 95,
+        "2016": 79,
+        "2017": 81,
+        "2018": 64
+      }
+    },
+    {
+      "variant": "H10-c0.8-L50",
+      "hypothesis": "H10",
+      "events": 662,
+      "unique_days": 661,
+      "excluded_clock_unsafe": 47,
+      "by_year": {
+        "2011": 81,
+        "2012": 79,
+        "2013": 94,
+        "2014": 89,
+        "2015": 95,
+        "2016": 79,
+        "2017": 81,
+        "2018": 64
+      }
+    },
+    {
+      "variant": "H10-c0.8-L100",
+      "hypothesis": "H10",
+      "events": 662,
+      "unique_days": 661,
+      "excluded_clock_unsafe": 47,
+      "by_year": {
+        "2011": 81,
+        "2012": 79,
+        "2013": 94,
+        "2014": 89,
+        "2015": 95,
+        "2016": 79,
+        "2017": 81,
+        "2018": 64
+      }
+    },
+    {
+      "variant": "H10-c0.9-L20",
+      "hypothesis": "H10",
+      "events": 1230,
+      "unique_days": 1230,
+      "excluded_clock_unsafe": 88,
+      "by_year": {
+        "2011": 140,
+        "2012": 165,
+        "2013": 152,
+        "2014": 145,
+        "2015": 155,
+        "2016": 161,
+        "2017": 161,
+        "2018": 151
+      }
+    },
+    {
+      "variant": "H10-c0.9-L50",
+      "hypothesis": "H10",
+      "events": 1230,
+      "unique_days": 1230,
+      "excluded_clock_unsafe": 88,
+      "by_year": {
+        "2011": 140,
+        "2012": 165,
+        "2013": 152,
+        "2014": 145,
+        "2015": 155,
+        "2016": 161,
+        "2017": 161,
+        "2018": 151
+      }
+    },
+    {
+      "variant": "H10-c0.9-L100",
+      "hypothesis": "H10",
+      "events": 1230,
+      "unique_days": 1230,
+      "excluded_clock_unsafe": 88,
+      "by_year": {
+        "2011": 140,
+        "2012": 165,
+        "2013": 152,
+        "2014": 145,
+        "2015": 155,
+        "2016": 161,
+        "2017": 161,
+        "2018": 151
+      }
+    }
+  ]
+}

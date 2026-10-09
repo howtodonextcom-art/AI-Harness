@@ -1,0 +1,47 @@
+{
+  "hypothesis_id": "H09",
+  "title": "Session-transition structure (cấu trúc chuyển phiên)",
+  "batch": "A",
+  "economic_rationale": "Chuyển từ Asia sang London và từ London sang New York là lúc thành phần người tham gia và thanh khoản đổi nhanh. Vị trí của giá trong biên độ phiên vừa hoàn tất, cùng xu hướng H4, có thể mang thông tin về hướng của giờ đầu phiên sau.",
+  "mechanism_status": "HYPOTHESIZED",
+  "observed_pattern": "Quan hệ thống kê giữa vị trí giá trong biên độ phiên, xu hướng H4 và kết quả sau chuyển phiên.",
+  "hypothesized_explanation": "Thay đổi thành phần người tham gia tại giờ mở phiên. Không quan sát được trực tiếp.",
+  "event_state_machine": "Quyết định tại giá đóng của bar H1 cuối cùng trước giờ mở London (bar mở 07:00 Europe/London) hoặc trước giờ mở New York (bar mở 07:00 America/New_York). Biên độ phiên: Asia = từ 00:00 UTC đến bar quyết định; London-NY = từ bar mở 08:00 London đến bar quyết định. p = (close - low)/(high - low). Sự kiện khi p >= 1 - t hoặc p <= t, VÀ dấu xu hướng H4 khác 0. Hướng = dấu xu hướng H4 (SMA50 đóng của H4, bar H4 đã đóng): tiếp diễn từ vùng ngoài cùng hướng và đảo chiều từ vùng đối lập đều quy về cùng một hướng đó. Mỗi chuyển phiên một sự kiện mỗi ngày.",
+  "availability_timing": "Quyết định tại giá đóng của bar H1 hoàn tất quy tắc; chỉ dùng bar đã đóng (chỉ số <= bar quyết định). Mức ngày trước chỉ tồn tại sau khi ngày giao dịch (17:00 New York) kết thúc; mức Asia chỉ tồn tại từ bar H1 mở lúc 07:00 UTC của cùng ngày UTC.",
+  "entry_timing": "Vào lệnh tại giá mở của bar H1 kế tiếp. Bỏ qua (và đếm là ENTRY_GAP) nếu bar kế tiếp mở sau bar quyết định hơn 90 phút.",
+  "label": "Triple barrier đã đóng băng của chương trình: mục tiêu +2a, stop -1a (a = ATR14 tại bar quyết định, 1R = 1a), timeout 24 bar H1 (thoát tại giá đóng bar cuối); báo cáo gross-at-mid và net R, MFE, MAE, số bar giữ.",
+  "barrier_rules": "Cả hai rào trong cùng một bar: stop trước (kết quả chính, bi quan) và ghi nhận AMBIGUOUS cùng kết quả lạc quan. Gap qua stop: khớp tại giá mở (xấu hơn). Gap qua mục tiêu: khớp tại mục tiêu.",
+  "expected_event_count": 625,
+  "effective_event_count_estimate": 625,
+  "expected_sd": 1.3,
+  "power_target": 0.8,
+  "k_at_registration": 20,
+  "parameter_grid": {
+    "transition": [
+      "ASIA_LONDON",
+      "LONDON_NY"
+    ],
+    "tercile": [
+      0.2,
+      0.3,
+      0.4
+    ]
+  },
+  "variant_ids": [
+    "H09-ASIA_LONDON-t0.2",
+    "H09-ASIA_LONDON-t0.3",
+    "H09-ASIA_LONDON-t0.4",
+    "H09-LONDON_NY-t0.2",
+    "H09-LONDON_NY-t0.3",
+    "H09-LONDON_NY-t0.4"
+  ],
+  "falsification_condition": "Không biến thể nào có Holm bác bỏ H0 và mean net R bi quan > 0 trên Development-2.",
+  "failure_conditions": "Như H07. Chính sách đồng hồ: ngày giao dịch rơi vào khoảng lệch DST Mỹ/EU của các năm chưa chứng nhận đồng hồ (trước 2021) bị loại và được đếm; không dịch giờ, không sửa dữ liệu.",
+  "placebo_plan": "Placebo cùng giờ UTC: N mốc ngẫu nhiên (N = số sự kiện) lấy từ các bar cùng giờ UTC, hướng ngẫu nhiên, 1000 lần, seed 7. Chẩn đoán (percentile thực nghiệm của kết quả thật), không phải tiêu chí đạt/trượt.",
+  "attribution_plan": "Phản thực tế trên cùng mốc thời gian: B hướng ngẫu nhiên (kỳ vọng), C luôn long, D luôn short, E hướng ngược, F mốc ngẫu nhiên cùng giờ; ước lượng Timing, Direction, Drift; mô tả, không khẳng định nhân quả.",
+  "cost_scenarios": "Như Programme 1 để so sánh được: spread = max(ghi nhận, 30) points; slippage 3 points (base) và 6 points (bi quan) mỗi lần khớp; swap theo CostModel hiện tại (anachronism bi quan, ghi rõ); báo cáo gross-at-mid, net base, net bi quan; độ nhạy swap 0/-20/-76 là chẩn đoán Class D.",
+  "structural_break_report": "Báo cáo hiệu ứng theo kỷ nguyên (trước 2021 và từ 2021, ranh giới thay đổi đồng hồ/lịch phiên) và quét dịch chuyển trung bình; gắn ERA_DEPENDENT nếu dương ở dưới nửa số kỷ nguyên, âm có ý nghĩa ở một kỷ nguyên, hoặc một kỷ nguyên chiếm trên 60% lợi nhuận.",
+  "intrabar_policy": "Kết quả chính luôn bi quan. Báo cáo số bar mơ hồ, tỷ lệ mơ hồ, hai cận; INTRABAR_SENSITIVE nếu dấu của trung bình đổi giữa hai cận hoặc tỷ lệ mơ hồ trên 10%; khi đó cần xác nhận bằng dữ liệu khung thời gian nhỏ hơn trước mọi thăng cấp.",
+  "event_counts_source": "docs/research/edge-program-v2/event-counts-dev2.json (Class D, chỉ đếm sự kiện trên Development-2, chưa tính kết quả)",
+  "dropped_variants": []
+}
