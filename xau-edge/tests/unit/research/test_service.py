@@ -345,7 +345,7 @@ def test_the_strategy_table_is_seeded_from_the_results(repo: Path) -> None:
     assert "không nâng bậc" in view["web_rule"]
 
 
-def test_forward_data_under_100_trades_is_not_a_conclusion(repo: Path) -> None:
+def test_forward_data_without_effective_n_inputs_is_inconclusive(repo: Path) -> None:
     write(
         repo,
         "data/forward/s1/summary.json",
@@ -360,12 +360,13 @@ def test_forward_data_under_100_trades_is_not_a_conclusion(repo: Path) -> None:
     )
     view = _service(repo).forward("s1")
     assert view["status"] == "ok"
-    assert view["conclusion"] == "KHÔNG KẾT LUẬN"
+    assert view["conclusion"] == "INCONCLUSIVE"
+    assert view["readiness"]["effective_n"] is None
     assert view["decay"] is None
     assert view["expected_vs_realised"]["mean_r_realised"] == 0.05
 
 
-def test_forward_data_with_enough_trades_gets_a_decay_suggestion(repo: Path) -> None:
+def test_forward_decay_is_advisory_while_the_sample_cannot_conclude(repo: Path) -> None:
     write(
         repo,
         "data/forward/s1/summary.json",
@@ -380,8 +381,9 @@ def test_forward_data_with_enough_trades_gets_a_decay_suggestion(repo: Path) -> 
         ),
     )
     view = _service(repo).forward("s1")
-    assert view["conclusion"] == "ĐỦ MẪU"
+    assert view["conclusion"] == "INCONCLUSIVE"
     assert view["decay"]["suggestion"] == "WATCH"
+    assert view["decay"]["advisory_only"] is True
 
 
 def test_no_forward_sample_is_stated_plainly(repo: Path) -> None:

@@ -15,14 +15,19 @@ from collections import Counter
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
+import numpy as np
 import polars as pl
 
 from xau_edge.backtest.costs import CostModel
+from xau_edge.integrity.dependence import effective_n
+from xau_edge.integrity.forward_power import INCONCLUSIVE
+from xau_edge.integrity.forward_power import readiness as fp_readiness
 from xau_edge.market_data.profiles import BrokerProfile
 from xau_edge.research import decay as decay_mod
 from xau_edge.research import hypotheses as hyp
+from xau_edge.research import integrity_views as iv
 from xau_edge.research import power as power_mod
 from xau_edge.research.ledger import LedgerParse, parse_ledger
 from xau_edge.research.lifecycle import LifecycleError, LifecycleStore
@@ -288,9 +293,18 @@ class ResearchService:
                 "status": "ok",
                 "started": True,
                 "sprint": state.get("sprint"),
-                "k_declared": state.get("k_declared"),
+                "k_declared": (
+                    v2_ledger.k
+                    if v2_ledger is not None and v2_ledger.k
+                    else state.get("k_declared")
+                ),
+                "k_source": V2_LEDGER if v2_ledger is not None and v2_ledger.k else V2_STATE,
                 "k_cap": state.get("k_cap", 48),
-                "hypotheses_used": state.get("hypotheses_used"),
+                "hypotheses_used": (
+                    len({r.hypothesis for r in v2_ledger.runs})
+                    if v2_ledger is not None and v2_ledger.runs
+                    else state.get("hypotheses_used")
+                ),
                 "hypotheses_budget": state.get("hypotheses_budget", 8),
                 "runs": len(v2_ledger.runs) if v2_ledger else 0,
                 "source": V2_STATE,
@@ -451,6 +465,17 @@ class ResearchService:
                         "results": hyp.summarise_results(runs, file.id),
                         "preregistration": hyp.preregistration_check(
                             self.files, file, runs, file.id
+                        ),
+                        "registration": (
+                            iv.registration(self.files, file.id)
+                            if programme == "V2"
+                            else {"status": "legacy", "reason": "chương trình V1 không có sidecar"}
+                        ),
+                        "registration_commit": hyp.commit_info(self.files, file.path),
+                        "first_result_commit": (
+                            hyp.first_commit_mentioning(self.files, V2_LEDGER, file.id)
+                            if programme == "V2"
+                            else hyp.first_commit_mentioning(self.files, V1_LEDGER, file.id)
                         ),
                     }
                 )
@@ -685,7 +710,9 @@ class ResearchService:
                 state = "ĐANG TÍCH LŨY"
             else:
                 state = "ĐÃ DÙNG THIẾT KẾ" if split["burned"] else "—"
-            locks.append({**split, "state": state})
+            locks.append(
+                {**split, "state": state, "outcome_state": self._outcome_state(split, state)}
+            )
         return {
             "status": "unknown" if blind else "ok",
             "source": "experiments/runs, experiments/edge_program*, ledger, freeze records",
@@ -695,6 +722,25 @@ class ResearchService:
             "locks": locks,
             "freeze_records": freezes,
         }
+
+    def _outcome_state(self, split: dict[str, Any], lock_state: str) -> str | None:
+        """PASS, FAIL, INCONCLUSIVE, LOCKED or UNKNOWN for the confirmatory splits only."""
+        if split["id"] not in {"testH", "holdout"}:
+            return None
+        rel = f"experiments/edge_program_v2/{split['id']}-outcome.json"
+        try:
+            raw = self.files.read_json(rel)
+        except SourceUnavailableError:
+            raw = None
+        recorded = raw.get("state") if isinstance(raw, dict) else None
+        valid = {"PASS", "FAIL", "INCONCLUSIVE"}
+        if lock_state == "NGUYÊN VẸN":
+            return (
+                "LOCKED" if raw is None else "UNKNOWN"
+            )  # an outcome on a pristine lock is a conflict
+        if lock_state == "ĐÃ DÙNG":
+            return recorded if recorded in valid else "UNKNOWN"
+        return "UNKNOWN"
 
     # -- W-R6 ----------------------------------------------------------------------------------
 
@@ -761,13 +807,10 @@ class ResearchService:
                 msg = "n_trades không khớp số lệnh trong trades_net_r"
                 raise ValueError(msg)
             config = decay_mod.load_decay_config(self.files.resolve(DECAY_CONFIG))
-            conclusion = "KHÔNG KẾT LUẬN" if n < MIN_FORWARD_TRADES else "ĐỦ MẪU"
+            readiness = self._forward_readiness(raw, trades)
             decay = None
             interval = raw.get("mean_r_expected")
-            if conclusion == "ĐỦ MẪU":
-                if not isinstance(interval, dict):
-                    msg = "thiếu mean_r_expected"
-                    raise ValueError(msg)
+            if n >= config.window_trades and isinstance(interval, dict):
                 result = decay_mod.evaluate_decay(
                     trades,
                     ci_lower=finite(interval.get("lo"), "mean_r_expected.lo"),
@@ -780,13 +823,20 @@ class ResearchService:
                     "reasons": list(result.reasons),
                     "window_means": list(result.window_means),
                     "max_drawdown_r": result.max_drawdown_r,
+                    "advisory_only": readiness["conclusion"] == INCONCLUSIVE,
                 }
+            conclusion = readiness["conclusion"]
             return {
                 "status": "ok",
                 "source": rel,
                 "strategy_id": strategy_id,
                 "n_trades": n,
-                "min_trades_for_conclusion": MIN_FORWARD_TRADES,
+                "legacy_reference_trades": MIN_FORWARD_TRADES,
+                "legacy_reference_note": (
+                    "100 lệnh chỉ là mốc tham chiếu cũ, không đủ để kết luận; "
+                    "kết luận dựa trên N hiệu dụng, thời gian và chế độ thị trường"
+                ),
+                "readiness": readiness,
                 "conclusion": conclusion,
                 "expected_vs_realised": {
                     k: raw.get(k)
@@ -814,6 +864,66 @@ class ResearchService:
         if out["status"] == "unknown":
             out["message"] = "KHÔNG CÓ MẪU FORWARD hợp lệ cho chiến lược này"
         return out
+
+    def _forward_readiness(self, raw: dict[str, Any], trades: list[float]) -> dict[str, Any]:
+        """Candidate-specific readiness; INCONCLUSIVE whenever an input is missing."""
+        need = ("trade_day_ids", "calendar_days", "regimes_seen", "target_effect", "expected_sd")
+        missing = [k for k in need if raw.get(k) is None]
+        interval = raw.get("mean_r_expected")
+        if not isinstance(interval, dict) or interval.get("lo") is None:
+            missing.append("mean_r_expected.lo")
+        days = raw.get("trade_day_ids")
+        if not missing and (not isinstance(days, list) or len(days) != len(trades)):
+            missing.append("trade_day_ids (độ dài khác n_trades)")
+        if missing or not trades:
+            return {
+                "conclusion": INCONCLUSIVE,
+                "raw_n": len(trades),
+                "effective_n": None,
+                "reasons": [f"thiếu dữ liệu để kết luận: {', '.join(missing) or 'không có lệnh'}"],
+                "legacy_reference_trades": MIN_FORWARD_TRADES,
+            }
+        days_list = cast("list[int]", days)
+        interval_map = cast("dict[str, Any]", interval)
+        values = np.asarray(trades, dtype=np.float64)
+        eff = effective_n(values, np.asarray(days_list, dtype=np.int64))
+        sd = float(values.std(ddof=1)) if len(values) > 1 else 0.0
+        result = fp_readiness(
+            raw_n=len(trades),
+            effective_n=eff,
+            calendar_days=float(raw["calendar_days"]),
+            regimes_seen=int(raw["regimes_seen"]),
+            observed_mean=float(values.mean()),
+            observed_sd=sd,
+            expected_lower_bound=float(interval_map["lo"]),
+            target_effect=float(raw["target_effect"]),
+            expected_sd=float(raw["expected_sd"]),
+        )
+        out = dict(result.__dict__)
+        out["reasons"] = list(result.reasons)
+        return out
+
+    # -- research integrity layer (RI) ---------------------------------------------------------
+
+    def provenance(self) -> dict[str, Any]:
+        """When a view was generated and from which code (never a path or a secret)."""
+        sha = (hyp._git(self.files, "rev-parse", "HEAD") or "").strip()
+        return {"generated_at": self.clock().isoformat(), "code_commit": sha[:12] or None}
+
+    def stage1(self) -> dict[str, Any]:
+        return _safe(iv.STAGE1_DIR, lambda: iv.stage1(self.files, self.clock()))
+
+    def lineage(self) -> dict[str, Any]:
+        return _safe(iv.LINEAGE, lambda: iv.lineage(self.files))
+
+    def prospective(self) -> dict[str, Any]:
+        return _safe(iv.PROSPECTIVE, lambda: iv.prospective(self.files, self.clock()))
+
+    def rollout(self) -> dict[str, Any]:
+        return _safe(iv.ROLLOUT, lambda: iv.rollout(self.files))
+
+    def gate_calibration(self) -> dict[str, Any]:
+        return _safe(iv.GATE_CAL, lambda: iv.gate_calibration(self.files))
 
     # -- W-R7 ----------------------------------------------------------------------------------
 

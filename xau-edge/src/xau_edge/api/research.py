@@ -25,9 +25,14 @@ def add_research_routes(app: FastAPI, service: ResearchService | None) -> None:
             raise HTTPException(status_code=503, detail="the research console is not configured")
         return service
 
+    def stamp(view: dict[str, Any]) -> dict[str, Any]:
+        """Add where and when the view was produced (no path, no secret)."""
+        view.setdefault("provenance", need().provenance())
+        return view
+
     @app.get("/research/overview")
     def overview() -> dict[str, Any]:
-        return need().overview()
+        return stamp(need().overview())
 
     @app.get("/research/ledger")
     def ledger(
@@ -36,7 +41,7 @@ def add_research_routes(app: FastAPI, service: ResearchService | None) -> None:
         period: Annotated[str | None, Query(max_length=20)] = None,
         scenario: Annotated[str | None, Query(max_length=20)] = None,
     ) -> dict[str, Any]:
-        return need().ledger(programme, hypothesis, period, scenario)
+        return stamp(need().ledger(programme, hypothesis, period, scenario))
 
     @app.get("/research/power")
     def power(
@@ -44,42 +49,73 @@ def add_research_routes(app: FastAPI, service: ResearchService | None) -> None:
         n: Annotated[int, Query(ge=1, le=1_000_000)] = 500,
         sd: Annotated[float, Query(gt=0.05, le=10.0)] = 1.3,
     ) -> dict[str, Any]:
-        return need().power(k, n, sd)
+        return stamp(need().power(k, n, sd))
 
     @app.get("/research/hypotheses")
     def hypotheses() -> dict[str, Any]:
-        return need().hypotheses()
+        return stamp(need().hypotheses())
 
     @app.get("/research/candidates")
     def candidates() -> dict[str, Any]:
-        return need().candidates()
+        return stamp(need().candidates())
 
     @app.get("/research/candidates/{variant}")
     def candidate(variant: str) -> dict[str, Any]:
         if not _ID.match(variant):
             raise HTTPException(status_code=422, detail="invalid variant id")
-        return need().candidate(variant)
+        return stamp(need().candidate(variant))
 
     @app.get("/research/data")
     def data() -> dict[str, Any]:
-        return need().data()
+        return stamp(need().data())
 
     @app.get("/research/locks")
     def locks() -> dict[str, Any]:
-        return need().locks()
+        return stamp(need().locks())
 
     @app.get("/research/calibration")
     def calibration() -> dict[str, Any]:
-        return need().calibration()
+        return stamp(need().calibration())
 
     @app.get("/research/soak")
     def soak() -> dict[str, Any]:
-        return need().soak()
+        return stamp(need().soak())
+
+    @app.get("/research/stage1")
+    def stage1() -> dict[str, Any]:
+        return stamp(need().stage1())
+
+    @app.get("/research/stage1/{variant}")
+    def stage1_variant(variant: str) -> dict[str, Any]:
+        if not _ID.match(variant):
+            raise HTTPException(status_code=422, detail="invalid variant id")
+        view = need().stage1()
+        rows = [r for r in view.get("variants", []) if r.get("variant") == variant]
+        if not rows:
+            return stamp({"status": "unknown", "source": view.get("source"), "variant": variant,
+                          "reason": "không có kết quả Stage 1 cho biến thể này"})  # fmt: skip
+        return stamp({**{k: v for k, v in view.items() if k != "variants"}, "variant": rows[0]})
+
+    @app.get("/research/lineage")
+    def lineage() -> dict[str, Any]:
+        return stamp(need().lineage())
+
+    @app.get("/research/prospective")
+    def prospective() -> dict[str, Any]:
+        return stamp(need().prospective())
+
+    @app.get("/research/rollout")
+    def rollout() -> dict[str, Any]:
+        return stamp(need().rollout())
+
+    @app.get("/research/gates")
+    def gates() -> dict[str, Any]:
+        return stamp(need().gate_calibration())
 
     @app.get("/lifecycle/strategies")
     def strategies() -> dict[str, Any]:
-        return need().strategies()
+        return stamp(need().strategies())
 
     @app.get("/lifecycle/{strategy_id}/forward")
     def forward(strategy_id: str) -> dict[str, Any]:
-        return need().forward(strategy_id)
+        return stamp(need().forward(strategy_id))

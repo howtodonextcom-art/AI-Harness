@@ -1,0 +1,2007 @@
+{
+  "stages": [
+    "RAW_SOURCE",
+    "RAW_DATASET",
+    "CERTIFIED_DATASET",
+    "DERIVED_DATASET",
+    "EVENT_DATASET",
+    "EXPERIMENT",
+    "RESULT",
+    "CANDIDATE",
+    "FORWARD_SIGNAL",
+    "EXECUTION"
+  ],
+  "ok": true,
+  "problems": [],
+  "empty_stages": [
+    "CANDIDATE",
+    "FORWARD_SIGNAL",
+    "EXECUTION"
+  ],
+  "nodes": [
+    {
+      "id": "4788efe042a15c64",
+      "parent_hash": null,
+      "stage": "RAW_SOURCE",
+      "label": "MetaTrader 5 history, FTMO demo server",
+      "parents": [],
+      "source": "mt5-ftmo-demo-history",
+      "broker": "FTMO (demo)",
+      "symbol": "XAUUSD",
+      "timeframe": null,
+      "timezone": "server wall clock converted to UTC at import",
+      "broker_clock": "NY+7 assumed at import; certified only from 2021 (see clock-certificate.json)",
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": null,
+      "detail": {}
+    },
+    {
+      "id": "5b9ea1994249d8d9",
+      "parent_hash": "68390c5f616a1b1f6a7df2b651264544675b5ab42c7a5342458ca31dcff58517",
+      "stage": "RAW_DATASET",
+      "label": "XAUUSD H1 raw parquet",
+      "parents": [
+        "4788efe042a15c64"
+      ],
+      "source": "mt5-ftmo-demo-history",
+      "broker": "FTMO (demo)",
+      "symbol": "XAUUSD",
+      "timeframe": "H1",
+      "timezone": "UTC",
+      "broker_clock": "NY+7 assumed",
+      "first_timestamp": "2010-01-24T23:00:00+00:00",
+      "last_timestamp": "2025-04-30T23:00:00+00:00",
+      "fetched_at": "2026-10-08T14:13:53.988979+00:00",
+      "raw_hash": "9b521cda6648c08e5a2ff3e67c62e3345c66ae8c8e38946c076fbee431ebf93a",
+      "transformation": "fetch (immutable raw store)",
+      "transform_version": "raw-store-v1",
+      "validator_result": null,
+      "detail": {
+        "rows": 91655
+      }
+    },
+    {
+      "id": "c817af0b777e5559",
+      "parent_hash": "e37112c15de4bc0660c755e4b78f6ea20b0e0309e910c88b20ed3169a8ba90cc",
+      "stage": "CERTIFIED_DATASET",
+      "label": "XAUUSD H1 validation record",
+      "parents": [
+        "5b9ea1994249d8d9"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": "XAUUSD",
+      "timeframe": "H1",
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": "9b521cda6648c08e5a2ff3e67c62e3345c66ae8c8e38946c076fbee431ebf93a",
+      "transformation": "validation, report never repair (ADR-0005)",
+      "transform_version": "validators-v1",
+      "validator_result": "FAILED",
+      "detail": {
+        "dataset_id": "8e64dd6561015b72",
+        "error_count": 1003,
+        "issue_codes": [
+          "INVALID_SPREAD",
+          "MISSING_BARS",
+          "UNSCHEDULED_CLOSURES",
+          "WEEKEND_BARS"
+        ],
+        "clock_certified_years": [
+          2021,
+          2022,
+          2023,
+          2024
+        ],
+        "clock_uncertified_before": 2021
+      }
+    },
+    {
+      "id": "2412ecf444d3217c",
+      "parent_hash": "68390c5f616a1b1f6a7df2b651264544675b5ab42c7a5342458ca31dcff58517",
+      "stage": "RAW_DATASET",
+      "label": "XAUUSD H4 raw parquet",
+      "parents": [
+        "4788efe042a15c64"
+      ],
+      "source": "mt5-ftmo-demo-history",
+      "broker": "FTMO (demo)",
+      "symbol": "XAUUSD",
+      "timeframe": "H4",
+      "timezone": "UTC",
+      "broker_clock": "NY+7 assumed",
+      "first_timestamp": "2004-06-11T01:00:00+00:00",
+      "last_timestamp": "2025-04-30T21:00:00+00:00",
+      "fetched_at": "2026-10-08T14:14:37.366765+00:00",
+      "raw_hash": "b4bbea7252a857d4dc405e7462960a29f49f4e0e2e932ff8d5df4a2a567b3bbb",
+      "transformation": "fetch (immutable raw store)",
+      "transform_version": "raw-store-v1",
+      "validator_result": null,
+      "detail": {
+        "rows": 31995
+      }
+    },
+    {
+      "id": "cf4e8c3548cc07b1",
+      "parent_hash": "07416a056578f219bd7f78ffbea790538c5d0d82ce3192a0d531e087922035c9",
+      "stage": "CERTIFIED_DATASET",
+      "label": "XAUUSD H4 validation record",
+      "parents": [
+        "2412ecf444d3217c"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": "XAUUSD",
+      "timeframe": "H4",
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": "b4bbea7252a857d4dc405e7462960a29f49f4e0e2e932ff8d5df4a2a567b3bbb",
+      "transformation": "validation, report never repair (ADR-0005)",
+      "transform_version": "validators-v1",
+      "validator_result": "FAILED",
+      "detail": {
+        "dataset_id": "b438f1794bd11402",
+        "error_count": 522,
+        "issue_codes": [
+          "INVALID_SPREAD",
+          "MISSING_BARS",
+          "UNSCHEDULED_CLOSURES",
+          "WEEKEND_BARS"
+        ],
+        "clock_certified_years": [
+          2021,
+          2022,
+          2023,
+          2024
+        ],
+        "clock_uncertified_before": 2021
+      }
+    },
+    {
+      "id": "89d5eb535564837d",
+      "parent_hash": "68390c5f616a1b1f6a7df2b651264544675b5ab42c7a5342458ca31dcff58517",
+      "stage": "RAW_DATASET",
+      "label": "XAUUSD M15 raw parquet",
+      "parents": [
+        "4788efe042a15c64"
+      ],
+      "source": "mt5-ftmo-demo-history",
+      "broker": "FTMO (demo)",
+      "symbol": "XAUUSD",
+      "timeframe": "M15",
+      "timezone": "UTC",
+      "broker_clock": "NY+7 assumed",
+      "first_timestamp": "2022-07-04T22:00:00+00:00",
+      "last_timestamp": "2025-04-30T23:45:00+00:00",
+      "fetched_at": "2026-10-08T14:11:15.045410+00:00",
+      "raw_hash": "a3e8e085dae6943316abb4572960f512004b32dd275aed4cef4eb506e9eeaa61",
+      "transformation": "fetch (immutable raw store)",
+      "transform_version": "raw-store-v1",
+      "validator_result": null,
+      "detail": {
+        "rows": 66720
+      }
+    },
+    {
+      "id": "b2ba0b99537edce7",
+      "parent_hash": "12f72ac939a326764de529b4edb10c584a2f271293e388338bf94fb59c4573f2",
+      "stage": "CERTIFIED_DATASET",
+      "label": "XAUUSD M15 validation record",
+      "parents": [
+        "89d5eb535564837d"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": "XAUUSD",
+      "timeframe": "M15",
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": "a3e8e085dae6943316abb4572960f512004b32dd275aed4cef4eb506e9eeaa61",
+      "transformation": "validation, report never repair (ADR-0005)",
+      "transform_version": "validators-v1",
+      "validator_result": "PASSED",
+      "detail": {
+        "dataset_id": "f1480a7251ffce51",
+        "error_count": 0,
+        "issue_codes": [
+          "MISSING_BARS",
+          "UNSCHEDULED_CLOSURES"
+        ],
+        "clock_certified_years": [
+          2021,
+          2022,
+          2023,
+          2024
+        ],
+        "clock_uncertified_before": 2021
+      }
+    },
+    {
+      "id": "4bd7fb71ada337c8",
+      "parent_hash": "08721b7b5145d561d8bbc1ec59e9f356aab65fb24d2922439b7175fe1ebe81ae",
+      "stage": "DERIVED_DATASET",
+      "label": "H1 research frame (arrays, ATR14, trading-day key, clock-safety mask)",
+      "parents": [
+        "c817af0b777e5559",
+        "cf4e8c3548cc07b1",
+        "b2ba0b99537edce7"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": "XAUUSD",
+      "timeframe": "H1",
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.frame.build_frame (no repair; unsafe days excluded)",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {}
+    },
+    {
+      "id": "99a3c41f34030d72",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H07-PD-e0 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1613,
+        "unique_days": 1427,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "5d7163c163a03503",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H07-PD-e0.25 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1529,
+        "unique_days": 1348,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "86624c91bfa7b089",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H07-PD-e0.5 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1409,
+        "unique_days": 1235,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "a6d90c2b53160b9a",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H07-ASIA-e0 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 2144,
+        "unique_days": 1503,
+        "excluded_clock_unsafe": 216
+      }
+    },
+    {
+      "id": "7523c575cfb9e0a3",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H07-ASIA-e0.25 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1722,
+        "unique_days": 1266,
+        "excluded_clock_unsafe": 216
+      }
+    },
+    {
+      "id": "6e600f5b8d9ccf99",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H07-ASIA-e0.5 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1328,
+        "unique_days": 1038,
+        "excluded_clock_unsafe": 216
+      }
+    },
+    {
+      "id": "759b0328551b85d1",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H08-PD-e0 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 168,
+        "unique_days": 167,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "24e12893a958fdfe",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H08-PD-e0.25 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 137,
+        "unique_days": 136,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "573c833c5f88f5f1",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H08-PD-e0.5 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 107,
+        "unique_days": 106,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "75a2022ac8885a91",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H08-ASIA-e0 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 784,
+        "unique_days": 755,
+        "excluded_clock_unsafe": 216
+      }
+    },
+    {
+      "id": "017284bf14445cc9",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H08-ASIA-e0.25 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 645,
+        "unique_days": 624,
+        "excluded_clock_unsafe": 216
+      }
+    },
+    {
+      "id": "33d5593eb43f752c",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H08-ASIA-e0.5 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 498,
+        "unique_days": 482,
+        "excluded_clock_unsafe": 216
+      }
+    },
+    {
+      "id": "5533ba8cadfc4458",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H09-ASIA_LONDON-t0.2 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 752,
+        "unique_days": 752,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "407e1fb2e6afdfc1",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H09-ASIA_LONDON-t0.3 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1206,
+        "unique_days": 1206,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "6d19ea2b5e95155d",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H09-ASIA_LONDON-t0.4 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1598,
+        "unique_days": 1598,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "b715c1aea45b7b38",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H09-LONDON_NY-t0.2 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 625,
+        "unique_days": 625,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "3dba1798d11ddc9c",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H09-LONDON_NY-t0.3 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1086,
+        "unique_days": 1086,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "d712449bb613bd9d",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H09-LONDON_NY-t0.4 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1498,
+        "unique_days": 1498,
+        "excluded_clock_unsafe": 148
+      }
+    },
+    {
+      "id": "b8597a03d04ebe42",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H10-c0.8-L20 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 662,
+        "unique_days": 661,
+        "excluded_clock_unsafe": 47
+      }
+    },
+    {
+      "id": "1df338297288f24c",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H10-c0.8-L50 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 662,
+        "unique_days": 661,
+        "excluded_clock_unsafe": 47
+      }
+    },
+    {
+      "id": "b2750cb0cbb32bff",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H10-c0.8-L100 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 662,
+        "unique_days": 661,
+        "excluded_clock_unsafe": 47
+      }
+    },
+    {
+      "id": "14c043e5789501df",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H10-c0.9-L20 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1230,
+        "unique_days": 1230,
+        "excluded_clock_unsafe": 88
+      }
+    },
+    {
+      "id": "75bdde1bd57d87ae",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H10-c0.9-L50 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1230,
+        "unique_days": 1230,
+        "excluded_clock_unsafe": 88
+      }
+    },
+    {
+      "id": "2a537438aa0c5f7a",
+      "parent_hash": "694e08750a0fba842fe5e44f2eabb9dd9f26dc41f4b3dd3f28ac17a6208f9e7a",
+      "stage": "EVENT_DATASET",
+      "label": "events H10-c0.9-L100 (Development-2)",
+      "parents": [
+        "4bd7fb71ada337c8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.events detector",
+      "transform_version": "events-v1",
+      "validator_result": null,
+      "detail": {
+        "events": 1230,
+        "unique_days": 1230,
+        "excluded_clock_unsafe": 88
+      }
+    },
+    {
+      "id": "39a49ecd97592525",
+      "parent_hash": "ea5580226aab1b715ba98ef0af2c7adf8c11106aed29cdf939adddbc591f7734",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H07-ASIA-e0.25",
+      "parents": [
+        "7523c575cfb9e0a3"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "1fc53f611b4c4eeb9ddec4f3f41d2fd8",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "27932a9975271fb0",
+      "parent_hash": "c826f8a1f5fbcce700d3d89139c5c7be84bbeff70e932e184d34bec1460d35ca",
+      "stage": "RESULT",
+      "label": "Stage 1 result H07-ASIA-e0.25",
+      "parents": [
+        "39a49ecd97592525"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1719,
+        "mean_net_base_r": -0.3017299377836324
+      }
+    },
+    {
+      "id": "eb343802f33b6b84",
+      "parent_hash": "01dc6dadd66eb54a97773d34b210f41ed979a740d4250ecab28e8a945e5fb669",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H07-ASIA-e0.5",
+      "parents": [
+        "6e600f5b8d9ccf99"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "b7ac568982c82c868e4d8acf81cb50da",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "1c2e727430a609fa",
+      "parent_hash": "303165c64aa72f9c3215003aa0af7408052b5e6b7e40807fa326041d1465e85f",
+      "stage": "RESULT",
+      "label": "Stage 1 result H07-ASIA-e0.5",
+      "parents": [
+        "eb343802f33b6b84"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1324,
+        "mean_net_base_r": -0.308501188240852
+      }
+    },
+    {
+      "id": "64ab0c557c54ce40",
+      "parent_hash": "122e55006ce948f0b38ddd1b5689754074c150ef08ad314bbae2b913f25bd8ae",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H07-ASIA-e0",
+      "parents": [
+        "a6d90c2b53160b9a"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "879964467ba6f8b886eff278fb84d61b",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "3e532c33b7a9a0c9",
+      "parent_hash": "55c8870636fc263aa45fd76781f15fa331abe39a9c9360e87f972ca7e6b4bf43",
+      "stage": "RESULT",
+      "label": "Stage 1 result H07-ASIA-e0",
+      "parents": [
+        "64ab0c557c54ce40"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 2142,
+        "mean_net_base_r": -0.28212358729123943
+      }
+    },
+    {
+      "id": "ddd4ca406cf0095f",
+      "parent_hash": "bc67e7eb7ff402ab8be50ce186c15b661295f1688cf51ed9b930d462bd6a9cc3",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H07-PD-e0.25",
+      "parents": [
+        "5d7163c163a03503"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "4a11e58c2c5decc12bffb268976a6924",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "a24be1ec6a19ff5d",
+      "parent_hash": "5fa1c2a78e2fc55c8cbe662d6d2a9302b2eb87afc54be2ca6ef4c76d513cbd71",
+      "stage": "RESULT",
+      "label": "Stage 1 result H07-PD-e0.25",
+      "parents": [
+        "ddd4ca406cf0095f"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1524,
+        "mean_net_base_r": -0.7178396812487465
+      }
+    },
+    {
+      "id": "4156325fb82372b5",
+      "parent_hash": "f6be35c8c53eab1bdcd30a91a72e29765cda92ce43b27619157b69a62da4083c",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H07-PD-e0.5",
+      "parents": [
+        "86624c91bfa7b089"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "1b0c3870ae5249c12f10ecc8eb4b087f",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "87ea7fc90e113f88",
+      "parent_hash": "561123c4b23a5a3e9aa0edc8a0e1b74e73b2258a7c8a520cad18a2aba4361944",
+      "stage": "RESULT",
+      "label": "Stage 1 result H07-PD-e0.5",
+      "parents": [
+        "4156325fb82372b5"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1404,
+        "mean_net_base_r": -0.71493057201327
+      }
+    },
+    {
+      "id": "299e05efc67c8641",
+      "parent_hash": "5982b42880c59a8fea2146f210397140aa9814c0842edd82cf9481aa022f1986",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H07-PD-e0",
+      "parents": [
+        "99a3c41f34030d72"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "2cc0656bb2ae7633a6376a8bd598dc2c",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "78964d1018874418",
+      "parent_hash": "a080a0ebde02d97a4174249c1276f32dc56e3de5f59c7868a7a6a9fe178bcad2",
+      "stage": "RESULT",
+      "label": "Stage 1 result H07-PD-e0",
+      "parents": [
+        "299e05efc67c8641"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1608,
+        "mean_net_base_r": -0.7001547618146846
+      }
+    },
+    {
+      "id": "acb99a9edb45c636",
+      "parent_hash": "daa5dc2a2c91cac70c0c152a10d2df171b98e191f8ce3b82468c418599876bfe",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H08-ASIA-e0.25",
+      "parents": [
+        "017284bf14445cc9"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "755fb1d1e08f6f2ffc383691c68e0d19",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "f4a2ee9f3ca51e81",
+      "parent_hash": "c3b29ba61c96baf872b62e9103b5ea7baab0823516a8ceb74322e702d2f9bb68",
+      "stage": "RESULT",
+      "label": "Stage 1 result H08-ASIA-e0.25",
+      "parents": [
+        "acb99a9edb45c636"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 640,
+        "mean_net_base_r": -0.2229014753632546
+      }
+    },
+    {
+      "id": "9b62867a040de584",
+      "parent_hash": "364647cdbd35be60ca6790b46514890ba7b75058b98fccb3567f93fd376561a6",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H08-ASIA-e0",
+      "parents": [
+        "75a2022ac8885a91"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "df285c9179c5a2d2fee2feba6b4b58d7",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "40d205522cb672b8",
+      "parent_hash": "742c980811709dcf857822a955cca9274a45271965f240eb795c93acded4973d",
+      "stage": "RESULT",
+      "label": "Stage 1 result H08-ASIA-e0",
+      "parents": [
+        "9b62867a040de584"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 777,
+        "mean_net_base_r": -0.2093350890298841
+      }
+    },
+    {
+      "id": "18339cc6d0db6352",
+      "parent_hash": "cfa7ab9f4602a63d45d55aba77e1adee717221f4f7705e8eaefb0aee4225671c",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H09-ASIA_LONDON-t0.2",
+      "parents": [
+        "5533ba8cadfc4458"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "4c6f55fcbd62c8b1a2a6e3cfc37ae7fd",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "6f78f36901af9a31",
+      "parent_hash": "ae6dadc65c9e34e0ee27f50526dd6dace511def43b06c529dc1871a8c4aeb33c",
+      "stage": "RESULT",
+      "label": "Stage 1 result H09-ASIA_LONDON-t0.2",
+      "parents": [
+        "18339cc6d0db6352"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 752,
+        "mean_net_base_r": -0.05261012629954458
+      }
+    },
+    {
+      "id": "17c71166cbcbcb3a",
+      "parent_hash": "fa9ea83cdae3327d61806cf0605bd814943bb9c412b4e98e3037c0bd3160e6cb",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H09-ASIA_LONDON-t0.3",
+      "parents": [
+        "407e1fb2e6afdfc1"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "fea20260173db721862a6a1c38360e7b",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "50af7256edf11c9d",
+      "parent_hash": "7d3049b9de89279eb3721a8c6ead3cdf894845c83b9b6f14e3a7a4ad87b4ef31",
+      "stage": "RESULT",
+      "label": "Stage 1 result H09-ASIA_LONDON-t0.3",
+      "parents": [
+        "17c71166cbcbcb3a"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1206,
+        "mean_net_base_r": -0.059388406344131006
+      }
+    },
+    {
+      "id": "26e4eb76292048ef",
+      "parent_hash": "0acd822d12cd275c8d5e993650ac2f38d67aedd2c26adc3d94f713d1abb80658",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H09-ASIA_LONDON-t0.4",
+      "parents": [
+        "6d19ea2b5e95155d"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "bbf1b21881ca28198a573cc808acd11d",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "f083a0f15b057546",
+      "parent_hash": "4db5978b703b086d766285c8ec46d56e3f889c49e9dfb2c72f24f08afa159be6",
+      "stage": "RESULT",
+      "label": "Stage 1 result H09-ASIA_LONDON-t0.4",
+      "parents": [
+        "26e4eb76292048ef"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1598,
+        "mean_net_base_r": -0.05468687174142619
+      }
+    },
+    {
+      "id": "fff62aa709aeb008",
+      "parent_hash": "967cc0477cec9cf46a304cebccf759306f62bc6970319de4913799643869df36",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H09-LONDON_NY-t0.2",
+      "parents": [
+        "b715c1aea45b7b38"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "8c931c79528d6920c4952676f4b5180a",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "ca3591203cf36d89",
+      "parent_hash": "89e4afbf4962fb50124057c0c0dbcd7b8a2234875e8dc49176cddb7e6a29969d",
+      "stage": "RESULT",
+      "label": "Stage 1 result H09-LONDON_NY-t0.2",
+      "parents": [
+        "fff62aa709aeb008"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 625,
+        "mean_net_base_r": -0.1652740337217368
+      }
+    },
+    {
+      "id": "fa1d22986a18e271",
+      "parent_hash": "9196620c6fa626492f53f372ae6434e892509533e72884e194a011709e6899e3",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H09-LONDON_NY-t0.3",
+      "parents": [
+        "3dba1798d11ddc9c"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "65a04099cc36630bae1db3812b73e3c4",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "a2fe1ec0c4ccd5f9",
+      "parent_hash": "7a131ab95086d68dbddc75da7d849f7afca819434a71eab30b5e70ecbc6afe8e",
+      "stage": "RESULT",
+      "label": "Stage 1 result H09-LONDON_NY-t0.3",
+      "parents": [
+        "fa1d22986a18e271"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1086,
+        "mean_net_base_r": -0.11216505194157614
+      }
+    },
+    {
+      "id": "c43fe8f6e1106962",
+      "parent_hash": "d27ba394090dcdfba64771cdb1c1aeec7362a16b856ffe83a4c003aa978b7a1d",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H09-LONDON_NY-t0.4",
+      "parents": [
+        "d712449bb613bd9d"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "a0c5386451ad74319f610db5928b03e1",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "37a89318eb48a8cc",
+      "parent_hash": "6630eefc9632e0b7ee2444bfbe010d34e5340ca7dc1fc1d4418d959ff492403b",
+      "stage": "RESULT",
+      "label": "Stage 1 result H09-LONDON_NY-t0.4",
+      "parents": [
+        "c43fe8f6e1106962"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1497,
+        "mean_net_base_r": -0.10518478984561656
+      }
+    },
+    {
+      "id": "f0b89aa2b63b4132",
+      "parent_hash": "c1e041f592e542e5aabca42dd06185eefa8f0c977578a46ccc5d8a04a699f878",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H10-c0.8-L100",
+      "parents": [
+        "b2750cb0cbb32bff"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "3bb3069836c42c12b526326defac927f",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "7a99fe214c5efeb0",
+      "parent_hash": "14573289f5fe0e88501b2f3f443fdbc4885bd6681e4b89d90a971d7f6ae6a111",
+      "stage": "RESULT",
+      "label": "Stage 1 result H10-c0.8-L100",
+      "parents": [
+        "f0b89aa2b63b4132"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 661,
+        "mean_net_base_r": -0.12789153572131104
+      }
+    },
+    {
+      "id": "0cc355c5ffa604d7",
+      "parent_hash": "3ed02edc4dea2b2685ac35ed1a07bcb262c979b6e7f6940498c2a955f156dd1c",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H10-c0.8-L20",
+      "parents": [
+        "b8597a03d04ebe42"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "6ce633c7f58b610dfed1e8712ec49f38",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "7ef71afcfa66674d",
+      "parent_hash": "6300ee52d65d5d7e7f7220e62bd1d273ee9bb2a17c6a22513c872dfb77ccb80c",
+      "stage": "RESULT",
+      "label": "Stage 1 result H10-c0.8-L20",
+      "parents": [
+        "0cc355c5ffa604d7"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 661,
+        "mean_net_base_r": -0.29458921714135927
+      }
+    },
+    {
+      "id": "6ea60c12ee33a733",
+      "parent_hash": "7079ad0bc1308fa1411d5389a5c7b03d53eaf23514cf6a986234dd8c32e6eb3d",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H10-c0.8-L50",
+      "parents": [
+        "1df338297288f24c"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "6aae0d04103fb57492366e6a44949df5",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "3b02e813e12f48d7",
+      "parent_hash": "32b5d9794427db961d033a40dfb15d6c461d83706d53875f80fe1c09368ddb8c",
+      "stage": "RESULT",
+      "label": "Stage 1 result H10-c0.8-L50",
+      "parents": [
+        "6ea60c12ee33a733"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 661,
+        "mean_net_base_r": -0.12872188744336505
+      }
+    },
+    {
+      "id": "18301d8317bab3e3",
+      "parent_hash": "0bfbb6be6b2fbd51102d9ef1fb2bd2105b4547a08a2fb121fa9488164583114a",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H10-c0.9-L100",
+      "parents": [
+        "2a537438aa0c5f7a"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "eeaefed4f40da9e15850c61c63620fdc",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "256b6a6353487a94",
+      "parent_hash": "242bf6be3bbe6da5a970f1dc411f4679e802764f4261b8452902b2e175167e29",
+      "stage": "RESULT",
+      "label": "Stage 1 result H10-c0.9-L100",
+      "parents": [
+        "18301d8317bab3e3"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1230,
+        "mean_net_base_r": -0.13306831636109165
+      }
+    },
+    {
+      "id": "c16c22b14e09c322",
+      "parent_hash": "6206ce16f27c1641f552a79ccd3b171cf4db395086c1c40153f70a59d38c5b91",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H10-c0.9-L20",
+      "parents": [
+        "14c043e5789501df"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "e990d3f3727d4334c29b3fd9c8435d3d",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "2f924267bfcba4f4",
+      "parent_hash": "77fae121f20a1c682c355823ff514036e425456107735c97b915d26f14ed0f8c",
+      "stage": "RESULT",
+      "label": "Stage 1 result H10-c0.9-L20",
+      "parents": [
+        "c16c22b14e09c322"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1230,
+        "mean_net_base_r": -0.24381662992625336
+      }
+    },
+    {
+      "id": "7b6e810f1c89a6e8",
+      "parent_hash": "93564ffbfb12402aa9f2b5eecc76b7c2dc7e9ecf65c318e57f87380726aaf5a5",
+      "stage": "EXPERIMENT",
+      "label": "Stage 1 experiment H10-c0.9-L50",
+      "parents": [
+        "75bdde1bd57d87ae"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": "research_v2.study.study_variant",
+      "transform_version": "research_v2-1",
+      "validator_result": null,
+      "detail": {
+        "experiment_id": "39e058c45db9e73a8b73185e99fa6804",
+        "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+        "evidence_class": "SCREENING",
+        "window": "dev2"
+      }
+    },
+    {
+      "id": "95567152ec54eab3",
+      "parent_hash": "5436af9baff95063f554a39e0fb2fec618e4ae270da03229d68f35c048fbbdbd",
+      "stage": "RESULT",
+      "label": "Stage 1 result H10-c0.9-L50",
+      "parents": [
+        "7b6e810f1c89a6e8"
+      ],
+      "source": null,
+      "broker": null,
+      "symbol": null,
+      "timeframe": null,
+      "timezone": null,
+      "broker_clock": null,
+      "first_timestamp": null,
+      "last_timestamp": null,
+      "fetched_at": null,
+      "raw_hash": null,
+      "transformation": null,
+      "transform_version": null,
+      "validator_result": "FAIL",
+      "detail": {
+        "evidence_class": "SCREENING",
+        "n_events": 1230,
+        "mean_net_base_r": -0.1423623900625992
+      }
+    }
+  ]
+}

@@ -266,6 +266,11 @@ ALLOWED_MT5_ATTRIBUTES = {
     "symbol_info_tick",
     "trade_allowed",
     "ACCOUNT_TRADE_MODE_DEMO",
+    # read-only market-data names used by scripts/probe_mt5_depth.py (P0 probe, DEMO only):
+    # none of them can place, modify or close anything.
+    "symbols_get",
+    "copy_ticks_range",
+    "COPY_TICKS_ALL",
 }
 
 

@@ -109,6 +109,35 @@ def last_commit_time(  # noqa: PLR0911 - one answer per reason the time cannot b
     return datetime.fromtimestamp(int(stamps[0]), UTC), ""
 
 
+def commit_info(root: ResearchRoot, rel: str) -> dict[str, Any]:
+    """Last commit that touched the file: short id and time, or why it is unknown."""
+    when, why = last_commit_time(root, rel)
+    if when is None:
+        return {"commit": None, "time": None, "unknown_reason": why}
+    try:
+        real = str(root.resolve(rel))
+    except SourceUnavailableError:
+        return {"commit": None, "time": None, "unknown_reason": "đường dẫn không hợp lệ"}
+    sha = (_git(root, "log", "-1", "--format=%H", "--", real) or "").strip()
+    return {"commit": sha[:12] or None, "time": when.isoformat(), "unknown_reason": ""}
+
+
+def first_commit_mentioning(root: ResearchRoot, rel: str, token: str) -> dict[str, Any]:
+    """Earliest commit whose change to ``rel`` added ``token`` (git pickaxe), read-only."""
+    if not re.match(r"^[A-Za-z0-9_.\-]{1,40}$", token):
+        return {"commit": None, "time": None}
+    try:
+        real = str(root.resolve(rel))
+    except SourceUnavailableError:
+        return {"commit": None, "time": None}
+    out = _git(root, "log", "--reverse", "--format=%H %ct", f"-S{token}", "--", real)
+    first = (out or "").strip().splitlines()
+    if not first:
+        return {"commit": None, "time": None}
+    sha, stamp = first[0].split()
+    return {"commit": sha[:12], "time": datetime.fromtimestamp(int(stamp), UTC).isoformat()}
+
+
 def preregistration_check(
     root: ResearchRoot, file: HypothesisFile | None, runs: list[LedgerRun], hypothesis_id: str
 ) -> dict[str, Any]:

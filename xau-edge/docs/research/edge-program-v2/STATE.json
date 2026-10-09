@@ -1,0 +1,13 @@
+{
+  "sprint": "Batch A Stage 1 complete on Development-2: no survivor",
+  "k_cap": 48,
+  "hypotheses_budget": 8,
+  "decisions": {
+    "D-1": "authorized for Batch A only by the owner prompt of 2026-10-09 (not for Batch B, not for Test-H or holdout)",
+    "D-2": "authorized for read-only probes by the owner prompt of 2026-10-09 (done, see mt5-probe.json)",
+    "D-3": "pending",
+    "D-4": "pending",
+    "D-5": "pending"
+  },
+  "note": "K is read from ledger.md (source of truth); this file holds only decision states and the sprint label."
+}
