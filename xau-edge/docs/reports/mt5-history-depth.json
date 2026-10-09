@@ -1,0 +1,499 @@
+{
+  "class": "D (data availability; no market outcome analysed)",
+  "probed_at": "2026-10-09T05:30:08.553873+00:00",
+  "terminal_build": 6241,
+  "terminal_max_bars": 100000,
+  "server": "FTMO-Demo",
+  "broker_symbol": "XAUUSD",
+  "timeframes": {
+    "M1": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2026-06-30 10:06:00+00:00",
+      "latest": "2026-10-09 05:30:00+00:00",
+      "limited_by_terminal_max_bars": true,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false,
+      "volume_eras": [
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2026,
+          "to_year": 2026,
+          "bars": 99000,
+          "nonzero_bars": 0
+        }
+      ],
+      "range_probe": [
+        {
+          "year": 2005,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2010,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2015,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2018,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2020,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2022,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2024,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2025,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2026,
+          "bars": 0,
+          "expected_at_least": 1728,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        }
+      ]
+    },
+    "M5": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2025-05-14 01:05:00+00:00",
+      "latest": "2026-10-09 05:30:00+00:00",
+      "limited_by_terminal_max_bars": true,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false,
+      "volume_eras": [
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2025,
+          "to_year": 2026,
+          "bars": 99000,
+          "nonzero_bars": 0
+        }
+      ],
+      "range_probe": [
+        {
+          "year": 2005,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2010,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2015,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2018,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2020,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2022,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2024,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2025,
+          "bars": 0,
+          "expected_at_least": 345,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2026,
+          "bars": 819,
+          "expected_at_least": 345,
+          "state": "OK"
+        }
+      ]
+    },
+    "M15": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2022-08-02 16:00:00+00:00",
+      "latest": "2026-10-09 05:30:00+00:00",
+      "limited_by_terminal_max_bars": true,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false,
+      "volume_eras": [
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2022,
+          "to_year": 2026,
+          "bars": 99000,
+          "nonzero_bars": 0
+        }
+      ],
+      "range_probe": [
+        {
+          "year": 2005,
+          "bars": 0,
+          "expected_at_least": 115,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2010,
+          "bars": 0,
+          "expected_at_least": 115,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2015,
+          "bars": 0,
+          "expected_at_least": 115,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2018,
+          "bars": 0,
+          "expected_at_least": 115,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2020,
+          "bars": 0,
+          "expected_at_least": 115,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2022,
+          "bars": 0,
+          "expected_at_least": 115,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2024,
+          "bars": 276,
+          "expected_at_least": 115,
+          "state": "OK"
+        },
+        {
+          "year": 2025,
+          "bars": 276,
+          "expected_at_least": 115,
+          "state": "OK"
+        },
+        {
+          "year": 2026,
+          "bars": 276,
+          "expected_at_least": 115,
+          "state": "OK"
+        }
+      ]
+    },
+    "M30": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2018-06-12 03:30:00+00:00",
+      "latest": "2026-10-09 05:30:00+00:00",
+      "limited_by_terminal_max_bars": true,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false,
+      "volume_eras": [
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2018,
+          "to_year": 2026,
+          "bars": 99000,
+          "nonzero_bars": 0
+        }
+      ],
+      "range_probe": [
+        {
+          "year": 2005,
+          "bars": 0,
+          "expected_at_least": 57,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2010,
+          "bars": 0,
+          "expected_at_least": 57,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2015,
+          "bars": 0,
+          "expected_at_least": 57,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2018,
+          "bars": 0,
+          "expected_at_least": 57,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2020,
+          "bars": 141,
+          "expected_at_least": 57,
+          "state": "OK"
+        },
+        {
+          "year": 2022,
+          "bars": 138,
+          "expected_at_least": 57,
+          "state": "OK"
+        },
+        {
+          "year": 2024,
+          "bars": 138,
+          "expected_at_least": 57,
+          "state": "OK"
+        },
+        {
+          "year": 2025,
+          "bars": 138,
+          "expected_at_least": 57,
+          "state": "OK"
+        },
+        {
+          "year": 2026,
+          "bars": 138,
+          "expected_at_least": 57,
+          "state": "OK"
+        }
+      ]
+    },
+    "H1": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2010-04-09 10:00:00+00:00",
+      "latest": "2026-10-09 05:00:00+00:00",
+      "limited_by_terminal_max_bars": true,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": true,
+      "volume_eras": [
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2010,
+          "to_year": 2011,
+          "bars": 9810,
+          "nonzero_bars": 0
+        },
+        {
+          "kind": "REAL_VOLUME_PRESENT",
+          "from_year": 2012,
+          "to_year": 2018,
+          "bars": 42744,
+          "nonzero_bars": 34283
+        },
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2019,
+          "to_year": 2026,
+          "bars": 46446,
+          "nonzero_bars": 0
+        }
+      ],
+      "range_probe": [
+        {
+          "year": 2005,
+          "bars": 0,
+          "expected_at_least": 28,
+          "state": "TRUNCATED_BY_TERMINAL_OR_NO_HISTORY"
+        },
+        {
+          "year": 2010,
+          "bars": 66,
+          "expected_at_least": 28,
+          "state": "OK"
+        },
+        {
+          "year": 2015,
+          "bars": 72,
+          "expected_at_least": 28,
+          "state": "OK"
+        },
+        {
+          "year": 2018,
+          "bars": 72,
+          "expected_at_least": 28,
+          "state": "OK"
+        },
+        {
+          "year": 2020,
+          "bars": 72,
+          "expected_at_least": 28,
+          "state": "OK"
+        },
+        {
+          "year": 2022,
+          "bars": 69,
+          "expected_at_least": 28,
+          "state": "OK"
+        },
+        {
+          "year": 2024,
+          "bars": 69,
+          "expected_at_least": 28,
+          "state": "OK"
+        },
+        {
+          "year": 2025,
+          "bars": 69,
+          "expected_at_least": 28,
+          "state": "OK"
+        },
+        {
+          "year": 2026,
+          "bars": 69,
+          "expected_at_least": 28,
+          "state": "OK"
+        }
+      ]
+    },
+    "H4": {
+      "available": true,
+      "count": 34232,
+      "requested": 99000,
+      "earliest": "2004-06-11 01:00:00+00:00",
+      "latest": "2026-10-09 05:00:00+00:00",
+      "limited_by_terminal_max_bars": false,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": true,
+      "volume_eras": [
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2004,
+          "to_year": 2011,
+          "bars": 11427,
+          "nonzero_bars": 0
+        },
+        {
+          "kind": "REAL_VOLUME_PRESENT",
+          "from_year": 2012,
+          "to_year": 2018,
+          "bars": 10784,
+          "nonzero_bars": 8988
+        },
+        {
+          "kind": "TICK_ONLY",
+          "from_year": 2019,
+          "to_year": 2026,
+          "bars": 12021,
+          "nonzero_bars": 0
+        }
+      ],
+      "range_probe": [
+        {
+          "year": 2005,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2010,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2015,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2018,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2020,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2022,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2024,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2025,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        },
+        {
+          "year": 2026,
+          "bars": 18,
+          "expected_at_least": 7,
+          "state": "OK"
+        }
+      ]
+    }
+  },
+  "ticks": {
+    "earliest_day": "2021-10-01T04:39:00.149876+00:00",
+    "ten_minute_sample_counts": {
+      "2021": 0,
+      "2022": 1315,
+      "2023": 747,
+      "2024": 0,
+      "2025": 0,
+      "2026": 1785
+    }
+  }
+}

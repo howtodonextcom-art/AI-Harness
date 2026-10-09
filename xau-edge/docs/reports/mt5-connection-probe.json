@@ -1,0 +1,98 @@
+{
+  "terminal_found": true,
+  "terminal_path": "C:\\Program Files\\FTMO Global Markets MT5 Terminal\\terminal64.exe",
+  "probed_at": "2026-10-09T05:29:17.382352+00:00",
+  "terminal_build": 6241,
+  "terminal_version": [
+    500,
+    6241,
+    "5 Oct 2026"
+  ],
+  "connected": true,
+  "demo_account": true,
+  "server": "FTMO-Demo",
+  "algo_trading_enabled": false,
+  "terminal_max_bars": 100000,
+  "canonical_symbol": "XAUUSD",
+  "broker_symbol": "XAUUSD",
+  "symbol_exact": true,
+  "symbol_selected": true,
+  "latest_tick_time": "2026-10-09T05:29:17.556000+00:00",
+  "latest_tick_age_seconds": -0.163053,
+  "bid_ask_available": true,
+  "quote_note": "",
+  "M1_available": true,
+  "M5_available": true,
+  "M15_available": true,
+  "M30_available": true,
+  "H1_available": true,
+  "H4_available": true,
+  "bar_depth": {
+    "M1": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2026-06-30 10:05:00+00:00",
+      "latest": "2026-10-09 05:29:00+00:00",
+      "limited_by_terminal_max_bars": false,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false
+    },
+    "M5": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2025-05-14 01:00:00+00:00",
+      "latest": "2026-10-09 05:25:00+00:00",
+      "limited_by_terminal_max_bars": false,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false
+    },
+    "M15": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2022-08-02 15:45:00+00:00",
+      "latest": "2026-10-09 05:15:00+00:00",
+      "limited_by_terminal_max_bars": false,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false
+    },
+    "M30": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2018-06-12 03:00:00+00:00",
+      "latest": "2026-10-09 05:00:00+00:00",
+      "limited_by_terminal_max_bars": false,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": false
+    },
+    "H1": {
+      "available": true,
+      "count": 99000,
+      "requested": 99000,
+      "earliest": "2010-04-09 10:00:00+00:00",
+      "latest": "2026-10-09 05:00:00+00:00",
+      "limited_by_terminal_max_bars": false,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": true
+    },
+    "H4": {
+      "available": true,
+      "count": 34232,
+      "requested": 99000,
+      "earliest": "2004-06-11 01:00:00+00:00",
+      "latest": "2026-10-09 05:00:00+00:00",
+      "limited_by_terminal_max_bars": false,
+      "tick_volume_positive": true,
+      "real_volume_nonzero": true
+    }
+  },
+  "rates_supported": true,
+  "earliest_M1": "2026-06-30 10:05:00+00:00",
+  "tick_volume_available": true,
+  "real_volume_available": true,
+  "earliest_tick": "2021-10-01T04:38:24.288585+00:00",
+  "ticks_supported": true
+}

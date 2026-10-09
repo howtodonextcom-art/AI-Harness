@@ -72,14 +72,55 @@ class Mt5Client(Protocol):
     ) -> Any: ...
 
 
+class Mt5DataClient(Mt5Client, Protocol):
+    """The market-data functions used by ``Mt5Feed`` (still no trading function)."""
+
+    def terminal_info(self) -> Any: ...
+
+    def version(self) -> Any: ...
+
+    def symbols_get(self, *args: Any, **kwargs: Any) -> Any: ...
+
+    def symbol_select(self, symbol: str, enable: bool = ...) -> bool: ...
+
+    def symbol_info(self, symbol: str) -> Any: ...
+
+    def symbol_info_tick(self, symbol: str) -> Any: ...
+
+    def copy_rates_from_pos(self, symbol: str, timeframe: int, pos: int, count: int) -> Any: ...
+
+    def copy_rates_from(
+        self, symbol: str, timeframe: int, date_from: datetime, count: int
+    ) -> Any: ...
+
+    def copy_ticks_range(self, symbol: str, start: datetime, end: datetime, flags: int) -> Any: ...
+
+    def copy_ticks_from(self, symbol: str, start: datetime, count: int, flags: int) -> Any: ...
+
+
 _ALLOWED_MT5_NAMES = frozenset(
     {
         "initialize",
         "shutdown",
         "last_error",
         "account_info",
-        "copy_rates_range",
         "ACCOUNT_TRADE_MODE_DEMO",
+        # market-data functions (read-only by construction; none of them can place or change
+        # anything). Orders, positions, deals and history of trades stay unreachable.
+        "terminal_info",
+        "version",
+        "symbols_get",
+        "symbol_select",
+        "symbol_info",
+        "symbol_info_tick",
+        "copy_rates_range",
+        "copy_rates_from_pos",
+        "copy_rates_from",
+        "copy_ticks_range",
+        "copy_ticks_from",
+        "COPY_TICKS_ALL",
+        "COPY_TICKS_INFO",
+        "COPY_TICKS_TRADE",
     }
 )
 
@@ -241,6 +282,7 @@ __all__ = [
     "Mt5AccountError",
     "Mt5BarSource",
     "Mt5Client",
+    "Mt5DataClient",
     "Mt5NotAvailableError",
     "Mt5Settings",
     "ReadOnlyMt5Client",

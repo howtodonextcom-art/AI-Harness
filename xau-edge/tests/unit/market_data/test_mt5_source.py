@@ -268,11 +268,18 @@ ALLOWED_MT5_ATTRIBUTES = {
     "symbol_info_tick",
     "trade_allowed",
     "ACCOUNT_TRADE_MODE_DEMO",
-    # read-only market-data names used by scripts/probe_mt5_depth.py (P0 probe, DEMO only):
-    # none of them can place, modify or close anything.
+    # read-only market-data names (MT5 data platform): none of them can place, modify or close
+    # anything; orders, positions, deals and trade history are deliberately absent.
+    "version",
     "symbols_get",
+    "symbol_info",
+    "copy_rates_from_pos",
+    "copy_rates_from",
     "copy_ticks_range",
+    "copy_ticks_from",
     "COPY_TICKS_ALL",
+    "COPY_TICKS_INFO",
+    "COPY_TICKS_TRADE",
 }
 
 
