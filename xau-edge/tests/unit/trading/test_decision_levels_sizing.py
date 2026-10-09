@@ -80,22 +80,23 @@ def test_the_sell_side_is_symmetric() -> None:
 @pytest.mark.parametrize(
     ("over", "expected"),
     [
-        ({"h1_trend": "NEUTRAL"}, Refusal.NO_DIRECTIONAL_EDGE),
+        ({"h1_trend": "NEUTRAL"}, Refusal.NO_DIRECTION),
         ({"h4_regime": "TREND_DOWN"}, Refusal.TIMEFRAME_CONFLICT),
         ({"m15_structure": "DOWN"}, Refusal.TIMEFRAME_CONFLICT),
-        ({"m30_structure": "DOWN"}, Refusal.TIMEFRAME_CONFLICT),
         ({"m15_pullback": "NONE"}, Refusal.NO_SETUP),
         ({"m15_structure": "RANGE"}, Refusal.NO_SETUP),
-        ({"m5_momentum": "FLAT"}, Refusal.NO_ENTRY_TRIGGER),
-        ({"m1_micro_state": "ABNORMAL"}, Refusal.NO_ENTRY_TRIGGER),
-        ({"m1_micro_state": "ACTIVE_DOWN"}, Refusal.NO_ENTRY_TRIGGER),
+        ({"m5_momentum": "FLAT"}, Refusal.NO_TRIGGER),
+        ({"m1_micro_state": "ABNORMAL"}, Refusal.VOLATILITY_TOO_HIGH),
+        ({"m1_micro_state": "QUIET"}, Refusal.VOLUME_TOO_LOW),
+        ({"m1_micro_state": "ACTIVE_DOWN"}, Refusal.NO_TRIGGER),
         ({"execution_quality": "POOR"}, Refusal.SPREAD_TOO_WIDE),
-        ({"execution_quality": "UNKNOWN"}, Refusal.SPREAD_TOO_WIDE),
+        ({"execution_quality": "UNKNOWN"}, Refusal.UNKNOWN_STATE),
+        ({"market_open": False}, Refusal.MARKET_CLOSED),
         ({"volatility_regime": "HIGH"}, Refusal.VOLATILITY_TOO_HIGH),
         ({"volatility_regime": "LOW"}, Refusal.VOLATILITY_TOO_LOW),
         ({"h4_regime": "SHOCK"}, Refusal.VOLATILITY_TOO_HIGH),
         ({"news_state": "BLOCKED"}, Refusal.NEWS_WINDOW),
-        ({"news_state": "UNKNOWN"}, Refusal.NEWS_WINDOW),
+        ({"news_state": "UNKNOWN"}, Refusal.NEWS_UNKNOWN),
         ({"data_quality": "STALE"}, Refusal.STALE_DATA),
         ({"data_quality": "UNKNOWN"}, Refusal.STALE_DATA),
         ({"available_timeframes": ("M5", "M15")}, Refusal.UNKNOWN_STATE),
@@ -343,3 +344,68 @@ def test_a_missing_or_stale_timeframe_degrades_the_state() -> None:
 
 def test_snapshot_helper_is_a_valid_tf_snapshot() -> None:
     assert snap().timeframe == "M5"
+
+
+def test_m30_is_context_only_it_never_vetoes_or_creates_a_trade() -> None:
+    against = decide(aligned_state(m30_structure="DOWN"), CTX)
+    assert against.decision is TradeDecision.BUY
+    assert against.m30_state == "DOWN"  # still reported, just not a rule
+    flat = decide(aligned_state(m30_structure="RANGE", h1_trend="NEUTRAL"), CTX)
+    assert flat.decision is TradeDecision.WAIT
+
+
+def test_unknown_news_is_allowed_for_paper_with_a_visible_warning_only() -> None:
+    from xau_edge.trading.baseline import NEWS_NOT_VERIFIED  # noqa: PLC0415
+
+    state = aligned_state(news_state="UNKNOWN")
+    paper = decide(state, CTX, BaselineConfig(allow_unknown_news=True))
+    assert paper.decision is TradeDecision.BUY
+    assert NEWS_NOT_VERIFIED in paper.warnings
+    assert paper.news_state == "UNKNOWN"  # never silently treated as clear
+    assert decide(state, CTX).decision is TradeDecision.WAIT
+
+
+def test_buy_enters_at_the_ask_and_sell_at_the_bid_when_a_quote_is_given() -> None:
+    ctx = DecisionContext(spec=SPEC, equity=10_000.0, bid=1999.9, ask=2000.4)
+    buy = decide(aligned_state(), ctx)
+    assert buy.entry_price == pytest.approx(2000.4)
+    assert (buy.bid, buy.ask) == (1999.9, 2000.4)
+    sell = decide(
+        aligned_state(
+            h4_regime="TREND_DOWN", h1_trend="BEARISH", m30_structure="DOWN", m15_structure="DOWN",
+            m15_pullback="PULLBACK_IN_DOWNTREND", m5_momentum="DOWN", m1_micro_state="ACTIVE_DOWN",
+            distance_to_support=20.0, distance_to_resistance=20.0,
+            recent_swing_high=2003.0, recent_swing_low=1990.0,
+        ),
+        ctx,
+    )  # fmt: skip
+    if sell.decision is TradeDecision.SELL:
+        assert sell.entry_price == pytest.approx(1999.9)
+
+
+def test_setup_id_is_stable_for_one_m5_trigger_and_changes_with_the_next() -> None:
+    from tests.unit.trading.helpers import T0  # noqa: PLC0415
+
+    first = snap("M5", bar_open=T0, bar_closed=T0 + timedelta(minutes=5))
+    later = snap("M5", bar_open=T0 + timedelta(minutes=5), bar_closed=T0 + timedelta(minutes=10))
+    a = decide(aligned_state(snapshots={"M5": first}), CTX)
+    b = decide(
+        aligned_state(
+            snapshots={"M5": first}, timestamp=aligned_state().timestamp + timedelta(minutes=2)
+        ),
+        CTX,
+    )
+    c = decide(aligned_state(snapshots={"M5": later}), CTX)
+    assert a.setup_id and a.setup_id == b.setup_id
+    assert a.setup_id != c.setup_id
+    assert a.signal_expiry == first.bar_closed + timedelta(
+        minutes=15
+    )  # anchored to the trigger bar
+
+
+def test_a_stop_closer_than_the_broker_minimum_is_refused_with_its_own_reason() -> None:
+    tight = SymbolSpec(stops_level_points=100_000)  # absurd minimum distance
+    ctx = DecisionContext(spec=tight, equity=10_000.0)
+    s = decide(aligned_state(), ctx)
+    assert s.decision is TradeDecision.WAIT
+    assert Refusal.INVALID_STOP_DISTANCE in s.refusal_reasons

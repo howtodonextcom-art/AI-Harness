@@ -33,6 +33,7 @@ from xau_edge.api.service import (
     model_records,
     regime_view,
 )
+from xau_edge.api.trade import add_trade_routes
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.execution.trader import TradeOutcome
 from xau_edge.signals.engine import EVIDENCE_FAMILY, evidence_params, generate_signal
@@ -255,6 +256,8 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
     add_bot_routes(app, ctx.bot, ctx.clock)
     if ctx.market_root is not None:
         add_market_data_routes(app, ctx.market_root, clock=ctx.clock)
+    if ctx.trade is not None:
+        add_trade_routes(app, ctx.trade, port=ctx.control_port, allowed_origins=ALLOWED_ORIGINS)
     if ctx.research is not None:
         install_research_host_guard(app, ctx.control_port)
     add_research_routes(app, ctx.research)

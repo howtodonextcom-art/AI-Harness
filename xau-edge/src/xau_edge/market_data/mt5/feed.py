@@ -62,6 +62,8 @@ class TerminalFacts:
     company: str | None
     server: str | None
     demo: bool
+    account_trade_allowed: bool | None = None
+    """Whether the account may trade at all (False with the investor/read-only password)."""
 
 
 def _utc_now() -> datetime:
@@ -129,6 +131,7 @@ class Mt5Feed:
             company=getattr(info, "company", None),
             server=getattr(account, "server", None),
             demo=demo,
+            account_trade_allowed=getattr(account, "trade_allowed", None),
         )
 
     # -- symbols -------------------------------------------------------------------------------

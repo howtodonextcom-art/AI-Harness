@@ -53,6 +53,7 @@ SETTLE = timedelta(seconds=20)
 """A just-closed bar is stored only after this long: late ticks may still be arriving."""
 TICK_LAG_LIMIT_SECONDS = 90.0
 ROWS_CACHE_SECONDS = 300.0
+SPEC_REFRESH_SECONDS = 600.0
 
 
 def _utc_now() -> datetime:
@@ -101,6 +102,8 @@ class CollectorStatus:
     tick_store: dict[str, Any] = field(default_factory=dict)
     tick_errors: int = 0
     terminal_build: int | None = None
+    account_trade_allowed: bool | None = None
+    terminal_algo_allowed: bool | None = None
 
 
 def evaluate_health(
@@ -176,6 +179,8 @@ class MarketCollector:
         self.tick_ledger = tick_ledger
         self._last_quote: Quote | None = None
         self._tick_errors = 0
+        self._spec: dict[str, Any] | None = None
+        self._spec_at: datetime = datetime.min.replace(tzinfo=UTC)
         self._rows_cache: dict[str, tuple[datetime, int]] = {}
         self._last_forming: dict[str, dict[str, Any]] | None = None
         self._errors: list[str] = []
@@ -232,6 +237,17 @@ class MarketCollector:
                 }
         return out
 
+    def _symbol_spec(self) -> dict[str, Any] | None:
+        """The broker's contract specification, refreshed every 10 minutes (sizing needs it)."""
+        now = self._now()
+        if self._spec is None or (now - self._spec_at).total_seconds() > SPEC_REFRESH_SECONDS:
+            try:
+                self._spec = dict(self.feed.symbol_spec(self.mapping.broker_symbol))
+                self._spec_at = now
+            except RuntimeError as exc:
+                self._errors.append(f"symbol spec: {exc}"[:200])
+        return self._spec
+
     def _forming(self) -> dict[str, dict[str, Any]]:
         self._last_forming = self.forming_bars()
         return self._last_forming
@@ -244,6 +260,7 @@ class MarketCollector:
             "updated_at": self._now().isoformat(),
             "quote": json.loads(self._last_quote.model_dump_json()),
             "forming": self._forming(),
+            "symbol_spec": self._symbol_spec(),
             "ticks": list(self._recent)[-200:],
         }
         try:
@@ -432,6 +449,8 @@ class MarketCollector:
             tick_store=tick_store,
             tick_errors=self._tick_errors,
             terminal_build=facts.build,
+            account_trade_allowed=facts.account_trade_allowed,
+            terminal_algo_allowed=facts.trade_allowed,
         )
 
     def _tick_store(self, now: datetime) -> dict[str, Any]:

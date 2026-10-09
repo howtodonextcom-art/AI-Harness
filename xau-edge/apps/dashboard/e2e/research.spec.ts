@@ -1015,11 +1015,11 @@ test("keyboard: Tab reaches every nav link with a visible focus ring; Escape can
   const count = await links.count();
   expect(count).toBe(10);
   const seen: string[] = [];
-  for (let i = 0; i < count + 3 && seen.length < count; i++) {
+  for (let i = 0; i < count + 10 && seen.length < count; i++) {
     await page.keyboard.press("Tab");
     const info = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;
-      if (!el || el.tagName !== "A" || !el.closest("nav")) return null;
+      if (!el || el.tagName !== "A" || !el.closest('nav[aria-label="Điều hướng Research Console"]')) return null;
       return { text: el.textContent ?? "", outline: getComputedStyle(el).outlineStyle, width: getComputedStyle(el).outlineWidth };
     });
     if (info) {

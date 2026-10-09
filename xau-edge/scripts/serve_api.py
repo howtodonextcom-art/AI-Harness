@@ -20,6 +20,7 @@ import uvicorn
 from xau_edge.api.app import create_app
 from xau_edge.api.bot import BotContext
 from xau_edge.api.service import ApiContext
+from xau_edge.api.trade import EngineRunner, build_trade_engine
 from xau_edge.backtest.costs import CostModel
 from xau_edge.config import Settings
 from xau_edge.domain.timeframe import Timeframe
@@ -72,6 +73,7 @@ def main() -> None:
             data_dir=Path.cwd() / settings.data_dir,
         )
         print("Web control plane ON (/control/*); token written for the dashboard server.")
+    trade = build_trade_engine(Path("data/market"), Path("data/trade"))
     ctx = ApiContext(
         load_frames=load,
         registry=ExperimentRegistry("experiments/runs"),
@@ -90,7 +92,9 @@ def main() -> None:
         control=control,
         control_port=args.port,
         market_root=Path("data/market"),
+        trade=trade,
     )
+    EngineRunner(trade).start()
     uvicorn.run(create_app(ctx), host="127.0.0.1", port=args.port, log_level="info")
 
 

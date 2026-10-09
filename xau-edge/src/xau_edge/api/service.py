@@ -28,6 +28,7 @@ from xau_edge.risk.prop_rules import PropProfile
 from xau_edge.signals.engine import MarketFrames
 from xau_edge.signals.schema import Signal
 from xau_edge.strategies.context import build_context
+from xau_edge.trading.engine import TradeEngine
 
 SYMBOL = "XAUUSD"
 WINDOW = 30
@@ -86,6 +87,8 @@ class ApiContext:
     control_port: int = 8000
     market_root: Path | None = None
     """MT5 bar ledger and collector files directory (``/md/*``); ``None`` omits the routes."""
+    trade: TradeEngine | None = None
+    """The live paper-trading desk (``/trade/*``); ``None`` omits the routes."""
     clock: Callable[[], datetime] = field(default=lambda: datetime.now(UTC))
     max_data_age_minutes: int = 45
     _paper_lock: threading.Lock = field(default_factory=threading.Lock)

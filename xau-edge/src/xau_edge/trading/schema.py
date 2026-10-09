@@ -37,21 +37,25 @@ class EntryType(StrEnum):
 class Refusal(StrEnum):
     """Why the answer is WAIT (section 30)."""
 
-    NO_DIRECTIONAL_EDGE = "NO_DIRECTIONAL_EDGE"
+    NO_DIRECTION = "NO_DIRECTION"
     TIMEFRAME_CONFLICT = "TIMEFRAME_CONFLICT"
     NO_SETUP = "NO_SETUP"
-    NO_ENTRY_TRIGGER = "NO_ENTRY_TRIGGER"
+    NO_TRIGGER = "NO_TRIGGER"
     SPREAD_TOO_WIDE = "SPREAD_TOO_WIDE"
+    VOLUME_TOO_LOW = "VOLUME_TOO_LOW"
     VOLATILITY_TOO_HIGH = "VOLATILITY_TOO_HIGH"
     VOLATILITY_TOO_LOW = "VOLATILITY_TOO_LOW"
     TOO_CLOSE_TO_RESISTANCE = "TOO_CLOSE_TO_RESISTANCE"
     TOO_CLOSE_TO_SUPPORT = "TOO_CLOSE_TO_SUPPORT"
     RR_TOO_LOW = "RR_TOO_LOW"
+    INVALID_STOP_DISTANCE = "INVALID_STOP_DISTANCE"
     RISK_LIMIT = "RISK_LIMIT"
     DAILY_LIMIT = "DAILY_LIMIT"
     COOLDOWN = "COOLDOWN"
+    NEWS_UNKNOWN = "NEWS_UNKNOWN"
     NEWS_WINDOW = "NEWS_WINDOW"
     STALE_DATA = "STALE_DATA"
+    MARKET_CLOSED = "MARKET_CLOSED"
     BROKER_DISCONNECTED = "BROKER_DISCONNECTED"
     UNKNOWN_STATE = "UNKNOWN_STATE"
 
@@ -96,6 +100,33 @@ class TradingSignal(BaseModel):
     code_version: str = ""
     inputs_hash: str = ""
     metadata: dict[str, float | str | None] = Field(default_factory=dict)
+    setup_id: str = ""
+    """Stable while the same M5 trigger bar holds: the identity used for alerts and paper orders."""
+    news_state: str = "UNKNOWN"
+    spread_state: str = "UNKNOWN"
+    volatility_regime: str = "UNKNOWN"
+    entry_quality: str = ""
+    risk_amount: float | None = None
+    invalidation: str | None = None
+    warnings: tuple[str, ...] = ()
+    bid: float | None = None
+    ask: float | None = None
+    generated_at: datetime | None = None
+    data_age_seconds: float | None = None
+
+    @property
+    def decision_id(self) -> str:
+        """Alias of ``signal_id`` (the id of this exact computation)."""
+        return self.signal_id
+
+    @property
+    def expires_at(self) -> datetime | None:
+        return self.signal_expiry
+
+    @property
+    def tick_volume_state(self) -> str:
+        """The volume state is always TICK volume on this feed (``volume_type`` says so)."""
+        return self.volume_state
 
     @model_validator(mode="after")
     def _consistent(self) -> Self:
@@ -128,6 +159,10 @@ class TradingSignal(BaseModel):
             msg = "the operational baseline can never be labelled VALIDATED"
             raise ValueError(msg)
         return self
+
+
+TradingDecision = TradingSignal
+"""The canonical decision object (the name used by the product documents)."""
 
 
 def make_signal_id(parts: dict[str, object]) -> str:

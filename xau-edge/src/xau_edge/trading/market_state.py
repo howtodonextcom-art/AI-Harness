@@ -23,6 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.features import indicators as ind
 from xau_edge.features.sessions import session_features
+from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.structure.regime import RegimeConfig, classify_regime
 from xau_edge.structure.swings import StructureConfig, analyse_structure
 from xau_edge.trading.activity import VolumeType, activity, detect_volume_type
@@ -137,6 +138,18 @@ class MarketState(BaseModel):
     available_timeframes: tuple[str, ...]
     stale_timeframes: tuple[str, ...]
     snapshots: dict[str, TfSnapshot] = Field(default_factory=dict)
+    pdh: float | None = None
+    """Previous broker-day high (server day, from closed H1 bars)."""
+    pdl: float | None = None
+    nearest_resistance: float | None = None
+    nearest_support: float | None = None
+    spread_state: str = "UNKNOWN"
+    volume_percentile_m1: float | None = None
+    volume_acceleration_m1: float | None = None
+    relative_volume_m1: float | None = None
+    """M1 tick volume against the average of its OWN last 20 bars (no cross-timeframe compare)."""
+    volume_state: str = "UNKNOWN"
+    market_open: bool = True
 
 
 def _last(arr: Any) -> float | None:
@@ -229,6 +242,30 @@ def snapshot(df: pl.DataFrame, timeframe: Timeframe, cfg: StateConfig) -> TfSnap
     )
 
 
+def previous_day_range(
+    h1: pl.DataFrame | None, clock: BrokerClock | None
+) -> tuple[float | None, float | None]:
+    """High and low of the previous BROKER day (server wall-clock date) from closed H1 bars."""
+    if h1 is None or h1.height < 48 or clock is None:
+        return None, None
+    wall = clock.utc_to_server(h1["timestamp"])
+    frame = h1.with_columns(wall.dt.date().alias("_day"))
+    days = frame["_day"].unique().sort()
+    if days.len() < 2:
+        return None, None
+    previous = days[-2]
+    day = frame.filter(pl.col("_day") == previous)
+    if day.height == 0:
+        return None, None
+    return float(day["high"].max()), float(day["low"].min())  # type: ignore[arg-type]
+
+
+def _volume_label(z: float | None) -> str:
+    if z is None:
+        return "UNKNOWN"
+    return "HIGH" if z >= 1.0 else "LOW" if z <= -1.0 else "NORMAL"
+
+
 def _direction_label(trend: int, up: str, down: str, flat: str) -> str:
     return up if trend > 0 else down if trend < 0 else flat
 
@@ -317,6 +354,8 @@ def build_market_state(
     news_state: str = UNKNOWN,
     symbol: str = "XAUUSD",
     config: StateConfig | None = None,
+    broker_clock: BrokerClock | None = None,
+    market_open: bool = True,
 ) -> MarketState:
     """The hierarchical state at ``at`` from closed bars only."""
     cfg = config or StateConfig()
@@ -405,6 +444,7 @@ def build_market_state(
     if base_frame is not None and base_frame.height:
         real = base_frame["real_volume"].to_numpy() if "real_volume" in base_frame.columns else None
         volume_type = detect_volume_type(base_frame["tick_volume"].to_numpy(), real).value
+    pdh, pdl = previous_day_range(frames.get(Timeframe.H1), broker_clock)
     return MarketState(
         timestamp=at,
         symbol=symbol,
@@ -445,4 +485,20 @@ def build_market_state(
         available_timeframes=available,
         stale_timeframes=tuple(stale),
         snapshots={tf.value: sn for tf, sn in snaps.items() if sn is not None},
+        pdh=pdh,
+        pdl=pdl,
+        nearest_resistance=None if price is None or res is None else res,
+        nearest_support=None if price is None or sup is None else sup,
+        spread_state=(
+            UNKNOWN
+            if current_spread is None or spread_pct is None
+            else "WIDE"
+            if exec_quality == "POOR"
+            else "GOOD"
+        ),
+        volume_percentile_m1=m1.volume_percentile if m1 else None,
+        volume_acceleration_m1=m1.volume_acceleration if m1 else None,
+        relative_volume_m1=m1.volume_ratio if m1 else None,
+        volume_state=_volume_label(m1.volume_zscore if m1 else None),
+        market_open=market_open,
     )

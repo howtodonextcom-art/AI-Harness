@@ -204,6 +204,41 @@ class PaperExecutionBroker:
         )
         return updated
 
+    # ---- persistence (the trade desk survives an API restart) --------------------------------
+
+    def export_state(self) -> dict[str, Any]:
+        """Everything needed to rebuild this broker (JSON-safe)."""
+        return {
+            "balance": self.balance,
+            "counter": self._counter,
+            "order_ids": sorted(self._order_ids),
+            "positions": [p.model_dump(mode="json") for p in self._positions.values()],
+            "closed": [c.model_dump(mode="json") for c in self.closed],
+            "quote": None
+            if self._quote is None
+            else {
+                "time": self._quote.time.isoformat(),
+                "bid": self._quote.bid,
+                "spread": self._quote.spread,
+            },
+        }
+
+    def import_state(self, state: dict[str, Any]) -> None:
+        """Restore a state produced by :meth:`export_state` (replaces the current one)."""
+        self.balance = float(state["balance"])
+        self._counter = int(state["counter"])
+        self._order_ids = set(state["order_ids"])
+        self._positions = {p["position_id"]: Position.model_validate(p) for p in state["positions"]}
+        self.closed = [ClosedTrade.model_validate(c) for c in state["closed"]]
+        quote = state.get("quote")
+        self._quote = (
+            None
+            if quote is None
+            else _Quote(
+                datetime.fromisoformat(quote["time"]), float(quote["bid"]), float(quote["spread"])
+            )
+        )
+
     # ---- internals ---------------------------------------------------------------------------
 
     @staticmethod
