@@ -94,7 +94,7 @@ apps/dashboard/      Next.js dashboard (read-only; /control only with XAU_EDGE_W
 configs/             brokers/ (measured profiles) prop/ (FTMO rules, verified 2026-10-08)
 tests/               unit/ integration/ regression/ statistical/ fixtures/
 docs/                PROJECT_PLAN.md BRIEF.md ROADMAP_TRACEABILITY.md architecture/ research/
-                     decisions/ (ADR-0001..0023) evals/ risk/ testing/ operations/ reports/
+                     decisions/ (ADR-0001..0024) evals/ risk/ testing/ operations/ reports/
 data/ models/ experiments/runs/   git-ignored local data, artifacts and run records
 .claude/             ECC components (project-local, minimal profile, no hooks)
 ```
@@ -110,7 +110,7 @@ data/ models/ experiments/runs/   git-ignored local data, artifacts and run reco
   `funded-readiness.md` (funded track status and operator commands)
 * Execution ADRs: ADR-0019 (demo execution scope), ADR-0020 (funded account execution: whitelists,
   D6 rule lock, staged rollout, D2 override, D5 auto-flatten), ADR-0021 (strategy registry),
-  ADR-0022 (entry price side and deviation), ADR-0023 (local web control plane)
+  ADR-0022 (entry price side and deviation), ADR-0023 (local web control plane), ADR-0024 (research console)
 
 ## Demo bot (MT5 demo only)
 
@@ -136,3 +136,10 @@ Token chỉ được server Next.js đọc từ file (`XAU_EDGE_CONTROL_TOKEN_FI
 bao giờ vào trình duyệt. Hướng dẫn đầy đủ: mục 9 "Vận hành từ web" trong `docs/operations/demo-trading.md`.
 
 ![Trang Điều khiển](docs/operations/img/control-page.png)
+
+## Research console (web, chỉ đọc)
+
+`/research` hiển thị chương trình nghiên cứu theo `docs/PROFITABILITY_ROADMAP.md`: kết luận, K và ngân sách,
+ledger, đăng ký trước, ứng viên và cổng robustness, khóa Test-H/holdout, forward và suy giảm edge, chi phí
+và soak. Không chạy thí nghiệm, không mở holdout, không bật funded; chỉ có thể hạ trạng thái một chiến lược.
+Xem `docs/operations/research-console.md` và ADR-0024.
