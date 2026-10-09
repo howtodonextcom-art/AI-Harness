@@ -11,6 +11,7 @@ import contextlib
 import json
 import math
 import re
+import threading
 from collections import Counter
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -141,9 +142,20 @@ class ResearchService:
         self, root: Path, clock: Callable[[], datetime] = lambda: datetime.now(UTC)
     ) -> None:
         self.files = ResearchRoot(root)
-        self.problems: list[str] = []
+        self._local = threading.local()
         self.root = root
         self.clock = clock
+
+    @property
+    def problems(self) -> list[str]:
+        """Problems of the last ``_variants`` call IN THIS THREAD (requests run in a pool)."""
+        if not hasattr(self._local, "problems"):
+            self._local.problems = []
+        return cast("list[str]", self._local.problems)
+
+    @problems.setter
+    def problems(self, value: list[str]) -> None:
+        self._local.problems = value
 
     # -- shared helpers ------------------------------------------------------------------------
 
@@ -678,6 +690,21 @@ class ResearchService:
             name = str(file_period.get("name") if isinstance(file_period, dict) else file_period)
             if name.lower() in {"test", "test-h", "testh"}:
                 testh_used = True
+        try:
+            stage1_files = self.files.list(iv.STAGE1_DIR, "*.json")
+        except SourceUnavailableError:
+            stage1_files = []
+        for rel in stage1_files:
+            try:
+                raw = self.files.read_json(rel)
+            except SourceUnavailableError:
+                reasons.append(f"không đọc được {rel}")
+                continue
+            window = str(raw.get("window", "")).lower() if isinstance(raw, dict) else ""
+            if window in {"testh", "test", "test-h"}:
+                testh_used = True
+            if window == "holdout":
+                holdout_used = True
         ledger_runs = 0
         for rel in (V1_LEDGER, V2_LEDGER):
             parsed = self._ledger(rel)
@@ -688,6 +715,8 @@ class ResearchService:
             ledger_runs += sum(
                 1 for r in parsed.runs if not r.period.lower().startswith(("dev", "val"))
             )
+            if any("holdout" in r.period.lower() for r in parsed.runs):
+                holdout_used = True
             if any(r.period.lower().replace("-", "").startswith("test") for r in parsed.runs):
                 testh_used = True
         if ledger_runs:

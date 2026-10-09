@@ -12,6 +12,7 @@ from __future__ import annotations
 import itertools
 import json
 import math
+from datetime import UTC, datetime
 from pathlib import Path
 from statistics import NormalDist
 
@@ -81,7 +82,8 @@ class DesignLedger:
             msg = f"{entry.hypothesis_id} is already recorded (the ledger is append-only)"
             raise ValueError(msg)
         head = str(records[-1]["record_hash"]) if records else GENESIS
-        record = seal(entry.model_dump(mode="json"), head)
+        stamped = entry.model_copy(update={"recorded_at": datetime.now(UTC).isoformat()})
+        record = seal(stamped.model_dump(mode="json"), head)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(canonical_json(record) + "\n")
@@ -159,8 +161,8 @@ def probability_of_backtest_overfitting(
         in_s = np.vstack([parts[i] for i in chosen]).mean(axis=0)
         out_s = np.vstack([parts[i] for i in rest]).mean(axis=0)
         best = int(np.argmax(in_s))
-        rank = float(np.mean(out_s <= out_s[best]))
-        below += rank < 0.5
+        rank = 1 + int(np.sum(out_s < out_s[best]))  # 1-based rank of the in-sample winner
+        below += rank / (m + 1) <= 0.5
         total += 1
     return below / total
 

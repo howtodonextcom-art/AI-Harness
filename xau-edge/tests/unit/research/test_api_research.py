@@ -230,12 +230,17 @@ def test_without_control_enabled_the_demote_route_does_not_exist(client: TestCli
     assert "/control/lifecycle/demote" not in paths
 
 
-def test_the_same_idempotency_key_replays_the_first_demotion(control_client: TestClient) -> None:
+def test_the_same_key_and_request_replays_but_a_different_request_conflicts(
+    control_client: TestClient,
+) -> None:
     body = {"strategy_id": "H04-L40", "to": "WATCH", "reason": "first", "confirm": "DEMOTE"}
     first = _demote(control_client, body)
-    again = _demote(control_client, {**body, "to": "DISABLED", "reason": "second"})
+    again = _demote(control_client, body)
     assert first.status_code == again.status_code == 200
-    assert again.json()["event"]["to_state"] == "WATCH"
+    assert again.json()["event"] == first.json()["event"]
+    other = _demote(control_client, {**body, "to": "DISABLED", "reason": "second"})
+    assert other.status_code == 409
+    assert "IDEMPOTENCY_CONFLICT" in other.text
     states = control_client.get("/lifecycle/strategies").json()["strategies"]
     assert {s["strategy_id"]: s["state"] for s in states}["H04-L40"] == "WATCH"
 

@@ -8,6 +8,7 @@ Ngày mở: 2026-10-09. Sổ này sở hữu K của V2. Sổ lịch sử (Progr
 * Sàng lọc Stage 1: Holm-Bonferroni family-wise 0.10 trên 20 biến thể (xem từng file giả thuyết). Stage 1 là SCREENING: không tạo bằng chứng.
 * Biến thể bị loại theo quy tắc underpowered-by-design (MDE > +0.20R tại K đã đăng ký): `H08-PD-e0`, `H08-PD-e0.25`, `H08-PD-e0.5`, `H08-ASIA-e0.5`. Không chạy, không tính K.
 * Test-H (2022-01-01..2025-04-30) và Holdout (2026-05-01..2026-10-07) **không bị chạm**. Mọi lần chạy bên dưới là Development-2 (2011-01-01..2018-12-31).
+* **Quy tắc bảo thủ cho Stage 2 và Test-H (thêm sau review độc lập):** vì Development-2 và Validation-2 đã bị 21 biến thể của Programme 1 dùng, mọi biến thể V2 tới Stage 2 phải được đánh giá với K_tổng = K_V2 + 21 = 41 (alpha = 0.05 / 41), trừ khi chủ dự án quyết định khác bằng văn bản có phiên bản. K = 20 ở trên chỉ áp dụng cho sàng lọc Stage 1.
 * Chạy chẩn đoán trên dữ liệu đã dùng (Class D) không tính K và không là bằng chứng: xem `docs/research/edge-program-v2/`.
 
 ## Bảng chạy

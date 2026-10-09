@@ -102,7 +102,8 @@ def effective_n(values: NDArray[np.float64], day_ids: NDArray[np.int64]) -> floa
     n = len(values)
     if n == 0:
         return 0.0
-    m_bar = n / len(np.unique(day_ids))
+    _, sizes = np.unique(day_ids, return_counts=True)
+    m_bar = float(np.sum(sizes.astype(np.float64) ** 2) / n)  # size-weighted mean cluster size
     deff_cluster = 1.0 + (m_bar - 1.0) * _icc(values, day_ids)
     rho = max(0.0, _lag1(values))
     deff_serial = (1.0 + rho) / (1.0 - rho) if rho < 0.99 else float(n)

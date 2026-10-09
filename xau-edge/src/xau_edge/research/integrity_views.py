@@ -75,9 +75,13 @@ def registration(files: ResearchRoot, hypothesis_id: str) -> dict[str, Any]:
     }
 
 
-def _manifest_ids(files: ResearchRoot) -> set[str]:
-    """experiment_id of every verified Stage 1 manifest (file name must equal content id)."""
-    ids: set[str] = set()
+def _manifest_ids(files: ResearchRoot) -> dict[str, tuple[str, str]]:
+    """Verified Stage 1 manifests: experiment_id -> (result hash, evidence class).
+
+    The file name must equal the manifest's content id; the result hash is what the runner
+    recorded for the result file, so a result edited afterwards no longer matches it.
+    """
+    ids: dict[str, tuple[str, str]] = {}
     try:
         names = files.list(f"{STAGE1_DIR}/manifests", "*.json")
     except SourceUnavailableError:
@@ -88,7 +92,10 @@ def _manifest_ids(files: ResearchRoot) -> set[str]:
         except (SourceUnavailableError, ValidationError, ValueError):
             continue
         if rel.rsplit("/", 1)[-1] == f"{manifest.manifest_id}.json":
-            ids.add(manifest.identity.experiment_id)
+            ids[manifest.identity.experiment_id] = (
+                manifest.output_hashes.get("result", ""),
+                manifest.identity.evidence_class.value,
+            )
     return ids
 
 
@@ -122,8 +129,17 @@ def stage1(files: ResearchRoot, clock: datetime) -> dict[str, Any]:
             rows.append({"variant": raw["variant"], "status": "TOO_FEW_EVENTS"})
             continue
         dep, power = study.get("dependence", {}), study.get("power", {})
-        has_manifest = raw["experiment_id"] in verified
-        cls = EvidenceClass(raw["evidence_class"])
+        recorded = verified.get(raw["experiment_id"])
+        intact = recorded is not None and canonical_hash(raw)[:16] == recorded[0]
+        has_manifest = intact
+        if recorded is not None and not intact:
+            problems.append(f"{rel}: kết quả khác với hash đã ghi trong manifest (đã bị sửa)")
+        # the class comes from the verified manifest, never from the editable result file
+        cls = (
+            EvidenceClass(recorded[1])
+            if recorded is not None and intact
+            else EvidenceClass.DESCRIPTIVE
+        )
         proof = Proof(
             evidence_class=cls,
             ci_present=bool(study.get("ci95_net_base")),
@@ -137,8 +153,10 @@ def stage1(files: ResearchRoot, clock: datetime) -> dict[str, Any]:
                 "hypothesis": raw["hypothesis"],
                 "window": raw["window"],
                 "evidence_class": cls.value,
+                "claimed_evidence_class": raw["evidence_class"],
                 "k": raw["k"],
                 "alpha_bonferroni": 0.05 / raw["k"],
+                "result_intact": intact,
                 "n_events": study.get("n_events"),
                 "n_effective": dep.get("effective_n"),
                 "unique_days": dep.get("unique_days"),
@@ -147,7 +165,7 @@ def stage1(files: ResearchRoot, clock: datetime) -> dict[str, Any]:
                 "mean_net_pess_r": study.get("mean_net_pess_r"),
                 "ci95_net_base": study.get("ci95_net_base"),
                 "p_value_one_sided": study.get("p_value_one_sided"),
-                "survivor": raw["screening"]["stage1_survivor"],
+                "survivor": bool(raw["screening"]["stage1_survivor"]) and intact,
                 "mde_effective": power.get("mde_effective"),
                 "adequately_powered": power.get("adequately_powered"),
                 "dependence_status": dep.get("sensitivity"),

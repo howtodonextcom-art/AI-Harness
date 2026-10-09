@@ -8,13 +8,39 @@ the console can make, demoting a strategy, lives under ``/control`` with the con
 from __future__ import annotations
 
 import re
+from collections.abc import Awaitable, Callable
 from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request, Response
+from fastapi.responses import JSONResponse
 
 from xau_edge.research.service import ResearchService
 
 _ID = re.compile(r"^[A-Za-z0-9_.\-]{1,60}$")
+
+
+def install_research_host_guard(app: FastAPI, port: int) -> None:
+    """Refuse a foreign Host on /research and /lifecycle (DNS-rebinding defence), control or not."""
+    hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+
+    @app.middleware("http")
+    async def research_host_guard(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        path = request.url.path.lower()
+        if path.startswith(("/research", "/lifecycle")) and (
+            request.headers.get("host", "").lower() not in hosts
+        ):
+            return JSONResponse(
+                {
+                    "detail": {
+                        "code": "BAD_HOST",
+                        "message": "chỉ chấp nhận Host 127.0.0.1/localhost",
+                    }
+                },
+                status_code=403,
+            )
+        return await call_next(request)
 
 
 def add_research_routes(app: FastAPI, service: ResearchService | None) -> None:

@@ -164,3 +164,12 @@ def test_secrets_dropped_in_every_allowed_folder_never_appear_in_any_answer(
         assert "hunter2" not in text
         assert "zzz-secret" not in text
         assert "PRIVATE KEY" not in text
+
+
+@pytest.mark.parametrize("path", GET_PATHS)
+def test_hostile_hosts_are_refused_even_without_the_control_plane(
+    tmp_path: Path, repo: Path, path: str
+) -> None:
+    client = TestClient(create_app(_ctx(tmp_path, research=True)), base_url=BASE)
+    assert client.get(path, headers={"host": "evil.example"}).status_code == 403
+    assert client.get(path).status_code == 200

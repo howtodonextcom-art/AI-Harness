@@ -32,6 +32,13 @@ BLOCKED_PATTERNS = (
     "*.sqlite",
     "*.sqlite-*",
     "*.db",
+    "*.db-*",
+    "*.sqlite3",
+    "id_rsa*",
+    "id_ed25519*",
+    "token*",
+    "api_key*",
+    "apikey*",
     "*.key",
     "*.pem",
     "*.pfx",
@@ -40,6 +47,16 @@ BLOCKED_PATTERNS = (
     "credentials*",
 )
 MAX_BYTES = 4_000_000
+_DEVICES = frozenset(
+    {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+)
 _SAFE = re.compile(r"^[A-Za-z0-9_./ \-+=]+$")
 
 
@@ -60,6 +77,9 @@ class ResearchRoot:
             msg = f"path outside the allowed folders: {text}"
             raise SourceUnavailableError(msg)
         parts = PurePosixPath(text).parts
+        if any(part.split(".")[0].upper() in _DEVICES for part in parts):
+            msg = f"reserved device name: {text}"
+            raise SourceUnavailableError(msg)
         if any(fnmatch.fnmatch(part.lower(), pat) for part in parts for pat in BLOCKED_PATTERNS):
             msg = f"blocked file type: {text}"
             raise SourceUnavailableError(msg)

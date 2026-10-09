@@ -27,6 +27,7 @@ from xau_edge.research_v2.frame import H1Frame
 SEED = 7
 N_RESAMPLES = 20_000
 HOLM_FAMILY_ALPHA = 0.10
+MIN_CLUSTERS_FOR_P = 30
 _NORMAL = NormalDist()
 CLOCK_ERA_BOUNDARY_YEAR = 2021
 
@@ -56,6 +57,8 @@ def day_block_ci(
 
 def one_sided_p(values: NDArray[np.float64], days: NDArray[np.int64]) -> float:
     """p-value of mean > 0 from the day-cluster robust t (normal approximation)."""
+    if len(np.unique(days)) < MIN_CLUSTERS_FOR_P:
+        return 1.0  # too few independent days for a normal approximation: never a rejection
     t = cluster_t_stat(values, days)
     return float(1 - _NORMAL.cdf(t))
 
@@ -254,10 +257,18 @@ def _placebo(  # noqa: PLR0917
 
 
 def screen(
-    studies: list[VariantStudy], family_alpha: float = HOLM_FAMILY_ALPHA
+    studies: list[VariantStudy],
+    family_alpha: float = HOLM_FAMILY_ALPHA,
+    family_size: int | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Holm screening over the family plus the pessimistic-cost condition."""
-    p = {s.name: s.p_value for s in studies if s.n_events >= 30}
+    """Holm screening over the DECLARED family plus the pessimistic-cost condition.
+
+    A variant with too few events counts as p = 1 inside the family, so it still occupies a slot:
+    the family size is the number of declared variants, not the number that happened to qualify.
+    """
+    p = {s.name: (s.p_value if s.n_events >= 30 else 1.0) for s in studies}
+    for i in range(max(0, (family_size or 0) - len(p))):
+        p[f"__undeclared_slot_{i}"] = 1.0
     rejected = holm(p, family_alpha) if p else {}
     out: dict[str, dict[str, Any]] = {}
     for s in studies:

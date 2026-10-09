@@ -96,7 +96,7 @@ def validate(reg: HypothesisRegistration, *, k_cap: int = 24) -> list[str]:
         problems.append("duplicate variant ids")
     if len(reg.variant_ids) > 6:
         problems.append("more than 6 variants for one hypothesis")
-    if d["variant_count"] > d["grid_product"] + len(reg.dropped_variants) * 0:
+    if d["variant_count"] > d["grid_product"]:
         problems.append("more variants than the parameter grid allows")
     if reg.k_at_registration > k_cap:
         problems.append("K exceeds the programme cap")

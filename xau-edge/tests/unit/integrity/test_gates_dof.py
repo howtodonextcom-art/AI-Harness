@@ -128,7 +128,8 @@ def test_deflated_sharpe_falls_as_trials_grow() -> None:
 def test_pbo_is_high_for_pure_noise_trials_and_low_for_a_real_winner() -> None:
     rng = np.random.default_rng(0)
     noise = rng.standard_normal((400, 20))
-    assert probability_of_backtest_overfitting(noise) > 0.3
+    pbo = probability_of_backtest_overfitting(noise)
+    assert 0.35 < pbo < 0.65  # pure noise: about one half
     real = rng.standard_normal((400, 20))
     real[:, 7] += 0.5
     assert probability_of_backtest_overfitting(real) < 0.1

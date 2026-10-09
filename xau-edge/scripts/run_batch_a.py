@@ -94,6 +94,10 @@ def main() -> int:
     if args.window in LOCKED or args.window not in PERIOD_LABEL:
         sys.exit("refused: only the dev2 window can be run here (Test-H and holdout are locked)")
     head, regs = preflight()
+    if args.write and any(OUT.glob(f"*_{args.window}.json")):
+        sys.exit(
+            "refused: results for this window already exist (a registered run is recorded once)"
+        )
     registered = {v for r in regs.values() for v in r.variant_ids}
     k = sum(len(r.variant_ids) for r in regs.values())
     data = load_research_data(RAW, MANIFEST)
@@ -107,7 +111,7 @@ def main() -> int:
             continue
         events = in_window(variant.build(frame, h4), first)
         studies.append((variant, study_variant(frame, events, longs, shorts, k=k)))
-    verdicts = screen([s for _, s in studies])
+    verdicts = screen([s for _, s in studies], family_size=k)
     finished = datetime.now(UTC)
     config = {
         "barrier": {

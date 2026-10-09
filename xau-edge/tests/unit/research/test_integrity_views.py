@@ -200,7 +200,8 @@ def test_stage1_is_empty_then_screening_and_never_validated(repo: Path) -> None:
     view = _service(repo).stage1()
     row = view["variants"][0]
     assert view["status"] == "ok"
-    assert row["evidence_class"] == "SCREENING"
+    assert row["evidence_class"] == "DESCRIPTIVE"  # no verified manifest: never claimed class
+    assert row["claimed_evidence_class"] == "SCREENING"
     assert row["labels"]["VALIDATED"]["allowed"] is False
     assert row["manifest_verified"] is False
     assert row["provenance"] == "KHÔNG RÕ"
@@ -276,3 +277,31 @@ def test_soak_and_calibration_warn_when_their_files_are_stale(repo: Path) -> Non
     assert fresh.calibration()["freshness"]["stale"] is False
     far = ResearchService(repo, clock=lambda: datetime.now(UTC) + timedelta(days=60))
     assert far.calibration()["freshness"]["stale"] is True
+
+
+def test_a_doctored_real_result_is_detected_and_never_labelled_validated(tmp_path: Path) -> None:
+    import shutil  # noqa: PLC0415
+
+    root = tmp_path / "repo"
+    shutil.copytree(
+        REAL / "experiments" / "edge_program_v2_stage1",
+        root / "experiments" / "edge_program_v2_stage1",
+    )
+    clean = _service(root).stage1()
+    assert clean["status"] == "ok"
+    assert all(r["result_intact"] for r in clean["variants"])
+    target = root / "experiments" / "edge_program_v2_stage1" / "H07-PD-e0_dev2.json"
+    doc = json.loads(target.read_text(encoding="utf-8"))
+    doc["evidence_class"] = "CONFIRMATORY"
+    doc["screening"]["stage1_survivor"] = True
+    doc["study"]["mean_net_base_r"] = 0.35
+    target.write_text(json.dumps(doc), encoding="utf-8")
+    bad = _service(root).stage1()
+    row = next(r for r in bad["variants"] if r["variant"] == "H07-PD-e0")
+    assert bad["status"] == "unknown"
+    assert row["result_intact"] is False
+    assert row["survivor"] is False
+    assert row["evidence_class"] == "DESCRIPTIVE"
+    assert row["labels"]["VALIDATED"]["allowed"] is False
+    assert row["labels"]["REPRODUCIBLE"]["allowed"] is False
+    assert bad["survivors"] == []

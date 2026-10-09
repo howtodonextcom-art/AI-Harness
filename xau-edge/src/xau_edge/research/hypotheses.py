@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -65,7 +66,25 @@ def read_hypothesis(root: ResearchRoot, rel: str, programme: str) -> HypothesisF
     )
 
 
+_GIT_CACHE: dict[tuple[str, tuple[str, ...]], tuple[float, str | None]] = {}
+_GIT_TTL_SECONDS = 20.0
+
+
 def _git(root: ResearchRoot, *args: str) -> str | None:
+    """Read-only git with a short cache (a page load must not fork dozens of processes)."""
+    key = (str(root.root), args)
+    now = time.monotonic()
+    hit = _GIT_CACHE.get(key)
+    if hit is not None and now - hit[0] < _GIT_TTL_SECONDS:
+        return hit[1]
+    result = _git_uncached(root, *args)
+    _GIT_CACHE[key] = (now, result)
+    if len(_GIT_CACHE) > 512:
+        _GIT_CACHE.clear()
+    return result
+
+
+def _git_uncached(root: ResearchRoot, *args: str) -> str | None:
     try:
         out = subprocess.run(  # noqa: S603 - fixed argument list, no shell
             ["git", *args],  # noqa: S607

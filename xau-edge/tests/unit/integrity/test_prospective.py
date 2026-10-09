@@ -177,3 +177,44 @@ def test_any_single_character_change_is_detected(
     lines[target] = original[:pos] + replacement + original[pos + 1 :]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     assert verify(path).status == INVALID
+
+
+def test_a_live_ledger_refuses_a_backdated_signal(tmp_path: Path) -> None:
+    from datetime import UTC, datetime, timedelta  # noqa: PLC0415
+
+    now = datetime(2026, 10, 9, 10, 0, tzinfo=UTC)
+    ledger = ProspectiveLedger(tmp_path / "l.jsonl", clock=lambda: now)
+    with pytest.raises(LedgerError, match="backdated"):
+        ledger.append(
+            signal(
+                1, "2020-01-01T10:00:00+00:00", decision_available_at="2019-12-31T00:00:00+00:00"
+            )
+        )
+    ok = signal(2, (now + timedelta(seconds=30)).isoformat())
+    assert ledger.append(ok)["record_id"] == "s2"
+
+
+def test_tail_truncation_is_detected_through_the_head_anchor(tmp_path: Path) -> None:
+    path = tmp_path / "l.jsonl"
+    ledger = ProspectiveLedger(path)
+    ledger.append(signal(1))
+    ledger.append(signal(2, "2026-10-09T10:15:00+00:00"))
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text(lines[0] + "\n", encoding="utf-8")  # drop the newest record
+    result = verify(path)
+    assert result.status == INVALID
+    assert any("tail truncated" in p for p in result.problems)
+
+
+def test_an_outcome_before_the_earliest_resolution_or_a_second_outcome_is_refused(
+    tmp_path: Path,
+) -> None:
+    ledger = ProspectiveLedger(tmp_path / "l.jsonl")
+    ledger.append(signal(1))
+    with pytest.raises(LedgerError, match="earliest resolution"):
+        ledger.append(outcome(1, 1, "2026-10-09T10:30:00+00:00"))
+    ledger.append(outcome(2, 1, "2026-10-09T12:00:00+00:00"))
+    with pytest.raises(LedgerError, match="second outcome"):
+        ledger.append(outcome(3, 1, "2026-10-09T13:00:00+00:00"))
+    with pytest.raises(LedgerError, match="unknown signal"):
+        ledger.append(outcome(4, 2, "2026-10-09T14:00:00+00:00"))  # s2 does not exist

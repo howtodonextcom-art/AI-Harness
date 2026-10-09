@@ -43,10 +43,10 @@ và **không** được dùng để cứu một biến thể.
 
 ## Công suất và phụ thuộc
 
-Mọi biến thể đều "đủ công suất" theo MDE hiệu dụng (0.12-0.18R tại K = 20, sd giả định 1.3R), nên các khoảng
+Mọi biến thể đều "đủ công suất" theo MDE hiệu dụng (0.10-0.19R tại K = 20, sd giả định 1.3R), nên các khoảng
 tin cậy day-block loại trừ edge lớn hơn khoảng +0.05R net ở H09-ASIA_LONDON (ví dụ CI 95% của t0.2:
 [-0.155, +0.049]), chứ không chỉ "không thấy". Mọi biến thể DEPENDENCE_STABLE (1, 2, 5 ngày). Đa số
-INTRABAR_ROBUST; H08-ASIA-e0 và H10-c0.9-L50 là INTRABAR_SENSITIVE (cần dữ liệu khung nhỏ hơn nếu từng được xét).
+INTRABAR_ROBUST; bốn biến thể là INTRABAR_SENSITIVE (H08-ASIA-e0, H08-ASIA-e0.25, H09-LONDON_NY-t0.2, H10-c0.9-L50), cần dữ liệu khung nhỏ hơn nếu từng được xét.
 Kỷ nguyên: Development-2 chỉ có giai đoạn trước 2021 nên báo cáo kỷ nguyên là UNKNOWN (không giả vờ).
 
 ## Chẩn đoán Class D: nhánh đối chứng PD (KHÔNG phải bằng chứng, KHÔNG phải giả thuyết đã đăng ký)
@@ -65,6 +65,7 @@ Quy tắc áp dụng:
   của roadmap, rồi Test-H), không phải trên Development-2.
 * Nó được ghi vào sổ bậc tự do (`design-ledger.jsonl`) như tri thức đã biết, để mọi giả thuyết sau này phải
   khai báo.
+* Review độc lập tái lập con số +0.479R (n = 1608) nhưng thấy: 1.408/1.608 sự kiện ở 21-23 UTC; hiệu ứng tiếp diễn khoảng +0.58R ở mọi ngày trong tuần; các sự kiện có bar quyết định là bar đầu ngày chỉ +0.02R; năm 2011 đảo chiều -0.11R so với -0.64 đến -0.86R các năm 2012-2018. Một hiệu ứng lớn và ổn định như vậy trên vàng H1 phải coi là artefact cho tới khi kiểm bằng M1 hoặc tick.
 * Cảnh báo giải thích: sự kiện tập trung ở giờ rollover nơi spread, thanh khoản và cách ghi giá bar khác
   thường; một hiệu ứng như vậy cần kiểm chứng bằng dữ liệu tick/M1 và broker thứ hai trước khi tin.
 

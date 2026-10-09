@@ -86,9 +86,19 @@ class LifecycleStore:
             return []
         events: list[LifecycleEvent] = []
         try:
-            for line in self.path.read_text(encoding="utf-8").splitlines():
+            text = self.path.read_text(encoding="utf-8")
+            lines = text.splitlines()
+            # a torn FINAL line (crash mid-write, no trailing newline) is ignored; any other bad
+            # line still makes the store unreadable (fail closed)
+            torn_last = bool(lines) and not text.endswith("\n")
+            for number, line in enumerate(lines):
                 if not line.strip():
                     continue
+                if torn_last and number == len(lines) - 1:
+                    try:
+                        json.loads(line)
+                    except json.JSONDecodeError:
+                        break
                 raw = json.loads(line)
                 event = LifecycleEvent(
                     strategy_id=str(raw["strategy_id"]),
@@ -145,13 +155,22 @@ class LifecycleStore:
     def _demote_locked(
         self, strategy_id: str, to_state: str, reason: str, source: str, key: str
     ) -> LifecycleEvent:
-        if key:
-            for earlier in self._events():
-                if earlier.key == key:
-                    return earlier
         if not _ID.match(strategy_id):
             msg = "invalid strategy id"
             raise LifecycleError(msg)
+        clean_reason = " ".join(_CONTROL.sub(" ", reason).split())[:200]
+        if key:
+            for earlier in self._events():
+                if earlier.key == key:
+                    same = (
+                        earlier.strategy_id == strategy_id
+                        and earlier.to_state == to_state
+                        and earlier.reason == clean_reason
+                    )
+                    if not same:
+                        msg = "IDEMPOTENCY_CONFLICT: this key was used for a different request"
+                        raise LifecycleError(msg)
+                    return earlier
         current = self.states()
         if strategy_id not in current:
             msg = "unknown strategy"
@@ -180,6 +199,13 @@ class LifecycleStore:
             key,
         )
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        existing = self.path.read_text(encoding="utf-8") if self.path.exists() else ""
+        if existing and not existing.endswith("\n"):
+            # drop the torn (incomplete) last line so the journal stays well formed
+            kept = existing.rsplit("\n", 1)[0] + "\n" if "\n" in existing else ""
+            tmp = self.path.with_suffix(".tmp")
+            tmp.write_text(kept, encoding="utf-8")
+            tmp.replace(self.path)
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(event.__dict__, sort_keys=True) + "\n")
         return event
