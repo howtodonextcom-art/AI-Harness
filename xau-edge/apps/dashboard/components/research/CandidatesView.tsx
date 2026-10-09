@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { EvidenceBadge } from "@/components/research/LifecycleBadge";
+import { ValidationBadge } from "@/components/research/LifecycleBadge";
 import { StatusBadge, type Tone } from "@/components/research/StatusBadge";
 import { Gate, Panel, RefreshButton, ResearchShell, SourceNote, TableWrap, Txt, Warning, td, th, useLoad } from "@/components/research/ui";
 import { type CandidateDetail, type CandidatesView as View, type GateMap, type GateState, fmt, research } from "@/lib/research";
@@ -54,7 +54,7 @@ function Detail({ detail }: { detail: CandidateDetail }) {
   return (
     <div className="space-y-4" aria-label={`Chi tiết ${detail.variant}`}>
       <p className="text-sm">
-        <strong className="font-mono">{detail.variant}</strong> ({detail.hypothesis ?? "?"}) <EvidenceBadge label={allPass ? "UNVALIDATED" : "REJECTED"} />
+        <strong className="font-mono">{detail.variant}</strong> ({detail.hypothesis ?? "?"}) <ValidationBadge label={allPass ? "UNVALIDATED" : "REJECTED"} />
         <span className="ml-2 text-xs text-slate-500">
           {allPass ? "qua cả hai giai đoạn nhưng cần Test-H và cổng robustness (chưa phải VALIDATED)" : "không qua đủ 7 tiêu chí ở mọi giai đoạn"}
         </span>
@@ -159,7 +159,7 @@ function Body({ view }: { view: View }) {
                   <td className={`${td} font-mono`}>{v.variant}</td>
                   <td className={td}>{v.survivor ? <StatusBadge tone="warn">CÓ (ứng viên)</StatusBadge> : <StatusBadge tone="fail">KHÔNG</StatusBadge>}</td>
                   <td className={td}>
-                    <EvidenceBadge label={v.survivor ? "UNVALIDATED" : "REJECTED"} />
+                    <ValidationBadge label={v.survivor ? "UNVALIDATED" : "REJECTED"} />
                   </td>
                   <td className={`${td} text-xs`}>
                     {Object.entries(v.periods).map(([name, p]) => (

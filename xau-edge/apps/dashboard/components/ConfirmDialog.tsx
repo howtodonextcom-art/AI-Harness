@@ -26,6 +26,24 @@ export function ConfirmDialog({
   const input = useRef<HTMLInputElement>(null);
   const danger = tone === "danger";
 
+  const first = useRef<HTMLButtonElement>(null);
+  const opener = useRef<Element | null>(null);
+
+  // Escape cancels; focus moves into the dialog and returns to the element that opened it.
+  useEffect(() => {
+    opener.current = document.activeElement;
+    first.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (opener.current instanceof HTMLElement) opener.current.focus();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per dialog; onCancel is read at call time
+  }, []);
+
   useEffect(() => {
     if (step === 2) input.current?.focus();
   }, [step]);
@@ -52,7 +70,7 @@ export function ConfirmDialog({
               ))}
             </ul>
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={onCancel} className="rounded-md border border-slate-400 px-3 py-1 text-sm">
+              <button ref={first} type="button" onClick={onCancel} className="rounded-md border border-slate-400 px-3 py-1 text-sm">
                 Hủy
               </button>
               <button

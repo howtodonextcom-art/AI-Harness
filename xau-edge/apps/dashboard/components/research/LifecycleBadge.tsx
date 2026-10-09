@@ -26,6 +26,6 @@ export function LifecycleBadge({ state }: { state: string }) {
 
 const EVIDENCE_TONE: Record<EvidenceLabel, Tone> = { VALIDATED: "ok", UNVALIDATED: "warn", REJECTED: "fail" };
 
-export function EvidenceBadge({ label }: { label: EvidenceLabel }) {
+export function ValidationBadge({ label }: { label: EvidenceLabel }) {
   return <StatusBadge tone={EVIDENCE_TONE[label]}>{label}</StatusBadge>;
 }

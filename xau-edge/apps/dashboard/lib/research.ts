@@ -31,17 +31,45 @@ export const LIFECYCLE_STATES: LifecycleState[] = [
   "RETIRED",
 ];
 
+export interface Provenance {
+  generated_at: string | null;
+  code_commit: string | null;
+}
+
 export type Result<T> =
   | { kind: "ok"; data: T; fetchedAt: number }
-  | { kind: "unknown"; reason: string; source: string | null; partial: T | null; fetchedAt: number };
+  | { kind: "unknown"; reason: string; source: string | null; partial: T | null; fetchedAt: number; provenance?: Provenance | null };
 
-/** Every API body carries `status` and (when known) the source path of its figures. */
+/** Every API body carries `status`, `provenance` and (when known) the source path of its figures. */
 interface Base {
-  status: "ok" | "unknown";
+  status: string;
   source?: string;
   reason?: string;
   message?: string;
+  provenance?: Provenance | null;
 }
+
+/** Evidence classes (one badge component, `EvidenceBadge`). Unknown values render as KHÔNG RÕ. */
+export type EvidenceClass =
+  | "DESCRIPTIVE"
+  | "EXPLORATORY"
+  | "SCREENING"
+  | "VALIDATION"
+  | "CONFIRMATORY"
+  | "HOLDOUT"
+  | "PROSPECTIVE"
+  | "EXECUTION";
+
+export const EVIDENCE_CLASSES: EvidenceClass[] = [
+  "DESCRIPTIVE",
+  "EXPLORATORY",
+  "SCREENING",
+  "VALIDATION",
+  "CONFIRMATORY",
+  "HOLDOUT",
+  "PROSPECTIVE",
+  "EXECUTION",
+];
 
 export interface Overview extends Base {
   generated_at: string;
@@ -125,6 +153,38 @@ export interface Preregistration {
   first_run_at?: string;
 }
 
+export interface Registration {
+  status: string;
+  source?: string;
+  reason?: string;
+  evidence_class?: string;
+  expected_event_count?: number | null;
+  effective_event_count_estimate?: number | null;
+  expected_sd?: number | null;
+  k_at_registration?: number | null;
+  power_target?: number | null;
+  mde_raw?: number | null;
+  mde_effective?: number | null;
+  underpowered_by_design?: boolean | null;
+  required_effective_n_for_target?: number | null;
+  parameter_grid?: Record<string, unknown> | null;
+  variant_ids?: string[];
+  variant_count?: number | null;
+  dropped_variants?: string[];
+  economic_rationale?: string | null;
+  mechanism_status?: string | null;
+  observed_pattern?: string | null;
+  hypothesized_explanation?: string | null;
+  falsification_condition?: string | null;
+  problems?: string[];
+}
+
+export interface CommitInfo {
+  commit: string | null;
+  time: string | null;
+  unknown_reason?: string | null;
+}
+
 export interface HypothesisRow {
   id: string;
   programme: string;
@@ -139,6 +199,9 @@ export interface HypothesisRow {
     best_pessimistic_min: { variant: string; value: number } | null;
   };
   preregistration: Preregistration;
+  registration?: Registration | null;
+  registration_commit?: CommitInfo | null;
+  first_result_commit?: CommitInfo | null;
 }
 
 export interface HypothesesView extends Base {
@@ -228,6 +291,7 @@ export interface DataView extends Base {
 
 export interface LockRow {
   id: string;
+  outcome_state?: "PASS" | "FAIL" | "INCONCLUSIVE" | "LOCKED" | "UNKNOWN" | null;
   name: string;
   from: string;
   to: string | null;
@@ -256,13 +320,28 @@ export interface StrategiesView extends Base {
   web_rule: string;
 }
 
+export interface Readiness {
+  conclusion: string;
+  raw_n?: number | null;
+  effective_n?: number | null;
+  required_effective_n?: number | null;
+  calendar_days?: number | null;
+  minimum_calendar_days?: number | null;
+  regimes_seen?: number | null;
+  regimes_required?: number | null;
+  power_estimate?: number | null;
+  reasons?: string[];
+}
+
 export interface ForwardView extends Base {
   strategy_id: string;
   n_trades: number;
-  min_trades_for_conclusion: number;
-  conclusion: "KHÔNG KẾT LUẬN" | "ĐỦ MẪU";
+  legacy_reference_trades?: number;
+  legacy_reference_note?: string;
+  readiness?: Readiness | null;
+  conclusion?: string;
   expected_vs_realised: Record<string, unknown>;
-  decay: { suggestion: string; reasons: string[]; window_means: number[]; max_drawdown_r: number | null } | null;
+  decay: { suggestion: string; reasons: string[]; window_means: number[]; max_drawdown_r: number | null; advisory_only?: boolean } | null;
   updated_at: string | null;
 }
 
@@ -283,7 +362,154 @@ export interface SoakView extends Base {
   funded_rules?: { status: string; source: string; pending?: string[]; total?: number; reason?: string };
 }
 
-async function get<T extends Base>(path: string, signal?: AbortSignal): Promise<Result<T>> {
+export interface Stage1Label {
+  allowed: boolean;
+  reasons: string[];
+}
+
+export interface Counterfactual {
+  name: string;
+  mean_r: number | null;
+  incremental_r: number | null;
+  ci_low: number | null;
+  ci_high: number | null;
+  effect_size: number | null;
+}
+
+export interface Stage1Variant {
+  variant: string;
+  status?: string;
+  hypothesis?: string;
+  window?: string;
+  evidence_class?: string;
+  k?: number | null;
+  alpha_bonferroni?: number | null;
+  n_events?: number | null;
+  n_effective?: number | null;
+  unique_days?: number | null;
+  mean_gross_mid_r?: number | null;
+  mean_net_base_r?: number | null;
+  mean_net_pess_r?: number | null;
+  ci95_net_base?: number[] | null;
+  p_value_one_sided?: number | null;
+  survivor?: boolean | null;
+  mde_effective?: number | null;
+  adequately_powered?: boolean | null;
+  dependence_status?: string | null;
+  intrabar_status?: string | null;
+  era_status?: string | null;
+  attribution?: {
+    observed_mean_r: number | null;
+    direction_edge: number | null;
+    timing_edge: number | null;
+    drift_exposure: number | null;
+    counterfactuals: Counterfactual[];
+    note?: string;
+  } | null;
+  placebo?: {
+    kind?: string;
+    real: number | null;
+    median: number | null;
+    p95: number | null;
+    p99: number | null;
+    empirical_percentile: number | null;
+    draws: number | null;
+  } | null;
+  by_year?: unknown;
+  dataset_ids?: Record<string, string> | null;
+  code_commit_sha?: string | null;
+  experiment_id?: string | null;
+  manifest_verified?: boolean | null;
+  provenance?: string | null;
+  recorded_at?: string | null;
+  labels?: Record<string, Stage1Label>;
+}
+
+export interface Stage1View extends Base {
+  evidence_class?: string;
+  k?: number | null;
+  survivors: string[];
+  variants: Stage1Variant[];
+  problems?: string[];
+  note?: string;
+}
+
+export interface Stage1Detail extends Base {
+  evidence_class?: string;
+  k?: number | null;
+  survivors?: string[];
+  variant: Stage1Variant;
+  note?: string;
+}
+
+export interface LineageNode {
+  id: string;
+  parent_hash: string | null;
+  stage: string;
+  label: string;
+  parents: string[];
+  source?: string | null;
+  broker?: string | null;
+  symbol?: string | null;
+  timeframe?: string | null;
+  timezone?: string | null;
+  broker_clock?: string | null;
+  first_timestamp?: string | null;
+  last_timestamp?: string | null;
+  fetched_at?: string | null;
+  raw_hash?: string | null;
+  transformation?: string | null;
+  transform_version?: string | null;
+  validator_result?: string | null;
+  detail?: Record<string, unknown> | null;
+}
+
+export interface LineageView extends Base {
+  stages: string[];
+  empty_stages: string[];
+  problems: string[];
+  nodes: LineageNode[];
+}
+
+export interface ProspectiveView extends Base {
+  label: string;
+  signals: number;
+  outcomes: number;
+  problems: string[];
+  evidence_class?: string;
+  head_hash_prefix?: string;
+}
+
+export interface RolloutTier {
+  tier: number | string;
+  name: string;
+  send_orders: boolean;
+  lot_cap: number | null;
+  risk_pct: number | null;
+  requires_validated: boolean;
+  exit: { min_trading_days?: number | null; min_orders?: number | null; max_rejected_or_unknown?: number | null; min_weeks?: number | null };
+  progress: string;
+}
+
+export interface RolloutView extends Base {
+  current_tier: number | string | null;
+  current_tier_state: string;
+  current_tier_reason: string;
+  tiers: RolloutTier[];
+  note: string;
+}
+
+export interface GatesView extends Base {
+  evidence_class?: string;
+  seed?: number;
+  gates: { gate: string; pass_rate: Record<string, number | null>; classification: string; reason: string }[];
+  power: Record<string, Record<string, number | null>>;
+  assumptions: Record<string, unknown>;
+  note: string;
+}
+
+/** `accept`: statuses that are a valid answer (default only "ok"); anything else is KHÔNG RÕ. */
+async function get<T extends Base>(path: string, signal?: AbortSignal, accept: string[] = ["ok"]): Promise<Result<T>> {
   const fetchedAt = Date.now();
   try {
     const res = await fetch(`${API_URL}${path}`, { signal, cache: "no-store" });
@@ -291,8 +517,8 @@ async function get<T extends Base>(path: string, signal?: AbortSignal): Promise<
       return { kind: "unknown", reason: `API trả về lỗi ${res.status}`, source: path, partial: null, fetchedAt };
     }
     const body = (await res.json()) as T | null;
-    if (body === null || typeof body !== "object" || body.status !== "ok") {
-      const bare = new Set(["status", "source", "reason", "message"]);
+    if (body === null || typeof body !== "object" || !accept.includes(body.status)) {
+      const bare = new Set(["status", "source", "reason", "message", "provenance"]);
       const partial = body !== null && typeof body === "object" && Object.keys(body).some((k) => !bare.has(k)) ? body : null;
       return {
         kind: "unknown",
@@ -300,6 +526,7 @@ async function get<T extends Base>(path: string, signal?: AbortSignal): Promise<
         source: body?.source ?? path,
         partial,
         fetchedAt,
+        provenance: body?.provenance ?? null,
       };
     }
     return { kind: "ok", data: body, fetchedAt };
@@ -321,6 +548,12 @@ export const research = {
   calibration: (s?: AbortSignal) => get<CalibrationView>("/research/calibration", s),
   soak: (s?: AbortSignal) => get<SoakView>("/research/soak", s),
   strategies: (s?: AbortSignal) => get<StrategiesView>("/lifecycle/strategies", s),
+  stage1: (s?: AbortSignal) => get<Stage1View>("/research/stage1", s, ["ok", "empty"]),
+  stage1Variant: (variant: string, s?: AbortSignal) => get<Stage1Detail>(`/research/stage1/${encodeURIComponent(variant)}`, s),
+  lineage: (s?: AbortSignal) => get<LineageView>("/research/lineage", s),
+  prospective: (s?: AbortSignal) => get<ProspectiveView>("/research/prospective", s, ["ok", "empty", "invalid", "unknown"]),
+  rollout: (s?: AbortSignal) => get<RolloutView>("/research/rollout", s),
+  gates: (s?: AbortSignal) => get<GatesView>("/research/gates", s),
   forward: (id: string, s?: AbortSignal) => get<ForwardView>(`/lifecycle/${encodeURIComponent(id)}/forward`, s),
 };
 
@@ -376,4 +609,13 @@ export function ageText(iso: string | null | undefined, now: number): { text: st
           ? `${(sec / 3600).toFixed(1)} giờ trước`
           : `${Math.round(sec / 86400)} ngày trước`;
   return { text, stale: sec > 86400 };
+}
+
+export function shortId(id: string | null | undefined, n = 8): string {
+  if (!id) return "KHÔNG RÕ";
+  return id.length > n + 1 ? `${id.slice(0, n)}…` : id;
+}
+
+export function pct(value: number | null | undefined, digits = 1): string {
+  return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(digits)}%` : "KHÔNG RÕ";
 }

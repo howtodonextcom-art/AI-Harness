@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ResearchNav } from "@/components/research/ResearchNav";
 import { SourceNote } from "@/components/research/SourceNote";
-import { ageText, clean, type Result } from "@/lib/research";
+import { ageText, clean, type Provenance, type Result } from "@/lib/research";
 
 export const card = "rounded-xl border border-slate-300/60 bg-white/60 p-4 dark:border-slate-700 dark:bg-slate-900/60";
 export const th = "px-2 py-1 text-left text-xs font-semibold uppercase tracking-wide text-slate-500";
@@ -149,6 +149,7 @@ export function Gate<T>({
           {result.source ? <span className="font-mono"> (nguồn: {result.source})</span> : null}
         </Warning>
         {partial && result.partial ? partial(result.partial) : null}
+        <SourceNote source={result.source} provenance={result.provenance} showProvenance />
         <AgeNote fetchedAt={result.fetchedAt} />
       </div>
     );
@@ -156,6 +157,11 @@ export function Gate<T>({
   return (
     <>
       {children(result.data)}
+      <SourceNote
+        source={(result.data as { source?: string }).source}
+        provenance={(result.data as { provenance?: Provenance | null }).provenance}
+        showProvenance
+      />
       <AgeNote fetchedAt={result.fetchedAt} dataAt={dataAt?.(result.data)} />
     </>
   );

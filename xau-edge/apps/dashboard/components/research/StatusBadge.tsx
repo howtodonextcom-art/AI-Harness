@@ -14,6 +14,7 @@ export function StatusBadge({ tone, children, title }: { tone: Tone; children: R
   return (
     <span
       title={title}
+      data-badge={tone}
       className={`inline-block max-w-full whitespace-normal break-words rounded border px-1.5 py-0.5 text-xs font-semibold ${TONE[tone]}`}
     >
       {children}
