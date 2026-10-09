@@ -5,28 +5,40 @@ import { StatusBadge } from "@/components/research/StatusBadge";
 import { Gate, Panel, RefreshButton, ResearchShell, SourceNote, Txt, useLoad } from "@/components/research/ui";
 import { type LineageNode, type LineageView as View, research, shortId } from "@/lib/research";
 
-function Field({ k, v, mono = true }: { k: string; v: string | null | undefined; mono?: boolean }) {
+function Field({ k, v, mono = true, need = true }: { k: string; v: string | null | undefined; mono?: boolean; need?: boolean }) {
   return (
     <div className="min-w-0">
       <dt className="text-[11px] text-slate-500">{k}</dt>
-      <dd className={`break-words text-xs [overflow-wrap:anywhere] ${mono ? "font-mono" : ""}`}>{v ? <Txt>{v}</Txt> : <span className="text-amber-800 dark:text-amber-300">KHÔNG RÕ</span>}</dd>
+      <dd className={`break-words text-xs [overflow-wrap:anywhere] ${mono ? "font-mono" : ""}`}>{v ? <Txt>{v}</Txt> : need ? <span className="text-amber-800 dark:text-amber-300">KHÔNG RÕ</span> : <span className="text-slate-500" title="không áp dụng cho tầng này">—</span>}</dd>
     </div>
   );
 }
 
-function Hash({ k, v }: { k: string; v: string | null | undefined }) {
+function Hash({ k, v, need = true }: { k: string; v: string | null | undefined; need?: boolean }) {
   return (
     <div className="min-w-0">
       <dt className="text-[11px] text-slate-500">{k}</dt>
       <dd className="font-mono text-xs [overflow-wrap:anywhere]" title={v ?? undefined}>
-        {v ? `${v.slice(0, 16)}${v.length > 16 ? "…" : ""}` : <span className="text-amber-800 dark:text-amber-300">KHÔNG RÕ</span>}
+        {v ? `${v.slice(0, 16)}${v.length > 16 ? "…" : ""}` : need ? <span className="text-amber-800 dark:text-amber-300">KHÔNG RÕ</span> : <span className="text-slate-500" title="không áp dụng cho tầng này">—</span>}
       </dd>
     </div>
   );
 }
 
+/** Fields that MUST be present per stage; any other empty field is "not applicable" (—), not unknown. */
+const NEEDED: Record<string, string[]> = {
+  RAW_SOURCE: ["source", "broker", "timezone", "broker_clock"],
+  RAW_DATASET: ["source", "broker", "symbol", "timezone", "broker_clock", "first", "last", "fetched", "raw_hash", "transformation", "version"],
+  CERTIFIED_DATASET: ["symbol", "raw_hash", "transformation", "version", "validator", "detail"],
+  DERIVED_DATASET: ["symbol", "transformation", "version"],
+  EVENT_DATASET: ["transformation", "version", "detail"],
+  EXPERIMENT: ["transformation", "version", "detail"],
+  RESULT: ["validator", "detail"],
+};
+
 function Node({ node, onJump }: { node: LineageNode; onJump: (id: string) => void }) {
   const detail = node.detail && Object.keys(node.detail).length > 0 ? JSON.stringify(node.detail) : null;
+  const need = (f: string) => (NEEDED[node.stage] ?? []).includes(f);
   return (
     <li id={`node-${node.id}`} className="min-w-0 scroll-mt-4 rounded-lg border border-slate-300/60 p-3 dark:border-slate-700">
       <p className="text-sm font-semibold [overflow-wrap:anywhere]">
@@ -58,20 +70,20 @@ function Node({ node, onJump }: { node: LineageNode; onJump: (id: string) => voi
         )}
       </p>
       <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
-        <Field k="nguồn" v={node.source} />
-        <Field k="broker" v={node.broker} mono={false} />
-        <Field k="symbol / timeframe" v={[node.symbol, node.timeframe].filter(Boolean).join(" / ") || null} />
-        <Field k="múi giờ" v={node.timezone} mono={false} />
-        <Field k="đồng hồ broker" v={node.broker_clock} mono={false} />
-        <Field k="timestamp đầu" v={node.first_timestamp} />
-        <Field k="timestamp cuối" v={node.last_timestamp} />
-        <Field k="lấy lúc" v={node.fetched_at} />
-        <Hash k="raw_hash" v={node.raw_hash} />
-        <Hash k="parent_hash" v={node.parent_hash} />
-        <Field k="biến đổi" v={node.transformation} mono={false} />
-        <Field k="phiên bản biến đổi" v={node.transform_version} />
-        <Field k="kết quả validator" v={node.validator_result} mono={false} />
-        <Field k="chi tiết" v={detail} />
+        <Field k="nguồn" v={node.source} need={need("source")} />
+        <Field k="broker" v={node.broker} mono={false} need={need("broker")} />
+        <Field k="symbol / timeframe" v={[node.symbol, node.timeframe].filter(Boolean).join(" / ") || null} need={need("symbol")} />
+        <Field k="múi giờ" v={node.timezone} mono={false} need={need("timezone")} />
+        <Field k="đồng hồ broker" v={node.broker_clock} mono={false} need={need("broker_clock")} />
+        <Field k="timestamp đầu" v={node.first_timestamp} need={need("first")} />
+        <Field k="timestamp cuối" v={node.last_timestamp} need={need("last")} />
+        <Field k="lấy lúc" v={node.fetched_at} need={need("fetched")} />
+        <Hash k="raw_hash" v={node.raw_hash} need={need("raw_hash")} />
+        <Hash k="parent_hash" v={node.parent_hash} need={node.parents.length > 0} />
+        <Field k="biến đổi" v={node.transformation} mono={false} need={need("transformation")} />
+        <Field k="phiên bản biến đổi" v={node.transform_version} need={need("version")} />
+        <Field k="kết quả validator" v={node.validator_result} mono={false} need={need("validator")} />
+        <Field k="chi tiết" v={detail} need={need("detail")} />
       </dl>
     </li>
   );

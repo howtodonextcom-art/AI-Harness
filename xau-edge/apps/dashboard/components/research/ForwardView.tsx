@@ -278,7 +278,7 @@ function ProspectiveCard({ p }: { p: ProspectiveView }) {
   return (
     <Panel title="Bằng chứng tiền cứu (prospective)">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <EvidenceBadge cls="PROSPECTIVE" />
+        {label === "SEALED BEFORE OUTCOME" && <EvidenceBadge cls="PROSPECTIVE" />}
         <StatusBadge tone={tone}>{label}</StatusBadge>
         <span>
           tín hiệu = <strong className="font-mono">{p.signals ?? "KHÔNG RÕ"}</strong> · kết quả = <strong className="font-mono">{p.outcomes ?? "KHÔNG RÕ"}</strong>

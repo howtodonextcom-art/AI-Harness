@@ -362,6 +362,7 @@ class ResearchService:
             else "KHÔNG RÕ: không đọc được vòng đời chiến lược"
         )
         return {
+            "source": f"{VERDICT}, {V1_LEDGER}, {V2_LEDGER}, {V2_STATE}, {ROADMAP}",
             "status": "ok" if verdict.get("status") == "ok" else "unknown",
             "generated_at": self.clock().isoformat(),
             "verdict": verdict,
