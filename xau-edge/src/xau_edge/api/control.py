@@ -17,6 +17,7 @@ or live setting, change ``.env`` or reset the kill switch.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 import threading
@@ -59,6 +60,7 @@ class ModeRequest(BaseModel):
     confirm: str = Field(default="", max_length=20)
 
 
+READ_ONLY_PREFIXES = ("/research", "/lifecycle")
 DEMOTE_WORD = "DEMOTE"
 
 
@@ -117,6 +119,10 @@ def install_control_guard(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         path = request.url.path
+        if path.startswith(READ_ONLY_PREFIXES) and (
+            request.headers.get("host", "").lower() not in hosts
+        ):
+            return _deny("BAD_HOST", "chỉ chấp nhận Host 127.0.0.1/localhost của API")
         if path != PREFIX and not path.startswith(PREFIX + "/"):
             return await call_next(request)
         if request.headers.get("host", "").lower() not in hosts:
@@ -247,18 +253,23 @@ def add_control_routes(
     @app.post(PREFIX + "/lifecycle/demote")
     def demote(body: DemoteRequest, key: str | None = key_header) -> JSONResponse:
         """Move a strategy DOWN (WATCH, DEGRADED, DISABLED). Never up, never a new strategy."""
-        _key(key)
+        idem = _key(key)
         if lifecycle is None:
             return _deny("LIFECYCLE_UNAVAILABLE", "bảng vòng đời chưa được cấu hình", 503)
         if body.confirm != DEMOTE_WORD:
             return _deny("CONFIRMATION_MISMATCH", f"gõ đúng chữ {DEMOTE_WORD} để xác nhận", 400)
         try:
-            event = lifecycle().demote(body.strategy_id, body.to, body.reason, source="web")
+            event = lifecycle().demote(
+                body.strategy_id, body.to, body.reason, source="web", key=idem
+            )
         except LifecycleError as exc:
             return _deny("DEMOTE_REFUSED", str(exc), 409)
-        service.record_web_event(
-            "lifecycle.demote", strategy_id=event.strategy_id, to=event.to_state
-        )
+        except OSError:
+            return _deny("DEMOTE_FAILED", "không ghi được bảng vòng đời", 503)
+        with contextlib.suppress(OSError):
+            service.record_web_event(
+                "lifecycle.demote", strategy_id=event.strategy_id, to=event.to_state
+            )
         return JSONResponse({"event": event.__dict__}, status_code=200)
 
     @app.post(PREFIX + "/flatten", status_code=202)

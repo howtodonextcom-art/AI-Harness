@@ -51,7 +51,7 @@ def max_drawdown_r(net_r: list[float]) -> float:
     return worst
 
 
-def evaluate_decay(
+def evaluate_decay(  # noqa: PLR0911 - one answer per rule
     net_r: list[float],
     *,
     ci_lower: float,
@@ -60,8 +60,11 @@ def evaluate_decay(
     config: DecayConfig,
 ) -> DecayResult:
     """Suggest VALIDATED, WATCH, DEGRADED or DISABLED. Too few trades: no suggestion change."""
-    if any(not math.isfinite(v) for v in net_r) or not math.isfinite(cost_drift):
+    inputs = (cost_drift, ci_lower, validated_max_dd_r)
+    if any(not math.isfinite(v) for v in net_r) or not all(math.isfinite(v) for v in inputs):
         return DecayResult("UNKNOWN", ("non-finite input",), (), 0.0)
+    if len(net_r) < config.window_trades:
+        return DecayResult("UNKNOWN", ("fewer trades than one window",), (), max_drawdown_r(net_r))
     dd = max_drawdown_r(net_r)
     size = config.window_trades
     windows = [net_r[i : i + size] for i in range(len(net_r) - size, -1, -size) if i >= 0]

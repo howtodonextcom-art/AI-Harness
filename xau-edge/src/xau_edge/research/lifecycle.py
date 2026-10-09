@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -60,6 +61,17 @@ class LifecycleEvent:
     at: str
     source: str
     reason: str
+    key: str = ""
+
+
+_LOCKS: dict[str, threading.Lock] = {}
+_LOCKS_GUARD = threading.Lock()
+_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u200e\u200f\u202a-\u202e\u2066-\u2069]")
+
+
+def _lock_for(path: Path) -> threading.Lock:
+    with _LOCKS_GUARD:
+        return _LOCKS.setdefault(str(path.resolve()), threading.Lock())
 
 
 class LifecycleStore:
@@ -85,6 +97,7 @@ class LifecycleStore:
                     at=str(raw["at"]),
                     source=str(raw["source"]),
                     reason=str(raw["reason"]),
+                    key=str(raw.get("key", "")),
                 )
                 if event.to_state not in STATES or event.from_state not in STATES:
                     msg = "unknown state in the lifecycle store"
@@ -96,9 +109,21 @@ class LifecycleStore:
         return events
 
     def states(self) -> dict[str, str]:
-        """Current state per strategy (seed, then the events in order)."""
+        """Current state per strategy (seed, then the events in order).
+
+        Events about a strategy that is not in the seed are ignored, and so is any event that the
+        web wrote which is not a legal demotion: a hand-edited or hostile file cannot promote.
+        """
         current = dict(self.seed)
         for event in self._events():
+            if event.strategy_id not in current:
+                continue
+            if event.source == "web" and not (
+                event.to_state in WEB_TARGETS
+                and current[event.strategy_id] in WEB_DEMOTABLE_FROM
+                and _RANK[event.to_state] < _RANK[current[event.strategy_id]]
+            ):
+                continue
             current[event.strategy_id] = event.to_state
         return current
 
@@ -106,8 +131,24 @@ class LifecycleStore:
         """Events of one strategy, oldest first."""
         return [e for e in self._events() if e.strategy_id == strategy_id]
 
-    def demote(self, strategy_id: str, to_state: str, reason: str, source: str) -> LifecycleEvent:
-        """Move a strategy DOWN. Refuses anything that is not a demotion allowed from the web."""
+    def demote(
+        self, strategy_id: str, to_state: str, reason: str, source: str, key: str = ""
+    ) -> LifecycleEvent:
+        """Move a strategy DOWN. Refuses anything that is not a demotion allowed from the web.
+
+        Serialised by a lock and re-checked inside it, so two concurrent demotions cannot undo each
+        other. The same ``key`` replays the first event instead of appending a second one.
+        """
+        with _lock_for(self.path):
+            return self._demote_locked(strategy_id, to_state, reason, source, key)
+
+    def _demote_locked(
+        self, strategy_id: str, to_state: str, reason: str, source: str, key: str
+    ) -> LifecycleEvent:
+        if key:
+            for earlier in self._events():
+                if earlier.key == key:
+                    return earlier
         if not _ID.match(strategy_id):
             msg = "invalid strategy id"
             raise LifecycleError(msg)
@@ -125,12 +166,18 @@ class LifecycleStore:
         if _RANK[to_state] >= _RANK[from_state]:
             msg = "only a lower state is allowed (no promotion, no sideways move)"
             raise LifecycleError(msg)
-        clean = " ".join(reason.split())[:200]
+        clean = " ".join(_CONTROL.sub(" ", reason).split())[:200]
         if not clean:
             msg = "a reason is required"
             raise LifecycleError(msg)
         event = LifecycleEvent(
-            strategy_id, from_state, to_state, datetime.now(UTC).isoformat(), source, clean
+            strategy_id,
+            from_state,
+            to_state,
+            datetime.now(UTC).isoformat(),
+            source,
+            clean,
+            key,
         )
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as handle:

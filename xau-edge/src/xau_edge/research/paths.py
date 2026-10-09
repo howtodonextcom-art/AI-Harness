@@ -53,6 +53,17 @@ class ResearchRoot:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
 
+    @staticmethod
+    def _check_allowed(text: str) -> None:
+        """Prefix and blocklist checks on a clean POSIX path (run before AND after resolving)."""
+        if not any(text == p or text.startswith(p + "/") for p in ALLOWED_PREFIXES):
+            msg = f"path outside the allowed folders: {text}"
+            raise SourceUnavailableError(msg)
+        parts = PurePosixPath(text).parts
+        if any(fnmatch.fnmatch(part.lower(), pat) for part in parts for pat in BLOCKED_PATTERNS):
+            msg = f"blocked file type: {text}"
+            raise SourceUnavailableError(msg)
+
     def resolve(self, rel: str) -> Path:
         """The real path of ``rel`` if it is allowed, else ``SourceUnavailableError``."""
         if not rel or "\\" in rel or not _SAFE.match(rel):
@@ -62,25 +73,26 @@ class ResearchRoot:
         if (
             pure.is_absolute()
             or ".." in pure.parts
-            or any(part.startswith("~") for part in pure.parts)
+            or any(part.startswith("~") or part.endswith((".", " ")) for part in pure.parts)
         ):
             msg = "unsafe path"
             raise SourceUnavailableError(msg)
         text = pure.as_posix()
-        if not any(text == p or text.startswith(p + "/") for p in ALLOWED_PREFIXES):
-            msg = f"path outside the allowed folders: {text}"
-            raise SourceUnavailableError(msg)
-        if any(
-            fnmatch.fnmatch(part.lower(), pat) for part in pure.parts for pat in BLOCKED_PATTERNS
-        ):
-            msg = f"blocked file type: {text}"
-            raise SourceUnavailableError(msg)
-        real = (self.root / pure).resolve()
+        self._check_allowed(text)
+        joined = self.root / pure
+        cursor = self.root
+        for part in pure.parts:  # a symlink anywhere in the path is refused, not followed
+            cursor = cursor / part
+            if cursor.is_symlink():
+                msg = "path escapes the repository"
+                raise SourceUnavailableError(msg)
+        real = joined.resolve()
         try:
-            real.relative_to(self.root)
+            inside = real.relative_to(self.root).as_posix()
         except ValueError as exc:
             msg = "path escapes the repository"
             raise SourceUnavailableError(msg) from exc
+        self._check_allowed(inside)  # again on what the path really is
         return real
 
     def exists(self, rel: str) -> bool:

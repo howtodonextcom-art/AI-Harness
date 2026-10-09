@@ -21,6 +21,7 @@ _TRADES = re.compile(r"(\d+)\s*lệnh")
 _BASE = re.compile(r"mean net R\s*([+-]?\d+\.\d+)")
 _PESSIMISTIC = re.compile(r"bi quan\s*([+-]?\d+\.\d+)")
 _VERDICT = re.compile(r"\b(PASS|FAIL)\b")
+_K_BOLD = re.compile(r"\*\*K\s*=\s*\d+\s*\+\s*\d+\s*=\s*(\d+)")
 _K = re.compile(r"K\s*=\s*\d+\s*\+\s*\d+\s*=\s*(\d+)")
 _CAP = re.compile(r"(?:trần K cap|K cap)\s*=\s*(\d+)")
 _ALPHA = re.compile(r"alpha\s*=\s*(?:0\.05\s*/\s*\d+\s*=\s*)?(0\.\d+)")
@@ -46,9 +47,10 @@ class LedgerRun:
 
     def when(self) -> datetime | None:
         """The run time as an aware UTC datetime, if the row carries one."""
-        match = _TIME.search(self.time or "")
-        if not match:
-            return None
+        text = self.time or ""
+        match = _TIME.search(text)
+        if not match or not re.search(r"\b(UTC|Z)\b|Z$", text):
+            return None  # a time without an explicit UTC marker is not trusted
         return datetime.fromisoformat(f"{match.group(1)}T{match.group(2)}").replace(tzinfo=UTC)
 
     def as_dict(self) -> dict[str, Any]:
@@ -105,7 +107,8 @@ def parse_ledger(text: str) -> LedgerParse:
                 note=note,
             )
         )
-    k_match, cap_match, alpha_match = _K.search(text), _CAP.search(text), _ALPHA.search(text)
+    k_match = _K_BOLD.search(text) or _K.search(text)
+    cap_match, alpha_match = _CAP.search(text), _ALPHA.search(text)
     return LedgerParse(
         runs=runs,
         k=int(k_match.group(1)) if k_match else None,

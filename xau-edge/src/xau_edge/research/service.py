@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import math
 import re
 from collections import Counter
 from collections.abc import Callable
@@ -40,6 +41,7 @@ FUNDED_RULES = "configs/prop/ftmo_funded.yaml"
 BROKER_PROFILE = "configs/brokers/ftmo_demo.yaml"
 NO_EDGE_BANNER = "Không có edge được kiểm định."
 MIN_FORWARD_TRADES = 100
+MAX_SOAK_SPAN_DAYS = 400
 
 SPLITS: tuple[dict[str, Any], ...] = (
     {
@@ -112,7 +114,15 @@ _DECISION = re.compile(r"^\|\s*\**(D-\d)\**\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*$")
 def _safe(source: str, fn: Callable[[], dict[str, Any]]) -> dict[str, Any]:
     try:
         return fn()
-    except (SourceUnavailableError, LifecycleError, ValueError, KeyError, TypeError) as exc:
+    except (
+        SourceUnavailableError,
+        LifecycleError,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,
+        OverflowError,
+    ) as exc:
         return unknown(source, str(exc)[:160])
 
 
@@ -123,6 +133,7 @@ class ResearchService:
         self, root: Path, clock: Callable[[], datetime] = lambda: datetime.now(UTC)
     ) -> None:
         self.files = ResearchRoot(root)
+        self.problems: list[str] = []
         self.root = root
         self.clock = clock
 
@@ -148,37 +159,64 @@ class ResearchService:
         return out
 
     def _variants(self) -> dict[str, dict[str, Any]]:
-        """Per variant: periods with base and pessimistic results (from the result files)."""
+        """Per variant: periods with base and pessimistic results (from the result files).
+
+        Problems (unreadable or malformed files, a period recorded twice) are collected in
+        ``self.problems`` and make the candidate views "unknown": a missing or duplicated result
+        must never make a variant look better.
+        """
         variants: dict[str, dict[str, Any]] = {}
+        self.problems = []
         for rel in self._candidate_files():
             try:
                 raw = self.files.read_json(rel)
             except SourceUnavailableError:
+                self.problems.append(f"không đọc được {rel}")
                 continue
             if not isinstance(raw, dict) or "variant" not in raw or "scenarios" not in raw:
+                self.problems.append(f"{rel} không đúng cấu trúc kết quả")
+                continue
+            scen = raw["scenarios"]
+            base = scen.get("base") if isinstance(scen, dict) else None
+            pess = scen.get("pessimistic") if isinstance(scen, dict) else None
+            if not isinstance(base, dict) or not isinstance(pess, dict):
+                self.problems.append(f"{rel} thiếu kịch bản base hoặc bi quan")
                 continue
             name = str(raw["variant"])
             period = raw.get("period", {})
             period_name = str(period.get("name") if isinstance(period, dict) else period)
-            scen = raw["scenarios"]
-            base, pess = scen.get("base", {}), scen.get("pessimistic", {})
             verdict = base.get("verdict", {})
+            verdict = verdict if isinstance(verdict, dict) else {}
             criteria = {k: v for k, v in verdict.items() if isinstance(v, dict) and "passed" in v}
             entry = variants.setdefault(
                 name,
                 {"variant": name, "hypothesis": raw.get("hypothesis"), "periods": {}, "files": []},
             )
             entry["files"].append(rel)
+            if period_name in entry["periods"]:
+                self.problems.append(f"{name}: giai đoạn {period_name} được ghi hai lần")
+            metrics = base.get("metrics", {})
+            metrics = metrics if isinstance(metrics, dict) else {}
+            passed_count = sum(1 for c in criteria.values() if c["passed"])
+            pess_mean = pess.get("mean_net_r")
+            consistent = (
+                raw.get("stage_pass") is True
+                and bool(criteria)
+                and passed_count == len(criteria)
+                and isinstance(pess_mean, int | float)
+                and pess_mean > 0
+            )
             entry["periods"][period_name] = {
                 "trades": base.get("trades"),
                 "mean_net_r_base": base.get("mean_net_r"),
-                "mean_net_r_pessimistic": pess.get("mean_net_r"),
-                "stage_pass": raw.get("stage_pass") is True,
+                "mean_net_r_pessimistic": pess_mean,
+                "stage_pass": consistent,
+                "stage_pass_claimed": raw.get("stage_pass") is True,
                 "criteria": criteria,
-                "criteria_passed": sum(1 for c in criteria.values() if c["passed"]),
+                "criteria_passed": passed_count,
                 "criteria_total": len(criteria),
                 "metrics": {
-                    k: base.get("metrics", {}).get(k)
+                    k: metrics.get(k)
                     for k in ("profit_factor", "max_drawdown_r", "win_rate", "net_return")
                 },
                 "variants_k": raw.get("variants_k"),
@@ -190,17 +228,22 @@ class ResearchService:
             }
         return variants
 
+    @staticmethod
+    def _is_survivor(entry: dict[str, Any]) -> bool:
+        """Both the development and the validation period exist and each passes consistently."""
+        periods = entry["periods"]
+        return all(name in periods and periods[name]["stage_pass"] for name in ("dev", "val"))
+
     def lifecycle_store(self) -> LifecycleStore:
         """The lifecycle store (the only thing the web may write to, and only downwards)."""
         return self._store()
 
     def _store(self) -> LifecycleStore:
         seed = dict.fromkeys(_SEED_REJECTED, "REJECTED")
-        for name, entry in self._variants().items():
-            passed = all(p["stage_pass"] for p in entry["periods"].values()) and bool(
-                entry["periods"]
-            )
-            seed[name] = "RESEARCH" if passed else "REJECTED"
+        variants = self._variants()
+        for name, entry in variants.items():
+            ok = not self.problems and self._is_survivor(entry)
+            seed[name] = "RESEARCH" if ok else "REJECTED"
         return LifecycleStore(self.files.resolve(LIFECYCLE), seed)
 
     # -- W-R1 ----------------------------------------------------------------------------------
@@ -448,7 +491,6 @@ class ResearchService:
         rows = []
         for name, entry in sorted(variants.items()):
             periods = entry["periods"]
-            survivor = bool(periods) and all(p["stage_pass"] for p in periods.values())
             rows.append(
                 {
                     "variant": name,
@@ -464,18 +506,21 @@ class ResearchService:
                         }
                         for k, v in periods.items()
                     },
-                    "survivor": survivor,
+                    "survivor": not self.problems and self._is_survivor(entry),
                     "gates": self._gates(name),
                 }
             )
+        status = "ok" if rows and not self.problems else "unknown"
         return {
-            "status": "ok" if rows else "unknown",
+            "status": status,
             "source": "experiments/edge_program, experiments/edge_program_v2",
             "survivors": [r["variant"] for r in rows if r["survivor"]],
             "variants": rows,
+            "problems": list(self.problems),
             "note": (
-                "Một biến thể chỉ là ứng viên khi qua cả hai giai đoạn; "
-                "cổng robustness chưa chạy luôn hiện CHƯA CHẠY."
+                "Một biến thể chỉ là ứng viên khi qua cả hai giai đoạn dev và val, mỗi giai đoạn "
+                "đủ 7 tiêu chí và dương trong kịch bản bi quan; cổng robustness chưa chạy luôn "
+                "hiện CHƯA CHẠY."
             ),
         }
 
@@ -503,12 +548,14 @@ class ResearchService:
             manifest = self.files.read_json(MANIFEST)
         except SourceUnavailableError as exc:
             return unknown(MANIFEST, str(exc))
+        if not isinstance(manifest, dict):
+            return unknown(MANIFEST, "manifest không phải đối tượng JSON")
         frames = []
         for tf in ("M5", "M15", "H1", "H4"):
-            item = manifest.get(tf) if isinstance(manifest, dict) else None
+            item = manifest.get(tf)
             if not isinstance(item, dict):
                 continue
-            issues = item.get("issues", [])
+            issues = [i for i in item.get("issues", []) if isinstance(i, dict)]
             frames.append(
                 {
                     "timeframe": tf,
@@ -525,11 +572,12 @@ class ResearchService:
         try:
             cert = self.files.read_json(CLOCK_CERT)
             cert_years = cert.get("years", {}) if isinstance(cert, dict) else {}
-            cert_ok = True
+            cert_ok = isinstance(cert_years, dict)
+            cert_years = cert_years if cert_ok else {}
         except SourceUnavailableError:
             cert_years, cert_ok = {}, False
         for year in range(2010, 2026):
-            item = cert_years.get(str(year)) if isinstance(cert_years, dict) else None
+            item = cert_years.get(str(year))
             certified = bool(isinstance(item, dict) and item.get("certified") is True)
             years.append(
                 {
@@ -541,9 +589,9 @@ class ResearchService:
             )
         blocked = [y["year"] for y in years if not y["certified"]]
         return {
-            "status": "ok",
+            "status": "ok" if frames else "unknown",
             "source": MANIFEST,
-            "generated_at": manifest.get("generated_at") if isinstance(manifest, dict) else None,
+            "generated_at": manifest.get("generated_at"),
             "frames": frames,
             "clock_certificate": {
                 "source": CLOCK_CERT,
@@ -556,13 +604,22 @@ class ResearchService:
             },
         }
 
-    def locks(self) -> dict[str, Any]:
+    def locks(self) -> dict[str, Any]:  # noqa: PLR0912, PLR0915 - several independent evidences
+        """Test-H and holdout read NGUYÊN VẸN only on positive evidence from SEVERAL sources.
+
+        Registry (local, may be absent), result files, ledger rows and freeze records are all
+        checked. Any use found anywhere means ĐÃ DÙNG. Anything missing, unreadable or inconsistent
+        (for example fewer registry records than ledger runs) means KHÔNG RÕ, never NGUYÊN VẸN.
+        """
+        reasons: list[str] = []
+        testh_used = holdout_used = False
         try:
             records = self.files.list("experiments/runs", "*.json")
         except SourceUnavailableError as exc:
-            return unknown("experiments/runs", str(exc))
-        testh_used = holdout_used = False
+            records = []
+            reasons.append(str(exc))
         unreadable = 0
+        edge_records = 0
         for rel in records:
             try:
                 raw = self.files.read_json(rel)
@@ -573,34 +630,57 @@ class ResearchService:
                 unreadable += 1
                 continue
             period, family = str(raw.get("period")), str(raw.get("family"))
+            if family == "edge-program":
+                edge_records += 1
             if period == "test" and family == "edge-program":
                 testh_used = True
             if period == "test" and family in {"backtest", "model", "analogue-study"}:
                 holdout_used = True
-        blind = not records or unreadable > 0
+        if not records:
+            reasons.append("không có sổ đăng ký thí nghiệm cục bộ (experiments/runs)")
+        if unreadable:
+            reasons.append(f"{unreadable} bản ghi của sổ đăng ký không đọc được")
+        for rel in self._candidate_files():
+            try:
+                raw = self.files.read_json(rel)
+            except SourceUnavailableError:
+                reasons.append(f"không đọc được {rel}")
+                continue
+            file_period = raw.get("period") if isinstance(raw, dict) else None
+            name = str(file_period.get("name") if isinstance(file_period, dict) else file_period)
+            if name.lower() in {"test", "test-h", "testh"}:
+                testh_used = True
+        ledger_runs = 0
+        for rel in (V1_LEDGER, V2_LEDGER):
+            parsed = self._ledger(rel)
+            if parsed is None:
+                if rel == V1_LEDGER:
+                    reasons.append("không đọc được ledger V1")
+                continue
+            ledger_runs += sum(
+                1 for r in parsed.runs if not r.period.lower().startswith(("dev", "val"))
+            )
+            if any(r.period.lower().replace("-", "").startswith("test") for r in parsed.runs):
+                testh_used = True
+        if ledger_runs:
+            testh_used = True
+        v1 = self._ledger(V1_LEDGER)
+        if v1 is not None and edge_records != len(v1.runs):
+            reasons.append(
+                f"sổ đăng ký có {edge_records} bản ghi edge-program, "
+                f"ledger có {len(v1.runs)} lần chạy"
+            )
         try:
             freezes = self.files.list("docs/research/edge-program-v2", "freeze-*.md")
         except SourceUnavailableError:
             freezes = []
+        blind = bool(reasons)
         locks = []
         for split in SPLITS:
             state: str
-            if split["id"] == "testH":
-                state = (
-                    "KHÔNG RÕ"
-                    if blind and not testh_used
-                    else "ĐÃ DÙNG"
-                    if testh_used
-                    else "NGUYÊN VẸN"
-                )
-            elif split["id"] == "holdout":
-                state = (
-                    "KHÔNG RÕ"
-                    if blind and not holdout_used
-                    else "ĐÃ DÙNG"
-                    if holdout_used
-                    else "NGUYÊN VẸN"
-                )
+            if split["id"] in {"testH", "holdout"}:
+                used = testh_used if split["id"] == "testH" else holdout_used
+                state = "ĐÃ DÙNG" if used else "KHÔNG RÕ" if blind else "NGUYÊN VẸN"
             elif split["id"] == "forward":
                 state = "ĐANG TÍCH LŨY"
             else:
@@ -608,9 +688,10 @@ class ResearchService:
             locks.append({**split, "state": state})
         return {
             "status": "unknown" if blind else "ok",
-            "source": "experiments/runs, docs/PROFITABILITY_ROADMAP.md (section 13.1)",
+            "source": "experiments/runs, experiments/edge_program*, ledger, freeze records",
             "registry_records": len(records),
             "unreadable_records": unreadable,
+            "reasons_unknown": reasons,
             "locks": locks,
             "freeze_records": freezes,
         }
@@ -659,28 +740,39 @@ class ResearchService:
             return unknown("data/forward", "mã chiến lược không hợp lệ")
         rel = f"data/forward/{strategy_id}/summary.json"
 
+        def finite(value: Any, name: str) -> float:
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int | float)
+                or not math.isfinite(value)
+            ):
+                msg = f"thiếu hoặc không hợp lệ: {name}"
+                raise ValueError(msg)
+            return float(value)
+
         def build() -> dict[str, Any]:
             raw = self.files.read_json(rel)
             if not isinstance(raw, dict):
                 msg = "summary không phải đối tượng JSON"
                 raise ValueError(msg)
-            trades = [float(x) for x in raw.get("trades_net_r", [])]
+            trades = [finite(x, "trades_net_r") for x in raw.get("trades_net_r", [])]
+            n = raw.get("n_trades")
+            if isinstance(n, bool) or not isinstance(n, int) or n != len(trades):
+                msg = "n_trades không khớp số lệnh trong trades_net_r"
+                raise ValueError(msg)
             config = decay_mod.load_decay_config(self.files.resolve(DECAY_CONFIG))
-            n = int(raw.get("n_trades", len(trades)))
             conclusion = "KHÔNG KẾT LUẬN" if n < MIN_FORWARD_TRADES else "ĐỦ MẪU"
             decay = None
-            interval = raw.get("mean_r_expected", {})
-            if (
-                conclusion == "ĐỦ MẪU"
-                and isinstance(interval, dict)
-                and "lo" in interval
-                and trades
-            ):
+            interval = raw.get("mean_r_expected")
+            if conclusion == "ĐỦ MẪU":
+                if not isinstance(interval, dict):
+                    msg = "thiếu mean_r_expected"
+                    raise ValueError(msg)
                 result = decay_mod.evaluate_decay(
                     trades,
-                    ci_lower=float(interval["lo"]),
-                    validated_max_dd_r=float(raw.get("validated_max_dd_r", 15.0)),
-                    cost_drift=float(raw.get("cost_drift", 1.0)),
+                    ci_lower=finite(interval.get("lo"), "mean_r_expected.lo"),
+                    validated_max_dd_r=finite(raw.get("validated_max_dd_r"), "validated_max_dd_r"),
+                    cost_drift=finite(raw.get("cost_drift"), "cost_drift"),
                     config=config,
                 )
                 decay = {
@@ -720,7 +812,7 @@ class ResearchService:
 
         out = _safe(rel, build)
         if out["status"] == "unknown":
-            out["message"] = "KHÔNG CÓ MẪU FORWARD cho chiến lược này"
+            out["message"] = "KHÔNG CÓ MẪU FORWARD hợp lệ cho chiến lược này"
         return out
 
     # -- W-R7 ----------------------------------------------------------------------------------
@@ -737,6 +829,8 @@ class ResearchService:
         try:
             measured = self.files.read_json(rel)
         except SourceUnavailableError:
+            measured = None
+        if not isinstance(measured, dict) or not measured:
             return {
                 "status": "unknown",
                 "source": rel,
@@ -746,7 +840,7 @@ class ResearchService:
             }
         return {"status": "ok", "source": rel, "assumed": assumed, "measured": measured}
 
-    def soak(self) -> dict[str, Any]:
+    def soak(self) -> dict[str, Any]:  # noqa: PLR0915 - one report over three logs
         cycles_rel = "data/execution/cycles.jsonl"
         try:
             lines = self.files.read_text(cycles_rel).splitlines()
@@ -756,33 +850,49 @@ class ResearchService:
                 **unknown(cycles_rel, "chưa có hoặc không đọc được cycles.jsonl"),
                 "alerts": None,
             }
-        decided = [
-            r["decision_time"] for r in rows if r.get("decision_time") and not r.get("skipped")
-        ]
+        decided: list[datetime] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                return {**unknown(cycles_rel, "một dòng không phải đối tượng JSON"), "alerts": None}
+            raw = row.get("decision_time")
+            if not raw or row.get("skipped"):
+                continue
+            try:
+                stamp = datetime.fromisoformat(raw)
+            except (TypeError, ValueError):
+                return {**unknown(cycles_rel, "decision_time không hợp lệ"), "alerts": None}
+            if stamp.tzinfo is None:
+                return {**unknown(cycles_rel, "decision_time thiếu múi giờ"), "alerts": None}
+            decided.append(stamp.astimezone(UTC))
         unique = sorted(set(decided))
         duplicates = len(decided) - len(unique)
         expected: int | None = None
         uptime: float | None = None
         days: float | None = None
+        over_count = False
+        problem: str | None = None
+        now = self.clock()
         if len(unique) >= 2:
-            first = datetime.fromisoformat(unique[0])
-            last = datetime.fromisoformat(unique[-1])
-            days = (last - first).total_seconds() / 86400
-            try:
-                cal = BrokerProfile.from_yaml(
-                    self.files.resolve(BROKER_PROFILE)
-                ).validation.calendar
-                stamps = []
-                cursor = first
-                while cursor <= last:
-                    stamps.append(cursor)
-                    cursor += timedelta(minutes=15)
-                frame = pl.DataFrame({"t": stamps}, schema={"t": pl.Datetime("us", "UTC")})
-                closed = frame.select(cal.closed_expr(pl.col("t")).alias("c"))["c"]
-                expected = len(stamps) - int(closed.sum())
-                uptime = min(1.0, len(unique) / expected) if expected else None
-            except (SourceUnavailableError, ValueError, OSError):
-                expected = uptime = None
+            first, last = unique[0], max(unique[-1], now)
+            days = (unique[-1] - first).total_seconds() / 86400
+            if (last - first) > timedelta(days=MAX_SOAK_SPAN_DAYS) or first.year < 2000:
+                problem = f"khoảng thời gian vượt {MAX_SOAK_SPAN_DAYS} ngày hoặc ngày bất thường"
+            else:
+                try:
+                    cal = BrokerProfile.from_yaml(
+                        self.files.resolve(BROKER_PROFILE)
+                    ).validation.calendar
+                    stamps = pl.datetime_range(
+                        first, last, interval="15m", time_zone="UTC", eager=True
+                    )
+                    frame = pl.DataFrame({"t": stamps})
+                    closed = frame.select(cal.closed_expr(pl.col("t")).alias("c"))["c"]
+                    expected = frame.height - int(closed.sum())
+                    uptime = len(unique) / expected if expected else None
+                    over_count = bool(uptime is not None and uptime > 1.0)
+                except (SourceUnavailableError, ValueError, OSError, pl.exceptions.PolarsError):
+                    expected = uptime = None
+                    problem = "không tính được số bar kỳ vọng"
         alerts: dict[str, int] | None = None
         try:
             alerts = {
@@ -805,14 +915,17 @@ class ResearchService:
         except (SourceUnavailableError, ValueError, OSError):
             funded = unknown(FUNDED_RULES, "không đọc được luật funded")
         return {
-            "status": "ok",
+            "status": "unknown" if problem else "ok",
             "source": cycles_rel,
+            "problem": problem,
             "cycles": len(rows),
             "decided_bars": len(unique),
             "duplicate_bars": duplicates,
             "expected_bars": expected,
             "uptime_m15": uptime,
+            "uptime_over_count": over_count,
             "days_covered": days,
+            "measured_until": now.isoformat(),
             "target": {"soak_days": 14, "uptime_min": 0.99, "duplicates_max": 0, "demo_weeks": 4},
             "alerts": alerts,
             "funded_rules": funded,

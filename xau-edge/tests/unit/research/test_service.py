@@ -294,7 +294,8 @@ def _registry(repo: Path, name: str, family: str, period: str) -> None:
 
 def test_locks_are_pristine_only_when_the_registry_was_read_and_shows_no_use(repo: Path) -> None:
     _registry(repo, "a1", "backtest", "development")
-    _registry(repo, "a2", "edge-program", "dev")
+    for n in range(2, 6):  # the synthetic ledger lists four edge-program runs
+        _registry(repo, f"a{n}", "edge-program", "dev")
     view = _service(repo).locks()
     states = {lock["id"]: lock["state"] for lock in view["locks"]}
     assert view["status"] == "ok"
@@ -417,7 +418,8 @@ def test_soak_uptime_counts_decided_bars_against_open_market_bars(repo: Path) ->
     start = datetime(2026, 3, 4, 8, 0, tzinfo=UTC)  # a Wednesday morning, market open
     full = [start + timedelta(minutes=15 * i) for i in range(16)]
     _cycles(repo, full)
-    view = _service(repo).soak()
+    at = ResearchService(repo, clock=lambda: full[-1])
+    view = at.soak()
     assert view["status"] == "ok"
     assert view["decided_bars"] == 16
     assert view["expected_bars"] == 16
@@ -425,7 +427,7 @@ def test_soak_uptime_counts_decided_bars_against_open_market_bars(repo: Path) ->
     assert view["duplicate_bars"] == 0
     missing = full[:5] + full[8:]
     _cycles(repo, missing)
-    view = _service(repo).soak()
+    view = at.soak()
     assert view["expected_bars"] == 16
     assert view["uptime_m15"] == pytest.approx(13 / 16)
     assert view["funded_rules"]["status"] == "ok"
@@ -438,7 +440,7 @@ def test_soak_does_not_count_closed_hours_against_uptime_and_flags_duplicates(re
     a = datetime(2026, 3, 6, 21, 0, tzinfo=UTC)
     b = datetime(2026, 3, 9, 1, 0, tzinfo=UTC)
     _cycles(repo, [a, b], duplicate=True)
-    view = _service(repo).soak()
+    view = ResearchService(repo, clock=lambda: b).soak()
     assert view["duplicate_bars"] == 1
     assert view["expected_bars"] < 200  # a weekend of 15-minute bars would be about 224
     assert view["uptime_m15"] is not None
@@ -448,3 +450,42 @@ def test_soak_without_cycles_is_unknown(repo: Path) -> None:
     assert _service(repo).soak()["status"] == "unknown"
     write(repo, "data/execution/cycles.jsonl", "oops\n")
     assert _service(repo).soak()["status"] == "unknown"
+
+
+def test_a_registry_with_fewer_records_than_the_ledger_is_unknown_not_pristine(repo: Path) -> None:
+    _registry(repo, "a1", "edge-program", "dev")
+    view = _service(repo).locks()
+    assert view["status"] == "unknown"
+    assert {lock["id"]: lock["state"] for lock in view["locks"]}["testH"] == "KHÔNG RÕ"
+
+
+def test_a_test_period_run_in_the_ledger_marks_test_h_used(repo: Path) -> None:
+    ledger = repo / "docs/research/edge-program/ledger.md"
+    ledger.write_text(
+        ledger.read_text(encoding="utf-8").replace(
+            "val-H | base + bi quan | 600", "test | base | 600"
+        ),
+        encoding="utf-8",
+    )
+    for n in range(1, 5):
+        _registry(repo, f"a{n}", "edge-program", "dev")
+    states = {lock["id"]: lock["state"] for lock in _service(repo).locks()["locks"]}
+    assert states["testH"] == "ĐÃ DÙNG"
+
+
+def test_a_candidate_recorded_twice_for_one_period_makes_the_view_unknown(repo: Path) -> None:
+    _results(repo, "H04-L40", True, True)
+    write(
+        repo,
+        "experiments/edge_program/H04-L40_dev_y.json",
+        json.dumps(result_file("H04-L40", "dev", passed=True)),
+    )
+    assert _service(repo).candidates()["status"] == "unknown"
+
+
+def test_a_stopped_bot_lowers_soak_uptime_because_the_window_runs_to_now(repo: Path) -> None:
+    start = datetime(2026, 3, 4, 8, 0, tzinfo=UTC)
+    _cycles(repo, [start + timedelta(minutes=15 * i) for i in range(16)])
+    later = start + timedelta(hours=8)  # the bot stopped four hours ago
+    view = ResearchService(repo, clock=lambda: later).soak()
+    assert view["uptime_m15"] < 0.6
