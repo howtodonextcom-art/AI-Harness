@@ -13,6 +13,7 @@ import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
 
 const POLL_MS = 3000;
 const STALE_UI_SECONDS = 20;
+const STALE_DATA_SECONDS = 180;
 
 const GOOD = "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200";
 const WARN = "border-amber-600 bg-amber-500/15 text-amber-800 dark:text-amber-200";
@@ -145,6 +146,7 @@ export function TradeView() {
   }, [load]);
 
   const uiStale = lastOk === null || (now - lastOk) / 1000 > STALE_UI_SECONDS;
+  const dataStale = Boolean(view?.market?.open) && ((view?.data_age_seconds ?? 0) > STALE_DATA_SECONDS || Boolean(view?.quote?.stale));
   const decision = view?.decision;
   const side = decision?.decision ?? "WAIT";
   const expiresMs = decision?.signal_expiry ? Date.parse(decision.signal_expiry) : null;
@@ -152,7 +154,7 @@ export function TradeView() {
   const expired = Boolean(decision?.expired) || (secondsLeft !== null && secondsLeft <= 0 && side !== "WAIT");
   const plan: RiskPlan | undefined = view?.risk_plans?.find((p) => Math.abs(p.risk_pct - risk) < 1e-9);
   const blockers = view?.desk?.blockers ?? [];
-  const canOpen = Boolean(view?.actionable && view?.desk?.can_open && !expired && !uiStale && plan?.ok);
+  const canOpen = Boolean(view?.actionable && view?.desk?.can_open && !expired && !uiStale && !dataStale && plan?.ok);
 
   const take = async () => {
     if (!decision || !decision.setup_id) return;
@@ -205,6 +207,11 @@ export function TradeView() {
           {error ?? "Đang chờ dữ liệu"} — không được vào lệnh khi dữ liệu cũ.
         </div>
       )}
+      {dataStale && (
+        <div role="alert" data-testid="data-stale-banner" className={`rounded-md border px-3 py-2 text-sm ${BAD}`}>
+          Dữ liệu thị trường đã cũ ({ageText(view?.data_age_seconds)}) hoặc quote cũ — không có kế hoạch nào được coi là hợp lệ.
+        </div>
+      )}
       {view && !view.available && (
         <div role="alert" className={`rounded-md border px-3 py-2 text-sm ${WARN}`}>
           Engine chưa có quyết định: {view.problems.join("; ")}
@@ -227,7 +234,7 @@ export function TradeView() {
             <Card title="Quyết định hiện tại" testId="decision-card">
               <div className="flex flex-wrap items-center gap-3">
                 <span data-testid="decision" className={`rounded-lg border-2 px-5 py-2 text-3xl font-black ${SIDE_STYLE[side]}`}>
-                  {expired && side !== "WAIT" ? `${side} (hết hạn)` : side}
+                  {side !== "WAIT" && (expired || dataStale) ? `${side} (${expired ? "hết hạn" : "dữ liệu cũ"})` : side}
                 </span>
                 {side !== "WAIT" && !expired && secondsLeft !== null && (
                   <span data-testid="expiry" className="text-sm">
@@ -360,7 +367,7 @@ export function TradeView() {
               <Row k="Trạng thái M1" v={view.volume?.state ?? "—"} />
               <Row k="Z-score" v={fmt(view.volume?.m1_zscore)} />
               <Row k="Tương đối" v={fmt(view.volume?.m1_relative)} />
-              <Row k="Percentile" v={fmt(view.volume?.m1_percentile, 0)} />
+              <Row k="Percentile" v={view.volume?.m1_percentile === null || view.volume?.m1_percentile === undefined ? "—" : `${(view.volume.m1_percentile * 100).toFixed(0)}%`} />
               <Row k="Gia tốc" v={fmt(view.volume?.m1_acceleration)} />
             </Card>
 

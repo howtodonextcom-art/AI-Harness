@@ -168,3 +168,14 @@ def test_cors_allows_only_the_local_dashboard(client: TestClient) -> None:
 def test_jsonable_converts_non_finite_numbers_and_numpy_scalars() -> None:
     out = jsonable({"a": float("nan"), "b": np.float64("inf"), "c": [np.int64(3), 1.5]})
     assert out == {"a": None, "b": None, "c": [3, 1.5]}
+
+
+def test_legacy_signals_endpoint_is_marked_deprecated_and_points_to_the_desk(
+    client: TestClient,
+) -> None:
+    res = client.get("/signals/XAUUSD")
+    assert res.headers["Deprecation"] == "true"
+    assert "/trade/decision" in res.headers["Link"]
+    body = res.json()
+    assert body["deprecated"] is True and body["successor"] == "/trade/decision"
+    assert "data/raw" in body["legacy_source"]

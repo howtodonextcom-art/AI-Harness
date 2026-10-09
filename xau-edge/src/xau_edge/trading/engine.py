@@ -56,6 +56,16 @@ class EngineConfig:
     code_version: str = "unknown"
 
 
+def _bias_of(label: str) -> int:
+    """+1 / -1 / 0 from the state label shown next to it (the arrow can never disagree)."""
+    upper = label.upper()
+    if upper.startswith(("BULL", "UP", "TREND_UP")):
+        return 1
+    if upper.startswith(("BEAR", "DOWN", "TREND_DOWN")):
+        return -1
+    return 0
+
+
 class TradeEngine:
     """Computes and serves the current trading decision and drives the paper desk."""
 
@@ -229,9 +239,7 @@ class TradeEngine:
                     "timeframe": name,
                     "role": ROLES[name],
                     "state": label[name],
-                    "bias": None
-                    if s is None
-                    else (1 if s.structure_trend > 0 else -1 if s.structure_trend < 0 else 0),
+                    "bias": None if s is None else _bias_of(label[name]),
                     "atr": None if s is None else s.atr,
                     "relative_tick_volume": None if s is None else s.volume_ratio,
                     "volume_zscore": None if s is None else s.volume_zscore,

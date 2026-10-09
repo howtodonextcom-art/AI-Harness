@@ -91,6 +91,14 @@ test("BUY shows the plan, lot per risk choice, and a paper order needs a confirm
   expect(posted).toEqual({ setup_id: "abcdef0123456789", risk_pct: 0.25 });
 });
 
+test("a BUY on stale data is shown as stale and cannot be taken, even if the API said actionable", async ({ page }) => {
+  await mock(page, view({ data_age_seconds: 900 }, "BUY"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("decision")).toContainText("dữ liệu cũ");
+  await expect(page.getByTestId("data-stale-banner")).toBeVisible();
+  await expect(page.getByTestId("take-paper")).toBeDisabled();
+});
+
 test("a blocked desk disables the button and says why", async ({ page }) => {
   await mock(page, view({}, "BUY", ["COOLDOWN"]));
   await page.goto("/trade");
@@ -162,3 +170,15 @@ test("the home page opens the trading desk and the legacy page is marked depreca
   await page.goto("/legacy");
   await expect(page.getByTestId("legacy-banner")).toContainText("deprecated");
 });
+
+for (const path of ["/trade", "/journal"]) {
+  test(`${path} at 390px has no horizontal page scroll`, async ({ page }) => {
+    await mock(page, view({}, "BUY"));
+    await page.route("**/trade/journal**", (route) => route.fulfill({ json: { simulated: true, open: null, trades: [], evidence: view().evidence } }));
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+}

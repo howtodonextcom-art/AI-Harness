@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict
 
@@ -163,9 +163,13 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
         )
         return {"symbol": SYMBOL, **view}
 
-    @app.get("/signals/{symbol}")
-    def signals(symbol: str, at: str | None = None) -> dict[str, Any]:
+    @app.get("/signals/{symbol}", deprecated=True)
+    def signals(symbol: str, response: Response, at: str | None = None) -> dict[str, Any]:
+        """DEPRECATED legacy research signal over ``data/raw``; use ``GET /trade/decision``."""
         _symbol(symbol)
+        response.headers["Deprecation"] = "true"
+        response.headers["Link"] = '</trade/decision>; rel="successor-version"'
+        response.headers["Warning"] = '299 - "legacy research store, not live data"'
         moment = _at(ctx, at)
         provider = ctx.signal_provider or (
             lambda when: generate_signal(ctx.frames(), when, ctx.registry)
@@ -181,6 +185,17 @@ def create_app(ctx: ApiContext) -> FastAPI:  # noqa: PLR0915 - one small functio
             else "clear"
         )
         body["data_as_of"] = _bounds(ctx)[1].isoformat()
+        body["deprecated"] = True
+        body["legacy_source"] = "data/raw (research store), NOT the live FTMO feed"
+        body["successor"] = "/trade/decision"
+        age = ctx.clock() - _bounds(ctx)[1]
+        if age.total_seconds() > ctx.max_data_age_minutes * 60:
+            body["stale"] = True
+            body["direction"] = "WAIT"
+            body["explanation"] = [
+                f"STALE: the legacy store ends {age.days} days ago; use /trade/decision",
+                *body.get("explanation", []),
+            ]
         return body
 
     @app.post("/paper/orders")
