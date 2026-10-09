@@ -2,10 +2,33 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+class ClosureWindow(BaseModel):
+    """A scheduled closure outside the weekly template (holiday or early close), in true UTC.
+
+    ``[start, end)``: bars opening inside it are expected to be absent. Only windows with a
+    recognised reason belong here; unexplained absences stay data gaps.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    start: datetime
+    end: datetime
+    reason: Literal["HOLIDAY", "EARLY_CLOSE"]
+
+    @model_validator(mode="after")
+    def _ordered_and_aware(self) -> ClosureWindow:
+        if self.start.tzinfo is None or self.end.tzinfo is None or self.end <= self.start:
+            msg = "closure windows need timezone-aware, increasing start/end"
+            raise ValueError(msg)
+        return self
 
 
 class MarketCalendar(BaseModel):
@@ -26,6 +49,7 @@ class MarketCalendar(BaseModel):
     weekend_open_minute: int = Field(default=17 * 60, ge=0, lt=24 * 60)
     daily_break_start_minute: int | None = Field(default=None, ge=0, lt=24 * 60)
     daily_break_end_minute: int | None = Field(default=None, ge=0, lt=24 * 60)
+    closures: tuple[ClosureWindow, ...] = ()
 
     @model_validator(mode="after")
     def _daily_break_is_complete(self) -> MarketCalendar:
@@ -85,4 +109,10 @@ class MarketCalendar(BaseModel):
                 else (minute >= start) | (minute < end)
             )
             closed = closed | in_break
+        if self.closures:
+            utc = ts.dt.convert_time_zone("UTC")
+            for window in self.closures:
+                begin = window.start.astimezone(UTC)
+                finish = window.end.astimezone(UTC)
+                closed = closed | ((utc >= pl.lit(begin)) & (utc < pl.lit(finish)))
         return closed

@@ -24,6 +24,8 @@ def market_status(now: datetime, calendar: MarketCalendar) -> MarketStatus:
     closed = bool(frame.select(calendar.closed_expr(pl.col("t")).alias("c"))["c"][0])
     if not closed:
         return MarketStatus.OPEN
+    if any(w.start <= now < w.end for w in calendar.closures):
+        return MarketStatus.CLOSED  # a holiday or early-close window, not the daily break
     local = frame.select(pl.col("t").dt.convert_time_zone(calendar.timezone).alias("l"))["l"][0]
     weekday = local.isoweekday()  # Monday=1 ... Sunday=7
     minute = local.hour * 60 + local.minute

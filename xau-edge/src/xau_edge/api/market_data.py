@@ -19,6 +19,7 @@ from fastapi import FastAPI, HTTPException, Query
 
 from xau_edge.domain.market import FeedHealth, MarketStatus
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.market_data.collector import read_status_file
 from xau_edge.market_data.ledger import BarLedger, LedgerError
 from xau_edge.market_data.session import market_status
@@ -58,7 +59,7 @@ def add_market_data_routes(  # noqa: PLR0915 - one small function per route
 ) -> None:
     """Mount the GET-only market data routes (``root`` is the ledger/collector directory)."""
     ledger = BarLedger(root)
-    cal = calendar or MarketCalendar()
+    cal = calendar or ftmo_calendar()
 
     def now() -> datetime:
         return clock() if clock else datetime.now(UTC)

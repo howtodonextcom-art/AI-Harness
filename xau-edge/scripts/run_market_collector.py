@@ -20,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from xau_edge.market_data.calendars import ftmo_calendar  # noqa: E402
 from xau_edge.market_data.collector import (  # noqa: E402
     CollectorStatus,
     MarketCollector,
@@ -27,7 +28,6 @@ from xau_edge.market_data.collector import (  # noqa: E402
 )
 from xau_edge.market_data.ledger import BarLedger  # noqa: E402
 from xau_edge.market_data.mt5.runtime import DEFAULT_TERMINAL, open_feed  # noqa: E402
-from xau_edge.market_data.validators.market_calendar import MarketCalendar  # noqa: E402
 
 DEFAULT_ROOT = ROOT / "data" / "market"
 
@@ -69,7 +69,7 @@ def main() -> int:
                 mapping = feed.discover_symbol(args.symbol)
                 feed.select(mapping.broker_symbol)
                 collector = MarketCollector(
-                    feed, BarLedger(args.root), mapping, MarketCalendar(), status_path=status_path
+                    feed, BarLedger(args.root), mapping, ftmo_calendar(), status_path=status_path
                 )
                 if args.once:
                     collector.reconcile_all()

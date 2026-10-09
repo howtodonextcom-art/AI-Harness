@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from xau_edge.domain.timeframe import Timeframe  # noqa: E402
 from xau_edge.market_data.broker_clock import BrokerClock  # noqa: E402
+from xau_edge.market_data.calendars import classify_incomplete, ftmo_calendar  # noqa: E402
 from xau_edge.market_data.ledger import BarLedger  # noqa: E402
 from xau_edge.market_data.resampling import resample_bars  # noqa: E402
 from xau_edge.market_data.validators.market_calendar import MarketCalendar  # noqa: E402
@@ -40,7 +41,9 @@ PAIRS = (
 COLUMNS = ("open", "high", "low", "close", "tick_volume")
 
 
-def parity(ledger: BarLedger, src: Timeframe, dst: Timeframe, clock: BrokerClock) -> dict[str, Any]:
+def parity(
+    ledger: BarLedger, src: Timeframe, dst: Timeframe, clock: BrokerClock, calendar: MarketCalendar
+) -> dict[str, Any]:
     fine = ledger.load("XAUUSD", src)
     native = ledger.load("XAUUSD", dst)
     if fine.height == 0 or native.height == 0:
@@ -48,7 +51,8 @@ def parity(ledger: BarLedger, src: Timeframe, dst: Timeframe, clock: BrokerClock
     # The first stored fine bar may sit mid-bucket: drop the partial leading bucket.
     start = fine["timestamp"].min()
     native = native.filter(pl.col("timestamp") >= start)
-    result = resample_bars(fine, src, dst, clock=clock, calendar=MarketCalendar())
+    result = resample_bars(fine, src, dst, clock=clock, calendar=calendar)
+    before = resample_bars(fine, src, dst, clock=clock, calendar=MarketCalendar())
     derived = result.frame
     native = native.filter(pl.col("timestamp") <= fine["timestamp"].max())
     joined = native.join(derived, on="timestamp", how="inner", suffix="_d")
@@ -57,7 +61,15 @@ def parity(ledger: BarLedger, src: Timeframe, dst: Timeframe, clock: BrokerClock
         "native_bars": native.height,
         "derived_bars": derived.height,
         "compared": joined.height,
+        "incomplete_buckets_before_default_calendar": len(before.incomplete),
         "incomplete_buckets": len(result.incomplete),
+        "drop_rate_before": len(before.incomplete)
+        / max(1, before.frame.height + len(before.incomplete)),
+        "drop_rate_after": len(result.incomplete) / max(1, derived.height + len(result.incomplete)),
+        "drop_reasons": {
+            k: len(v)
+            for k, v in classify_incomplete(result.incomplete, dst, fine, calendar).items()
+        },
         "native_without_derived": native.join(
             derived.select("timestamp"), on="timestamp", how="anti"
         ).height,
@@ -92,9 +104,10 @@ def main() -> int:
     args = parser.parse_args()
     ledger = BarLedger(args.root)
     clock = BrokerClock.parse("NY+7")
+    calendar = ftmo_calendar()
     report = {
         "class": "D (data parity; no market outcome analysed)",
-        "parity": [parity(ledger, s, d, clock) for s, d in PAIRS],
+        "parity": [parity(ledger, s, d, clock, calendar) for s, d in PAIRS],
         "bar_spread_field": spread_semantics(ledger),
     }
     text = json.dumps(report, indent=2, default=str)
