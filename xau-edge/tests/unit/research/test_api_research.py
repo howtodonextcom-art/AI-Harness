@@ -31,6 +31,12 @@ GET_PATHS = (
     "/research/locks",
     "/research/calibration",
     "/research/soak",
+    "/research/stage1",
+    "/research/stage1/x",
+    "/research/lineage",
+    "/research/prospective",
+    "/research/rollout",
+    "/research/gates",
     "/lifecycle/strategies",
     "/lifecycle/x/forward",
 )
@@ -61,7 +67,7 @@ def client(tmp_path: Path, repo: Path) -> TestClient:
 def test_every_research_and_lifecycle_route_is_get_only(client: TestClient) -> None:
     routes = [r for r in client.app.routes if isinstance(r, APIRoute)]  # type: ignore[attr-defined]
     mine = [r for r in routes if r.path.startswith(("/research", "/lifecycle"))]
-    assert len(mine) >= 12
+    assert len(mine) >= 18
     for route in mine:
         assert route.methods == {"GET"}, route.path
 

@@ -22,6 +22,7 @@ import polars as pl
 
 from xau_edge.backtest.costs import CostModel
 from xau_edge.integrity.dependence import effective_n
+from xau_edge.integrity.evidence import EvidenceClass, Label, Proof, can_display
 from xau_edge.integrity.forward_power import INCONCLUSIVE
 from xau_edge.integrity.forward_power import readiness as fp_readiness
 from xau_edge.market_data.profiles import BrokerProfile
@@ -711,7 +712,11 @@ class ResearchService:
             else:
                 state = "ĐÃ DÙNG THIẾT KẾ" if split["burned"] else "—"
             locks.append(
-                {**split, "state": state, "outcome_state": self._outcome_state(split, state)}
+                {
+                    **split,
+                    "state": state,
+                    "outcome_state": self._outcome_state(split, state, bool(freezes)),
+                }
             )
         return {
             "status": "unknown" if blind else "ok",
@@ -723,7 +728,9 @@ class ResearchService:
             "freeze_records": freezes,
         }
 
-    def _outcome_state(self, split: dict[str, Any], lock_state: str) -> str | None:
+    def _outcome_state(
+        self, split: dict[str, Any], lock_state: str, has_freeze: bool
+    ) -> str | None:
         """PASS, FAIL, INCONCLUSIVE, LOCKED or UNKNOWN for the confirmatory splits only."""
         if split["id"] not in {"testH", "holdout"}:
             return None
@@ -739,7 +746,8 @@ class ResearchService:
                 "LOCKED" if raw is None else "UNKNOWN"
             )  # an outcome on a pristine lock is a conflict
         if lock_state == "ĐÃ DÙNG":
-            return recorded if recorded in valid else "UNKNOWN"
+            # a confirmatory result without its freeze record is not confirmatory evidence
+            return recorded if recorded in valid and has_freeze else "UNKNOWN"
         return "UNKNOWN"
 
     # -- W-R6 ----------------------------------------------------------------------------------
@@ -940,15 +948,34 @@ class ResearchService:
             measured = self.files.read_json(rel)
         except SourceUnavailableError:
             measured = None
+        proof = Proof(
+            EvidenceClass.EXECUTION,
+            broker_evidence_present=isinstance(measured, dict) and bool(measured),
+        )
+        labels = {
+            "EXECUTION_VALIDATED": {
+                "allowed": can_display(Label.EXECUTION_VALIDATED, proof).allowed,
+                "reasons": list(can_display(Label.EXECUTION_VALIDATED, proof).reasons),
+            }
+        }
         if not isinstance(measured, dict) or not measured:
             return {
                 "status": "unknown",
                 "source": rel,
+                "labels": labels,
+                "evidence_class": "EXECUTION",
                 "assumed": assumed,
                 "measured": None,
                 "message": "chưa đo chi phí thật (sprint P12); các số trên là GIẢ ĐỊNH",
             }
-        return {"status": "ok", "source": rel, "assumed": assumed, "measured": measured}
+        return {
+            "status": "ok",
+            "source": rel,
+            "labels": labels,
+            "evidence_class": "EXECUTION",
+            "assumed": assumed,
+            "measured": measured,
+        }
 
     def soak(self) -> dict[str, Any]:  # noqa: PLR0915 - one report over three logs
         cycles_rel = "data/execution/cycles.jsonl"

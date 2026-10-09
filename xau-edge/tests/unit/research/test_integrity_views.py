@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -166,7 +167,7 @@ def test_gate_calibration_requires_its_artefact(repo: Path) -> None:
 # -- stage 1 -------------------------------------------------------------------------------
 
 
-def _stage1_payload() -> dict[str, object]:
+def _stage1_payload() -> dict[str, Any]:
     study = {
         "n_events": 500,
         "mean_gross_mid_r": 0.05,
