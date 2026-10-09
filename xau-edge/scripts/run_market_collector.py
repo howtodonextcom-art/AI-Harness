@@ -1,57 +1,37 @@
-"""Run the MT5 market collector: quote loop plus closed-bar loop with reconcile and a health file.
+"""Run the MT5 market collector: quotes, closed bars, ticks, reconcile, health file, reconnect.
 
     uv run --extra mt5 python scripts/run_market_collector.py [--once] [--quote-interval 1]
 
-Restart-safe: on start (and every 10 minutes) it reconciles the last 200 bars of every timeframe
-against the terminal, records gaps/duplicates/changes as events and never overwrites a stored bar.
-If the terminal drops, the loop waits and reconnects; the status file then says DISCONNECTED.
-Stop with Ctrl+C. Market data only; the feed has no order function and requires a DEMO account.
+Restart-safe: every session reconciles the last 200 bars of every timeframe against the terminal
+(recording gaps/duplicates/changes as events, never overwriting a stored bar) and ingests ticks
+into the tick ledger. If the terminal is missing, starts late, restarts or drops, the status file
+says DISCONNECTED and a new session starts automatically after 5 s. Stop with Ctrl+C (or let the
+supervisor stop it). Market data only; the feed has no order function and requires a DEMO account.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
-import time
-from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from xau_edge.market_data.calendars import ftmo_calendar  # noqa: E402
-from xau_edge.market_data.collector import (  # noqa: E402
-    CollectorStatus,
-    MarketCollector,
-    write_status_file,
+from xau_edge.market_data.collector import MarketCollector, write_status_file  # noqa: E402
+from xau_edge.market_data.collector_runner import (  # noqa: E402
+    disconnected_status,
+    run_with_reconnect,
 )
 from xau_edge.market_data.ledger import BarLedger  # noqa: E402
+from xau_edge.market_data.mt5.feed import Mt5Feed  # noqa: E402
 from xau_edge.market_data.mt5.runtime import DEFAULT_TERMINAL, open_feed  # noqa: E402
 from xau_edge.market_data.tick_ledger import TickLedger  # noqa: E402
 
 DEFAULT_ROOT = ROOT / "data" / "market"
-
-
-def _disconnected(path: Path, reason: str) -> None:
-    write_status_file(
-        path,
-        CollectorStatus(
-            updated_at=datetime.now(UTC).isoformat(),
-            health="DISCONNECTED",
-            reasons=[reason],
-            market_status="UNKNOWN",
-            connected=False,
-            demo_account=False,
-            server=None,
-            broker_symbol="",
-            quote=None,
-            last_closed={},
-            last_bar_age_seconds={},
-            stored_rows={},
-            stale_timeframes=[],
-        ),
-    )
 
 
 def main() -> int:
@@ -63,37 +43,45 @@ def main() -> int:
     parser.add_argument("--bar-interval", type=float, default=5.0)
     parser.add_argument("--once", action="store_true")
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     status_path = args.root / "collector_status.json"
-    while True:
+
+    def build(feed: Mt5Feed) -> MarketCollector:
+        mapping = feed.discover_symbol(args.symbol)
+        feed.select(mapping.broker_symbol)
+        return MarketCollector(
+            feed,
+            BarLedger(args.root),
+            mapping,
+            ftmo_calendar(),
+            status_path=status_path,
+            tick_ledger=TickLedger(args.root),
+        )
+
+    if args.once:
         try:
             with open_feed(args.terminal_path) as feed:
-                mapping = feed.discover_symbol(args.symbol)
-                feed.select(mapping.broker_symbol)
-                collector = MarketCollector(
-                    feed,
-                    BarLedger(args.root),
-                    mapping,
-                    ftmo_calendar(),
-                    status_path=status_path,
-                    tick_ledger=TickLedger(args.root),
-                )
-                if args.once:
-                    collector.reconcile_all()
-                    print(json.dumps(collector.run_once().__dict__, indent=2, default=str))
-                    return 0
-                collector.run(
-                    lambda: False,
-                    quote_interval=args.quote_interval,
-                    bar_interval=args.bar_interval,
-                )
-        except KeyboardInterrupt:
-            return 0
+                collector = build(feed)
+                collector.reconcile_all()
+                print(json.dumps(collector.run_once().__dict__, indent=2, default=str))
         except Exception as exc:
-            _disconnected(status_path, f"{type(exc).__name__}: {exc}"[:300])
-            if args.once:
-                print("FAILED:", exc)
-                return 2
-            time.sleep(5)
+            write_status_file(
+                status_path, disconnected_status(f"{type(exc).__name__}: {exc}"[:300])
+            )
+            print("FAILED:", exc)
+            return 2
+        return 0
+    try:
+        run_with_reconnect(
+            lambda: open_feed(args.terminal_path),
+            build,
+            status_path=status_path,
+            quote_interval=args.quote_interval,
+            bar_interval=args.bar_interval,
+        )
+    except KeyboardInterrupt:
+        return 0
+    return 0
 
 
 if __name__ == "__main__":
