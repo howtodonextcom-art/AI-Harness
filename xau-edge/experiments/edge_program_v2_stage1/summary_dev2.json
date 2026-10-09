@@ -1,0 +1,128 @@
+{
+  "window": "dev2",
+  "k": 20,
+  "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+  "survivors": [],
+  "verdicts": {
+    "H07-PD-e0": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H07-PD-e0.25": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H07-PD-e0.5": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H07-ASIA-e0": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H07-ASIA-e0.25": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H07-ASIA-e0.5": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H08-ASIA-e0": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H08-ASIA-e0.25": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H09-ASIA_LONDON-t0.2": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H09-ASIA_LONDON-t0.3": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H09-ASIA_LONDON-t0.4": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H09-LONDON_NY-t0.2": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H09-LONDON_NY-t0.3": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H09-LONDON_NY-t0.4": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H10-c0.8-L20": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H10-c0.8-L50": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H10-c0.8-L100": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H10-c0.9-L20": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H10-c0.9-L50": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    },
+    "H10-c0.9-L100": {
+      "holm_family_alpha": 0.1,
+      "holm_rejects_null": false,
+      "pessimistic_mean_positive": false,
+      "stage1_survivor": false
+    }
+  }
+}

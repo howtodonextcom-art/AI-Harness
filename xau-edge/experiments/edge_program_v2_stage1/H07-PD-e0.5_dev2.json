@@ -1,0 +1,175 @@
+{
+  "variant": "H07-PD-e0.5",
+  "hypothesis": "H07",
+  "window": "dev2",
+  "evidence_class": "SCREENING",
+  "k": 20,
+  "experiment_id": "1b0c3870ae5249c12f10ecc8eb4b087f",
+  "dataset_ids": {
+    "H1": "8e64dd6561015b72",
+    "H4": "b438f1794bd11402"
+  },
+  "code_commit_sha": "09cc1281a9c703786c043674fa6fcac113f329e7",
+  "recorded_at": "2026-10-09T01:51:56.055542+00:00",
+  "screening": {
+    "holm_family_alpha": 0.1,
+    "holm_rejects_null": false,
+    "pessimistic_mean_positive": false,
+    "stage1_survivor": false
+  },
+  "study": {
+    "name": "H07-PD-e0.5",
+    "n_events_raw": 1409,
+    "n_events": 1404,
+    "dropped_without_outcome": 5,
+    "excluded_clock_unsafe": 148,
+    "evidence_class": "SCREENING",
+    "mean_gross_mid_r": -0.6143716603092151,
+    "mean_net_base_r": -0.71493057201327,
+    "mean_net_pess_r": -0.7288439000988668,
+    "ci95_net_base": [
+      -0.7651352296101188,
+      -0.6657203470697983
+    ],
+    "p_value_one_sided": 1.0,
+    "hit_target": 0.12606837606837606,
+    "hit_stop": 0.8682336182336182,
+    "timeout": 0.005698005698005698,
+    "mean_mfe_r": 0.8537251522857379,
+    "mean_mae_r": 1.3930247018145625,
+    "by_year": {
+      "2011": {
+        "n": 88,
+        "mean_net_base_r": -0.06382463462996318
+      },
+      "2012": {
+        "n": 139,
+        "mean_net_base_r": -0.6207717095716359
+      },
+      "2013": {
+        "n": 186,
+        "mean_net_base_r": -0.6600661514585815
+      },
+      "2014": {
+        "n": 195,
+        "mean_net_base_r": -0.7894573941181426
+      },
+      "2015": {
+        "n": 184,
+        "mean_net_base_r": -0.875020294689875
+      },
+      "2016": {
+        "n": 195,
+        "mean_net_base_r": -0.7417446343669345
+      },
+      "2017": {
+        "n": 206,
+        "mean_net_base_r": -0.7625124423685763
+      },
+      "2018": {
+        "n": 211,
+        "mean_net_base_r": -0.8171596708624982
+      }
+    },
+    "dependence": {
+      "raw_n": 1404,
+      "unique_days": 1232,
+      "unique_weeks": 393,
+      "effective_n": 1404.0,
+      "icc": 0.0,
+      "lag1_autocorr": -0.012060004167618182,
+      "sensitivity": "DEPENDENCE_STABLE",
+      "ci_lower_by_block": {
+        "1d": -0.7672090648575558,
+        "2d": -0.7648086636429284,
+        "5d": -0.7663883094598726
+      }
+    },
+    "power": {
+      "k": 20,
+      "mde_raw": 0.1265880176878681,
+      "mde_effective": 0.1265880176878681,
+      "adequately_powered": true,
+      "required_effective_n": {
+        "0.05R": 9000,
+        "0.10R": 2250,
+        "0.20R": 563
+      }
+    },
+    "era": {
+      "status": "UNKNOWN",
+      "reason": "fewer than two eras with enough trades",
+      "eras": [
+        {
+          "label": "pre-2021",
+          "n": 1404,
+          "mean": -0.71493057201327,
+          "ci_low": -0.7670226376186223,
+          "ci_high": -0.6628385064079177,
+          "profit_share": 1.0
+        }
+      ]
+    },
+    "intrabar": {
+      "n": 1404,
+      "ambiguous_count": 10,
+      "ambiguous_fraction": 0.007122507122507123,
+      "pessimistic_mean_r": -0.6143716603092151,
+      "optimistic_mean_r": -0.5927433001730691,
+      "status": "INTRABAR_ROBUST",
+      "recommendation": ""
+    },
+    "attribution_pool_n": 47959,
+    "attribution": {
+      "observed_mean_r": -0.71493057201327,
+      "direction_edge": -0.6070376624195674,
+      "timing_edge": 0.07912516622721122,
+      "drift_exposure": -0.08828425299827383,
+      "counterfactuals": [
+        {
+          "name": "B random direction (expected)",
+          "mean_r": -0.10789290959370268,
+          "incremental_r": -0.6070376624195674,
+          "ci_low": -0.6573784192133059,
+          "ci_high": -0.5566969056258289,
+          "effect_size": -0.5752531928132766
+        },
+        {
+          "name": "C always long",
+          "mean_r": -0.19617716259197654,
+          "incremental_r": -0.5187534094212937,
+          "ci_low": -0.6026122731008694,
+          "ci_high": -0.434894545741718,
+          "effect_size": -0.3275560783412403
+        },
+        {
+          "name": "D always short",
+          "mean_r": -0.019608656595428875,
+          "incremental_r": -0.6953219154178412,
+          "ci_low": -0.781366146769941,
+          "ci_high": -0.6092776840657413,
+          "effect_size": -0.4256881433687076
+        },
+        {
+          "name": "E opposite direction",
+          "mean_r": 0.4991447528258646,
+          "incremental_r": -1.2140753248391347,
+          "ci_low": -1.3147568384266117,
+          "ci_high": -1.1133938112516577,
+          "effect_size": -0.5752531928132766
+        }
+      ],
+      "note": "descriptive decomposition from paired differences; not a causal claim"
+    },
+    "placebo": {
+      "kind": "same-hour random timestamps, random direction",
+      "real": -0.71493057201327,
+      "median": -0.18618511193713794,
+      "p95": -0.1201318758009295,
+      "p99": -0.09631510010279382,
+      "empirical_percentile": 0.0,
+      "draws": 1000,
+      "seed": 7
+    }
+  }
+}
