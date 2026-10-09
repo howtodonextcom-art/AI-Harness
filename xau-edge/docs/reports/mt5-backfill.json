@@ -1,0 +1,55 @@
+{
+  "since_wanted": "2004-01-01T00:00:00+00:00",
+  "timeframes": {
+    "M1": {
+      "fetched": 98999,
+      "new": 98999,
+      "duplicates": 0,
+      "changed": 0,
+      "earliest_stored": "2026-06-30T10:13:00+00:00",
+      "state": "TRUNCATED_BY_TERMINAL"
+    },
+    "M5": {
+      "fetched": 98999,
+      "new": 98999,
+      "duplicates": 0,
+      "changed": 0,
+      "earliest_stored": "2025-05-14T01:10:00+00:00",
+      "state": "TRUNCATED_BY_TERMINAL"
+    },
+    "M15": {
+      "fetched": 98999,
+      "new": 98999,
+      "duplicates": 0,
+      "changed": 0,
+      "earliest_stored": "2022-08-02T16:00:00+00:00",
+      "state": "TRUNCATED_BY_TERMINAL"
+    },
+    "M30": {
+      "fetched": 98999,
+      "new": 98999,
+      "duplicates": 0,
+      "changed": 0,
+      "earliest_stored": "2018-06-12T03:30:00+00:00",
+      "state": "TRUNCATED_BY_TERMINAL"
+    },
+    "H1": {
+      "fetched": 98999,
+      "new": 98999,
+      "duplicates": 0,
+      "changed": 0,
+      "earliest_stored": "2010-04-09T10:00:00+00:00",
+      "state": "TRUNCATED_BY_TERMINAL"
+    },
+    "H4": {
+      "fetched": 34231,
+      "new": 34231,
+      "duplicates": 0,
+      "changed": 0,
+      "earliest_stored": "2004-06-11T01:00:00+00:00",
+      "state": "TRUNCATED_BY_TERMINAL"
+    }
+  },
+  "terminal_max_bars": 100000,
+  "owner_action_required": "raise 'Max bars in chart' (Tools > Options > Charts) in the FTMO MT5 terminal to Unlimited or >= 10,000,000, restart the terminal, then rerun this backfill"
+}
