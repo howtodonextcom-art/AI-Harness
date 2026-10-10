@@ -14,8 +14,12 @@ async function load(page: Page, request: APIRequestContext, name: string, path =
   expect(res.ok()).toBeTruthy();
   // the page asks the production API port; the acceptance API answers instead (same routes, same code)
   await page.route("http://127.0.0.1:8000/**", async (route) => {
-    const response = await route.fetch({ url: route.request().url().replace(":8000", ":8100") });
-    await route.fulfill({ response });
+    try {
+      const response = await route.fetch({ url: route.request().url().replace(":8000", ":8100") });
+      await route.fulfill({ response });
+    } catch {
+      await route.abort().catch(() => undefined); // a poll still in flight when the test ends must not fail the run
+    }
   });
   await page.goto(path);
   await expect(page.getByTestId("hero").or(page.getByTestId("api-down-banner"))).toBeVisible({ timeout: 30_000 });
@@ -210,6 +214,30 @@ test.describe("paper lifecycle through the real API", () => {
     await expect(page.getByTestId("action-sub")).toContainText("Mất kết nối API");
   });
 
+  test("double-click on open and on close: exactly one PAPER operation each, even with a slow network", async ({ page, request }) => {
+    await load(page, request, "buy_tp");
+    await page.route("**/api/trade/paper/**", async (route) => {
+      await new Promise((r) => setTimeout(r, 700)); // a slow answer: the second click arrives before the first is back
+      await route.continue().catch(() => undefined);
+    });
+    await page.getByTestId("take-paper").click();
+    await expect(page.getByTestId("confirm-open-modal")).toBeVisible();
+    await page.getByTestId("confirm-paper").dblclick();
+    await expect(page.getByTestId("paper-position")).toBeVisible({ timeout: 20_000 });
+    let journal = await (await request.get(`${API}/trade/journal`)).json();
+    expect(journal.open).not.toBeNull(); // exactly one open position (a second click cannot open another: one setup, one trade)
+    expect(journal.trades.filter((t: { status: string }) => t.status === "CLOSED")).toHaveLength(0);
+    await page.getByTestId("close-paper").click();
+    await page.getByTestId("confirm-close").dblclick();
+    // the setup is still READY but already taken: the card says CHỜ (blocked), never a second BUY
+    await expect(hero(page)).toHaveAttribute("data-action", "WAIT", { timeout: 20_000 });
+    journal = await (await request.get(`${API}/trade/journal`)).json();
+    expect(journal.trades.filter((t: { exit_reason: string }) => t.exit_reason === "MANUAL_CLOSE")).toHaveLength(1);
+    expect(journal.trades.filter((t: { status: string }) => t.status === "CLOSED")).toHaveLength(1);
+    expect(journal.open).toBeNull();
+    await page.unroute("**/api/trade/paper/**");
+  });
+
   test("STOP_LOSS exit (SELL)", async ({ page, request }) => {
     await load(page, request, "sell_ready");
     await openPaper(page);
@@ -268,7 +296,7 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
     await load(page, request, "paper_corrupt");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "UNAVAILABLE");
     await expect(page.getByTestId("hero-problems")).toContainText("Trạng thái bàn PAPER không khớp nhật ký");
-    await expect(page.getByTestId("conditions").locator("details").first()).toContainText("PAPER_STATE_ERROR"); // the code is in the technical details
+    await expect(page.getByTestId("hero-problems").locator("details").first()).toContainText("PAPER_STATE_ERROR"); // the code is in the technical details
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await shot(page, "16-replay-paper-state-error");
   });
@@ -276,7 +304,7 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
   test("second writer: read-only, no paper action", async ({ page, request }) => {
     await load(page, request, "writer_conflict");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "UNAVAILABLE");
-    await expect(page.getByTestId("conditions")).toContainText(/WRITER_LOCK/);
+    await expect(page.getByTestId("hero-problems")).toContainText(/WRITER_LOCK/);
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await shot(page, "17-replay-writer-conflict");
   });

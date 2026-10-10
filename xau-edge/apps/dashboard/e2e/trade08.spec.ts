@@ -6,7 +6,7 @@ import { mock, setupsGolden, view } from "./fixtures/trade";
 test("a technical code is never in front of the trader: the human sentence first, the code under 'Chi tiết kỹ thuật'", async ({ page }) => {
   await mock(page, view("writerConflict"));
   await page.goto("/trade");
-  const banner = page.getByTestId("conditions");
+  const banner = page.getByTestId("hero-problems");
   await expect(banner).toContainText("Một tiến trình khác đang giữ quyền ghi bàn PAPER");
   const visible = await banner.innerText(); // innerText leaves out the closed <details> body
   expect(visible).not.toContain("WRITER_LOCK");

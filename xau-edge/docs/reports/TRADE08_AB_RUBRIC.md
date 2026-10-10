@@ -38,3 +38,36 @@ Phương án:
 - C: quyết định thu gọn được (mặc định gọn: hành động + 1 dòng), biểu đồ chiếm phần lớn.
 
 Tiêu chí: cổng cứng; hiểu hành động trong 5 giây; kiểm soát vô tình (chạm nhầm); độ phức tạp.
+
+---
+
+# Kết quả (ghi SAU khi chấm; rubric ở trên không bị sửa)
+
+## 1. "Thiên hướng ≠ hành động" — bốn người chấm mù, 20 ảnh từ backend replay thật
+
+Vòng 1 (A, B, C; 15 ảnh xáo trộn × 2 người chấm, tên trung tính): **cả ba biến thể qua cổng cứng** (mọi ảnh WATCH/ARMED trả lời "KHÔNG được phép giao dịch"). Phát hiện:
+
+| Biến thể | Điểm yếu do người chấm nêu |
+|---|---|
+| A (dải thiên hướng phía trên) | đọc "MUA/BÁN" trước "CHỜ"; ghi chú "không phải lệnh" quá nhỏ |
+| B (biểu ngữ viền đứt hổ phách) | màu hổ phách đọc như cảnh báo; "KHÔNG VÀO LỆNH" nằm cuối câu; dài, xuống dòng xấu |
+| C (hai ô BIAS \| HÀNH ĐỘNG cạnh nhau) | **rủi ro nhất**: "↑ MUA" lớn đứng cạnh CHỜ đọc thành "mua, chờ" |
+
+Biến thể D (mới, rút từ phát hiện trên): hành động CHỜ lớn + nhãn "KHÔNG VÀO LỆNH" ngay cạnh; **thiên hướng nhỏ, có nhãn, nằm DƯỚI hành động**, kèm "chỉ là hướng thị trường nghiêng về, không phải lệnh"; dòng "Chỉ MUA/BÁN khi: …" cụ thể.
+
+Vòng 2 (D, 5 ảnh × 2 người chấm mới): **qua cổng cứng, 10/10 ảnh**: thiên hướng được đọc là "LEAN", chưa lần nào là "PERMISSION", độ tự tin 4–5. Góp ý áp dụng: nhãn "KHÔNG VÀO LỆNH" có ở **mọi** trạng thái CHỜ; ghi chú đậm hơn; "Chỉ MUA khi:" (thêm "Chỉ"); "nến" rõ nghĩa; "Điều kiện vào lệnh: đạt n/8 — cần đủ tất cả".
+
+**Thắng: D** (qua cổng, điểm cao nhất theo tiêu chí 2–5, đơn giản ngang A).
+
+## 2. Bố cục điện thoại 390×844 (cổng định trước: biểu đồ ≥ 280 px, thấy giá + hành động + câu "khi nào", không cuộn)
+
+Đo trên replay thật (px nến nhìn thấy; WAIT/BUY/ARMED):
+
+| | A | B | C |
+|---|---|---|---|
+| biểu đồ nhìn thấy | 313 / 328 / 288 | 448 (mọi trạng thái) | 313 / 352 / 332 |
+| hành động trong màn hình đầu | có | **KHÔNG (y≈902)** | có |
+
+B loại ở cổng cứng. Người chấm mù (6 ảnh): C xếp trên A (dòng phụ lặp huy hiệu, tốn ~20 px biểu đồ); B xếp cuối (không có quyết định ở màn hình đầu). **Thắng: C** (bỏ dòng phụ chỉ khi nó lặp huy hiệu; mọi trạng thái khác giữ dòng phụ).
+
+Trước đó (TRADE-07): 87–93 px. Sau: 288–411 px. Ngang (844×390) và zoom 200% (720×450) cũng có biểu đồ nhờ bố cục hai cột "short" (cổng ≥ 160 px, có test).

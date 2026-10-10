@@ -8,7 +8,7 @@
  */
 
 import type { TradeView } from "@/lib/trade";
-import { BLOCKER_VI, EXIT_REASON_VI, humanCondition, invalidationText, waitingText } from "@/lib/vi";
+import { BLOCKER_VI, EXIT_REASON_VI, invalidationText, waitingText } from "@/lib/vi";
 
 export type ActionTone = "buy" | "sell" | "hold" | "exit" | "wait" | "error";
 
@@ -68,7 +68,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
     a.code === "BUY" || a.code === "SELL" || a.code === "HOLD" || a.code === "EXIT"
       ? "Đã kích hoạt"
       : phase === "ARMED"
-        ? `Đã hình thành${n !== null && validBars !== null ? ` (đã qua ${n}/${validBars} nến M5)` : ""}, chờ trigger M5`
+        ? `Đã hình thành, chờ trigger M5${n !== null && validBars !== null ? ` (còn ${Math.max(0, validBars - n)} nến M5)` : ""}`
         : "Chưa có";
   const make = (code: ActionText["code"], tone: ActionTone, word: string, sub: string, whenLabel: string, whenBody: string, whenShort?: string): ActionText => ({
     code,
@@ -89,7 +89,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
     if (a.stage === "API_DOWN") {
       return make("UNAVAILABLE", "error", "KHÔNG KHẢ DỤNG", "Mất kết nối API: những gì thấy trên màn hình có thể đã cũ.", "Khi nào?", "Đừng vào lệnh lúc này. Đây không phải trạng thái chờ bình thường: đợi kết nối trở lại.");
     }
-    return make("UNAVAILABLE", "error", "KHÔNG KHẢ DỤNG", err ? humanCondition(err.code, err.message) : "Hệ thống chưa cho quyết định đáng tin.", "Khi nào?", "Đừng vào lệnh lúc này. Đây không phải trạng thái chờ bình thường: hãy kiểm tra hệ thống.");
+    return make("UNAVAILABLE", "error", "KHÔNG KHẢ DỤNG", err ? "Hệ thống chưa cho quyết định đáng tin (lý do bên dưới)." : "Hệ thống chưa cho quyết định đáng tin.", "Khi nào?", "Đừng vào lệnh lúc này. Đây không phải trạng thái chờ bình thường: hãy kiểm tra hệ thống.");
   }
 
   if (a.code === "HOLD") {
@@ -141,7 +141,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
 
   if (bias.side && a.missing === "TRIGGER") {
     const left = n === null || validBars === null ? null : Math.max(0, validBars - n);
-    return make("WAIT", "wait", "CHỜ", `Setup đã hình thành${n !== null && validBars !== null ? ` (đã qua ${n}/${validBars} nến M5)` : ""}, chưa có trigger — chưa được vào lệnh`, `Chỉ ${verb} khi:`, `nến M5 kế tiếp đóng xác nhận trigger ${dir}${left === null ? "" : ` (còn ${left} nến M5 trước khi setup hết hạn)`}; lúc đó hành động chuyển thành ${verb} PAPER.`);
+    return make("WAIT", "wait", "CHỜ", `Setup đã hình thành, chưa có trigger — chưa được vào lệnh`, `Chỉ ${verb} khi:`, `nến M5 kế tiếp đóng xác nhận trigger ${dir}${left === null ? "" : ` (còn ${left} nến M5 trước khi setup hết hạn)`}; lúc đó hành động chuyển thành ${verb} PAPER.`);
   }
   if (bias.side) {
     return make("WAIT", "wait", "CHỜ", "Chưa có tín hiệu vào lệnh", `Chỉ ${verb} khi:`, `M15 có nhịp pullback tạo setup, rồi nến M5 đóng xác nhận trigger ${dir}; lúc đó hành động chuyển thành ${verb} PAPER.`);

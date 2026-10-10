@@ -286,7 +286,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         if (!at) continue;
         const buy = r.side === "BUY";
         const how = r.outcome === "INVALIDATED" ? "bị vô hiệu" : r.outcome === "EXPIRED" ? "hết hiệu lực" : r.outcome === "TRIGGERED" ? "đã kích hoạt" : "đang hình thành";
-        list.push({ time: at.time as UTCTimestamp, position: buy ? "belowBar" : "aboveBar", shape: "circle", color: GREY, text: "SETUP" }, 3);
+        list.push({ time: at.time as UTCTimestamp, position: buy ? "belowBar" : "aboveBar", shape: "circle", color: GREY, text: "" }, 3); // a text here was clipped by the price axis and read as a live setup: the shape + click/popover/legend say it
         out.push({ key: `setup-${r.armed_at}`, kind: "SETUP", barTime: at.barIso, setup: r, lines: [`SETUP ${r.side === "BUY" ? "MUA" : r.side === "SELL" ? "BÁN" : ""} ${how}`] });
       }
     }
@@ -478,7 +478,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   // The shapes and the lines always stay; only the TEXT of a lower-ranked neighbour is dropped, and everything stays in the legend / details.
   const chartMarkersRef = useRef<{ list: SeriesMarker<Time>[]; prio: number[] }>({ list: [], prio: [] });
   const lastCloseRef = useRef<number | null>(null);
-  const lineStateRef = useRef<boolean[]>([]);
+  const lineStateRef = useRef<string[]>([]);
   const lastLabelRef = useRef<boolean | null>(null);
   const declutter = useRef<() => void>(() => {});
   const schedule = useRef<() => void>(() => {});
@@ -523,6 +523,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       items.sort((x, y) => rank(x.id) - rank(y.id) || x.i - y.i);
       const taken: number[] = [];
       let hiddenAxis = 0;
+      const narrow = el.clientWidth < 520; // a phone chart keeps the price tags on the axis; the NAME of a line is in the legend, not on top of the newest candles
       for (const it of items) {
         const clash = taken.some((t) => Math.abs(t - it.y) < AXIS_PX);
         if (clash) hiddenAxis++;
@@ -532,10 +533,10 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
             lastLabelRef.current = !clash;
             h.candles.applyOptions({ lastValueVisible: !clash });
           }
-        } else if (h.lines[it.i] && lineStateRef.current[it.i] !== !clash) {
-          lineStateRef.current[it.i] = !clash;
+        } else if (h.lines[it.i] && lineStateRef.current[it.i] !== `${!clash}|${narrow}`) {
+          lineStateRef.current[it.i] = `${!clash}|${narrow}`;
           const l = specs[it.i];
-          h.lines[it.i].applyOptions({ axisLabelVisible: !clash, title: clash ? "" : `${l.title} ${l.price.toFixed(2)}` });
+          h.lines[it.i].applyOptions({ axisLabelVisible: !clash, title: clash || narrow ? "" : `${l.title} ${l.price.toFixed(2)}` });
         }
       }
       el.dataset.hiddenAxisLabels = String(hiddenAxis);

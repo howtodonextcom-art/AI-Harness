@@ -69,8 +69,8 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <h1 className="mr-1 text-lg font-black tracking-tight">XAUUSD</h1>
-            <span data-testid="source-pill" className={`${pill} ${live ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-red-600 bg-red-500/15 text-red-800 dark:text-red-200"}`}>
-              {view ? (live ? "LIVE" : "REPLAY · NOT LIVE") : "…"}
+            <span data-testid="source-pill" className={`${pill} ${live ? (open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300") : "border-red-600 bg-red-500/15 text-red-800 dark:text-red-200"}`}>
+              {view ? (live ? (open ? "LIVE" : "LIVE · ĐÓNG CỬA") : "REPLAY · NOT LIVE") : "…"}
             </span>
             <span data-testid="market-pill" className={`${pill} ${open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300"}`}>
               {open ? `Thị trường MỞ${live ? "" : " (replay)"}` : status === "—" ? "…" : `Thị trường ${status === "CLOSED" ? "ĐÓNG" : status}`}

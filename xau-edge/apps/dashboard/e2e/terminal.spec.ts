@@ -148,8 +148,8 @@ test.describe("decision", () => {
     await expect(hero(page)).toHaveAttribute("data-hero-state", "STALE");
     await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "STALE");
     await expect(page.getByTestId("hero-problems")).toContainText("Dữ liệu giá đã quá cũ");
-    await expect(page.getByTestId("hero-problems")).not.toContainText("DATA_STALE"); // the code is not in front of the trader
-    await expect(page.getByTestId("conditions").locator("details").first()).toContainText("DATA_STALE"); // ...it is in the technical details
+    expect(await page.getByTestId("hero-problems").innerText()).not.toContain("DATA_STALE"); // the code is not in front of the trader (innerText leaves out the closed details)
+    await expect(page.getByTestId("hero-problems").locator("details").first()).toContainText("DATA_STALE"); // ...it is in the technical details
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await expect(page.getByTestId("line-ENTRY")).toHaveCount(0);
     await expect(page.getByTestId("price-stale")).toBeVisible();
@@ -158,7 +158,7 @@ test.describe("decision", () => {
     await page.goto("/trade");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "UNAVAILABLE");
     await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "UNAVAILABLE");
-    await expect(page.getByTestId("conditions")).toContainText("quyền ghi");
+    await expect(page.getByTestId("hero-problems")).toContainText("quyền ghi");
 
     await mock(page, view("paperCorrupt"));
     await page.goto("/trade");

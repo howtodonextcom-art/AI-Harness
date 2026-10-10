@@ -261,6 +261,13 @@ export function TerminalView() {
     return () => clearTimeout(t);
   }, [exitedId, openId, loadSide]);
 
+  // a receipt about an order must not outlive the state it described: once the desk is flat or unavailable it goes
+  const actionCode = view?.hero.action.code ?? null;
+  useEffect(() => {
+    if (actionCode !== "EXIT" && actionCode !== "WAIT" && actionCode !== "UNAVAILABLE") return;
+    const t = setTimeout(() => setMessage((m) => (m && m.tone !== BAD ? null : m)), 0);
+    return () => clearTimeout(t);
+  }, [actionCode]);
   // a success message is a receipt, not a status: it goes away by itself (errors stay until dismissed)
   useEffect(() => {
     if (!message || message.tone === BAD) return;
@@ -402,7 +409,8 @@ export function TerminalView() {
   }, [modalOpen, tool, fullscreen, prefs.follow, prefs.shortcuts, setPrefs]);
 
   // ---- conditions that need attention are banners with a human sentence first -------------------
-  const banners = (view?.conditions ?? []).filter((c) => (c.severity === "ERROR" || c.severity === "WARN") && c.code !== "MARKET_CLOSED" && c.code !== "NEWS_UNKNOWN");
+  const heroLists = hero?.state === "UNAVAILABLE" || hero?.state === "STALE"; // the hero card already says each of these errors, once
+  const banners = (view?.conditions ?? []).filter((c) => (c.severity === "ERROR" || c.severity === "WARN") && c.code !== "MARKET_CLOSED" && c.code !== "NEWS_UNKNOWN" && !(heroLists && c.severity === "ERROR"));
 
   // no connection (or data that stopped arriving): never keep a green BUY on screen, whatever the last view said
   const heroView = view && (error || uiStale) ? { ...view, hero: { ...view.hero, action: { ...view.hero.action, code: "UNAVAILABLE" as const, stage: "API_DOWN" } } } : view;
@@ -601,7 +609,7 @@ export function TerminalView() {
             <>
               <div className="min-w-0 flex-1 text-sm">
                 <b>{hero ? HERO_ICON[hero.state] : ""} {hero ? HERO_VI[hero.state].label : ""}</b>
-                <div className="truncate font-mono text-xs">SL {fmt(plan?.sl)} · TP {fmt(plan?.tp1)} · R/R {fmt(plan?.rr_net)}</div>
+                <div className="font-mono text-xs leading-tight">SL {fmt(plan?.sl)} · TP {fmt(plan?.tp1)} · R/R {fmt(plan?.rr_net)}</div>
               </div>
               <button type="button" data-testid="action-bar-open" disabled={!canOpen || busy} onClick={requestOpen} className={`rounded-md border-2 px-4 py-2 text-sm font-black text-white disabled:opacity-40 ${hero?.state === "BUY_READY" ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>
                 Mở lệnh…

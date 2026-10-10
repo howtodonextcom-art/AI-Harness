@@ -155,6 +155,10 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
           {expiredNow ? "KẾ HOẠCH ĐÃ HẾT HẠN — chỉ để tham khảo, không thể mở lệnh." : "Dữ liệu hoặc kết nối không chắc chắn — chỉ để tham khảo, không thể mở lệnh."}
         </p>
       )}
+      <button type="button" data-testid="take-paper" disabled={!canOpen || busy} onClick={onOpenRequest} className={`w-full rounded-md border-2 px-3 py-2.5 text-base font-black disabled:opacity-40 ${buy ? "border-emerald-700 bg-emerald-700 text-white" : "border-red-700 bg-red-700 text-white"}`}>
+        Mở lệnh PAPER {buy ? "MUA" : "BÁN"}
+      </button>
+      <p className="text-center text-xs text-slate-600 dark:text-slate-400">Giả lập, không gửi lệnh thật tới MT5.</p>
       <div className="flex items-center justify-between">
         <span data-testid="plan-side" className={`rounded px-2 py-0.5 text-sm font-black ${buy ? "bg-emerald-700 text-white" : "bg-red-700 text-white"}`}>
           {buy ? "▲ MUA (BUY)" : "▼ BÁN (SELL)"}
@@ -193,10 +197,7 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
           ))}
         </ul>
       )}
-      <button type="button" data-testid="take-paper" disabled={!canOpen || busy} onClick={onOpenRequest} className={`w-full rounded-md border-2 px-3 py-2.5 text-base font-black disabled:opacity-40 ${buy ? "border-emerald-700 bg-emerald-700 text-white" : "border-red-700 bg-red-700 text-white"}`}>
-        Mở lệnh PAPER {buy ? "MUA" : "BÁN"}
-      </button>
-      <p className="text-center text-xs text-slate-600 dark:text-slate-400">Giả lập, không gửi lệnh thật tới MT5.</p>
+
     </div>
   );
 }
@@ -331,7 +332,10 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups }: { view: Tra
       {(state === "UNAVAILABLE" || state === "STALE") && errors.length > 0 && (
         <ul data-testid="hero-problems" className="mt-1 space-y-0.5 text-sm">
           {errors.map((c) => (
-            <li key={c.code}>{humanCondition(c.code, c.message)}</li>
+            <li key={c.code}>
+              {humanCondition(c.code, c.message)}
+              <TechDetail code={c.code}><span className="ml-2">{c.message}</span></TechDetail>
+            </li>
           ))}
         </ul>
       )}
