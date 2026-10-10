@@ -428,6 +428,16 @@ def test_every_hero_state_maps_to_one_action() -> None:
         assert action_for(_hero(state), wait, None)["code"] in ("WAIT", "WATCH_BUY", "WATCH_SELL")
 
 
+def test_a_ready_setup_the_desk_would_refuse_is_never_a_buy_or_sell() -> None:
+    """Red-team finding: a taken-and-closed setup kept a giant BUY with only the button disabled."""
+    buy = signal()
+    dup = {"code": "DUPLICATE_SETUP", "message": "this setup was already taken"}
+    blocked = action_for(_hero("BUY_READY", "BUY"), buy, None, [dup])
+    assert (blocked["code"], blocked["stage"], blocked["side"]) == ("WAIT", "BLOCKED", "BUY")
+    assert blocked["blocked_by"] == dup
+    assert action_for(_hero("BUY_READY", "BUY"), buy, None, [])["code"] == "BUY"
+
+
 def test_hold_reports_whether_the_entry_thesis_still_stands() -> None:
     bull = signal()  # H1 bullish in the helper state
     hold = action_for(_hero("POSITION_OPEN", "BUY"), bull, {"side": "BUY", "status": "OPEN"})

@@ -60,6 +60,8 @@ export const BLOCKER_VI: Record<string, string> = {
   EXPIRED: "Kế hoạch đã hết hạn.",
   COOLDOWN: "Đang nghỉ sau lệnh trước.",
   OPEN_POSITION: "Đang có lệnh paper mở.",
+  DUPLICATE_SETUP: "Setup này đã được vào lệnh rồi, không mở lại.",
+  QUOTE_STALE: "Giá quá cũ để khớp lệnh.",
 };
 
 export const STAGE_VI: Record<string, string> = {

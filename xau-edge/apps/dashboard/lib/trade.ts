@@ -31,6 +31,8 @@ export interface HeroAction {
   stage: string;
   side: "BUY" | "SELL" | null;
   thesis: "INTACT" | "WEAK" | "UNKNOWN" | null;
+  /** READY setup the desk would refuse: the action is WAIT, stage BLOCKED, and this is why (server text). */
+  blocked_by?: { code: string; message: string };
 }
 
 export interface Hero {

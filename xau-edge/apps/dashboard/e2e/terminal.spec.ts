@@ -731,6 +731,19 @@ test.describe("layouts", () => {
     await expect(page.getByTestId("confirm-open-modal")).toBeVisible();
   });
 
+  test("phone in landscape: the confirmation's confirm and cancel buttons stay inside the screen (red team)", async ({ page }) => {
+    await mock(page, view("buy"));
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.goto("/trade");
+    await page.getByTestId("take-paper").or(page.getByTestId("mobile-action-bar").getByRole("button")).first().click();
+    await expect(page.getByTestId("confirm-open-modal")).toBeVisible();
+    for (const id of ["confirm-paper", "cancel-paper"]) {
+      const b = (await page.getByTestId(id).boundingBox())!;
+      expect(b.y).toBeGreaterThanOrEqual(0);
+      expect(b.y + b.height).toBeLessThanOrEqual(390);
+    }
+  });
+
   test("phone: no action bar while the desk only waits", async ({ page }) => {
     await mock(page, view("wait"));
     await page.setViewportSize({ width: 390, height: 844 });

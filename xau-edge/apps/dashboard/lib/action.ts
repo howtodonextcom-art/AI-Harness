@@ -5,7 +5,7 @@
  */
 
 import type { TradeView } from "@/lib/trade";
-import { EXIT_REASON_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
+import { BLOCKER_VI, EXIT_REASON_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
 
 export type ActionTone = "buy" | "sell" | "watch-buy" | "watch-sell" | "hold" | "exit" | "wait" | "error";
 
@@ -30,6 +30,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
 
   if (a.code === "UNAVAILABLE") {
     const err = view.conditions.find((c) => c.severity === "ERROR" && c.code !== "MARKET_CLOSED");
+    if (a.stage === "API_DOWN") return { code: a.code, tone: "error", word: "KHÔNG KHẢ DỤNG", sub: "Mất kết nối API: những gì thấy trên màn hình có thể đã cũ.", when: "Đừng vào lệnh lúc này. Đây không phải trạng thái chờ bình thường: đợi kết nối trở lại." };
     return { code: a.code, tone: "error", word: "KHÔNG KHẢ DỤNG", sub: err ? humanCondition(err.code, err.message) : "Hệ thống chưa cho quyết định đáng tin.", when: "Đừng vào lệnh lúc này. Đây không phải trạng thái chờ bình thường: hãy kiểm tra hệ thống." };
   }
   if (a.code === "HOLD") {
@@ -87,9 +88,10 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
   const bull = view.structure?.h1_trend === "BULLISH" ? true : view.structure?.h1_trend === "BEARISH" ? false : null;
   const next = waitingText(view.why_wait?.waiting_for_code ?? null, bull, { phase: view.setup?.phase ?? null, age: view.setup?.bars_since_armed ?? null });
   let sub = next ? `Đang chờ: ${next}` : "Chưa có kế hoạch";
-  if (a.stage === "CLOSED") sub = "Thị trường đóng cửa";
+  if (a.stage === "BLOCKED" && a.blocked_by) sub = `${SIDE ? `Có setup ${sideVi} nhưng ` : ""}không mở được: ${BLOCKER_VI[a.blocked_by.code] ?? a.blocked_by.message}`;
+  else if (a.stage === "CLOSED") sub = "Thị trường đóng cửa";
   else if (a.stage === "EXPIRED" || expiredNow) sub = "Kế hoạch trước đã hết hạn, không còn mở được";
   else if (a.stage === "INVALIDATED") sub = "Setup vừa bị vô hiệu: bộ máy chờ setup mới";
   else if (a.stage === "INCOMPLETE") sub = "Có setup nhưng kế hoạch chưa đầy đủ";
-  return { code: "WAIT", tone: "wait", word: "CHỜ", sub, when: a.stage === "CLOSED" ? "Chưa làm gì. Bộ máy tự tính lại khi thị trường mở cửa." : "Chưa làm gì. Chờ là trạng thái bình thường: bộ máy rất ít khi có kế hoạch." };
+  return { code: "WAIT", tone: "wait", word: "CHỜ", sub, when: a.stage === "BLOCKED" ? "Đừng mở lệnh cho setup này. Bàn sẽ tự cập nhật khi lý do chặn hết hoặc có setup mới." : a.stage === "CLOSED" ? "Chưa làm gì. Bộ máy tự tính lại khi thị trường mở cửa." : "Chưa làm gì. Chờ là trạng thái bình thường: bộ máy rất ít khi có kế hoạch." };
 }

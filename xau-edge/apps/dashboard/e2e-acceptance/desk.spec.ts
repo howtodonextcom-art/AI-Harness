@@ -190,6 +190,26 @@ test.describe("paper lifecycle through the real API", () => {
     expect(journal.trades.filter((t: { exit_reason: string }) => t.exit_reason === "MANUAL_CLOSE")).toHaveLength(1);
   });
 
+  test("a setup that was already taken and closed is WAIT (blocked), never a green BUY (red team)", async ({ page, request }) => {
+    await load(page, request, "buy_tp");
+    await openPaper(page);
+    await page.getByTestId("close-paper").click();
+    await page.getByTestId("confirm-close").click();
+    await expect(page.getByTestId("paper-position")).toHaveCount(0, { timeout: 20_000 });
+    await expect(hero(page)).toHaveAttribute("data-action", "WAIT", { timeout: 20_000 });
+    await expect(page.getByTestId("action-sub")).toContainText("không mở được");
+    await expect(page.getByTestId("take-paper")).toBeDisabled();
+  });
+
+  test("API down: the hero stops saying BUY and says UNAVAILABLE (red team)", async ({ page, request }) => {
+    await load(page, request, "buy_tp");
+    await expect(hero(page)).toHaveAttribute("data-action", "BUY");
+    await page.unroute("http://127.0.0.1:8000/**");
+    await page.route("http://127.0.0.1:8000/**", (route) => route.abort());
+    await expect(hero(page)).toHaveAttribute("data-action", "UNAVAILABLE", { timeout: 30_000 });
+    await expect(page.getByTestId("action-sub")).toContainText("Mất kết nối API");
+  });
+
   test("STOP_LOSS exit (SELL)", async ({ page, request }) => {
     await load(page, request, "sell_ready");
     await openPaper(page);

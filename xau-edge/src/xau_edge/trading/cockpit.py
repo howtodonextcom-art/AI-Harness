@@ -184,7 +184,10 @@ def _bias_side(bias: str | None) -> str | None:
 
 
 def action_for(
-    hero: dict[str, Any], signal: TradingSignal | None, position: dict[str, Any] | None
+    hero: dict[str, Any],
+    signal: TradingSignal | None,
+    position: dict[str, Any] | None,
+    blockers: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """The ONE thing the trader should do now, derived from the same state as the hero.
 
@@ -193,6 +196,9 @@ def action_for(
     INVALIDATED, ...). ``thesis`` (HOLD only) says whether the entry reason still stands: the H1
     direction of the open position against the current H1 direction. It is information, not a new
     exit rule: the paper desk exits only by SL, TP, time or the closure policy.
+
+    A READY setup that the desk would refuse (already taken, cooldown, risk limits, ...) is never
+    shown as BUY/SELL: it is WAIT with stage BLOCKED and the server's reason in ``blocked_by``.
     """
     state = hero["state"]
     phase = None if signal is None else signal.metadata.get("setup_phase")
@@ -208,7 +214,10 @@ def action_for(
         out.update(code="HOLD", stage="OPEN", side=held, thesis=thesis)
     elif state in ("BUY_READY", "SELL_READY"):
         ready = state.split("_")[0]
-        out.update(code=ready, stage="READY", side=ready)
+        if blockers:
+            out.update(stage="BLOCKED", side=ready, blocked_by=blockers[0])
+        else:
+            out.update(code=ready, stage="READY", side=ready)
     elif state in ("EXPIRED_SETUP", "NOT_ACTIONABLE"):
         out.update(
             stage="EXPIRED" if state == "EXPIRED_SETUP" else "INCOMPLETE", side=hero.get("side")

@@ -55,7 +55,7 @@ export function OpenConfirmModal({ frozen, liveEntry, maxDriftR, valid, busy, on
         </p>
       )}
       <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">Giá khớp thực có thể lệch nhẹ so với giá hiển thị; máy chủ kiểm tra lại mọi điều kiện trước khi mở.</p>
-      <div className="mt-3 flex gap-2">
+      <div className="sticky -bottom-4 mt-3 flex gap-2 bg-white pb-1 pt-2 dark:bg-slate-900">
         <button type="button" data-testid="confirm-paper" data-autofocus disabled={busy || !valid} onClick={onConfirm} className={`flex-1 rounded-md border-2 px-3 py-2 font-black text-white disabled:opacity-40 ${buy ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>
           XÁC NHẬN MỞ LỆNH PAPER
         </button>
@@ -84,7 +84,7 @@ export function CloseConfirmModal({ trade, busy, unsure, onConfirm, onCancel }: 
         </p>
       )}
       <p className={`mt-2 rounded border px-2 py-1 text-xs ${WARN}`}>Giá và lãi/lỗ cuối cùng được máy chủ đọc lại ngay lúc đóng, có thể khác ước tính.</p>
-      <div className="mt-3 flex gap-2">
+      <div className="sticky -bottom-4 mt-3 flex gap-2 bg-white pb-1 pt-2 dark:bg-slate-900">
         <button type="button" data-testid="confirm-close" data-autofocus disabled={busy} onClick={onConfirm} className="flex-1 rounded-md border-2 border-slate-700 bg-slate-800 px-3 py-2 font-black text-white disabled:opacity-40">
           XÁC NHẬN ĐÓNG
         </button>

@@ -378,7 +378,9 @@ export function TerminalView() {
   // ---- conditions that need attention are banners with a human sentence first -------------------
   const banners = (view?.conditions ?? []).filter((c) => (c.severity === "ERROR" || c.severity === "WARN") && c.code !== "MARKET_CLOSED" && c.code !== "NEWS_UNKNOWN");
 
-  const heroNode = view && <DecisionHero view={view} serverNowMs={serverNow} />;
+  // no connection (or data that stopped arriving): never keep a green BUY on screen, whatever the last view said
+  const heroView = view && (error || uiStale) ? { ...view, hero: { ...view.hero, action: { ...view.hero.action, code: "UNAVAILABLE" as const, stage: "API_DOWN" } } } : view;
+  const heroNode = heroView && <DecisionHero view={heroView} serverNowMs={serverNow} />;
   const bodyNode = view && (
     <DecisionBody
       view={view}

@@ -669,7 +669,7 @@ class TradeEngine:
                 signal=signal, conditions=conditions, expired=expired, plan=plan, position=position,
                 last_exit=self._last_exit(), market_open=snap.market_open, now=stamp,
             )  # fmt: skip
-            hero["action"] = action_for(hero, signal, position)
+            hero["action"] = action_for(hero, signal, position, entry_blockers)
             decision = signal.model_dump(mode="json")
             decision["decision_id"] = signal.decision_id
             decision["expired"] = expired
