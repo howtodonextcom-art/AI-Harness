@@ -66,3 +66,28 @@ jobs:
         run: npm run build
       - name: Type check
         run: npx tsc --noEmit
+
+  dashboard-e2e:
+    name: dashboard browser (mock API, real-backend goldens, axe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: dashboard
+    defaults:
+      run:
+        working-directory: xau-edge/apps/dashboard
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install
+        run: npm ci
+      # The browser binary is not in the lock file: it is downloaded for the pinned Playwright version.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      # Every API payload in these tests is a golden written by the real backend
+      # (scripts/generate_trade_goldens.py); tests/unit/trading/test_contract_goldens.py keeps them honest.
+      # No MT5, no live data, no network: the suite is deterministic. It includes the axe accessibility checks.
+      - name: Playwright (mock API)
+        run: npx playwright test --workers=2

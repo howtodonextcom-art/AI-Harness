@@ -83,6 +83,26 @@ def collect(market: Path, out_root: Path) -> dict[str, tuple[str, Any]]:
     )
     w.close()
 
+    # the other two ways a paper trade ends (TAKE_PROFIT is `closed_paper` above): the stop and the clock
+    for name, key, reason in (
+        ("sell_ready", "closed_sl", "STOP_LOSS"),
+        ("buy_time", "closed_time", "TIME_EXIT"),
+    ):
+        w = world(name)
+        setup = w.engine.view()["decision"]["setup_id"]
+        w.engine.paper_open(setup_id=setup, risk_pct=0.25)
+        for _ in range(120):  # at most 20 hours of replay, ten minutes at a time
+            w.advance_minutes(10)
+            if w.engine.desk.open_trade() is None:
+                break
+        view = w.engine.view()
+        if view["hero"]["action"]["code"] != "EXIT":
+            raise SystemExit(f"{name} did not exit")
+        if view["desk"]["last_exit"]["exit_reason"] != reason:
+            raise SystemExit(f"{name} exited another way than {reason}")
+        files[key] = (f"GET /trade/decision, paper trade exited by {reason}", view)
+        w.close()
+
     for name, key in (
         ("stale", "stale"),
         ("market_closed", "market_closed"),

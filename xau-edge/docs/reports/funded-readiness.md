@@ -37,7 +37,7 @@ Cờ `XAU_EDGE_ENABLE_FUNDED_TRADING` **vẫn tắt**. Repository này chưa g�
 | | T2.7, T2.8, T2.13 | ✅ | `3ab4a6c` |
 | | T2.11 (d5) | ✅ | `244d750` |
 | | T2.12 guard luật FTMO, ngân sách request | ✅ | `3ab4a6c`, `244d750` |
-| 3 Vận hành | T3.1 lịch tin | ✅ code; 🟠 cần nguồn | `b511afd` |
+| 3 Vận hành | T3.1 lịch tin | ✅ code + nguồn Forex Factory weekly (NEWS-01); 🟠 chưa có nguồn có SLA | `b511afd`, `e8e8fc3` |
 | | T3.2 raw store | ✅ | `8d78120` |
 | | T3.3 supervisor NSSM | ✅ code; 🟠 cần cài | `dde466c`, `244d750` |
 | | T3.4 Telegram | ✅ code; 🟠 cần token | `ba8007f`, `dde466c` |
@@ -65,7 +65,7 @@ Cờ `XAU_EDGE_ENABLE_FUNDED_TRADING` **vẫn tắt**. Repository này chưa g�
 | 4 | Định nghĩa "request" của FTMO | Chủ dự án | Hỏi support; bot giới hạn 900 trade request/ngày, lệnh đọc chỉ được đếm. |
 | 5 | Mật khẩu demo từng lộ | Chủ dự án | Đổi master + investor password. |
 | 6 | Trade password, smoke order (T5.1 Phase E) | Chủ dự án | Đặt `MT5_TRADE_PASSWORD` trong `.env`, tự chạy smoke (lệnh bên dưới). |
-| 7 | Lịch tin không có nguồn | Chủ dự án | Cấp file/nguồn có `available_at`; xem `docs/operations/news-calendar.md`. |
+| 7 | Lịch tin: đã có nguồn Forex Factory weekly (NEWS-01, 2026-10-10) nhưng không chính thức, chỉ phủ tuần hiện tại, không có published/updated | Chủ dự án | Chấp nhận giới hạn cho PAPER, hoặc cấp nguồn có SLA (provider mới, định dạng PIT không đổi); xem `docs/reports/NEWS_SOURCE_DECISION.md`. |
 | 8 | Telegram | Chủ dự án | Tạo bot với BotFather, điền `XAU_EDGE_TELEGRAM_BOT_TOKEN`, `XAU_EDGE_TELEGRAM_CHAT_ID`; xem `docs/operations/telegram-alerts.md`. |
 | 9 | Soak 14 ngày, demo 4 tuần | Thời gian thực | Lịch bên dưới. |
 | 10 | Tần suất lệnh thấp | Lưu ý kế hoạch | H03-c1.0 có 211 lệnh trong 8 năm Dev-H và 119 lệnh trong 3 năm Val-H (khoảng 26–40 lệnh/năm): bậc 1 (≥ 10 lệnh) có thể mất 3–5 tháng. |

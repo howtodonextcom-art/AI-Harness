@@ -13,6 +13,8 @@ import sellArmed from "./golden/sell_armed.json";
 import sellInvalidated from "./golden/sell_invalidated.json";
 import buy from "./golden/buy.json";
 import closedPaper from "./golden/closed_paper.json";
+import closedSl from "./golden/closed_sl.json";
+import closedTime from "./golden/closed_time.json";
 import expired from "./golden/expired.json";
 import journalClosed from "./golden/journal_closed.json";
 import marketClosed from "./golden/market_closed.json";
@@ -52,6 +54,8 @@ export const GOLDEN_VIEWS = {
   sell: sell satisfies Json<TradeView>,
   openPaper: openPaper satisfies Json<TradeView>,
   closedPaper: closedPaper satisfies Json<TradeView>,
+  closedSl: closedSl satisfies Json<TradeView>,
+  closedTime: closedTime satisfies Json<TradeView>,
   stale: stale satisfies Json<TradeView>,
   expired: expired satisfies Json<TradeView>,
   marketClosed: marketClosed satisfies Json<TradeView>,

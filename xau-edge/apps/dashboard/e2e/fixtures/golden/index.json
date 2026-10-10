@@ -1,6 +1,6 @@
 {
  "provenance": "ACCEPTANCE_REPLAY of burned FTMO bars through the real TradeEngine; NOT LIVE",
- "code_version": "e8e8fc3-dirty",
+ "code_version": "a614533-dirty",
  "files": {
   "wait.json": "GET /trade/decision, ordinary WAIT",
   "sell.json": "GET /trade/decision, real SELL setup",
@@ -12,6 +12,8 @@
   "markers_closed.json": "GET /trade/markers after the exit",
   "setups_history.json": "GET /trade/setups after the exit",
   "signals_history.json": "GET /trade/signals after the exit",
+  "closed_sl.json": "GET /trade/decision, paper trade exited by STOP_LOSS",
+  "closed_time.json": "GET /trade/decision, paper trade exited by TIME_EXIT",
   "stale.json": "GET /trade/decision, scenario stale",
   "market_closed.json": "GET /trade/decision, scenario market_closed",
   "paper_corrupt.json": "GET /trade/decision, scenario paper_corrupt",

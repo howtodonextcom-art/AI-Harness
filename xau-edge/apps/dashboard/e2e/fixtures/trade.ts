@@ -7,6 +7,8 @@ import sellArmed from "./golden/sell_armed.json";
 import sellInvalidated from "./golden/sell_invalidated.json";
 import buy from "./golden/buy.json";
 import closedPaper from "./golden/closed_paper.json";
+import closedSl from "./golden/closed_sl.json";
+import closedTime from "./golden/closed_time.json";
 import coverageIncomplete from "./golden/coverage_incomplete.json";
 import expired from "./golden/expired.json";
 import journalClosed from "./golden/journal_closed.json";
@@ -28,7 +30,7 @@ import writerConflict from "./golden/writer_conflict.json";
  * remove things; they never hand-write a BUY, SELL or paper-trade payload.
  */
 
-export const GOLDEN = { buyWatch, buyArmed, sellWatch, sellArmed, sellInvalidated, wait, buy, sell, openPaper, closedPaper, stale, expired, marketClosed, paperCorrupt, writerConflict };
+export const GOLDEN = { buyWatch, buyArmed, sellWatch, sellArmed, sellInvalidated, wait, buy, sell, openPaper, closedPaper, closedSl, closedTime, stale, expired, marketClosed, paperCorrupt, writerConflict };
 export type GoldenName = keyof typeof GOLDEN;
 
 export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;

@@ -70,10 +70,12 @@ def test_a_covering_calendar_without_events_is_clear(tmp_path: Path) -> None:
     assert "NEWS_UNKNOWN" not in _codes(view)
 
 
-def test_a_calendar_that_no_longer_covers_now_stays_unknown_and_says_why(tmp_path: Path) -> None:
+def test_a_calendar_that_no_longer_covers_now_is_stale_and_says_why(tmp_path: Path) -> None:
     cal = _calendar(tmp_path / "cal.csv", NOW - timedelta(days=14), NOW - timedelta(days=1), [])
     view = _engine(tmp_path, cal).view()
-    assert view["news"]["state"] == "UNKNOWN"
+    assert (
+        view["news"]["state"] == "STALE"
+    )  # it can no longer prove "no event"; the baseline still sees UNKNOWN
     unknown = next(c for c in view["conditions"] if c["code"] == "NEWS_UNKNOWN")
     assert "coverage" in unknown["message"]
     assert "coverage" in view["news"]["text"]
@@ -87,14 +89,17 @@ def test_a_row_published_after_now_is_look_ahead_and_never_trusted(tmp_path: Pat
         NOW + timedelta(days=7),
         [f"{_z(event)},CPI,high,{_z(NOW + timedelta(hours=1))}"],
     )
-    assert _engine(tmp_path, cal).view()["news"]["state"] == "UNKNOWN"
+    news = _engine(tmp_path, cal).view()["news"]
+    assert news["state"] == "ERROR"  # a bad file or a wrong clock, never trusted
+    assert "published after now" in news["detail"]
 
 
 def test_without_a_calendar_the_engine_behaves_as_before(tmp_path: Path) -> None:
     engine = _engine(tmp_path, None)
     view = engine.view()
     assert engine.config.news_calendar_path is None
-    assert view["news"]["state"] == "UNKNOWN"
+    assert view["news"]["state"] == "NOT_CONFIGURED"
+    assert view["news"]["warning"] is True
     assert view["news"]["text"] == "NEWS NOT VERIFIED: no economic calendar"
 
 
@@ -110,4 +115,6 @@ def test_serve_api_passes_the_configured_calendar_to_the_trade_engine() -> None:
     assert len(calls) == 1
     keyword = next((k for k in calls[0].keywords if k.arg == "news_calendar_path"), None)
     assert keyword is not None
-    assert ast.unparse(keyword.value) == "settings.news_calendar_path"
+    assert (
+        ast.unparse(keyword.value) == "news_path"
+    )  # settings.news_calendar_path, or data/news/calendar.csv when it exists

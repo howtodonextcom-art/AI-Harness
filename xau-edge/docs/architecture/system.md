@@ -14,6 +14,11 @@ Market data -> Features -> Structure/Regime -> Pattern analogues -> Outcome stat
 
 A forecast never becomes an order directly. `WAIT` is a first-class output.
 
+> **Cập nhật 2026-10-11 (trạng thái thực tế):** ngoài bảng giai đoạn dưới đây (viết ở Sprint 1-2), hệ thống hiện có
+> Trading Core (`xau_edge.trading`), bàn PAPER, API `/md/*` + `/trade/*`, dashboard `/trade`, lịch tin PIT có nguồn thật
+> (`xau_edge.news`) và thu thập dữ liệu MT5 liên tục. Mô tả đầy đủ và đã kiểm chứng: `CLAUDE.md`; hai bộ não và kiến trúc
+> đích: `docs/architecture/canonical-brain.md`; sơ đồ: `docs/diagrams/end-to-end-flow.md`.
+
 ## Layers and status
 
 | Layer | Package | Status |

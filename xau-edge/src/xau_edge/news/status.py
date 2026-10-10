@@ -113,9 +113,16 @@ def news_status(
     stamps = [
         t
         for r in doc.rows
-        for t in ((r.meta.updated_at or r.meta.ingested_at) if r.meta else r.available_at,)
+        for t in ((r.meta.updated_at or r.meta.ingested_at) if r.meta else None,)
         if t is not None
     ]
+    if not stamps:
+        # a legacy file (no provenance columns) cannot say when it was refreshed: its own time is
+        # the honest answer, never the publication time of its oldest row
+        try:
+            stamps = [datetime.fromtimestamp(path.stat().st_mtime, UTC)]
+        except OSError:
+            stamps = []
     last = max(stamps) if stamps else None
     sources = sorted({r.meta.source for r in doc.rows if r.meta and r.meta.source})
     base |= {
