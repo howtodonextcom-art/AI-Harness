@@ -18,7 +18,7 @@ import io
 import os
 import tempfile
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -31,6 +31,7 @@ from xau_edge.news.calendar import (
 )
 
 HEADER = ("time_utc", "category", "impact", "available_at")
+META_HEADER = (*HEADER, "currency", "source", "published_at", "ingested_at", "updated_at")
 FutureRows = Literal["raise", "drop"]
 
 
@@ -39,11 +40,27 @@ class CalendarLeakageError(ValueError):
 
 
 @dataclass(frozen=True)
+class RowMeta:
+    """Where a row came from and when we last saw it (all optional, all point-in-time).
+
+    ``published_at``: when the SOURCE published the row (empty when the source does not say).
+    ``ingested_at``: when we first stored it. ``updated_at``: the last fetch that confirmed it.
+    """
+
+    currency: str = ""
+    source: str = ""
+    published_at: datetime | None = None
+    ingested_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass(frozen=True)
 class CalendarRow:
     """One event plus the time it became known."""
 
     event: NewsEvent
     available_at: datetime
+    meta: RowMeta | None = None
 
     @property
     def key(self) -> tuple[datetime, str, int]:
@@ -128,8 +145,33 @@ def parse_calendar_text(
         else:
             msg = f"row {line['time_utc']!r} has an empty available_at"
             raise ValueError(msg)
-        rows.append(CalendarRow(NewsEvent(when, line["category"].strip(), impact), available))
+        meta = _read_meta(line)
+        if meta is not None and default_available_at is not None:
+            meta = replace(
+                meta,
+                ingested_at=meta.ingested_at or default_available_at,
+                updated_at=meta.updated_at or default_available_at,
+            )
+        rows.append(CalendarRow(NewsEvent(when, line["category"].strip(), impact), available, meta))
     return CalendarDocument(coverage, tuple(rows))
+
+
+def _optional_utc(raw: str | None, label: str) -> datetime | None:
+    text = (raw or "").strip()
+    return parse_utc(text, label) if text else None
+
+
+def _read_meta(line: dict[str, str]) -> RowMeta | None:
+    """The optional provenance columns of a row (None for a legacy four-column file)."""
+    if not any(name in line for name in META_HEADER[4:]):
+        return None
+    return RowMeta(
+        currency=(line.get("currency") or "").strip(),
+        source=(line.get("source") or "").strip(),
+        published_at=_optional_utc(line.get("published_at"), "published_at"),
+        ingested_at=_optional_utc(line.get("ingested_at"), "ingested_at"),
+        updated_at=_optional_utc(line.get("updated_at"), "updated_at"),
+    )
 
 
 def load_calendar_asof(
@@ -165,20 +207,33 @@ def load_calendar_asof(
 
 
 def render_calendar(coverage: tuple[datetime, datetime], rows: Iterable[CalendarRow]) -> str:
-    """Canonical text: coverage line, header, rows sorted by time then category."""
+    """Canonical text: coverage line, header, rows sorted by time then category.
+
+    The provenance columns are written only when at least one row carries them, so a legacy file
+    stays byte-identical.
+    """
+    ordered = sorted(rows, key=lambda r: (r.event.time, r.event.category))
+    with_meta = any(r.meta is not None for r in ordered)
     out = io.StringIO()
     out.write(f"{COVERAGE_PREFIX} {format_utc(coverage[0])}..{format_utc(coverage[1])}\n")
     writer = csv.writer(out, lineterminator="\n")
-    writer.writerow(HEADER)
-    for row in sorted(rows, key=lambda r: (r.event.time, r.event.category)):
-        writer.writerow(
-            [
-                format_utc(row.event.time),
-                row.event.category,
-                row.event.impact.name.lower(),
-                format_utc(row.available_at),
+    writer.writerow(META_HEADER if with_meta else HEADER)
+    for row in ordered:
+        cells = [
+            format_utc(row.event.time),
+            row.event.category,
+            row.event.impact.name.lower(),
+            format_utc(row.available_at),
+        ]
+        if with_meta:
+            meta = row.meta or RowMeta()
+            cells += [
+                meta.currency,
+                meta.source,
+                *(format_utc(t) if t else "" for t in (meta.published_at, meta.ingested_at)),
+                format_utc(meta.updated_at) if meta.updated_at else "",
             ]
-        )
+        writer.writerow(cells)
     return out.getvalue()
 
 

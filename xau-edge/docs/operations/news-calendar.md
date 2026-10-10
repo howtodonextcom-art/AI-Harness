@@ -1,9 +1,20 @@
 # Lịch tin tức (News calendar): định dạng, cập nhật hằng ngày, cảnh báo
 
-> Trạng thái: **khung vận hành đã sẵn sàng, chưa có nguồn dữ liệu**. Chủ dự án chưa chỉ định nguồn
-> lịch kinh tế; code không bundle và không tự lấy dữ liệu từ bất kỳ website nào. Không có lịch =
-> `NEWS_UNKNOWN`: bot demo legacy luôn `WAIT` (fail-closed); Trading Core `/trade` hiện cảnh báo
-> "NEWS NOT VERIFIED" (baseline vận hành chạy với `allow_unknown_news=True`). Xem mục 3.
+> Trạng thái (NEWS-01, 2026-10-10): **có nguồn thật và job cập nhật chạy trong stack**. Nguồn mặc định là
+> Forex Factory weekly JSON (`--source forexfactory`, lý do và giới hạn ở `docs/reports/NEWS_SOURCE_DECISION.md`).
+> `scripts/run_market_stack.py` có thêm tiến trình con `news` (`scripts/run_news_refresher.py`) gọi
+> `news_update.py` mỗi 15 phút, và script tự bỏ qua nếu lần thử gần nhất mới hơn 4 giờ (nguồn giới hạn tốc độ).
+> API tự dùng `data/news/calendar.csv` khi file tồn tại và `XAU_EDGE_NEWS_CALENDAR_PATH` chưa đặt.
+>
+> Trạng thái tin tức chuẩn hoá (`xau_edge/news/status.py`): `CLEAR`, `BLOCKED`, `UNKNOWN`, `NOT_CONFIGURED`,
+> `STALE`, `ERROR`. Chỉ `CLEAR` là xanh. Chiến lược (baseline) vẫn chỉ thấy `CLEAR/BLOCKED/UNKNOWN`: các trạng
+> thái còn lại gộp thành `UNKNOWN`, hành vi chiến lược không đổi. `STALE` khi coverage sắp hết/đã hết hoặc file
+> không được làm mới quá 48 giờ. `update_status.json` cạnh file lịch ghi lần cập nhật gần nhất (kể cả lỗi).
+>
+> Cột provenance tuỳ chọn (file cũ 4 cột vẫn đọc được): `currency, source, published_at, ingested_at, updated_at`.
+> `available_at` = lần đầu TA thấy dòng; `ingested_at` giữ lần đầu, `updated_at` là lần fetch gần nhất xác nhận;
+> `published_at` để trống khi nguồn không cung cấp. Sự kiện tương lai biến mất khỏi nguồn (hủy/dời) bị loại ở lần
+> cập nhật kế tiếp; sự kiện đã qua không bao giờ bị xoá.
 
 ## 1. Định dạng file (point-in-time)
 

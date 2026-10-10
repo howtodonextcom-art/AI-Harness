@@ -29,6 +29,7 @@ from xau_edge.market_data.freshness import bar_freshness, missed_closed_bars
 from xau_edge.market_data.ledger import BarLedger, LedgerError
 from xau_edge.market_data.session import market_status
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
+from xau_edge.news.status import news_status, strategy_state
 from xau_edge.trading.frames import FrameError, MultiTfBars, from_frames
 from xau_edge.trading.sizing import SymbolSpec
 
@@ -260,22 +261,8 @@ class LiveTradingMarketSource:
 
 
 def news_state(now: datetime, calendar_path: Path | str | None) -> str:
-    """CLEAR, BLOCKED or UNKNOWN. Without a calendar covering ``now`` it is UNKNOWN, never CLEAR."""
-    if not calendar_path or not Path(calendar_path).exists():
-        return "UNKNOWN"
-    from xau_edge.news.calendar import news_blocked  # noqa: PLC0415
-    from xau_edge.news.pit import load_calendar_asof  # noqa: PLC0415
-
-    try:
-        calendar = load_calendar_asof(calendar_path, now)
-        return (
-            "BLOCKED"
-            if news_blocked(calendar, now, before_minutes=30, after_minutes=15)
-            else "CLEAR"
-        )
-    except Exception as exc:
-        _LOG.warning("news calendar unusable: %s", type(exc).__name__)
-        return "UNKNOWN"
+    """CLEAR, BLOCKED or UNKNOWN for the baseline; never CLEAR without a fresh covering calendar."""
+    return strategy_state(news_status(now, calendar_path)["state"])
 
 
 __all__ = [

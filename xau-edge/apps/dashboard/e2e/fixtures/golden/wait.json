@@ -255,7 +255,14 @@
   }
  },
  "news": {
-  "state": "UNKNOWN",
+  "blocked_by": null,
+  "coverage": null,
+  "detail": "no economic calendar is configured",
+  "last_update": null,
+  "last_updated_at": null,
+  "next_events": [],
+  "source": null,
+  "state": "NOT_CONFIGURED",
   "text": "NEWS NOT VERIFIED: no economic calendar",
   "warning": true
  },

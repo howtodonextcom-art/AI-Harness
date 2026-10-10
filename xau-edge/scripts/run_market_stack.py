@@ -30,12 +30,14 @@ def python_argv() -> list[str]:
 
 
 def build_children(
-    *, api: bool, dashboard: bool, port: int, collector: bool = True
+    *, api: bool, dashboard: bool, port: int, collector: bool = True, news: bool = True
 ) -> list[ChildSpec]:
     py = python_argv()
     children = []
     if collector:
         children.append(ChildSpec("collector", [*py, "scripts/run_market_collector.py"], ROOT))
+    if news:
+        children.append(ChildSpec("news", [*py, "scripts/run_news_refresher.py"], ROOT))
     if api:
         children.append(ChildSpec("api", [*py, "scripts/serve_api.py", "--port", str(port)], ROOT))
     if dashboard:
@@ -56,6 +58,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--no-api", action="store_true")
     parser.add_argument("--no-collector", action="store_true", help="for failure drills only")
+    parser.add_argument("--no-news", action="store_true", help="do not refresh the calendar")
     parser.add_argument("--dashboard", action="store_true")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
@@ -65,6 +68,7 @@ def main() -> int:
             dashboard=args.dashboard,
             port=args.port,
             collector=not args.no_collector,
+            news=not args.no_news,
         ),
         run_dir=ROOT / "data" / "run",
         log_dir=ROOT / "data" / "logs",

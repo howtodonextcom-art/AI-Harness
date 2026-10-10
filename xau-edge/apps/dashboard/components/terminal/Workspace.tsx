@@ -2,6 +2,7 @@
 
 import { Term } from "@/components/terminal/Term";
 import { useMemo, useState, type ReactNode } from "react";
+import { NewsCard } from "@/components/terminal/News";
 import { AccountCard, AlertCard, CoverageCard, DemoLockCard, ForwardCard, FunnelCard, StrategyCard, SystemStatus } from "@/components/terminal/SystemCards";
 import { Card, NEUTRAL, Pill, Row, fmt, money } from "@/components/trade/ui";
 import type { ManualLevel, PriceAlert, Tab } from "@/lib/prefs";
@@ -82,7 +83,6 @@ function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert, notify, 
           <b className="font-mono">{view?.volume?.m1_percentile == null ? "—" : `${(view.volume.m1_percentile * 100).toFixed(0)}%`}</b> · z <b className="font-mono">{fmt(view?.volume?.m1_zscore)}</b>
         </p>
         <p data-testid="volume-note" className="mt-2 text-xs text-slate-600 dark:text-slate-400">Volume là tick volume (số lần giá đổi), không phải khối lượng sàn.</p>
-        {view?.news?.warning && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">Tin tức chưa được xác minh (không có lịch kinh tế).</p>}
       </Card>
       <Card title="Mức giá" testId="levels-card">
         <Row k="Kháng cự gần (M15)" v={fmt(st?.nearest_resistance as number | null)} />
@@ -289,6 +289,7 @@ function System({ view, mode, zone }: { view: TradeView | null; mode: string; zo
         <StrategyCard strategy={view.strategy} />
         <ForwardCard view={view} />
         <CoverageCard view={view} zone={zone} />
+        <NewsCard news={view?.news} zone={zone} />
         <FunnelCard funnel={view.funnel} />
         <AlertCard alerts={view.alerts} mode={mode} />
         <AccountCard view={view} />

@@ -244,3 +244,60 @@ test("a replay has no coverage to show; the System card says so", async ({ page 
   await expect(page.getByTestId("coverage-card")).toContainText("hoặc đây là replay");
   await expect(page.getByTestId("forward-incomplete")).toHaveCount(0);
 });
+
+/** NEWS-01: one canonical news state; only CLEAR is green; every other state says "check the news yourself". */
+const NEWS_BASE = {
+  detail: "no high-impact event inside the news window",
+  warning: false,
+  text: "CLEAR",
+  coverage: { from: "2026-10-04T04:00:00Z", to: "2026-10-11T04:00:00Z" },
+  last_updated_at: "2026-10-08T06:00:00Z",
+  source: "forexfactory-weekly",
+  next_events: [{ time: "2026-10-08T12:30:00Z", title: "CPI m/m", currency: "USD", impact: "high" as const, minutes_to: 135 }],
+  blocked_by: null,
+  last_update: null,
+};
+
+for (const [state, shown, green] of [
+  ["CLEAR", "Không trong cửa sổ tin mạnh", true],
+  ["BLOCKED", "ĐANG trong cửa sổ tin mạnh", false],
+  ["UNKNOWN", "Tin tức chưa xác minh", false],
+  ["NOT_CONFIGURED", "Chưa cấu hình lịch tin", false],
+  ["STALE", "Lịch tin đã cũ hoặc hết hạn", false],
+  ["ERROR", "Lịch tin bị lỗi", false],
+] as const) {
+  test(`news ${state}: the strip says it in words and ${green ? "is the only green state" : "never looks green"}`, async ({ page }) => {
+    const v = view("wait");
+    const blocked = { time: "2026-10-08T12:30:00Z", title: "CPI m/m", currency: "USD", impact: "high" as const, minutes_to: -5 };
+    v.news = { ...NEWS_BASE, state, warning: state !== "CLEAR" && state !== "BLOCKED", blocked_by: state === "BLOCKED" ? blocked : null, next_events: state === "BLOCKED" ? [] : NEWS_BASE.next_events };
+    await mock(page, v);
+    await page.goto("/trade");
+    const strip = page.getByTestId("news-strip");
+    await expect(strip).toHaveAttribute("data-state", state);
+    await expect(page.getByTestId("news-state")).toContainText(shown);
+    const klass = (await strip.getAttribute("class")) ?? "";
+    expect(/emerald|green/.test(klass)).toBe(green);
+    if (state === "CLEAR") await expect(page.getByTestId("news-next")).toContainText("CPI m/m USD · MẠNH · sau 2h15");
+    if (state === "BLOCKED") await expect(page.getByTestId("news-next")).toContainText("5 phút trước");
+    if (!green && state !== "BLOCKED") await expect(page.getByTestId("news-detail")).toContainText("Hãy tự kiểm tra tin");
+  });
+}
+
+test("System shows the calendar's source, coverage, freshness, a failed update and the events to come", async ({ page }) => {
+  const v = view("wait");
+  v.news = {
+    ...NEWS_BASE,
+    state: "STALE",
+    warning: true,
+    detail: "the calendar was last refreshed 60 h ago",
+    last_update: { ok: false, error: "download failed (HTTP 429, retry after 218s)", last_attempt_at: "2026-10-10T16:25:00Z", last_success_at: "2026-10-08T06:00:00Z" },
+  };
+  await mock(page, v);
+  await page.goto("/trade");
+  await page.getByTestId("tab-system").click();
+  await expect(page.getByTestId("news-card-state")).toHaveText("STALE");
+  await expect(page.getByTestId("news-source")).toHaveText("forexfactory-weekly");
+  await expect(page.getByTestId("news-update-failed")).toContainText("THẤT BẠI");
+  await expect(page.getByTestId("news-update-failed")).toContainText("HTTP 429");
+  await expect(page.getByTestId("news-events")).toContainText("CPI m/m USD · MẠNH");
+});

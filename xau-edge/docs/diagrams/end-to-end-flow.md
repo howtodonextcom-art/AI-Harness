@@ -64,7 +64,7 @@ flowchart TD
 | MT5 → collector → `data/market` | Chạy, `health=GOOD`, 0 nến thiếu | `/md/status` lúc 11:13 UTC; `scripts/run_market_stack.py:38` |
 | Supervisor | Chạy collector + API + dashboard; tự khởi động lại child chết | `scripts/run_market_stack.py:32-52` |
 | `data/market` → TradeEngine | Chạy mỗi 5 giây | `api/trade.py:41` (`STEP_SECONDS`), `api/trade.py:120-141` |
-| Lịch tin → TradeEngine | **Đã nối (NEWS-01)**, chưa áp dụng cho API đang chạy (cần restart); chưa có file lịch trên đĩa (`data/news/` trống) | `scripts/serve_api.py:76-80`, `api/trade.py` `news_calendar_path`, `tests/unit/api/test_trade_news_wiring.py` |
+| Lịch tin → TradeEngine | **Hoạt động (NEWS-01, quan sát LIVE 2026-10-10)**: nguồn Forex Factory weekly, `data/news/calendar.csv` 24 sự kiện USD/All, tiến trình `news` trong supervisor làm mới; trạng thái `CLEAR/BLOCKED/UNKNOWN/NOT_CONFIGURED/STALE/ERROR` trên dải TIN của /trade và thẻ Hệ thống. Chưa quan sát LIVE trạng thái BLOCKED (chỉ unit + mock); nguồn chỉ phủ tuần hiện tại | `news/status.py`, `news/forexfactory.py`, `scripts/news_update.py`, `docs/reports/NEWS_SOURCE_DECISION.md` |
 | Quyết định | 249/249 là WAIT (09/10 12:53 UTC → 10/10); top lý do NO_SETUP 151, TIMEFRAME_CONFLICT 35, NO_TRIGGER 35 | `data/trade/decisions-*.jsonl`; 0 file `signals-*.jsonl` |
 | Telemetry | Thiếu khoảng một nửa nến M1 khi thị trường mở (234 bản ghi / ~480 phút) | cùng nguồn trên |
 | PaperDesk | READY, 0 lệnh | tab Hệ thống trên `/trade` |

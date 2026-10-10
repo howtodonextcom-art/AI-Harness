@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Protocol
 
 MAX_BYTES = 5_000_000
+USER_AGENT = "xau-edge-news/1.0 (personal decision support; a few fetches per day)"
 
 
 class CalendarProviderError(RuntimeError):
@@ -47,7 +48,7 @@ class LocalFileProvider:
 
 
 def _urlopen_read(url: str, timeout: float) -> bytes:
-    request = urllib.request.Request(url, headers={"Accept": "text/csv"})  # noqa: S310 - https only
+    request = urllib.request.Request(url, headers={"Accept": "text/csv", "User-Agent": USER_AGENT})  # noqa: S310 - https only
     with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
         data: bytes = response.read(MAX_BYTES + 1)
     return data
@@ -88,7 +89,11 @@ class HttpsCsvProvider:
 
 
 def provider_from_source(source: str) -> CalendarProvider:
-    """``https://...`` gives an HttpsCsvProvider, anything else is treated as a local path."""
+    """``forexfactory`` names the weekly feed, ``https://...`` an HttpsCsvProvider, else a path."""
+    if source.strip().lower() in ("forexfactory", "ff"):
+        from xau_edge.news.forexfactory import ForexFactoryProvider  # noqa: PLC0415 - no cycle
+
+        return ForexFactoryProvider()
     if source.lower().startswith(("http://", "https://")):
         return HttpsCsvProvider(source)
     return LocalFileProvider(source)

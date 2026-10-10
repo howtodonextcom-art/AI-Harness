@@ -73,10 +73,12 @@ def main() -> None:
             data_dir=Path.cwd() / settings.data_dir,
         )
         print("Web control plane ON (/control/*); token written for the dashboard server.")
+    default_news = Path("data/news/calendar.csv")
+    news_path = settings.news_calendar_path or (default_news if default_news.exists() else None)
     trade = build_trade_engine(
         Path("data/market"),
         Path("data/trade"),
-        news_calendar_path=settings.news_calendar_path,
+        news_calendar_path=news_path,
     )
     ctx = ApiContext(
         load_frames=load,

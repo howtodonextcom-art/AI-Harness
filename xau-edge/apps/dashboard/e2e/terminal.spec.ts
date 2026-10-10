@@ -103,7 +103,8 @@ test.describe("decision", () => {
     await expect(page.getByTestId("blocked-by")).toContainText("Mã chặn");
     await expect(page.getByTestId("wait-context")).toContainText("Xu hướng");
     await expect(page.getByTestId("market-activity")).toContainText("biến động");
-    await expect(page.getByTestId("news-warning")).toContainText("NEWS NOT VERIFIED");
+    await expect(page.getByTestId("news-strip")).toHaveAttribute("data-state", "NOT_CONFIGURED");
+    await expect(page.getByTestId("news-strip")).toContainText("Hãy tự kiểm tra tin");
     await expect(page.getByTestId("plan-card")).toHaveCount(0);
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     const stages = page.getByTestId("stages").getByRole("button");

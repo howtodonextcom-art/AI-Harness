@@ -27,6 +27,7 @@ from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.atomic import atomic_write_text
 from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.market_data.session import market_status
+from xau_edge.news.status import empty_status, news_status, strategy_state
 from xau_edge.trading.baseline import BaselineConfig
 from xau_edge.trading.cockpit import (
     action_for,
@@ -43,7 +44,7 @@ from xau_edge.trading.coverage import apply_to_forward, decision_coverage
 from xau_edge.trading.decision_core import ROLES, SnapshotInputs, evaluate, explain
 from xau_edge.trading.demo_lock import demo_lock_status
 from xau_edge.trading.funnel import stages_from_signal, waiting_for
-from xau_edge.trading.live_source import LiveSnapshot, LiveTradingMarketSource, news_state
+from xau_edge.trading.live_source import LiveSnapshot, LiveTradingMarketSource
 from xau_edge.trading.market_context import market_context
 from xau_edge.trading.market_state import MarketState, SnapshotMemo
 from xau_edge.trading.namespace import claim_root
@@ -139,6 +140,7 @@ class TradeEngine:
         self._snap: LiveSnapshot | None = None
         self._last_telemetry_m1: datetime | None = None
         self._run_id = uuid.uuid4().hex[:8]  # which engine process wrote a telemetry row
+        self._news: dict[str, Any] | None = None
         self._coverage_cache: tuple[datetime, dict[str, Any] | None] | None = None
         self._errors: list[str] = []
         self._memo = SnapshotMemo()
@@ -236,7 +238,8 @@ class TradeEngine:
     def _recompute(self, now: datetime) -> None:
         snap = self.source.load(now)
         quote = snap.quote
-        news = news_state(now, self.config.news_calendar_path)
+        self._news = news_status(now, self.config.news_calendar_path)
+        news = strategy_state(self._news["state"])
         equity = self.desk.equity(quote, now)
         data_ok = snap.usable if snap.market_open else True
         inputs = SnapshotInputs(
@@ -806,13 +809,7 @@ class TradeEngine:
                 "risk_plans": plans,
                 "default_risk_pct": self.config.default_risk_pct,
                 "risk_choices": list(RISK_CHOICES),
-                "news": {
-                    "state": state.news_state,
-                    "warning": state.news_state == "UNKNOWN",
-                    "text": self._news_unknown_text()
-                    if state.news_state == "UNKNOWN"
-                    else state.news_state,
-                },
+                "news": self._news_view(state.news_state),
                 "desk": {
                     "can_open": bool(actionable_side and trusted and not entry_blockers),
                     "blockers": entry_blockers,
@@ -836,13 +833,25 @@ class TradeEngine:
                 "engine_errors": self._errors[-3:],
             }
 
-    def _news_unknown_text(self) -> str:
+    def _news_view(self, strategy: str) -> dict[str, Any]:
+        """The canonical news state with its evidence; ``warning`` unless CLEAR or BLOCKED."""
+        status = self._news
+        if status is None:  # replay or before the first decision
+            status = empty_status(strategy)
+        state = str(status["state"])
+        return {
+            **status,
+            "warning": state not in ("CLEAR", "BLOCKED"),
+            "text": self._news_unknown_text(status) if strategy == "UNKNOWN" else state,
+        }
+
+    def _news_unknown_text(self, status: dict[str, Any] | None = None) -> str:
+        status = status or self._news or {}
         if self.config.news_calendar_path is None:
             return "NEWS NOT VERIFIED: no economic calendar"
-        return (
-            "NEWS NOT VERIFIED: the economic calendar is missing, unreadable, has no coverage "
-            "for now or lists a row published after now"
-        )
+        detail = status.get("detail")
+        state = status.get("state", "UNKNOWN")
+        return f"NEWS NOT VERIFIED ({state}): {detail or 'the calendar cannot be used'}"
 
     def _limits(self, quote: Any, stamp: datetime) -> dict[str, Any]:
         """The governor daily limits next to where today stands."""

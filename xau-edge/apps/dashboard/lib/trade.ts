@@ -402,7 +402,7 @@ export interface TradeView {
   risk_plans?: RiskPlan[] | null;
   default_risk_pct?: number;
   risk_choices?: number[];
-  news?: { state: string; warning: boolean; text: string };
+  news?: NewsView;
   evidence: { operational: string; validated_edge: boolean; research: string; label: string };
   desk?: {
     can_open: boolean;
@@ -488,3 +488,25 @@ export const closePaperTrade = (trade_id: string) => post<PaperTrade>("paper/clo
 /** Quick risk calculator (read-only; the same sizing the paper desk uses). Not a signal. */
 export const fetchRisk = (entry: number, stopLoss: number, riskPct: number, signal?: AbortSignal) =>
   getJson<RiskPlan>(`/trade/risk?entry=${entry}&stop_loss=${stopLoss}&risk_pct=${riskPct}`, signal);
+
+export interface NewsEventItem {
+  time: string;
+  title: string;
+  currency: string;
+  impact: "high" | "medium" | "low";
+  minutes_to: number;
+}
+
+/** The canonical news state: only CLEAR is green; every other state is "do not assume no news". */
+export interface NewsView {
+  state: "CLEAR" | "BLOCKED" | "UNKNOWN" | "NOT_CONFIGURED" | "STALE" | "ERROR";
+  detail: string | null;
+  warning: boolean;
+  text: string;
+  coverage: { from: string; to: string } | null;
+  last_updated_at: string | null;
+  source: string | null;
+  next_events: NewsEventItem[];
+  blocked_by: NewsEventItem | null;
+  last_update: { ok: boolean; error: string | null; last_attempt_at: string; last_success_at: string | null } | null;
+}

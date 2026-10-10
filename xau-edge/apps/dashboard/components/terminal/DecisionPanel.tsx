@@ -1,6 +1,7 @@
 "use client";
 
 import { lastEventText, lifecycleSteps } from "@/lib/lifecycle";
+import { NewsStrip } from "@/components/terminal/News";
 import { TechDetail } from "@/components/terminal/TechDetail";
 import { Term } from "@/components/terminal/Term";
 import { useEffect, useState, type ReactNode } from "react";
@@ -89,11 +90,6 @@ function WaitContext({ view, zone, setups, journal }: { view: TradeView; zone: D
           </li>
         )}
       </ul>
-      {view.news?.warning && (
-        <p data-testid="news-warning" className={`rounded-md border px-2 py-1 text-xs ${WARN}`}>
-          Tin tức CHƯA XÁC MINH (NEWS NOT VERIFIED): chưa có lịch kinh tế, hãy tự kiểm tra.
-        </p>
-      )}
       <details data-testid="wait-tech" className="text-xs">
         <summary className="inline cursor-pointer text-slate-600 underline decoration-dotted dark:text-slate-400">Chi tiết kỹ thuật</summary>
         {next && (
@@ -376,6 +372,7 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
   const waiting = state === "WAIT" || state === "SETUP_ARMED" || state === "NOT_ACTIONABLE";
   return (
     <section data-testid="decision-card" className="space-y-3">
+      {view.news && <NewsStrip news={view.news} />}
       {showPosition && view.desk?.position ? <PositionPanel trade={view.desk.position} onCloseRequest={onCloseRequest} busy={busy} serverNowMs={serverNowMs} zone={zone} /> : null}
       {showTicket && !uiStale && <Ticket view={view} risk={risk} onRisk={onRisk} onOpenRequest={onOpenRequest} busy={busy} uiStale={uiStale} expiredNow={expiredNow} />}
       {showTicket && uiStale && (
