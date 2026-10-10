@@ -41,6 +41,7 @@ from xau_edge.trading.decision_core import ROLES, SnapshotInputs, evaluate, expl
 from xau_edge.trading.demo_lock import demo_lock_status
 from xau_edge.trading.funnel import stages_from_signal, waiting_for
 from xau_edge.trading.live_source import LiveSnapshot, LiveTradingMarketSource, news_state
+from xau_edge.trading.market_context import market_context
 from xau_edge.trading.market_state import MarketState, SnapshotMemo
 from xau_edge.trading.namespace import claim_root
 from xau_edge.trading.paper_desk import (
@@ -667,6 +668,14 @@ class TradeEngine:
                 "hero": hero,
                 "decision_trusted": trusted,
                 "status_strip": self._status_strip(conditions, hero, forward, demo),
+                "market_context": market_context(
+                    snap.bars.frames,
+                    self.broker_clock,
+                    stamp,
+                    price=None if quote is None else quote.bid,
+                    session=state.session,
+                    market_open=snap.market_open,
+                ),
                 "generated_at": signal.generated_at.isoformat()
                 if signal.generated_at
                 else stamp.isoformat(),
@@ -696,6 +705,9 @@ class TradeEngine:
                 "why_wait": {
                     "stages": stages_from_signal(signal),
                     "waiting_for": waiting_for(signal),
+                    "waiting_for_code": None
+                    if signal.decision is not TradeDecision.WAIT or not signal.refusal_reasons
+                    else signal.refusal_reasons[0].value,
                     "blocked_by": [r.value for r in signal.refusal_reasons],
                 },
                 "setup": {
