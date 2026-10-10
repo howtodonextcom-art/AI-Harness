@@ -123,3 +123,57 @@ test("during a long WAIT the page still says what happened last", async ({ page 
   await expect(page.getByTestId("last-event")).toContainText("Lần gần nhất:");
   await expect(page.getByTestId("last-event")).toContainText(/Setup|Tín hiệu|Lệnh/);
 });
+
+test("a replay page leaves the old TRADE-06/07 keys alone (they were the owner's live tools)", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    sessionStorage.setItem("seeded", "1");
+    localStorage.setItem("xau-edge.trade.levels.v1", JSON.stringify([{ id: "old", price: 4210, label: "Đường" }]));
+  });
+  await mock(page, view("wait")); // a replay view
+  await page.goto("/trade");
+  await expect(page.getByTestId("tools-scope")).toContainText("REPLAY");
+  await expect(page.getByTestId("my-levels")).not.toContainText("4210.00");
+  expect(await page.evaluate(() => localStorage.getItem("xau-edge.trade.levels.v1"))).not.toBeNull();
+});
+
+test("a refused open says one Vietnamese sentence; the code and the server's English text are in the technical details", async ({ page }) => {
+  await mock(page, view("buy"));
+  await page.route("**/api/trade/paper/open", (route) => route.fulfill({ status: 409, json: { detail: { code: "DECISION_CHANGED", message: "the setup changed or is gone; refresh and look again" } } }));
+  await page.goto("/trade");
+  await page.getByTestId("take-paper").click();
+  await page.getByTestId("confirm-paper").click();
+  const msg = page.getByTestId("action-message");
+  await expect(msg).toContainText("Không mở được lệnh PAPER: Kế hoạch đã thay đổi hoặc hết hạn");
+  const visible = await msg.innerText();
+  expect(visible).not.toContain("DECISION_CHANGED");
+  expect(visible).not.toContain("the setup changed");
+  await expect(msg.locator("details")).toContainText("DECISION_CHANGED");
+});
+
+test("changing the display zone keeps the chart on the current candles", async ({ page }) => {
+  await mock(page, view("buy"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("ohlc-readout")).toBeVisible();
+  const zone = page.getByRole("combobox", { name: "Múi giờ hiển thị" });
+  for (const z of ["UTC", "BROKER", "LOCAL", "VN"]) {
+    await zone.selectOption({ label: await zone.locator(`option[value="${z}"]`).innerText() });
+    await page.waitForTimeout(500);
+    await expect(page.getByTestId("go-latest")).toHaveCount(0); // still at the latest candle, nothing is out of view
+  }
+});
+
+test("offline, the ages keep counting and the market pill says 'Mất kết nối'", async ({ page }) => {
+  await page.clock.install();
+  const online = { on: true };
+  const v = view("buy");
+  await mock(page, v);
+  await page.route("**/trade/decision", (route) => (online.on ? route.fulfill({ json: v }) : route.abort()));
+  await page.goto("/trade");
+  await expect(page.getByTestId("action-word")).toHaveText("MUA PAPER");
+  online.on = false;
+  await page.clock.fastForward(95_000);
+  await expect(page.getByTestId("market-pill")).toHaveText("Mất kết nối");
+  await expect(page.getByTestId("price-stale")).not.toContainText(/· 0\s?s/);
+  await expect(page.getByTestId("data-age")).not.toHaveText(/dữ liệu: 0\s?s$/);
+});

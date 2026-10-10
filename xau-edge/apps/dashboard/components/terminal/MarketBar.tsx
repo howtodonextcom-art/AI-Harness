@@ -16,6 +16,8 @@ interface Props {
   serverNowMs: number;
   /** The page has not heard from the API for too long. */
   uiStale: boolean;
+  /** seconds since the last answer (0 while connected): the ages shown keep counting while the API is silent */
+  offlineSeconds?: number;
 }
 
 const pill = "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-semibold";
@@ -33,7 +35,7 @@ function BigPrice({ value }: { value: number }) {
 }
 
 /** Top market bar: what XAUUSD is doing right now, before anything about the engine. */
-export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Props) {
+export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlineSeconds = 0 }: Props) {
   const quote = view?.quote ?? null;
   const ctx = view?.market_context;
   const daily = ctx?.daily ?? null;
@@ -55,7 +57,9 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
   const reopen = !open && ctx?.next_open ? Date.parse(ctx.next_open) : null;
   const reopenIn = countdownText(reopen, serverNowMs);
   // an old quote while the market is closed is normal (the last price); it is only an alarm while trading is open
-  const stalePrice = uiStale || (open && Boolean(quote?.stale));
+  const faulted = view?.hero.state === "UNAVAILABLE" || view?.hero.state === "STALE"; // the engine itself says the data cannot be trusted
+  const stalePrice = uiStale || faulted || (open && Boolean(quote?.stale));
+  const extra = uiStale ? offlineSeconds : 0;
   const lastPrice = !open && Boolean(quote?.stale) && !uiStale;
   const live = view?.source_mode === "LIVE";
   const change = daily?.change ?? null;
@@ -72,8 +76,8 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
             <span data-testid="source-pill" className={`${pill} ${live ? (open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300") : "border-red-600 bg-red-500/15 text-red-800 dark:text-red-200"}`}>
               {view ? (live ? (open ? "LIVE" : "LIVE · ĐÓNG CỬA") : "REPLAY · NOT LIVE") : "…"}
             </span>
-            <span data-testid="market-pill" className={`${pill} ${open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300"}`}>
-              {open ? `Thị trường MỞ${live ? "" : " (replay)"}` : status === "—" ? "…" : `Thị trường ${status === "CLOSED" ? "ĐÓNG" : status}`}
+            <span data-testid="market-pill" className={`${pill} ${uiStale ? "border-red-600 bg-red-500/15 text-red-800 dark:text-red-200" : open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300"}`}>
+              {uiStale ? "Mất kết nối" : open ? `Thị trường MỞ${live ? "" : " (replay)"}` : status === "—" ? "…" : `Thị trường ${status === "CLOSED" ? "ĐÓNG" : status}`}
             </span>
             <span data-testid="paper-only" className={`${pill} border-amber-600 bg-amber-500/15 text-amber-800 dark:text-amber-200`}><span className="roomy:hidden">PAPER</span><span className="hidden roomy:inline">PAPER · không gửi lệnh thật</span></span>
           </div>
@@ -97,7 +101,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
             )}
             {stalePrice && (
               <span data-testid="price-stale" role="status" className={`${pill} border-red-600 bg-red-500/15 text-red-800 dark:text-red-200`}>
-                GIÁ CŨ{quote ? ` · ${ageText(quote.age_seconds)}` : ""}
+                GIÁ CŨ{quote ? ` · ${ageText(quote.age_seconds + extra)}` : ""}
               </span>
             )}
           </div>
@@ -145,7 +149,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
           <div data-testid="countdown" className={`font-mono text-xs ${MUTED}`}>
             {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
           </div>
-          <span data-testid="data-age" className={`hidden text-xs sm:inline ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds)}</span>
+          <span data-testid="data-age" className={`hidden text-xs sm:inline ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds === null || view?.data_age_seconds === undefined ? view?.data_age_seconds : view.data_age_seconds + extra)}</span>
           <button type="button" data-testid="market-more" aria-expanded={more} onClick={() => setMore(!more)} className="text-xs font-semibold underline roomy:hidden">{more ? "Ẩn chi tiết thị trường ▴" : "Chi tiết thị trường ▾"}</button>
         </div>
       </div>

@@ -65,16 +65,21 @@ test("levels and alerts are scoped by source mode and symbol: a replay tool neve
   expect(storageKey(REPLAY, "levels")).toBe("xau-edge:v3:REPLAY:XAUUSD:levels");
 });
 
-test("migration moves the TRADE-06/07 keys into the first scope that loads, once, without destroying anything newer", () => {
+test("migration moves the TRADE-06/07 keys into the LIVE scope only, once, without destroying anything newer", () => {
   const old = { "xau-edge.trade.price-alerts.v1": JSON.stringify([alert(4240)]), "xau-edge.trade.levels.v1": JSON.stringify([{ id: "l", price: 4200, label: "Đường" }, { id: "bad", price: -1, label: "x" }]) };
-  const data = fakeStorage(old);
+  // a replay page that loads first must NOT adopt or delete them (they were drawn on live prices)
+  const first = fakeStorage(old);
+  expect(migrateLegacy(REPLAY)).toEqual({ alerts: 0, levels: 0 });
+  expect("xau-edge.trade.price-alerts.v1" in first).toBe(true);
+  expect(loadAlerts(REPLAY)).toEqual([]);
+  // LIVE adopts them
   expect(migrateLegacy(LIVE)).toEqual({ alerts: 1, levels: 1 });
   expect(loadAlerts(LIVE).map((a) => a.price)).toEqual([4240]);
   expect(loadLevels(LIVE).map((l) => l.price)).toEqual([4200]); // the invalid line is dropped, not carried over
-  expect("xau-edge.trade.price-alerts.v1" in data).toBe(false); // retired
-  expect(loadAlerts(REPLAY)).toEqual([]); // a second scope never inherits it
-  expect(migrateLegacy(REPLAY)).toEqual({ alerts: 0, levels: 0 });
-  // a scope that already has data keeps it: the old key is not read into it
+  expect("xau-edge.trade.price-alerts.v1" in first).toBe(false); // retired
+  expect(loadAlerts(REPLAY)).toEqual([]); // REPLAY never inherits them
+  expect(migrateLegacy(LIVE)).toEqual({ alerts: 0, levels: 0 }); // once
+  // a LIVE scope that already has data keeps it: the old key is not read into it
   const d2 = fakeStorage({ ...old, [storageKey(LIVE, "alerts")]: JSON.stringify([alert(5000)]) });
   expect(migrateLegacy(LIVE).alerts).toBe(0);
   expect(loadAlerts(LIVE).map((a) => a.price)).toEqual([5000]);

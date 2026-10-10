@@ -31,7 +31,7 @@ import {
   type TradeView as TradeViewData,
 } from "@/lib/trade";
 import { BASE_TITLE, beep, isNewSetup, readyTitle, systemNotify } from "@/lib/notify";
-import { EXIT_REASON_VI, HERO_ICON, HERO_VI, humanCondition } from "@/lib/vi";
+import { EXIT_REASON_VI, HERO_ICON, HERO_VI, actionErrorText, humanCondition } from "@/lib/vi";
 
 const POLL_MS = 3000;
 const SYMBOL = "XAUUSD"; // this terminal is single-symbol: the symbol is part of the storage scope
@@ -65,7 +65,7 @@ export function TerminalView() {
   const [prefs, setPrefsState] = useState<Prefs>(DEFAULT_PREFS);
   const [hydrated, setHydrated] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ tone: string; text: string } | null>(null);
+  const [message, setMessage] = useState<{ tone: string; text: string; code?: string; detail?: string } | null>(null);
   const [bars, setBars] = useState<BarsResponse | null>(null);
   const [barsError, setBarsError] = useState(false);
   const [markers, setMarkers] = useState<MarkersResponse | null>(null);
@@ -307,7 +307,7 @@ export function TerminalView() {
     setMessage(
       res.ok
         ? { tone: "border-emerald-600 bg-emerald-500/15", text: `Đã mở lệnh PAPER ${res.data.side === "BUY" ? "MUA" : "BÁN"} ${fmt(res.data.lots, 2)} lot: kế hoạch ${fmt(res.data.planned_entry ?? null)}, khớp ${fmt(res.data.fill_price)}` }
-        : { tone: BAD, text: `Không mở được lệnh PAPER: ${res.error.message} (${res.error.code})` },
+        : { tone: BAD, text: `Không mở được lệnh PAPER: ${actionErrorText(res.error.code)}`, code: res.error.code, detail: res.error.message },
     );
     await Promise.all([load(true), loadSide()]);
     setBusy(false);
@@ -320,7 +320,7 @@ export function TerminalView() {
     setMessage(
       res.ok
         ? { tone: "border-emerald-600 bg-emerald-500/15", text: `Đã đóng lệnh paper: ${money(res.data.net_pnl ?? null)} (${fmt(res.data.r_multiple ?? null, 2)}R) — ${EXIT_REASON_VI[res.data.exit_reason ?? ""] ?? res.data.exit_reason}` }
-        : { tone: BAD, text: `Không đóng được lệnh: ${res.error.message} (${res.error.code})` },
+        : { tone: BAD, text: `Không đóng được lệnh: ${actionErrorText(res.error.code)}`, code: res.error.code, detail: res.error.message },
     );
     await Promise.all([load(true), loadSide()]);
     setBusy(false);
@@ -504,7 +504,7 @@ export function TerminalView() {
   return (
     <main className={`mx-auto w-full max-w-[1800px] space-y-2 px-2 py-2 short:space-y-1 short:py-1 sm:px-3 ${showActionBar ? "pb-20 short:pb-2 lg:pb-2" : ""}`}>
       <div inert={modalOpen} className="space-y-2">
-      <MarketBar view={view} tf={prefs.tf} zone={prefs.zone} onZone={changeZone} serverNowMs={serverNow} uiStale={uiStale} />
+      <MarketBar view={view} tf={prefs.tf} zone={prefs.zone} onZone={changeZone} serverNowMs={serverNow} uiStale={uiStale || Boolean(error)} offlineSeconds={lastOk === null ? 0 : Math.max(0, Math.round((now - lastOk) / 1000))} />
 
       {mode !== "LIVE" && (
         <div role="alert" data-testid="replay-banner" className={`rounded-md border-2 px-3 py-1 short:py-0 text-xs font-semibold ${BAD}`}>
@@ -537,7 +537,10 @@ export function TerminalView() {
       )}
       {message && (
         <div role="status" data-testid="action-message" className={`flex items-start justify-between gap-2 rounded-md border px-3 py-1.5 text-sm ${message.tone}`}>
-          <span>{message.text}</span>
+          <span>
+            {message.text}
+            {message.code && <TechDetail code={message.code}>{message.detail ? <span className="ml-2">{message.detail}</span> : null}</TechDetail>}
+          </span>
           <button type="button" aria-label="Đóng thông báo" onClick={() => setMessage(null)} className="rounded px-1.5 hover:bg-slate-500/20">✕</button>
         </div>
       )}
@@ -557,7 +560,7 @@ export function TerminalView() {
             <MtfStrip rows={view?.timeframes ?? []} tf={prefs.tf} onFocus={focusTf} />
           </div>
         </div>
-        <div className="contents short:flex short:max-h-[calc(100dvh-4.5rem)] short:min-w-0 short:flex-col short:gap-2 short:overflow-y-auto short:[grid-area:side] lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:side]">
+        <div className="contents short:flex short:max-h-[calc(100dvh-4.5rem)] short:min-w-0 short:flex-col short:gap-2 short:overflow-y-auto short:pb-16 short:[grid-area:side] lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:side]">
           <div style={{ gridArea: "hero" }} className="min-w-0">{heroNode}</div>
           <div style={{ gridArea: "body" }} className="min-w-0">{bodyNode}</div>
         </div>
@@ -596,7 +599,7 @@ export function TerminalView() {
 
       </div>
       {showActionBar && view && (
-        <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="short:hidden fixed inset-x-0 bottom-0 z-[45] flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
+        <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="fixed inset-x-0 bottom-0 z-[45] short:left-auto short:w-[38%] short:rounded-tl-xl flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
           {hero?.state === "POSITION_OPEN" && position ? (
             <>
               <div className="min-w-0 flex-1 text-sm">

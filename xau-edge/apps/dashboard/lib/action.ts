@@ -113,7 +113,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
       "ĐÃ THOÁT",
       x ? `${reason} · ${money(x.net_pnl)} · ${px(x.r_multiple)}R${x.duration_minutes != null ? ` · ${Math.round(x.duration_minutes)} phút` : ""}` : "Lệnh paper vừa đóng",
       "Đã thoát vì",
-      `${reason ? reason.toLowerCase() : "lệnh đã đóng"}. Không cần làm gì thêm: xem lại ở tab Hoạt động hoặc Journal; bộ máy tiếp tục chờ setup kế tiếp.`,
+      `${reason ? reason.charAt(0).toLowerCase() + reason.slice(1) : "lệnh đã đóng"}. Không cần làm gì thêm: xem lại ở tab Hoạt động hoặc Journal; bộ máy tiếp tục chờ setup kế tiếp.`,
     );
   }
 

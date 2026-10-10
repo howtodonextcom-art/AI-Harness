@@ -37,7 +37,7 @@ export function Term({ id, children }: { id: TermId; children?: ReactNode }) {
         data-testid={`term-${id}`}
         aria-describedby={open ? tipId : undefined}
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(true)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         className="cursor-help rounded-sm underline decoration-dotted underline-offset-2"

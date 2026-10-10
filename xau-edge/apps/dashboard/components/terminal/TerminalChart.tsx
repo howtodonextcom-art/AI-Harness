@@ -467,10 +467,11 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     container.current?.setAttribute("data-bars", String(h.candles.data().length)); // observable (tests, support)
     const last = series[series.length - 1].bar;
     h.candles.applyOptions({ priceLineColor: last.close >= last.open ? GREEN : RED });
-    if (fitted.current !== timeframe) {
+    // a new timeframe OR a new display zone re-places every bar in time: the old visible range would point at nothing
+    if (fitted.current !== `${timeframe}|${zone}`) {
       h.chart.timeScale().fitContent();
       h.chart.timeScale().scrollToRealTime();
-      fitted.current = timeframe;
+      fitted.current = `${timeframe}|${zone}`;
     }
   }, [series, times, timeframe, zone]);
 
@@ -777,7 +778,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         </div>
       )}
 
-      <ul data-testid="chart-legend" aria-label="Các đường trên biểu đồ" className="pointer-events-none absolute left-2 top-12 z-10 flex max-w-[70%] sm:top-6 flex-wrap gap-x-3 gap-y-0 text-[11px] font-semibold">
+      <ul data-testid="chart-legend" aria-label="Các đường trên biểu đồ" className="pointer-events-none absolute left-2 top-12 z-10 flex max-w-[70%] sm:top-6 short:top-12 flex-wrap gap-x-3 gap-y-0 text-[11px] font-semibold">
         {lineSpecs.map((l) => (
           <li key={l.id} data-testid={`line-${l.title.replace(/ /g, "-")}`} style={{ color: l.color }} className="rounded bg-white/70 px-1 dark:bg-slate-900/70">
             {l.title} {l.price.toFixed(2)}

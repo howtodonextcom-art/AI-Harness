@@ -219,7 +219,7 @@ test.describe("paper order workflow", () => {
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("dialog", { name: /Xác nhận mở lệnh PAPER/ });
     await expect(dialog).toBeVisible();
-    await expect(page.getByTestId("confirm-paper")).toBeFocused();
+    await expect(page.getByTestId("cancel-paper")).toBeFocused(); // the SAFE button: a held or repeated Enter cannot confirm (red team)
     for (let i = 0; i < 5; i++) {
       await page.keyboard.press("Tab");
       expect(await dialog.evaluate((d) => d.contains(document.activeElement))).toBe(true);

@@ -242,7 +242,8 @@ for (const [w, h, label] of [[844, 390, "phone landscape"], [720, 450, "200% zoo
         const q = (id: string) => document.querySelector(`[data-testid=${id}]`)!;
         const c = q("trade-chart").getBoundingClientRect();
         const bar = document.querySelector("[data-testid=mobile-action-bar]");
-        const floor = bar && getComputedStyle(bar).display !== "none" ? bar.getBoundingClientRect().top : innerHeight; // a short viewport has no sticky bar: the ticket is in the side column
+        const bb = bar ? bar.getBoundingClientRect() : null;
+        const floor = bb && bb.left < c.right ? bb.top : innerHeight; // in a short viewport the bar sits under the side column only, never over the chart
         return {
           priceBottom: q("price-bid").getBoundingClientRect().bottom,
           wordBottom: q("action-word").getBoundingClientRect().bottom,
@@ -257,6 +258,14 @@ for (const [w, h, label] of [[844, 390, "phone landscape"], [720, 450, "200% zoo
       expect(m.chartVisible).toBeGreaterThanOrEqual(160);
       expect(m.sideBySide).toBe(true);
       expect(m.scrollW).toBeLessThanOrEqual(m.vw);
+      if (name === "buy" || name === "openPaper") {
+        // the open/close button must be reachable WITHOUT scrolling (red team: it was below the fold)
+        const btn = page.getByTestId(name === "buy" ? "action-bar-open" : "action-bar-close");
+        await expect(btn).toBeVisible();
+        const b = (await btn.boundingBox())!;
+        expect(b.y + b.height).toBeLessThanOrEqual(h);
+        expect(b.x).toBeGreaterThan(w * 0.55); // under the decision column, not over the chart
+      }
     });
   }
 }

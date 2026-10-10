@@ -39,7 +39,7 @@ export function OpenConfirmModal({ frozen, liveEntry, maxDriftR, valid, busy, on
         </p>
       )}
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
-        <dt className="text-slate-600 dark:text-slate-400">Setup</dt><dd data-testid="confirm-setup" className="text-right font-mono">{frozen.setup_id.slice(0, 12)}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Mã setup</dt><dd data-testid="confirm-setup" className="text-right font-mono">{frozen.setup_id.slice(0, 12)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Hướng</dt><dd className="text-right font-bold">{buy ? "MUA (BUY)" : "BÁN (SELL)"}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Entry (giá thị trường hiện tại)</dt><dd data-testid="confirm-entry" className="text-right font-mono">{fmt(liveEntry ?? frozen.entry)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">SL</dt><dd data-testid="confirm-sl" className="text-right font-mono">{fmt(frozen.sl)}</dd>
@@ -56,10 +56,10 @@ export function OpenConfirmModal({ frozen, liveEntry, maxDriftR, valid, busy, on
       )}
       <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">Giá khớp thực có thể lệch nhẹ so với giá hiển thị; máy chủ kiểm tra lại mọi điều kiện trước khi mở.</p>
       <div className="sticky -bottom-4 mt-3 flex gap-2 bg-white pb-1 pt-2 dark:bg-slate-900">
-        <button type="button" data-testid="confirm-paper" data-autofocus disabled={busy || !valid} onClick={onConfirm} className={`flex-1 rounded-md border-2 px-3 py-2 font-black text-white disabled:opacity-40 ${buy ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>
+        <button type="button" data-testid="confirm-paper" disabled={busy || !valid} onClick={onConfirm} className={`flex-1 rounded-md border-2 px-3 py-2 font-black text-white disabled:opacity-40 ${buy ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>
           XÁC NHẬN MỞ LỆNH PAPER
         </button>
-        <button type="button" data-testid="cancel-paper" onClick={onCancel} className="rounded-md border-2 border-slate-400 px-3 py-2 font-semibold">
+        <button type="button" data-testid="cancel-paper" data-autofocus onClick={onCancel} className="rounded-md border-2 border-slate-400 px-3 py-2 font-semibold">
           Hủy
         </button>
       </div>
@@ -85,10 +85,10 @@ export function CloseConfirmModal({ trade, busy, unsure, onConfirm, onCancel }: 
       )}
       <p className={`mt-2 rounded border px-2 py-1 text-xs ${WARN}`}>Giá và lãi/lỗ cuối cùng được máy chủ đọc lại ngay lúc đóng, có thể khác ước tính.</p>
       <div className="sticky -bottom-4 mt-3 flex gap-2 bg-white pb-1 pt-2 dark:bg-slate-900">
-        <button type="button" data-testid="confirm-close" data-autofocus disabled={busy} onClick={onConfirm} className="flex-1 rounded-md border-2 border-slate-700 bg-slate-800 px-3 py-2 font-black text-white disabled:opacity-40">
+        <button type="button" data-testid="confirm-close" disabled={busy} onClick={onConfirm} className="flex-1 rounded-md border-2 border-slate-700 bg-slate-800 px-3 py-2 font-black text-white disabled:opacity-40">
           XÁC NHẬN ĐÓNG
         </button>
-        <button type="button" data-testid="cancel-close" onClick={onCancel} className="rounded-md border-2 border-slate-400 px-3 py-2 font-semibold">Giữ lệnh</button>
+        <button type="button" data-testid="cancel-close" data-autofocus onClick={onCancel} className="rounded-md border-2 border-slate-400 px-3 py-2 font-semibold">Giữ lệnh</button>
       </div>
     </Modal>
   );

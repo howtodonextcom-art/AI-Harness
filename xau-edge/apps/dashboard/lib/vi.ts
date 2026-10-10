@@ -53,6 +53,17 @@ export function humanCondition(code: string, fallback: string): string {
   return CONDITION_VI[code] ?? fallback;
 }
 
+/** Why the server refused a paper action, in plain Vietnamese (the server's own English sentence is never shown first). */
+export const ACTION_ERROR_VI: Record<string, string> = {
+  DECISION_CHANGED: "Kế hoạch đã thay đổi hoặc hết hạn trước khi bạn xác nhận. Hãy nhìn lại màn hình rồi quyết định lại.",
+  RISK_PCT_NOT_ALLOWED: "Mức rủi ro này không được phép. Chọn một trong các mức có sẵn.",
+  NOT_OPEN: "Lệnh này không còn mở nên không có gì để đóng.",
+  NOT_FOUND: "Không tìm thấy lệnh paper này.",
+  ENTRY_DRIFT: "Giá đã chạy quá xa giá kế hoạch nên bàn hủy lệnh.",
+  BAD_ORIGIN: "Yêu cầu bị từ chối vì đến từ nguồn không được phép.",
+};
+export const actionErrorText = (code: string): string => BLOCKER_VI[code] ?? ACTION_ERROR_VI[code] ?? "Máy chủ từ chối yêu cầu này.";
+
 export const BLOCKER_VI: Record<string, string> = {
   PAPER_STATE_ERROR: "Trạng thái PAPER lỗi: không thể mở lệnh.",
   WRITER_LOCK: "Tiến trình này chỉ đọc: không thể mở lệnh.",

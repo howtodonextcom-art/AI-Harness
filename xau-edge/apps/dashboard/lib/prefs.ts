@@ -165,13 +165,14 @@ export function saveAlerts(scope: Scope, alerts: PriceAlert[]): void {
 }
 
 /**
- * One-time, non-destructive migration of the TRADE-06/07 keys. The old data belongs to the origin it was
- * written on, and an origin serves one source in practice, so the first scope that loads claims it:
+ * One-time, non-destructive migration of the TRADE-06/07 keys. The old data was drawn on live prices, so only
+ * the LIVE scope adopts it (a replay page leaves it alone):
  * it is copied into that scope (only when the scope has nothing of its own) and the old key is retired.
  * If the scope already has data the old key is left untouched and never read again.
  */
 export function migrateLegacy(scope: Scope): { alerts: number; levels: number } {
   const moved = { alerts: 0, levels: 0 };
+  if (scope.mode !== "LIVE") return moved; // the owner's tools were drawn on live prices: a replay page never adopts (or deletes) them
   try {
     const ls = window.localStorage;
     const oldAlerts = validAlerts(read<PriceAlert[]>(LEGACY_ALERTS_KEY));
