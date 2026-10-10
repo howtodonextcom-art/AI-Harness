@@ -29,6 +29,7 @@ from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.event_log import append_event, read_events
 from xau_edge.market_data.locking import file_lock
 
+MAX_AUDITED_BARS = 1000
 PRICE_COLUMNS = ("open", "high", "low", "close", "tick_volume", "real_volume")
 _FILE_COLUMNS = (
     "timestamp",
@@ -215,7 +216,9 @@ class BarLedger:
                     "timeframe": timeframe.value,
                     "reason": reason,
                     "count": len(changes),
-                    "bars": changes[:50],
+                    "bars": changes[
+                        :MAX_AUDITED_BARS
+                    ],  # every repaired bar is named (health matches on them)
                 },
                 now=stamp,
             )

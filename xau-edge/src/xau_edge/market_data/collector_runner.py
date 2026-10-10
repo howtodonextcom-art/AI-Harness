@@ -58,7 +58,7 @@ def run_with_reconnect(
         try:
             with connect() as feed:
                 collector = build(feed)
-                collector.reconcile_all()
+                collector.reconcile_all(deep=True)
                 LOG.info("collector session %s started", sessions)
                 collector.run(
                     stop, quote_interval=quote_interval, bar_interval=bar_interval, sleep=sleep

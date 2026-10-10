@@ -32,6 +32,7 @@ from xau_edge.market_data.freshness import (
 )
 from xau_edge.market_data.ledger import AppendResult, BarLedger
 from xau_edge.market_data.mt5.feed import Mt5Feed, SymbolMapping
+from xau_edge.market_data.parity import late_tick_volume_rows
 from xau_edge.market_data.session import market_status
 from xau_edge.market_data.tick_collection import ingest_recent
 from xau_edge.market_data.tick_ledger import TickLedger
@@ -49,6 +50,12 @@ INITIAL_BARS = {Timeframe.M1: 1500, Timeframe.M5: 600, Timeframe.M15: 400, Timef
 DEFAULT_INITIAL = 300
 MAX_FETCH = 5000
 OVERLAP_BARS = 200
+DEEP_RECONCILE_DAYS = 3
+"""Session start compares this many days of every timeframe, not only the last 200 bars.
+
+While the market is closed 200 M1 bars reach back only hours, so a late revision just before
+the close would never be seen.
+"""
 SETTLE = timedelta(seconds=20)
 """A just-closed bar is stored only after this long: late ticks may still be arriving."""
 TICK_LAG_LIMIT_SECONDS = 90.0
@@ -152,6 +159,13 @@ def evaluate_health(
     if soft_reasons:
         return FeedHealth.DEGRADED, soft_reasons, stale
     return FeedHealth.GOOD, ["all checks passed"], stale
+
+
+def reconcile_window(tf: Timeframe, *, deep: bool = False) -> int:
+    """How many of the latest bars one reconcile compares: 200, or DEEP_RECONCILE_DAYS of bars."""
+    if not deep:
+        return OVERLAP_BARS
+    return max(OVERLAP_BARS, math.ceil(DEEP_RECONCILE_DAYS * 24 * 60 / tf.minutes))
 
 
 class MarketCollector:
@@ -343,18 +357,31 @@ class MarketCollector:
         result = self.ledger.append_closed(
             self.symbol, tf, fetched, now=self._now(), reason="reconcile"
         )
+        # the ONE automatic repair: a settled bar whose only difference is a small late
+        # tick_volume revision goes to the terminal's value through the audited path (parity.py)
+        revised = late_tick_volume_rows(stored, fetched, tf, self._now())
+        repaired = (
+            len(
+                self.ledger.replace_bars(
+                    self.symbol, tf, revised, now=self._now(), reason="late-tick-volume"
+                )
+            )
+            if revised.height
+            else 0
+        )
         report = ReconcileReport(tf.value, fetched.height, missing, only_store, changed, result.new)
         self.ledger.log_event(
             self.symbol,
             "RECONCILED" if report.clean else "RECONCILE_DIFFERENCES",
             {"timeframe": tf.value, "compared": report.compared, "missing_in_store": missing,
-             "only_in_store": only_store, "changed": changed, "appended": result.new},
+             "only_in_store": only_store, "changed": changed, "appended": result.new,
+             "volume_revisions_repaired": repaired},
             now=self._now(),
         )  # fmt: skip
         return report
 
-    def reconcile_all(self) -> list[ReconcileReport]:
-        return [self.reconcile(tf) for tf in self.timeframes]
+    def reconcile_all(self, *, deep: bool = False) -> list[ReconcileReport]:
+        return [self.reconcile(tf, reconcile_window(tf, deep=deep)) for tf in self.timeframes]
 
     # -- status --------------------------------------------------------------------------------
 
@@ -495,8 +522,8 @@ class MarketCollector:
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        """Quote loop and bar loop until ``stop()``; reconciles on start and periodically."""
-        self.reconcile_all()
+        """Quote loop and bar loop until ``stop()``; reconciles on start (deep) and periodically."""
+        self.reconcile_all(deep=True)
         next_bar = next_reconcile = clock()
         next_reconcile += reconcile_interval
         while not stop():

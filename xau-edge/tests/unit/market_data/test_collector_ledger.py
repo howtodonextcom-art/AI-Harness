@@ -18,9 +18,19 @@ from xau_edge.market_data.collector import (
     MarketCollector,
     evaluate_health,
     read_status_file,
+    reconcile_window,
 )
 from xau_edge.market_data.ledger import BarLedger, LedgerError
 from xau_edge.market_data.mt5.feed import Mt5Feed, SymbolNotFoundError
+from xau_edge.market_data.parity import (
+    LATE_TICK_VOLUME,
+    PRICE_DIFFERENCE,
+    SPREAD_DIFFERENCE,
+    UNSETTLED_VOLUME,
+    VOLUME_OUT_OF_BOUND,
+    classify,
+    volume_tolerance,
+)
 from xau_edge.market_data.session import market_status
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
 
@@ -33,14 +43,25 @@ MINUTES = {"M1": 1, "M5": 5, "M15": 15, "M30": 30, "H1": 60, "H4": 240}
 NOW = datetime(2026, 3, 11, 12, 0, 30, tzinfo=UTC)
 
 
-def make_rates(start: datetime, minutes: int, count: int, *, bump: float = 0.0) -> Any:
+def make_rates(
+    start: datetime, minutes: int, count: int, *, bump: float = 0.0, vol_bump: int = 0
+) -> Any:
     rows = []
     for i in range(count):
         t = start + timedelta(minutes=minutes * i)
         slot = int(t.timestamp() // 60)
         base = 2000.0 + (slot % 500) * 0.1 + bump
         rows.append(
-            (int(t.timestamp()), base, base + 1, base - 1, base + 0.5, 100 + slot % 50, 20, 0)
+            (
+                int(t.timestamp()),
+                base,
+                base + 1,
+                base - 1,
+                base + 0.5,
+                100 + slot % 50 + vol_bump,
+                20,
+                0,
+            )
         )
     return np.array(rows, dtype=DTYPE)
 
@@ -55,6 +76,7 @@ class FakeClient:
         self.now = now
         self.trade_mode = trade_mode
         self.bump = 0.0
+        self.vol_bump = 0  # the terminal later counts this many extra ticks in every bar
         self.connected = True
         self.tick_age = 1.0
         self.symbols = ["XAUUSD", "EURUSD"]
@@ -100,7 +122,7 @@ class FakeClient:
         slots = int((self.now - epoch) / step)
         last_open = epoch + step * slots  # the forming bar
         start = last_open - step * (count - 1)
-        return make_rates(start, minutes, count, bump=self.bump)
+        return make_rates(start, minutes, count, bump=self.bump, vol_bump=self.vol_bump)
 
 
 def make_feed(client: FakeClient) -> Mt5Feed:
@@ -434,3 +456,88 @@ def test_audited_repair_replaces_only_flagged_bars_and_clears_the_health_count(
     assert status.events_last_hour["changes"] == sum(
         len([t for t in e["timestamps"] if e["timeframe"] != "M1"]) for e in m1_changes
     )
+
+
+# -- late tick_volume revisions: the one audited automatic repair (DATA_PARITY_AUDIT.md) ---------
+
+
+def test_a_late_tick_volume_revision_is_reconciled_through_an_audited_event(tmp_path: Path) -> None:
+    client = FakeClient()
+    collector = make_collector(tmp_path, client)
+    collector.poll_bars()
+    client.now += timedelta(minutes=10)  # every stored bar is long settled
+    collector.reconcile(Timeframe.M1)
+    before = collector.ledger.load("XAUUSD", Timeframe.M1).sort("timestamp")
+    client.vol_bump = 1  # the terminal now counts one more tick in every bar (OHLC unchanged)
+    report = collector.reconcile(Timeframe.M1)
+    after = collector.ledger.load("XAUUSD", Timeframe.M1).sort("timestamp")
+    repaired = [e for e in collector.ledger.events("XAUUSD") if e["kind"] == "BAR_REPAIRED"]
+    assert repaired and repaired[-1]["reason"] == "late-tick-volume"
+    first = repaired[-1]["bars"][0]
+    assert first["new"][4] == first["old"][4] + 1  # tick_volume +1, with old AND new recorded
+    assert first["new"][:4] == first["old"][:4]  # prices untouched
+    stamps = [datetime.fromisoformat(b["timestamp"]) for b in repaired[-1]["bars"]]
+    joined = after.filter(pl.col("timestamp").is_in(stamps)).join(
+        before, on="timestamp", suffix="_b"
+    )
+    assert joined.height == len(stamps) > 0
+    assert (joined["tick_volume"] - joined["tick_volume_b"]).to_list() == [1] * len(stamps)
+    assert joined["close"].to_list() == joined["close_b"].to_list()
+    assert report.changed > 0
+    # the second pass leaves only the youngest bars alone (late ticks may still arrive)...
+    left = collector.reconcile(Timeframe.M1)
+    assert 0 < left.changed <= 3
+    # ...and once they settle everything converges: nothing left to repair, health GOOD
+    client.now += timedelta(minutes=5)
+    collector.poll_quote()
+    collector.poll_bars()
+    collector.reconcile_all()
+    assert all(r.clean for r in collector.reconcile_all())
+    status = collector.status()
+    assert status.health == FeedHealth.GOOD.value, status.reasons
+
+
+def test_a_price_difference_is_never_repaired_automatically(tmp_path: Path) -> None:
+    client = FakeClient()
+    collector = make_collector(tmp_path, client)
+    collector.poll_bars()
+    client.now += timedelta(minutes=10)
+    collector.reconcile(Timeframe.M1)
+    stored = collector.ledger.load("XAUUSD", Timeframe.M1).sort("timestamp")
+    client.bump = 5.0
+    collector.reconcile(Timeframe.M1)
+    again = collector.ledger.load("XAUUSD", Timeframe.M1).sort("timestamp")
+    assert again["open"].to_list() == stored["open"].to_list()  # history did not move
+    assert not [e for e in collector.ledger.events("XAUUSD") if e["kind"] == "BAR_REPAIRED"]
+    collector.poll_quote()
+    collector.poll_bars()
+    assert collector.status().health == FeedHealth.DEGRADED.value  # and it stays visible
+
+
+def test_a_young_bar_is_not_reconciled_yet(tmp_path: Path) -> None:
+    row = {"timestamp": NOW - timedelta(minutes=1), "open": 1.0, "high": 2.0, "low": 0.5,
+           "close": 1.5, "tick_volume": 100, "spread": 20, "real_volume": 0}  # fmt: skip
+    other = {**row, "tick_volume": 101}
+    assert classify(row, other, Timeframe.M1, NOW) == UNSETTLED_VOLUME
+
+
+def test_the_parity_policy_classifies_every_kind_of_difference() -> None:
+    old = NOW - timedelta(hours=1)
+    base = {"timestamp": old, "open": 10.0, "high": 12.0, "low": 9.0, "close": 11.0,
+            "tick_volume": 238, "spread": 36, "real_volume": 0}  # fmt: skip
+    assert classify(base, dict(base), Timeframe.M1, NOW) is None
+    assert classify(base, {**base, "tick_volume": 239}, Timeframe.M1, NOW) == LATE_TICK_VOLUME
+    assert classify(base, {**base, "tick_volume": 250}, Timeframe.M1, NOW) == VOLUME_OUT_OF_BOUND
+    assert classify(base, {**base, "close": 11.01}, Timeframe.M1, NOW) == PRICE_DIFFERENCE
+    assert classify(base, {**base, "spread": 40}, Timeframe.M1, NOW) == SPREAD_DIFFERENCE
+    # price beats volume: a bar that moved is never "just a late tick"
+    both = {**base, "close": 11.5, "tick_volume": 239}
+    assert classify(base, both, Timeframe.M1, NOW) == PRICE_DIFFERENCE
+    assert volume_tolerance(100) == 3 and volume_tolerance(20_000) == 100
+
+
+def test_session_start_reconciles_days_not_just_the_last_200_bars() -> None:
+    assert reconcile_window(Timeframe.M1) == 200 == reconcile_window(Timeframe.H1)
+    assert reconcile_window(Timeframe.M1, deep=True) == 3 * 1440
+    assert reconcile_window(Timeframe.M5, deep=True) == 3 * 288
+    assert reconcile_window(Timeframe.H4, deep=True) == 200  # never fewer than the normal window
