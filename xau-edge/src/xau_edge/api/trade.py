@@ -27,6 +27,7 @@ from xau_edge.ops.process_lock import WriterLock, WriterLockError
 from xau_edge.ops.settings import OpsSettings
 from xau_edge.strategies.edge_program import SERVER_CLOCK
 from xau_edge.trading.baseline import BaselineConfig
+from xau_edge.trading.cockpit import setup_history
 from xau_edge.trading.engine import EngineConfig, TradeEngine
 from xau_edge.trading.live_source import LiveTradingMarketSource
 from xau_edge.trading.namespace import claim_root
@@ -279,6 +280,15 @@ def add_trade_routes(  # noqa: PLR0915 - one small function per route
                     rows.append({**record, "taken": record["setup_id"] in taken})
         rows.sort(key=lambda r: str(r.get("at")), reverse=True)
         return {"source_mode": mode, "signals": rows[:limit]}
+
+    @app.get("/trade/setups", dependencies=reader)
+    def setups(days: Annotated[int, Query(ge=1, le=14)] = 7) -> dict[str, Any]:
+        """Setups the lifecycle armed in the last days and how each ended (this source mode)."""
+        now = engine.now()
+        records: list[dict[str, Any]] = []
+        for back in range(days):
+            records.extend(engine.telemetry.read_day(now - timedelta(days=back)))
+        return {"source_mode": engine.source_mode, "setups": setup_history(records)}
 
     @app.get("/trade/telemetry", dependencies=reader)
     def telemetry() -> dict[str, Any]:

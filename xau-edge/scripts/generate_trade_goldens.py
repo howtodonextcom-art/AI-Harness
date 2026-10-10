@@ -74,6 +74,7 @@ def collect(market: Path, out_root: Path) -> dict[str, tuple[str, Any]]:
         "GET /trade/markers after the exit",
         http.get("/trade/markers").json(),
     )
+    files["setups_history"] = ("GET /trade/setups after the exit", http.get("/trade/setups").json())
     files["signals_history"] = (
         "GET /trade/signals after the exit",
         http.get("/trade/signals").json(),

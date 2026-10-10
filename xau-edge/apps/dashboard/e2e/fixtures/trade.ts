@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import type { JournalResponse, MarkersResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
+import type { JournalResponse, MarkersResponse, SetupHistoryResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
 import buy from "./golden/buy.json";
 import closedPaper from "./golden/closed_paper.json";
 import expired from "./golden/expired.json";
@@ -9,6 +9,7 @@ import markersClosed from "./golden/markers_closed.json";
 import openPaper from "./golden/open_paper.json";
 import paperCorrupt from "./golden/paper_corrupt.json";
 import sell from "./golden/sell.json";
+import setupsHistory from "./golden/setups_history.json";
 import signalsHistory from "./golden/signals_history.json";
 import stale from "./golden/stale.json";
 import wait from "./golden/wait.json";
@@ -28,6 +29,7 @@ export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 export const view = (name: GoldenName): TradeView => clone(GOLDEN[name]) as unknown as TradeView;
 export const journalClosedGolden = (): JournalResponse => clone(journalClosed) as unknown as JournalResponse;
 export const markersClosedGolden = (): MarkersResponse => clone(markersClosed) as unknown as MarkersResponse;
+export const setupsGolden = (): SetupHistoryResponse => clone(setupsHistory) as unknown as SetupHistoryResponse;
 export const signalsGolden = (): SignalHistoryResponse => clone(signalsHistory) as unknown as SignalHistoryResponse;
 
 export const TFS = ["H4", "H1", "M30", "M15", "M5", "M1"];
@@ -54,6 +56,7 @@ export interface Mocks {
   markers?: MarkersResponse;
   signals?: SignalHistoryResponse;
   journal?: JournalResponse;
+  setups?: SetupHistoryResponse;
   onBars?: (tf: string) => void;
 }
 
@@ -65,6 +68,7 @@ export async function mock(page: Page, v: TradeView, extra: Mocks = {}) {
   await page.route("**/trade/decision", (route) => route.fulfill({ json: v }));
   await page.route("**/trade/markers**", (route) => route.fulfill({ json: markers }));
   await page.route("**/trade/signals**", (route) => route.fulfill({ json: signals }));
+  await page.route("**/trade/setups**", (route) => route.fulfill({ json: extra.setups ?? { source_mode: mode, setups: [] } }));
   await page.route("**/trade/journal**", (route) => route.fulfill({ json: journal }));
   await page.route("**/md/XAUUSD/bars**", (route) => {
     const tf = new URL(route.request().url()).searchParams.get("timeframe") ?? "M5";

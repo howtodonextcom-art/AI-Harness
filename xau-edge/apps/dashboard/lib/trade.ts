@@ -192,6 +192,21 @@ export interface SignalHistoryResponse {
   signals: SignalMarker[];
 }
 
+export interface SetupHistoryRow {
+  armed_at: string;
+  first_seen: string;
+  last_seen: string;
+  side: "BUY" | "SELL" | null;
+  outcome: "TRIGGERED" | "EXPIRED" | "INVALIDATED" | "ARMED";
+  actionable: boolean;
+  strategy_version: string | null;
+}
+
+export interface SetupHistoryResponse {
+  source_mode: SourceMode;
+  setups: SetupHistoryRow[];
+}
+
 export interface TimeframeRow {
   timeframe: string;
   role: string;
@@ -359,7 +374,8 @@ export interface TradeView {
     position: PaperTrade | null;
     today: Record<string, number | string | null>;
     closure_policy: string;
-    limits: { daily_loss_stop_pct: number; daily_loss_pct: number; max_trades_per_day: number; day_start_equity: number };
+    limits: { daily_loss_stop_pct: number; daily_loss_pct: number; max_trades_per_day: number; max_entry_drift_r: number; day_start_equity: number };
+    last_exit: { trade_id: string; side: Side; exit_reason: string | null; net_pnl: number | null; r_multiple: number | null; duration_minutes: number | null; closed_at: string } | null;
   };
   funnel?: Funnel;
   telemetry?: {
@@ -399,6 +415,7 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 export const fetchDecision = (signal?: AbortSignal) => getJson<TradeView>("/trade/decision", signal);
 export const fetchMarkers = (signal?: AbortSignal) => getJson<MarkersResponse>("/trade/markers?days=7", signal);
 export const fetchSignals = (signal?: AbortSignal) => getJson<SignalHistoryResponse>("/trade/signals?limit=20", signal);
+export const fetchSetups = (signal?: AbortSignal) => getJson<SetupHistoryResponse>("/trade/setups?days=7", signal);
 export const fetchJournal = (signal?: AbortSignal) => getJson<JournalResponse>("/trade/journal?limit=500", signal);
 
 export interface ActionError {

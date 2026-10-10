@@ -5,7 +5,7 @@ import { AccountCard, AlertCard, DemoLockCard, ForwardCard, FunnelCard, Strategy
 import { Card, NEUTRAL, Pill, Row, fmt, money } from "@/components/trade/ui";
 import type { ManualLevel, PriceAlert, Tab } from "@/lib/prefs";
 import { formatInZone, type DisplayZone } from "@/lib/time";
-import type { JournalResponse, PaperTrade, SignalHistoryResponse, SignalMarker, TradeView } from "@/lib/trade";
+import type { JournalResponse, PaperTrade, SetupHistoryResponse, SignalHistoryResponse, SignalMarker, TradeView } from "@/lib/trade";
 import { ACTIVITY_VI, EXIT_REASON_VI, REFUSAL_VI, STAGE_VI } from "@/lib/vi";
 
 const TABS: [Tab, string][] = [
@@ -23,6 +23,7 @@ interface Props {
   mode: string;
   journal: JournalResponse | null;
   signals: SignalHistoryResponse | null;
+  setups: SetupHistoryResponse | null;
   zone: DisplayZone;
   tf: string;
   onFocusTf: (tf: string) => void;
@@ -38,7 +39,7 @@ interface Props {
   onSound: (v: boolean) => void;
 }
 
-type Kind = "signal" | "trade" | "alert";
+type Kind = "signal" | "trade" | "alert" | "setup";
 interface Item {
   key: string;
   at: string;
@@ -209,7 +210,7 @@ function PositionTab({ view, journal, zone, onFocusPaper }: Pick<Props, "view" |
   );
 }
 
-function Activity({ view, journal, signals, zone, mode, onFocusPaper, onFocusSignal, alerts }: Pick<Props, "view" | "journal" | "signals" | "zone" | "mode" | "onFocusPaper" | "onFocusSignal" | "alerts">) {
+function Activity({ view, journal, signals, setups, zone, mode, onFocusPaper, onFocusSignal, alerts }: Pick<Props, "view" | "journal" | "signals" | "setups" | "zone" | "mode" | "onFocusPaper" | "onFocusSignal" | "alerts">) {
   const [filter, setFilter] = useState<"all" | Kind>("all");
   const items = useMemo(() => {
     const out: Item[] = [];
@@ -231,17 +232,28 @@ function Activity({ view, journal, signals, zone, mode, onFocusPaper, onFocusSig
         out.push({ key: `close-${t.trade_id}`, at: t.closed_at, kind: "trade", tone: (t.net_pnl ?? 0) >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300", text: `Thoát lệnh paper: ${EXIT_REASON_VI[t.exit_reason ?? ""] ?? t.exit_reason} @ ${fmt(t.exit_price)}`, detail: `${money(t.net_pnl)} · ${fmt(t.r_multiple)}R · ${fmt(t.duration_minutes, 0)} phút`, onClick: () => onFocusPaper(t) });
       }
     }
+    const OUTCOME_VI = { TRIGGERED: "đã kích hoạt", EXPIRED: "HẾT HẠN khi chưa ai mở", INVALIDATED: "bị vô hiệu", ARMED: "đang hình thành" } as const;
+    for (const u of setups?.setups ?? []) {
+      out.push({
+        key: `setup-${u.armed_at}`,
+        at: u.armed_at,
+        kind: "setup",
+        tone: u.outcome === "TRIGGERED" ? "text-sky-700 dark:text-sky-300" : "text-slate-700 dark:text-slate-300",
+        text: `Setup ${u.side === "BUY" ? "MUA" : u.side === "SELL" ? "BÁN" : ""} hình thành → ${OUTCOME_VI[u.outcome]}`,
+        detail: `${u.actionable ? "đã có tín hiệu hành động" : "chưa có tín hiệu hành động"}${u.strategy_version ? ` · v${u.strategy_version}` : ""}`,
+      });
+    }
     const a = view?.alerts;
     if (a?.last) out.push({ key: "alert-last", at: a.last.announced_at, kind: "alert", tone: "text-amber-700 dark:text-amber-300", text: `Đã báo setup ${a.last.side} (${a.delivery === "TELEGRAM" ? "Telegram" : "file"})`, detail: a.last.setup_id.slice(0, 8) });
     if (a?.last_invalidation?.at) out.push({ key: "alert-inval", at: a.last_invalidation.at, kind: "alert", tone: "text-amber-700 dark:text-amber-300", text: `Setup ${a.last_invalidation.side} bị vô hiệu`, detail: a.last_invalidation.setup_id.slice(0, 8) });
     for (const p of alerts.filter((x) => x.firedAt)) out.push({ key: `price-${p.id}`, at: p.firedAt as string, kind: "alert", tone: "text-amber-700 dark:text-amber-300", text: `Cảnh báo giá: bid ${p.direction === "UP" ? "vượt" : "xuống"} ${p.price.toFixed(2)}` });
     return out.sort((x, y) => Date.parse(y.at) - Date.parse(x.at));
-  }, [signals, journal, view, alerts, onFocusPaper, onFocusSignal]);
+  }, [signals, journal, setups, view, alerts, onFocusPaper, onFocusSignal]);
   const shown = items.filter((i) => filter === "all" || i.kind === filter).slice(0, 40);
   return (
     <Card title={`Hoạt động gần đây${mode === "LIVE" ? "" : ` (${mode.replace("_", " ")} — không phải live)`}`} testId="activity-feed">
       <div role="group" aria-label="Lọc hoạt động" className="mb-2 flex gap-1 text-xs">
-        {([["all", "Tất cả"], ["signal", "Tín hiệu"], ["trade", "Lệnh paper"], ["alert", "Cảnh báo"]] as [typeof filter, string][]).map(([k, label]) => (
+        {([["all", "Tất cả"], ["signal", "Tín hiệu"], ["setup", "Setup đã hình thành"], ["trade", "Lệnh paper"], ["alert", "Cảnh báo"]] as [typeof filter, string][]).map(([k, label]) => (
           <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)} className={`rounded-md border px-2 py-0.5 ${filter === k ? "border-sky-600 bg-sky-500/15 font-semibold" : "border-slate-400"}`}>{label}</button>
         ))}
       </div>
@@ -321,7 +333,7 @@ export function Workspace(props: Props) {
         {tab === "overview" && <Overview view={props.view} levels={props.levels} onRemoveLevel={props.onRemoveLevel} alerts={props.alerts} onRemoveAlert={props.onRemoveAlert} notify={props.notify} sound={props.sound} onNotify={props.onNotify} onSound={props.onSound} />}
         {tab === "why" && <Why view={props.view} onFocusTf={props.onFocusTf} />}
         {tab === "position" && <PositionTab view={props.view} journal={props.journal} zone={props.zone} onFocusPaper={props.onFocusPaper} />}
-        {tab === "activity" && <Activity view={props.view} journal={props.journal} signals={props.signals} zone={props.zone} mode={props.mode} onFocusPaper={props.onFocusPaper} onFocusSignal={props.onFocusSignal} alerts={props.alerts} />}
+        {tab === "activity" && <Activity view={props.view} journal={props.journal} signals={props.signals} setups={props.setups} zone={props.zone} mode={props.mode} onFocusPaper={props.onFocusPaper} onFocusSignal={props.onFocusSignal} alerts={props.alerts} />}
         {tab === "system" && <System view={props.view} mode={props.mode} />}
       </div>
     </section>

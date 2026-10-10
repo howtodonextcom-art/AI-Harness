@@ -18,11 +18,13 @@ import {
   fetchDecision,
   fetchJournal,
   fetchMarkers,
+  fetchSetups,
   fetchSignals,
   openPaperTrade,
   type JournalResponse,
   type MarkersResponse,
   type PaperTrade,
+  type SetupHistoryResponse,
   type SignalHistoryResponse,
   type SignalMarker,
   type TradeView as TradeViewData,
@@ -65,6 +67,7 @@ export function TerminalView() {
   const [barsError, setBarsError] = useState(false);
   const [markers, setMarkers] = useState<MarkersResponse | null>(null);
   const [signals, setSignals] = useState<SignalHistoryResponse | null>(null);
+  const [setups, setSetups] = useState<SetupHistoryResponse | null>(null);
   const [journal, setJournal] = useState<JournalResponse | null>(null);
   const [focus, setFocus] = useState<{ from: string; to: string } | null>(null);
   const [tool, setTool] = useState<Tool>("none");
@@ -209,11 +212,12 @@ export function TerminalView() {
   // markers, signal history and journal; reloaded right after a paper action
   const loadSide = useCallback(async () => {
     const seq = ++sideSeq.current;
-    const [m, s, j] = await Promise.allSettled([fetchMarkers(), fetchSignals(), fetchJournal()]);
+    const [m, s, j, u] = await Promise.allSettled([fetchMarkers(), fetchSignals(), fetchJournal(), fetchSetups()]);
     if (seq !== sideSeq.current) return;
     if (m.status === "fulfilled") setMarkers(m.value);
     if (s.status === "fulfilled") setSignals(s.value);
     if (j.status === "fulfilled") setJournal(j.value);
+    if (u.status === "fulfilled") setSetups(u.value);
   }, []);
   useEffect(() => {
     const first = setTimeout(() => void loadSide(), 0);
@@ -243,7 +247,7 @@ export function TerminalView() {
   // ---- actions ---------------------------------------------------------------------------------
   const requestOpen = () => {
     if (!plan || plan.side === undefined) return;
-    setOpenFrozen({ setup_id: plan.setup_id, side: plan.side, sl: plan.sl, tp1: plan.tp1, risk: prefs.risk, entry: plan.planned_entry, lots: chosen?.lots ?? null, rr: plan.rr_net, riskAmount: chosen?.risk_amount ?? null });
+    setOpenFrozen({ setup_id: plan.setup_id, side: plan.side, sl: plan.sl, tp1: plan.tp1, risk: prefs.risk, entry: plan.planned_entry, lots: chosen?.lots ?? null, rr: plan.rr_net, riskAmount: chosen?.risk_amount ?? null, tp2: plan.tp2 });
   };
   const confirmOpen = async () => {
     const frozen = openFrozen;
@@ -405,7 +409,7 @@ export function TerminalView() {
         alertCount={alerts.filter((a) => !a.firedAt).length}
         onHelp={() => setHelp(true)}
       />
-      <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[24rem] sm:h-[28rem] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
+      <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[min(28rem,62vh)] sm:h-[28rem] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
         {dim && <div data-testid="chart-veil" aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] bg-white/60 dark:bg-slate-950/60" />}
         {hydrated && <TerminalChart
           ref={chart}
@@ -434,6 +438,8 @@ export function TerminalView() {
           {planLive && plan && <span className="font-mono">Entry {fmt(plan.planned_entry)} · SL {fmt(plan.sl)} · TP {fmt(plan.tp1)} · R/R {fmt(plan.rr_net)}</span>}
           {position && <span className="font-mono">{position.side} {fmt(position.fill_price)} · P&L {money(position.unrealized_pnl)} · {fmt(position.unrealized_r, 2)}R</span>}
           <span className="font-mono text-slate-600 dark:text-slate-400">{view.quote ? `${fmt(view.quote.bid)} / ${fmt(view.quote.ask)}` : ""}</span>
+          {ready && !expiredNow && <button type="button" data-testid="fs-open" disabled={!canOpen || busy} onClick={requestOpen} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Mở lệnh…</button>}
+          {hero?.state === "POSITION_OPEN" && <button type="button" data-testid="fs-close" disabled={busy} onClick={() => setClosing(true)} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Đóng lệnh…</button>}
           <button type="button" onClick={() => setFullscreen(false)} className="ml-auto rounded border border-slate-400 px-2 py-0.5 text-xs font-semibold">⤡ Thu nhỏ (Esc)</button>
         </div>
       )}
@@ -500,6 +506,7 @@ export function TerminalView() {
         mode={mode}
         journal={journal}
         signals={signals}
+        setups={setups && setups.source_mode === mode ? setups : null}
         zone={prefs.zone}
         tf={prefs.tf}
         onFocusTf={focusTf}
@@ -547,7 +554,7 @@ export function TerminalView() {
         </div>
       )}
       {openFrozen && (
-        <OpenConfirmModal frozen={openFrozen} liveEntry={plan?.planned_entry ?? null} valid={frozenValid} busy={busy} onConfirm={() => void confirmOpen()} onCancel={() => setOpenFrozen(null)} />
+        <OpenConfirmModal frozen={openFrozen} liveEntry={plan?.planned_entry ?? null} maxDriftR={view?.desk?.limits.max_entry_drift_r ?? 0.25} valid={frozenValid} busy={busy} onConfirm={() => void confirmOpen()} onCancel={() => setOpenFrozen(null)} />
       )}
       {closing && position && <CloseConfirmModal trade={position} busy={busy} unsure={uiStale || Boolean(error)} onConfirm={() => void confirmClose()} onCancel={() => setClosing(false)} />}
       {help && (

@@ -25,8 +25,8 @@ function BigPrice({ value }: { value: number }) {
   const [whole, dec = "00"] = value.toFixed(2).split(".");
   return (
     <span className="font-mono tabular-nums leading-none">
-      <span className="text-4xl font-black sm:text-5xl">{whole}</span>
-      <span className="text-2xl font-bold sm:text-3xl">.{dec}</span>
+      <span className="text-3xl font-black sm:text-5xl">{whole}</span>
+      <span className="text-xl font-bold sm:text-3xl">.{dec}</span>
     </span>
   );
 }
@@ -73,7 +73,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
             <span data-testid="market-pill" className={`${pill} ${open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300"}`}>
               {open ? `Thị trường MỞ${live ? "" : " (replay)"}` : status === "—" ? "…" : `Thị trường ${status === "CLOSED" ? "ĐÓNG" : status}`}
             </span>
-            <span data-testid="paper-only" className={`${pill} border-amber-600 bg-amber-500/15 text-amber-800 dark:text-amber-200`}>PAPER · không gửi lệnh thật</span>
+            <span data-testid="paper-only" className={`${pill} border-amber-600 bg-amber-500/15 text-amber-800 dark:text-amber-200`}><span className="sm:hidden">PAPER</span><span className="hidden sm:inline">PAPER · không gửi lệnh thật</span></span>
           </div>
           <div className="mt-1 flex flex-wrap items-end gap-x-5 gap-y-1" data-testid="quote">
             <div className={stalePrice ? "grayscale" : ""} aria-label="Giá bid">

@@ -520,6 +520,24 @@ class TradeEngine:
             "r_multiple": last.get("r_multiple"),
         }
 
+    def _last_exit_detail(self) -> dict[str, Any] | None:
+        """The most recently closed paper trade, for the card that stays after the exit message."""
+        done = [
+            t for t in self.desk.trades.values() if t["status"] == "CLOSED" and t.get("closed_at")
+        ]
+        if not done:
+            return None
+        t = max(done, key=lambda x: x["closed_at"])
+        return {
+            "trade_id": t["trade_id"],
+            "side": t["side"],
+            "exit_reason": t.get("exit_reason"),
+            "net_pnl": t.get("net_pnl"),
+            "r_multiple": t.get("r_multiple"),
+            "duration_minutes": t.get("duration_minutes"),
+            "closed_at": t["closed_at"],
+        }
+
     def _status_strip(
         self,
         conditions: list[dict[str, str]],
@@ -759,6 +777,7 @@ class TradeEngine:
                     "today": self.desk.day_summary(stamp),
                     "closure_policy": self.desk.config.closure_policy.value,
                     "limits": self._limits(quote, stamp),
+                    "last_exit": self._last_exit_detail(),
                 },
                 "funnel": funnel(records, todays_signals, self.desk.trades.values(), stamp),
                 "telemetry": self.telemetry.summary(stamp),
@@ -782,6 +801,7 @@ class TradeEngine:
             "daily_loss_stop_pct": cfg.daily_loss_stop_pct,
             "daily_loss_pct": round(self.desk.governor.daily_loss_pct(start, equity), 3),
             "max_trades_per_day": cfg.max_trades_per_day,
+            "max_entry_drift_r": self.desk.config.max_entry_drift_r,
             "day_start_equity": round(start, 2),
         }
 

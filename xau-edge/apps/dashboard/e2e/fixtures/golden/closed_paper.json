@@ -135,10 +135,20 @@
   "blockers": [],
   "can_open": false,
   "closure_policy": "BLOCK_NEW_NEAR_CLOSE",
+  "last_exit": {
+   "closed_at": "2025-12-05T15:33:00+00:00",
+   "duration_minutes": 48.0,
+   "exit_reason": "TAKE_PROFIT",
+   "net_pnl": 42.044895417497166,
+   "r_multiple": 1.987,
+   "side": "BUY",
+   "trade_id": "T00001"
+  },
   "limits": {
    "daily_loss_pct": 0.0,
    "daily_loss_stop_pct": 2.0,
    "day_start_equity": 10000.0,
+   "max_entry_drift_r": 0.25,
    "max_trades_per_day": 6
   },
   "position": null,

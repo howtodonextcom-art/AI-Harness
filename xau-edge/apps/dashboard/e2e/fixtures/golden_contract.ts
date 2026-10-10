@@ -5,7 +5,7 @@
  * `tests/unit/trading/test_contract_goldens.py` covers the other direction (backend vs golden).
  */
 
-import type { JournalResponse, MarkersResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
+import type { JournalResponse, MarkersResponse, SetupHistoryResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
 import buy from "./golden/buy.json";
 import closedPaper from "./golden/closed_paper.json";
 import expired from "./golden/expired.json";
@@ -15,6 +15,7 @@ import markersClosed from "./golden/markers_closed.json";
 import openPaper from "./golden/open_paper.json";
 import paperCorrupt from "./golden/paper_corrupt.json";
 import sell from "./golden/sell.json";
+import setupsHistory from "./golden/setups_history.json";
 import signalsHistory from "./golden/signals_history.json";
 import stale from "./golden/stale.json";
 import wait from "./golden/wait.json";
@@ -50,3 +51,4 @@ export const GOLDEN_VIEWS = {
 export const GOLDEN_JOURNAL = journalClosed satisfies Json<JournalResponse>;
 export const GOLDEN_MARKERS = markersClosed satisfies Json<MarkersResponse>;
 export const GOLDEN_SIGNALS = signalsHistory satisfies Json<SignalHistoryResponse>;
+export const GOLDEN_SETUPS = setupsHistory satisfies Json<SetupHistoryResponse>;

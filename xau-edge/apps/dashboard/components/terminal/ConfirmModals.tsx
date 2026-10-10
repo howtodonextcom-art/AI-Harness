@@ -15,6 +15,7 @@ export interface FrozenPlan {
   lots: number | null;
   rr: number | null;
   riskAmount: number | null;
+  tp2: number | null;
 }
 
 /** True while the live plan is still the very one the modal was opened for. */
@@ -24,8 +25,11 @@ export function planMatches(frozen: FrozenPlan, plan: TradePlan | null, risk: nu
   );
 }
 
-export function OpenConfirmModal({ frozen, liveEntry, valid, busy, onConfirm, onCancel }: { frozen: FrozenPlan; liveEntry: number | null; valid: boolean; busy: boolean; onConfirm: () => void; onCancel: () => void }) {
+export function OpenConfirmModal({ frozen, liveEntry, maxDriftR, valid, busy, onConfirm, onCancel }: { frozen: FrozenPlan; liveEntry: number | null; maxDriftR: number; valid: boolean; busy: boolean; onConfirm: () => void; onCancel: () => void }) {
   const buy = frozen.side === "BUY";
+  const stop = frozen.entry !== null && frozen.sl !== null ? Math.abs(frozen.entry - frozen.sl) : 0;
+  const moved = liveEntry !== null && frozen.entry !== null ? liveEntry - frozen.entry : 0;
+  const movedR = stop > 0 ? Math.abs(moved) / stop : 0;
   return (
     <Modal title={`Xác nhận mở lệnh PAPER ${buy ? "MUA" : "BÁN"}`} testId="confirm-open-modal" tone={buy ? "buy" : "sell"} onClose={onCancel}>
       <p className="mb-2 text-sm">Đây là lệnh <b>giả lập</b>: không có lệnh nào được gửi tới MT5.</p>
@@ -38,11 +42,17 @@ export function OpenConfirmModal({ frozen, liveEntry, valid, busy, onConfirm, on
         <dt className="text-slate-600 dark:text-slate-400">Hướng</dt><dd className="text-right font-bold">{buy ? "MUA (BUY)" : "BÁN (SELL)"}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Entry (giá thị trường hiện tại)</dt><dd data-testid="confirm-entry" className="text-right font-mono">{fmt(liveEntry ?? frozen.entry)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">SL</dt><dd data-testid="confirm-sl" className="text-right font-mono">{fmt(frozen.sl)}</dd>
-        <dt className="text-slate-600 dark:text-slate-400">TP</dt><dd data-testid="confirm-tp" className="text-right font-mono">{fmt(frozen.tp1)}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">TP (lệnh thoát tại đây)</dt><dd data-testid="confirm-tp" className="text-right font-mono">{fmt(frozen.tp1)}</dd>
+        {frozen.tp2 !== null && (<><dt className="text-slate-600 dark:text-slate-400">TP 2 (chỉ tham khảo)</dt><dd className="text-right font-mono">{fmt(frozen.tp2)}</dd></>)}
         <dt className="text-slate-600 dark:text-slate-400">R/R</dt><dd className="text-right font-mono">{fmt(frozen.rr)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Rủi ro</dt><dd data-testid="confirm-risk" className="text-right font-mono">{fmt(frozen.risk, 2)}% · {money(frozen.riskAmount === null ? null : -frozen.riskAmount)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Lot</dt><dd data-testid="confirm-lots" className="text-right font-mono">{fmt(frozen.lots, 2)}</dd>
       </dl>
+      {Math.abs(moved) > 0.004 && (
+        <p data-testid="confirm-drift" className={`mt-2 rounded border px-2 py-1 text-sm ${movedR >= maxDriftR ? BAD : WARN}`}>
+          Giá thị trường đã dịch {moved > 0 ? "+" : ""}{moved.toFixed(2)} so với entry kế hoạch ({movedR.toFixed(2)}R). Lệnh bị hủy nếu lệch từ {maxDriftR}R.
+        </p>
+      )}
       <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">Giá khớp thực có thể lệch nhẹ so với giá hiển thị; máy chủ kiểm tra lại mọi điều kiện trước khi mở.</p>
       <div className="mt-3 flex gap-2">
         <button type="button" data-testid="confirm-paper" data-autofocus disabled={busy || !valid} onClick={onConfirm} className={`flex-1 rounded-md border-2 px-3 py-2 font-black text-white disabled:opacity-40 ${buy ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>

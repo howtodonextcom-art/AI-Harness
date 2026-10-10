@@ -1,6 +1,6 @@
 {
  "provenance": "ACCEPTANCE_REPLAY of burned FTMO bars through the real TradeEngine; NOT LIVE",
- "code_version": "56370f4-dirty",
+ "code_version": "7ecd477-dirty",
  "files": {
   "wait.json": "GET /trade/decision, ordinary WAIT",
   "sell.json": "GET /trade/decision, real SELL setup",
@@ -10,6 +10,7 @@
   "journal_closed.json": "GET /trade/journal after the exit",
   "signals.json": "signal log records of the replay day",
   "markers_closed.json": "GET /trade/markers after the exit",
+  "setups_history.json": "GET /trade/setups after the exit",
   "signals_history.json": "GET /trade/signals after the exit",
   "stale.json": "GET /trade/decision, scenario stale",
   "market_closed.json": "GET /trade/decision, scenario market_closed",

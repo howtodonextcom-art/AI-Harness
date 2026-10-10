@@ -22,6 +22,7 @@ from xau_edge.trading.cockpit import (
     forward_acceptance,
     funnel,
     hero_state,
+    setup_history,
     strategy_info,
     trade_plan,
 )
@@ -350,3 +351,51 @@ def test_the_closure_probe_sees_the_weekly_close_inside_the_maximum_hold(
     assert "CLOSURE_NEAR" not in engine.desk.can_open(
         at - timedelta(hours=6), "NEW_YORK", 0.25, None
     )
+
+
+# -- setup history ------------------------------------------------------------------------------
+
+
+def _rec(
+    at: str, armed: str | None, phase: str | None, decision: str = "WAIT", h1: str = "BULLISH"
+) -> dict[str, Any]:
+    return {
+        "at": at,
+        "armed_at": armed,
+        "setup_phase": phase,
+        "decision": decision,
+        "h1": h1,
+        "strategy_version": "1.2.1",
+    }
+
+
+def test_setup_history_says_how_each_armed_setup_ended() -> None:
+
+    rows = [
+        _rec("2026-03-02T10:00:00+00:00", "2026-03-02T09:55:00+00:00", "ARMED"),
+        _rec("2026-03-02T10:05:00+00:00", "2026-03-02T09:55:00+00:00", "TRIGGERED", "BUY"),
+        _rec("2026-03-02T11:00:00+00:00", "2026-03-02T10:50:00+00:00", "ARMED", h1="BEARISH"),
+        _rec("2026-03-02T11:30:00+00:00", "2026-03-02T10:50:00+00:00", "EXPIRED", h1="BEARISH"),
+        _rec("2026-03-02T12:00:00+00:00", "2026-03-02T11:55:00+00:00", "ARMED"),
+        _rec("2026-03-02T12:05:00+00:00", "2026-03-02T11:55:00+00:00", "INVALIDATED"),
+        _rec("2026-03-02T12:10:00+00:00", None, "NONE"),
+        _rec("2026-03-02T13:00:00+00:00", "2026-03-02T12:55:00+00:00", "ARMED"),
+    ]
+    history = setup_history(rows)
+    by_armed = {h["armed_at"][11:16]: h for h in history}
+    assert [h["outcome"] for h in history] == [
+        "ARMED",
+        "INVALIDATED",
+        "EXPIRED",
+        "TRIGGERED",
+    ]  # newest first
+    assert by_armed["09:55"]["actionable"] is True
+    assert by_armed["09:55"]["side"] == "BUY"
+    assert by_armed["10:50"]["side"] == "SELL"
+    assert by_armed["10:50"]["actionable"] is False  # expired unseen: it never offered a trade
+    assert len(history) == 4  # the phase-less record is not a setup
+
+
+def test_a_version_without_a_lifecycle_lists_no_armed_setups() -> None:
+
+    assert setup_history([_rec("2026-03-02T10:00:00+00:00", None, "SAME_BAR", "BUY")]) == []

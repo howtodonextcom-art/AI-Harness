@@ -38,8 +38,9 @@ function Hero({ view, expiredNow, secondsLeft, compact }: { view: TradeView; exp
         <span aria-hidden="true" className={compact ? "text-xl" : "text-3xl"}>{showExpired ? HERO_ICON.EXPIRED_SETUP : HERO_ICON[hero.state]}</span>
         <span data-testid="decision" className={`${compact ? "text-lg" : "text-2xl"} font-black leading-tight`}>{text.label}</span>
         {!showExpired && secondsLeft !== null && (hero.state === "BUY_READY" || hero.state === "SELL_READY") && (
-          <span data-testid="expiry" className="text-sm">
+          <span data-testid="expiry" data-urgent={secondsLeft <= 60} className={`text-sm ${secondsLeft <= 60 ? "font-bold" : ""}`}>
             còn hiệu lực <b className="font-mono">{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</b>
+            {secondsLeft <= 60 ? " — sắp hết hạn, hết hạn là không mở được" : ""}
           </span>
         )}
       </div>
@@ -350,7 +351,8 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
       {showTicket && <Ticket view={view} risk={risk} onRisk={onRisk} onOpenRequest={onOpenRequest} busy={busy} uiStale={uiStale} expiredNow={expiredNow} />}
       {waiting && <Pipeline view={view} tf={tf} onFocusTf={onFocusTf} />}
       {waiting && <WaitContext view={view} />}
-      {state === "EXITED" && <LastExit view={view} />}
+      {state !== "POSITION_OPEN" && <LastExit view={view} />}
+      <AlertChannelNotice view={view} />
       {state === "MARKET_CLOSED" && <ClosedInfo view={view} zone={zone} />}
       <AccountStrip view={view} />
       {!showTicket && !showPosition && <Calculator bid={view.quote?.bid ?? null} />}
@@ -359,10 +361,28 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
 }
 
 function LastExit({ view }: { view: TradeView }) {
-  const t = view.desk?.today;
+  const x = view.desk?.last_exit;
+  if (!x) return null;
   return (
-    <p data-testid="last-exit" className="text-sm">
-      Hôm nay: {String(t?.paper_trades ?? 0)} lệnh · P&L {money(t?.net_pnl as number | null)} · {fmt(t?.net_r as number | null)}R. Xem tab «Hoạt động» để biết chi tiết ({EXIT_REASON_VI.TAKE_PROFIT}/{EXIT_REASON_VI.STOP_LOSS}…).
+    <section data-testid="last-exit" aria-label="Lệnh paper đóng gần nhất" className="rounded-lg border border-slate-300 p-2 text-sm dark:border-slate-700">
+      <div className="mb-0.5 text-xs font-semibold uppercase text-slate-600 dark:text-slate-400">Lệnh đóng gần nhất</div>
+      <div className="flex flex-wrap items-baseline gap-x-3">
+        <b>{x.side === "BUY" ? "MUA" : "BÁN"}</b>
+        <span>{EXIT_REASON_VI[x.exit_reason ?? ""] ?? x.exit_reason}</span>
+        <span className={`font-mono font-bold ${(x.net_pnl ?? 0) >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}`}>{money(x.net_pnl)} · {fmt(x.r_multiple, 2)}R</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">{fmt(x.duration_minutes, 0)} phút</span>
+      </div>
+    </section>
+  );
+}
+
+/** Off-browser alerts are the channel that works when the page is closed: say whether it is on. */
+function AlertChannelNotice({ view }: { view: TradeView }) {
+  const a = view.alerts;
+  if (view.source_mode !== "LIVE" || !a || a.telegram_configured) return null;
+  return (
+    <p data-testid="alert-channel-notice" className={`rounded-md border px-2 py-1 text-xs ${WARN}`}>
+      Cảnh báo khi đóng trình duyệt: <b>CHƯA BẬT</b> (Telegram chưa cấu hình, hiện chỉ ghi file). Thông báo trong trình duyệt chỉ hoạt động khi trang đang mở.
     </p>
   );
 }

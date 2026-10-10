@@ -309,6 +309,61 @@ def funnel(
     }
 
 
+# ---- setup history (what the engine saw while nobody was watching) -------------------------------
+
+_SETUP_PHASES = ("ARMED", "TRIGGERED", "EXPIRED", "INVALIDATED")
+
+
+def setup_history(records: Iterable[dict[str, Any]], *, limit: int = 60) -> list[dict[str, Any]]:
+    """One row per setup the lifecycle armed, from the logged decisions: how it ended.
+
+    ``outcome`` is TRIGGERED (the M5 trigger fired, ``actionable`` says whether a BUY/SELL was ever
+    offered), EXPIRED (its window ran out unseen), INVALIDATED, or ARMED (still forming). Versions
+    without a setup lifecycle (v1.1.0) arm nothing and list nothing here; their signals are in the
+    signal history. The rows are evidence about how often the engine gets close, not a forecast.
+    """
+    groups: dict[str, dict[str, Any]] = {}
+    for r in records:
+        armed_at, phase = r.get("armed_at"), r.get("setup_phase")
+        if not armed_at or phase not in _SETUP_PHASES:
+            continue
+        g = groups.setdefault(
+            str(armed_at),
+            {
+                "armed_at": str(armed_at),
+                "first_seen": str(r["at"]),
+                "last_seen": str(r["at"]),
+                "phases": set(),
+                "side": None,
+                "actionable": False,
+                "strategy_version": r.get("strategy_version"),
+            },
+        )
+        g["last_seen"] = max(g["last_seen"], str(r["at"]))
+        g["first_seen"] = min(g["first_seen"], str(r["at"]))
+        g["phases"].add(phase)
+        if r.get("h1") in ("BULLISH", "BEARISH") and g["side"] is None:
+            g["side"] = "BUY" if r["h1"] == "BULLISH" else "SELL"
+        if r.get("decision") in ("BUY", "SELL"):
+            g["actionable"] = True
+            g["side"] = r["decision"]
+    out: list[dict[str, Any]] = []
+    for g in groups.values():
+        phases = g.pop("phases")
+        g["outcome"] = (
+            "TRIGGERED"
+            if "TRIGGERED" in phases
+            else "INVALIDATED"
+            if "INVALIDATED" in phases
+            else "EXPIRED"
+            if "EXPIRED" in phases
+            else "ARMED"
+        )
+        out.append(g)
+    out.sort(key=lambda g: g["armed_at"], reverse=True)
+    return out[:limit]
+
+
 # ---- forward acceptance -------------------------------------------------------------------------
 
 FORWARD_TEXT = {

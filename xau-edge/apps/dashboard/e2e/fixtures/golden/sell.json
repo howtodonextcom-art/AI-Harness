@@ -142,10 +142,12 @@
   "blockers": [],
   "can_open": true,
   "closure_policy": "BLOCK_NEW_NEAR_CLOSE",
+  "last_exit": null,
   "limits": {
    "daily_loss_pct": 0.0,
    "daily_loss_stop_pct": 2.0,
    "day_start_equity": 10000.0,
+   "max_entry_drift_r": 0.25,
    "max_trades_per_day": 6
   },
   "position": null,
