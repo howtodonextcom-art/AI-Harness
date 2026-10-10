@@ -490,13 +490,19 @@ export function TerminalView() {
       )}
       {!view && !error && <p data-testid="loading" className="text-sm text-slate-600 dark:text-slate-400">Đang tải quyết định…</p>}
 
-      <div data-testid="terminal-grid" className="grid items-start gap-2 [grid-template-areas:'hero'_'chart'_'mtf'_'body'] lg:grid-cols-[minmax(0,1fr)_23rem] lg:[grid-template-areas:'chart_hero'_'chart_body'_'mtf_body']">
-        <div style={{ gridArea: "hero" }} className="min-w-0">{heroNode}</div>
-        {chartBlock}
-        <div style={{ gridArea: "mtf" }} className="min-w-0">
-          <MtfStrip rows={view?.timeframes ?? []} tf={prefs.tf} onFocus={focusTf} />
+      {/* phone: one column in the order price -> decision -> chart -> plan; desktop: chart column | decision column,
+          independent of each other so a tall decision never pushes the multi-timeframe strip down */}
+      <div data-testid="terminal-grid" className="grid items-start gap-2 [grid-template-areas:'hero'_'chart'_'mtf'_'body'] lg:grid-cols-[minmax(0,1fr)_23rem] lg:[grid-template-areas:'left_side']">
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:left]">
+          {chartBlock}
+          <div style={{ gridArea: "mtf" }} className="min-w-0">
+            <MtfStrip rows={view?.timeframes ?? []} tf={prefs.tf} onFocus={focusTf} />
+          </div>
         </div>
-        <div style={{ gridArea: "body" }} className="min-w-0">{bodyNode}</div>
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:side]">
+          <div style={{ gridArea: "hero" }} className="min-w-0">{heroNode}</div>
+          <div style={{ gridArea: "body" }} className="min-w-0">{bodyNode}</div>
+        </div>
       </div>
 
       <Workspace

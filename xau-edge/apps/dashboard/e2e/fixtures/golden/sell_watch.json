@@ -19,29 +19,29 @@
   }
  ],
  "data_age_seconds": 0.0,
- "data_as_of": "2025-12-02T12:00:00+00:00",
+ "data_as_of": "2025-12-02T17:05:00+00:00",
  "decision": {
   "active_timeframe": "M5",
-  "ask": 4205.41,
-  "atr": 7.215581082683458,
-  "bid": 4205.2,
+  "ask": 4189.44,
+  "atr": 10.872286689031972,
+  "bid": 4189.21,
   "code_version": "1.2.1",
   "data_age_seconds": 0.0,
   "decision": "WAIT",
-  "decision_id": "6baa701dcc95a98cb4a8",
+  "decision_id": "d0f085a863e1db991735",
   "entry_price": null,
   "entry_quality": "",
   "entry_type": null,
   "evidence_status": "UNVALIDATED_BASELINE",
   "expired": false,
-  "generated_at": "2025-12-02T12:00:00Z",
-  "h1_bias": "NEUTRAL",
+  "generated_at": "2025-12-02T17:05:00Z",
+  "h1_bias": "BEARISH",
   "h4_bias": "RANGE",
   "inputs_hash": "",
   "invalidation": null,
-  "m15_setup": "RANGE/NONE",
+  "m15_setup": "REVERSAL_DOWN/NONE",
   "m1_execution_state": "GOOD",
-  "m30_state": "REVERSAL_DOWN",
+  "m30_state": "RANGE",
   "m5_trigger": "FLAT",
   "market_regime": "RANGE",
   "metadata": {
@@ -54,17 +54,18 @@
   "position_size": null,
   "reasons": [
    "H4:RANGE",
-   "H1:NEUTRAL",
-   "M30:REVERSAL_DOWN (context only)",
-   "M15:RANGE/NONE",
+   "H1:BEARISH",
+   "M30:RANGE (context only)",
+   "M15:REVERSAL_DOWN/NONE",
    "SETUP:NONE",
    "M5:FLAT",
    "M1:GOOD",
    "SPREAD:GOOD",
-   "VOLUME:NORMAL(TICK_VOLUME)"
+   "VOLUME:NORMAL(TICK_VOLUME)",
+   "no setup"
   ],
   "refusal_reasons": [
-   "NO_DIRECTION"
+   "NO_SETUP"
   ],
   "required_win_rate": null,
   "risk_amount": null,
@@ -73,9 +74,9 @@
   "seconds_to_expiry": null,
   "setup_id": "",
   "signal_expiry": null,
-  "signal_id": "6baa701dcc95a98cb4a8",
+  "signal_id": "d0f085a863e1db991735",
   "source_mode": "ACCEPTANCE_REPLAY",
-  "spread": 21.0,
+  "spread": 23.0,
   "spread_state": "GOOD",
   "stop_loss": null,
   "stop_model": null,
@@ -84,12 +85,13 @@
   "symbol": "XAUUSD",
   "take_profit": null,
   "take_profit_2": null,
-  "timestamp": "2025-12-02T12:00:00Z",
-  "volatility_regime": "NORMAL",
+  "timestamp": "2025-12-02T17:05:00Z",
+  "volatility_regime": "HIGH",
   "volume_state": "NORMAL",
   "volume_type": "TICK_VOLUME",
   "warnings": [
-   "NEWS NOT VERIFIED: no economic calendar, check the news yourself"
+   "NEWS NOT VERIFIED: no economic calendar, check the news yourself",
+   "VOLATILITY HIGH: ATR(M15) is in the top fifth of its recent range"
   ]
  },
  "decision_trusted": true,
@@ -156,7 +158,7 @@
   "validated_edge": false
  },
  "explanation": [
-  "WAIT because: H1 has no clear direction"
+  "WAIT because: no M15 pullback setup inside the H1 trend"
  ],
  "forward_acceptance": {
   "counts": {},
@@ -178,12 +180,12 @@
   "refusals": {
    "MARKET_CLOSED": 0,
    "NEWS": 0,
-   "NO_DIRECTION": 45,
-   "NO_SETUP": 0,
+   "NO_DIRECTION": 34,
+   "NO_SETUP": 1,
    "NO_TRIGGER": 0,
    "RISK": 0,
    "RR": 0,
-   "SPREAD": 3,
+   "SPREAD": 13,
    "STALE": 0,
    "TIMEFRAME_CONFLICT": 0,
    "VOLATILITY": 0,
@@ -192,21 +194,25 @@
   "top_refusals": [
    [
     "NO_DIRECTION",
-    45
+    34
    ],
    [
     "SPREAD",
-    3
+    13
+   ],
+   [
+    "NO_SETUP",
+    1
    ]
   ],
   "triggered_setups": 0
  },
- "generated_at": "2025-12-02T12:00:00+00:00",
+ "generated_at": "2025-12-02T17:05:00+00:00",
  "hero": {
   "action": {
-   "code": "WAIT",
-   "side": null,
-   "stage": "WAITING",
+   "code": "WATCH_SELL",
+   "side": "SELL",
+   "stage": "WATCHING",
    "thesis": null
   },
   "detail": "The engine evaluated and chose no trade",
@@ -221,32 +227,32 @@
  },
  "market_context": {
   "bar_close": {
-   "H1": "2025-12-02T13:00:00+00:00",
-   "H4": "2025-12-02T14:00:00+00:00",
-   "M1": "2025-12-02T12:01:00+00:00",
-   "M15": "2025-12-02T12:15:00+00:00",
-   "M30": "2025-12-02T12:30:00+00:00",
-   "M5": "2025-12-02T12:05:00+00:00"
+   "H1": "2025-12-02T18:00:00+00:00",
+   "H4": "2025-12-02T18:00:00+00:00",
+   "M1": "2025-12-02T17:06:00+00:00",
+   "M15": "2025-12-02T17:15:00+00:00",
+   "M30": "2025-12-02T17:30:00+00:00",
+   "M5": "2025-12-02T17:10:00+00:00"
   },
   "daily": {
-   "change": -27.26000000000022,
+   "change": -43.25,
    "change_basis": "PREV_CLOSE",
-   "change_pct": -0.6440698789829135,
+   "change_pct": -1.0218643531185174,
    "day": "2025-12-02",
    "high": 4235.83,
    "is_current_day": true,
-   "last": 4205.2,
-   "low": 4181.1,
+   "last": 4189.21,
+   "low": 4163.52,
    "open": 4231.41,
    "prev_close": 4232.46,
-   "range": 54.72999999999956,
-   "range_position": 0.44034350447651466
+   "range": 72.30999999999949,
+   "range_position": 0.35527589545014215
   },
   "next_open": null,
-  "server_time": "2025-12-02T12:00:00+00:00",
+  "server_time": "2025-12-02T17:05:00+00:00",
   "session": {
-   "code": "LONDON",
-   "label": "Phi\u00ean \u00c2u (London)"
+   "code": "NEW_YORK",
+   "label": "Phi\u00ean M\u1ef9 (New York)"
   }
  },
  "news": {
@@ -258,9 +264,9 @@
  "problems": [],
  "quote": {
   "age_seconds": 0.0,
-  "ask": 4205.41,
-  "bid": 4205.2,
-  "spread_points": 21.0,
+  "ask": 4189.44,
+  "bid": 4189.21,
+  "spread_points": 23.0,
   "stale": false
  },
  "risk_choices": [
@@ -269,7 +275,7 @@
   0.5
  ],
  "risk_plans": null,
- "served_at": "2025-12-02T12:00:00+00:00",
+ "served_at": "2025-12-02T17:05:00+00:00",
  "setup": {
   "bars_since_armed": null,
   "phase": "NONE",
@@ -335,17 +341,17 @@
  },
  "structure": {
   "bos": "NONE",
-  "choch": "NONE",
-  "h1_trend": "NEUTRAL",
-  "m15_structure": "RANGE",
-  "nearest_resistance": 4219.23,
-  "nearest_support": 4182.31,
+  "choch": "CHOCH_DOWN",
+  "h1_trend": "BEARISH",
+  "m15_structure": "REVERSAL_DOWN",
+  "nearest_resistance": 4229.61,
+  "nearest_support": 4163.52,
   "pdh": 4264.46,
   "pdl": 4205.48,
-  "recent_swing_high": 4219.23,
-  "recent_swing_low": 4182.31,
-  "session": "LONDON",
-  "volatility": "NORMAL"
+  "recent_swing_high": 4230.52,
+  "recent_swing_low": 4163.52,
+  "session": "NEW_YORK",
+  "volatility": "HIGH"
  },
  "telemetry": {
   "buy": 0,
@@ -353,129 +359,133 @@
   "decisions": 48,
   "distinct_setups": 0,
   "m1_counts": {
-   "GOOD": 37,
-   "QUIET": 8,
-   "SPREAD_WIDE": 3
+   "GOOD": 21,
+   "QUIET": 14,
+   "SPREAD_WIDE": 13
   },
   "most_common_blocker": "NO_DIRECTION",
   "sell": 0,
   "setup_counts": {
-   "DOWN/NONE": 12,
-   "DOWN/PULLBACK_IN_DOWNTREND": 12,
-   "RANGE/NONE": 24
+   "RANGE/NONE": 25,
+   "REVERSAL_DOWN/NONE": 14,
+   "UP/NONE": 9
   },
   "setup_phases": {
-   "-": 3,
-   "NONE": 45
+   "-": 13,
+   "NONE": 35
   },
   "spread_counts": {
-   "GOOD": 45,
-   "WIDE": 3
+   "GOOD": 35,
+   "WIDE": 13
   },
   "top_refusals": [
    [
     "NO_DIRECTION",
-    45
+    34
    ],
    [
     "SPREAD_TOO_WIDE",
-    3
+    13
+   ],
+   [
+    "NO_SETUP",
+    1
    ]
   ],
   "trigger_counts": {
-   "DOWN": 9,
-   "FLAT": 36,
-   "UP": 3
+   "DOWN": 7,
+   "FLAT": 34,
+   "UP": 7
   },
   "volume_counts": {
-   "HIGH": 6,
-   "LOW": 8,
-   "NORMAL": 34
+   "HIGH": 4,
+   "LOW": 14,
+   "NORMAL": 30
   },
   "wait": 48,
   "wait_pct": 100.0
  },
  "timeframes": [
   {
-   "atr": 29.6965322238189,
+   "atr": 29.926065636403603,
    "bias": 0,
    "freshness": "FRESH",
-   "last_closed": "2025-12-02T10:00:00+00:00",
-   "relative_tick_volume": 1.2200888565564187,
+   "last_closed": "2025-12-02T14:00:00+00:00",
+   "relative_tick_volume": 1.193737150086984,
    "role": "REGIME / BLOCKER",
    "state": "RANGE",
    "timeframe": "H4",
-   "volume_zscore": 0.39257255708257294
+   "volume_zscore": 0.38412028182305386
   },
   {
-   "atr": 15.317718103233744,
-   "bias": 0,
-   "freshness": "FRESH",
-   "last_closed": "2025-12-02T12:00:00+00:00",
-   "relative_tick_volume": 0.828238477542216,
-   "role": "DIRECTION",
-   "state": "NEUTRAL",
-   "timeframe": "H1",
-   "volume_zscore": -0.44671609760712266
-  },
-  {
-   "atr": 10.754343402722494,
+   "atr": 18.283280232388375,
    "bias": -1,
    "freshness": "FRESH",
-   "last_closed": "2025-12-02T12:00:00+00:00",
-   "relative_tick_volume": 1.023840651027513,
+   "last_closed": "2025-12-02T17:00:00+00:00",
+   "relative_tick_volume": 1.5440921837972172,
+   "role": "DIRECTION",
+   "state": "BEARISH",
+   "timeframe": "H1",
+   "volume_zscore": 1.5074752479235154
+  },
+  {
+   "atr": 13.809574447696972,
+   "bias": 0,
+   "freshness": "FRESH",
+   "last_closed": "2025-12-02T17:00:00+00:00",
+   "relative_tick_volume": 1.2656233212763672,
    "role": "CONTEXT (display only)",
-   "state": "REVERSAL_DOWN",
+   "state": "RANGE",
    "timeframe": "M30",
-   "volume_zscore": 0.23965859948674365
+   "volume_zscore": 0.7715404048267087
   },
   {
-   "atr": 7.215581082683458,
-   "bias": 0,
+   "atr": 10.872286689031972,
+   "bias": -1,
    "freshness": "FRESH",
-   "last_closed": "2025-12-02T12:00:00+00:00",
-   "relative_tick_volume": 1.0130757450818706,
+   "last_closed": "2025-12-02T17:00:00+00:00",
+   "relative_tick_volume": 1.0119379228014325,
    "role": "SETUP",
-   "state": "RANGE / NONE",
+   "state": "REVERSAL_DOWN / NONE",
    "timeframe": "M15",
-   "volume_zscore": 0.09105900699093536
+   "volume_zscore": -0.016094660099901632
   },
   {
-   "atr": 3.6968495041316016,
+   "atr": 6.4847040336918935,
    "bias": 0,
    "freshness": "FRESH",
-   "last_closed": "2025-12-02T12:00:00+00:00",
-   "relative_tick_volume": 1.181785327069028,
+   "last_closed": "2025-12-02T17:05:00+00:00",
+   "relative_tick_volume": 0.9163906453879354,
    "role": "TRIGGER",
    "state": "FLAT",
    "timeframe": "M5",
-   "volume_zscore": 1.1318959508369228
+   "volume_zscore": -0.787049437509093
   },
   {
-   "atr": 1.4746792788816958,
-   "bias": 1,
+   "atr": 2.622906404644455,
+   "bias": 0,
    "freshness": "FRESH",
-   "last_closed": "2025-12-02T12:00:00+00:00",
-   "relative_tick_volume": 1.1517857142857142,
+   "last_closed": "2025-12-02T17:05:00+00:00",
+   "relative_tick_volume": 0.9185441941074524,
    "role": "EXECUTION TIMING",
    "state": "GOOD",
    "timeframe": "M1",
-   "volume_zscore": 0.7838191062044335
+   "volume_zscore": -0.6502645007292871
   }
  ],
  "trade_plan": null,
  "volume": {
-  "m1_acceleration": -0.24830464578079536,
-  "m1_percentile": 0.82,
-  "m1_relative": 1.1517857142857142,
-  "m1_zscore": 0.7838191062044335,
+  "m1_acceleration": -1.851724196723259,
+  "m1_percentile": 0.045,
+  "m1_relative": 0.9185441941074524,
+  "m1_zscore": -0.6502645007292871,
   "note": "tick volume (number of price changes), not exchange volume",
   "state": "NORMAL",
   "type": "TICK_VOLUME"
  },
  "why_wait": {
   "blocked_by": [
-   "NO_DIRECTION"
+   "NO_SETUP"
   ],
   "stages": [
    {
@@ -490,17 +500,17 @@
    },
    {
     "stage": "H1 direction",
-    "status": "FAIL",
+    "status": "PASS",
     "timeframe": "H1"
    },
    {
     "stage": "H4 / M15 alignment",
-    "status": "NOT_REACHED",
+    "status": "PASS",
     "timeframe": "M15"
    },
    {
     "stage": "M15 setup",
-    "status": "NOT_REACHED",
+    "status": "FAIL",
     "timeframe": "M15"
    },
    {
@@ -519,7 +529,7 @@
     "timeframe": "M5"
    }
   ],
-  "waiting_for": "H1 to establish a bullish or bearish direction",
-  "waiting_for_code": "NO_DIRECTION"
+  "waiting_for": "an M15 pullback inside the H1 trend (it then stays armed 6 M5 bars)",
+  "waiting_for_code": "NO_SETUP"
  }
 }

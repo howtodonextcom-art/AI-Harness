@@ -26,7 +26,15 @@ export type HeroState =
   | "EXITED"
   | "WAIT";
 
+export interface HeroAction {
+  code: "WAIT" | "WATCH_BUY" | "WATCH_SELL" | "BUY" | "SELL" | "HOLD" | "EXIT" | "UNAVAILABLE";
+  stage: string;
+  side: "BUY" | "SELL" | null;
+  thesis: "INTACT" | "WEAK" | "UNKNOWN" | null;
+}
+
 export interface Hero {
+  action: HeroAction;
   state: HeroState;
   label: string;
   tone: "buy" | "sell" | "neutral" | "info" | "warn" | "error";

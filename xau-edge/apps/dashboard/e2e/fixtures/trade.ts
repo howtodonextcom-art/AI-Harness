@@ -1,5 +1,10 @@
 import type { Page } from "@playwright/test";
 import type { JournalResponse, MarkersResponse, SetupHistoryResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
+import buyWatch from "./golden/buy_watch.json";
+import buyArmed from "./golden/buy_armed.json";
+import sellWatch from "./golden/sell_watch.json";
+import sellArmed from "./golden/sell_armed.json";
+import sellInvalidated from "./golden/sell_invalidated.json";
 import buy from "./golden/buy.json";
 import closedPaper from "./golden/closed_paper.json";
 import expired from "./golden/expired.json";
@@ -22,7 +27,7 @@ import writerConflict from "./golden/writer_conflict.json";
  * remove things; they never hand-write a BUY, SELL or paper-trade payload.
  */
 
-export const GOLDEN = { wait, buy, sell, openPaper, closedPaper, stale, expired, marketClosed, paperCorrupt, writerConflict };
+export const GOLDEN = { buyWatch, buyArmed, sellWatch, sellArmed, sellInvalidated, wait, buy, sell, openPaper, closedPaper, stale, expired, marketClosed, paperCorrupt, writerConflict };
 export type GoldenName = keyof typeof GOLDEN;
 
 export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;

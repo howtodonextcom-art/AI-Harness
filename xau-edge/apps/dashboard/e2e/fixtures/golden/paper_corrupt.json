@@ -227,6 +227,12 @@
  },
  "generated_at": "2025-12-05T14:45:00+00:00",
  "hero": {
+  "action": {
+   "code": "UNAVAILABLE",
+   "side": null,
+   "stage": "UNAVAILABLE",
+   "thesis": null
+  },
   "detail": "Not WAIT: PAPER_STATE_ERROR",
   "label": "DECISION UNAVAILABLE",
   "side": null,

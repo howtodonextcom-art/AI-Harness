@@ -199,6 +199,12 @@
  },
  "generated_at": "2025-12-06T12:00:00+00:00",
  "hero": {
+  "action": {
+   "code": "WAIT",
+   "side": null,
+   "stage": "CLOSED",
+   "thesis": null
+  },
   "detail": "The market is closed; no decision is made",
   "label": "MARKET CLOSED",
   "side": null,

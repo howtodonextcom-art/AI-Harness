@@ -219,6 +219,12 @@
  },
  "generated_at": "2025-12-05T15:45:00+00:00",
  "hero": {
+  "action": {
+   "code": "EXIT",
+   "side": null,
+   "stage": "DONE",
+   "thesis": null
+  },
   "detail": "Last paper trade T00001 closed",
   "label": "EXITED \u2014 TAKE_PROFIT",
   "side": null,

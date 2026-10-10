@@ -28,6 +28,7 @@ from xau_edge.market_data.broker_clock import BrokerClock
 from xau_edge.market_data.session import market_status
 from xau_edge.trading.baseline import BaselineConfig
 from xau_edge.trading.cockpit import (
+    action_for,
     blocker,
     condition,
     forward_acceptance,
@@ -619,6 +620,7 @@ class TradeEngine:
                     signal=None, conditions=conditions, expired=False, plan=None, position=None,
                     last_exit=None, market_open=True, now=stamp,
                 )  # fmt: skip
+                hero["action"] = action_for(hero, None, None)
                 return {
                     **base,
                     "available": False,
@@ -667,6 +669,7 @@ class TradeEngine:
                 signal=signal, conditions=conditions, expired=expired, plan=plan, position=position,
                 last_exit=self._last_exit(), market_open=snap.market_open, now=stamp,
             )  # fmt: skip
+            hero["action"] = action_for(hero, signal, position)
             decision = signal.model_dump(mode="json")
             decision["decision_id"] = signal.decision_id
             decision["expired"] = expired

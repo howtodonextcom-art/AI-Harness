@@ -18,6 +18,7 @@ from xau_edge.market_data.session import market_status
 from xau_edge.trading.baseline import BaselineConfig, DecisionContext, decide
 from xau_edge.trading.cockpit import (
     F4_MIN_TRADES,
+    action_for,
     condition,
     forward_acceptance,
     funnel,
@@ -399,3 +400,38 @@ def test_setup_history_says_how_each_armed_setup_ended() -> None:
 def test_a_version_without_a_lifecycle_lists_no_armed_setups() -> None:
 
     assert setup_history([_rec("2026-03-02T10:00:00+00:00", None, "SAME_BAR", "BUY")]) == []
+
+
+# -- action: the one thing to do now --------------------------------------------------------------
+
+
+def _hero(state: str, side: str | None = None) -> dict[str, Any]:
+    return {"state": state, "side": side, "label": state, "tone": "x", "detail": ""}
+
+
+def test_every_hero_state_maps_to_one_action() -> None:
+    buy = signal()
+    wait = signal(wait=True)
+    assert action_for(_hero("BUY_READY", "BUY"), buy, None)["code"] == "BUY"
+    assert action_for(_hero("SELL_READY", "SELL"), buy, None)["code"] == "SELL"
+    assert action_for(_hero("UNAVAILABLE"), None, None)["code"] == "UNAVAILABLE"
+    assert action_for(_hero("STALE"), buy, None)["code"] == "UNAVAILABLE"
+    assert action_for(_hero("MARKET_CLOSED"), wait, None) == {
+        "code": "WAIT",
+        "stage": "CLOSED",
+        "side": None,
+        "thesis": None,
+    }
+    assert action_for(_hero("EXITED"), wait, None)["code"] == "EXIT"
+    assert action_for(_hero("EXPIRED_SETUP", "BUY"), buy, None)["code"] == "WAIT"
+    for state in ("WAIT", "SETUP_ARMED"):
+        assert action_for(_hero(state), wait, None)["code"] in ("WAIT", "WATCH_BUY", "WATCH_SELL")
+
+
+def test_hold_reports_whether_the_entry_thesis_still_stands() -> None:
+    bull = signal()  # H1 bullish in the helper state
+    hold = action_for(_hero("POSITION_OPEN", "BUY"), bull, {"side": "BUY", "status": "OPEN"})
+    assert (hold["code"], hold["stage"], hold["thesis"]) == ("HOLD", "OPEN", "INTACT")
+    weak = action_for(_hero("POSITION_OPEN", "SELL"), bull, {"side": "SELL", "status": "OPEN"})
+    assert weak["thesis"] == "WEAK"
+    assert action_for(_hero("POSITION_OPEN", "BUY"), None, {"side": "BUY"})["thesis"] == "UNKNOWN"

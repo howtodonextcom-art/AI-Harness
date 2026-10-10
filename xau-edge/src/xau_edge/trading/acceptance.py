@@ -85,6 +85,36 @@ SCENARIOS: dict[str, Scenario] = {
             "buy_time", "a BUY that later exits on time (v1.1)", "1.1.0", at("2025-08-04T15:40:00")
         ),
         Scenario(
+            "buy_watch",
+            "H1 bullish, waiting for an M15 pullback (WATCH BUY)",
+            "1.2.1",
+            at("2025-12-01T08:15:00"),
+        ),
+        Scenario(
+            "buy_armed",
+            "a BUY setup armed, waiting for the M5 trigger",
+            "1.2.1",
+            at("2025-12-01T11:15:00"),
+        ),
+        Scenario(
+            "sell_watch",
+            "H1 bearish, waiting for an M15 pullback (WATCH SELL)",
+            "1.2.1",
+            at("2025-12-02T17:05:00"),
+        ),
+        Scenario(
+            "sell_armed",
+            "a SELL setup armed, waiting for the M5 trigger",
+            "1.2.1",
+            at("2025-12-02T19:00:00"),
+        ),
+        Scenario(
+            "sell_invalidated",
+            "an armed SELL setup that was invalidated",
+            "1.2.1",
+            at("2025-12-02T19:15:00"),
+        ),
+        Scenario(
             "market_closed", "Saturday: the market is closed", "1.2.1", at("2025-12-06T12:00:00")
         ),
         Scenario(

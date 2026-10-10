@@ -176,6 +176,58 @@ def trade_plan(
 # ---- hero ---------------------------------------------------------------------------------------
 
 
+ACTIONS = ("WAIT", "WATCH_BUY", "WATCH_SELL", "BUY", "SELL", "HOLD", "EXIT", "UNAVAILABLE")
+
+
+def _bias_side(bias: str | None) -> str | None:
+    return "BUY" if bias == "BULLISH" else "SELL" if bias == "BEARISH" else None
+
+
+def action_for(
+    hero: dict[str, Any], signal: TradingSignal | None, position: dict[str, Any] | None
+) -> dict[str, Any]:
+    """The ONE thing the trader should do now, derived from the same state as the hero.
+
+    code: WAIT / WATCH_BUY / WATCH_SELL / BUY / SELL / HOLD / EXIT / UNAVAILABLE.
+    ``stage`` says how far along it is (WATCHING, ARMED, READY, OPEN, DONE, CLOSED, EXPIRED,
+    INVALIDATED, ...). ``thesis`` (HOLD only) says whether the entry reason still stands: the H1
+    direction of the open position against the current H1 direction. It is information, not a new
+    exit rule: the paper desk exits only by SL, TP, time or the closure policy.
+    """
+    state = hero["state"]
+    phase = None if signal is None else signal.metadata.get("setup_phase")
+    out: dict[str, Any] = {"code": "WAIT", "stage": "WAITING", "side": None, "thesis": None}
+    if state in ("UNAVAILABLE", "STALE"):
+        out.update(code="UNAVAILABLE", stage=state)
+    elif state == "MARKET_CLOSED":
+        out.update(stage="CLOSED")
+    elif state == "POSITION_OPEN":
+        held = str((position or {}).get("side") or hero.get("side"))
+        now_side = _bias_side(None if signal is None else signal.h1_bias)
+        thesis = "UNKNOWN" if now_side is None else "INTACT" if now_side == held else "WEAK"
+        out.update(code="HOLD", stage="OPEN", side=held, thesis=thesis)
+    elif state in ("BUY_READY", "SELL_READY"):
+        ready = state.split("_")[0]
+        out.update(code=ready, stage="READY", side=ready)
+    elif state in ("EXPIRED_SETUP", "NOT_ACTIONABLE"):
+        out.update(
+            stage="EXPIRED" if state == "EXPIRED_SETUP" else "INCOMPLETE", side=hero.get("side")
+        )
+    elif state == "EXITED":
+        out.update(code="EXIT", stage="DONE")
+    elif state == "SETUP_ARMED":
+        armed = _bias_side(None if signal is None else signal.h1_bias)
+        out.update(code=f"WATCH_{armed}" if armed else "WAIT", stage="ARMED", side=armed)
+    elif signal is not None:  # WAIT: is there a direction worth watching?
+        side = _bias_side(signal.h1_bias)
+        first = signal.refusal_reasons[0].value if signal.refusal_reasons else None
+        if side and first in ("NO_SETUP", "NO_TRIGGER"):
+            out.update(code=f"WATCH_{side}", stage="WATCHING", side=side)
+        elif phase in ("INVALIDATED", "EXPIRED"):
+            out.update(stage=str(phase))
+    return out
+
+
 def hero_state(  # noqa: PLR0911 - one return per product state, in priority order
     *,
     signal: TradingSignal | None,

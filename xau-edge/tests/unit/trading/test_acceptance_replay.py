@@ -155,3 +155,37 @@ def test_the_documented_acceptance_replay_script_still_runs(tmp_path: Path) -> N
     journals = list(tmp_path.glob("*/paper_journal.jsonl"))
     assert journals
     assert '"paper.close"' in journals[0].read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("name", "code", "stage"),
+    [
+        ("buy_watch", "WATCH_BUY", "WATCHING"),
+        ("buy_armed", "WATCH_BUY", "ARMED"),
+        ("sell_watch", "WATCH_SELL", "WATCHING"),
+        ("sell_armed", "WATCH_SELL", "ARMED"),
+        ("sell_invalidated", "WAIT", "INVALIDATED"),
+        ("buy_tp", "BUY", "READY"),
+        ("sell_ready", "SELL", "READY"),
+        ("market_closed", "WAIT", "CLOSED"),
+        ("stale", "UNAVAILABLE", "STALE"),
+    ],
+)
+def test_each_lifecycle_state_is_reachable_with_its_action(
+    tmp_path: Path, name: str, code: str, stage: str
+) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS[name])
+    action = world.engine.view()["hero"]["action"]
+    assert (action["code"], action["stage"]) == (code, stage)
+    world.close()
+
+
+def test_open_position_is_hold_and_the_exit_is_exit(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["buy_tp"])
+    world.engine.paper_open(setup_id=world.engine.view()["decision"]["setup_id"], risk_pct=0.25)
+    world.advance_minutes(10)
+    hold = world.engine.view()["hero"]["action"]
+    assert (hold["code"], hold["stage"], hold["side"]) == ("HOLD", "OPEN", "BUY")
+    world.advance_minutes(50)
+    assert world.engine.view()["hero"]["action"]["code"] == "EXIT"
+    world.close()

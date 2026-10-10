@@ -87,6 +87,11 @@ def collect(market: Path, out_root: Path) -> dict[str, tuple[str, Any]]:
         ("paper_corrupt", "paper_corrupt"),
         ("writer_conflict", "writer_conflict"),
         ("expired", "expired"),
+        ("buy_watch", "buy_watch"),
+        ("buy_armed", "buy_armed"),
+        ("sell_watch", "sell_watch"),
+        ("sell_armed", "sell_armed"),
+        ("sell_invalidated", "sell_invalidated"),
     ):
         w = world(name)
         files[key] = (f"GET /trade/decision, scenario {name}", w.engine.view())

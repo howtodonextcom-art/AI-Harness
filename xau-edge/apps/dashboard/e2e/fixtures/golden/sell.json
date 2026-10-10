@@ -225,6 +225,12 @@
  },
  "generated_at": "2025-08-14T18:05:00+00:00",
  "hero": {
+  "action": {
+   "code": "SELL",
+   "side": "SELL",
+   "stage": "READY",
+   "thesis": null
+  },
   "detail": "M5 trigger confirmed; plan complete",
   "label": "SELL READY",
   "side": "SELL",

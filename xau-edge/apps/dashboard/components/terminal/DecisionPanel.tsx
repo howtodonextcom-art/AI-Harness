@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { actionText, type ActionTone } from "@/lib/action";
 import { parseDecimal } from "@/lib/chartMath";
 import { BAD, GOOD, INFO, NEUTRAL, WARN, fmt, money } from "@/components/trade/ui";
 import { formatInZone, type DisplayZone } from "@/lib/time";
 import { fetchRisk, type PaperTrade, type RiskPlan, type TradeView } from "@/lib/trade";
-import { ACTIVITY_VI, BLOCKER_VI, EXIT_REASON_VI, HERO_ICON, HERO_VI, PAPER_ACCOUNT_VI, REFUSAL_VI, STAGE_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
+import { ACTIVITY_VI, BLOCKER_VI, EXIT_REASON_VI, HERO_VI, PAPER_ACCOUNT_VI, REFUSAL_VI, STAGE_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
 
 interface Props {
   view: TradeView;
@@ -21,42 +22,7 @@ interface Props {
   zone: DisplayZone;
 }
 
-const TONE: Record<string, string> = { buy: GOOD, sell: BAD, neutral: NEUTRAL, info: INFO, warn: WARN, error: BAD };
 
-// ---- the dominant state --------------------------------------------------------------------------
-
-function Hero({ view, expiredNow, secondsLeft, compact }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null; compact: boolean }) {
-  const hero = view.hero;
-  const showExpired = expiredNow && (hero.state === "BUY_READY" || hero.state === "SELL_READY");
-  const state = showExpired ? "EXPIRED_SETUP" : hero.state;
-  const text = HERO_VI[state];
-  const tone = showExpired ? WARN : (TONE[hero.tone] ?? NEUTRAL);
-  const errors = view.conditions.filter((c) => c.severity === "ERROR" && c.code !== "MARKET_CLOSED");
-  return (
-    <div data-testid="hero" data-hero-state={state} data-server-label={hero.label} className={`rounded-lg border-2 ${compact ? "px-3 py-2" : "px-4 py-3"} ${tone}`}>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span aria-hidden="true" className={compact ? "text-xl" : "text-3xl"}>{showExpired ? HERO_ICON.EXPIRED_SETUP : HERO_ICON[hero.state]}</span>
-        <span data-testid="decision" className={`${compact ? "text-lg" : "text-2xl"} font-black leading-tight`}>{text.label}</span>
-        {!showExpired && secondsLeft !== null && (hero.state === "BUY_READY" || hero.state === "SELL_READY") && (
-          <span data-testid="expiry" data-urgent={secondsLeft <= 60} className={`text-sm ${secondsLeft <= 60 ? "font-bold" : ""}`}>
-            còn hiệu lực <b className="font-mono">{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</b>
-            {secondsLeft <= 60 ? " — sắp hết hạn, hết hạn là không mở được" : ""}
-          </span>
-        )}
-      </div>
-      <p data-testid="hero-detail" className="mt-1 hidden text-sm sm:block">{text.hint}</p>
-      {(state === "UNAVAILABLE" || state === "STALE") && errors.length > 0 && (
-        <ul data-testid="hero-problems" className="mt-1 space-y-0.5 text-sm">
-          {errors.map((c) => (
-            <li key={c.code}>
-              {humanCondition(c.code, c.message)} <span className="font-mono text-xs">{c.code}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 // ---- setup pipeline ------------------------------------------------------------------------------
 
@@ -331,10 +297,65 @@ export function expiryOf(view: TradeView, serverNowMs: number) {
   return { expiredNow, secondsLeft };
 }
 
+const ACTION_STYLE: Record<ActionTone, string> = {
+  buy: "border-emerald-800 bg-emerald-700 text-white",
+  sell: "border-red-800 bg-red-700 text-white",
+  // a WATCH is not an order: amber with a dashed border, so it is never mistaken for BUY/SELL READY
+  "watch-buy": "border-dashed border-amber-700 bg-amber-500/15 text-amber-950 dark:text-amber-100",
+  "watch-sell": "border-dashed border-amber-700 bg-amber-500/15 text-amber-950 dark:text-amber-100",
+  hold: "border-sky-700 bg-sky-500/15 text-sky-900 dark:text-sky-100",
+  exit: "border-slate-600 bg-slate-500/15 text-slate-900 dark:text-slate-100",
+  wait: "border-slate-500 bg-slate-500/10 text-slate-800 dark:text-slate-200",
+  error: "border-red-700 bg-red-500/15 text-red-900 dark:text-red-100",
+};
+const ACTION_ICON: Record<ActionTone, string> = { buy: "▲", sell: "▼", "watch-buy": "👁▲", "watch-sell": "👁▼", hold: "●", exit: "✓", wait: "⏸", error: "⚠" };
+
+/** Action-first: what to do NOW in one word, why in one line, and exactly when to act. */
+function ActionHero({ view, expiredNow, secondsLeft }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null }) {
+  const [more, setMore] = useState(false);
+  const t = actionText(view, secondsLeft, expiredNow);
+  const state = expiredNow && (view.hero.state === "BUY_READY" || view.hero.state === "SELL_READY") ? "EXPIRED_SETUP" : view.hero.state;
+  const text = HERO_VI[state];
+  const errors = view.conditions.filter((c) => c.severity === "ERROR" && c.code !== "MARKET_CLOSED");
+  const solid = t.tone === "buy" || t.tone === "sell";
+  const veil = solid ? "bg-black/25" : "bg-black/10 dark:bg-white/10"; // solid heroes keep white text on a darker, never lighter, panel
+  const urgent = secondsLeft !== null && secondsLeft <= 60 && (t.code === "BUY" || t.code === "SELL") && !expiredNow;
+  return (
+    <div data-testid="hero" data-hero-state={state} data-action={t.code} data-server-label={view.hero.label} className={`rounded-lg border-2 px-4 py-2 ${ACTION_STYLE[t.tone]}`}>
+      <div className="flex items-center justify-between gap-2 text-xs font-semibold uppercase">
+        <span>Bạn nên làm gì bây giờ?</span>
+        <span data-testid="decision" className={`rounded px-1.5 py-0.5 ${veil}`}>{text.label}</span>
+      </div>
+      <div className="mt-1 flex items-center gap-2">
+        <span aria-hidden="true" className="text-2xl">{ACTION_ICON[t.tone]}</span>
+        <span data-testid="action-word" className="text-4xl font-black leading-none">{expiredNow && (t.code === "BUY" || t.code === "SELL") ? "BỎ QUA" : t.word}</span>
+      </div>
+      <p data-testid="action-sub" className="mt-1 text-sm font-semibold">
+        {expiredNow && (t.code === "BUY" || t.code === "SELL") ? "Kế hoạch đã hết hạn" : t.sub}
+        {urgent && <span data-testid="expiry" data-urgent="true"> — sắp hết hạn</span>}
+        {!urgent && secondsLeft !== null && (t.code === "BUY" || t.code === "SELL") && !expiredNow && <span data-testid="expiry" data-urgent="false" className="sr-only"> còn hiệu lực {mmss2(secondsLeft)}</span>}
+      </p>
+      <p data-testid="action-when" className={`mt-2 rounded-md px-2 py-1.5 text-sm ${veil} sm:line-clamp-none ${more ? "" : "line-clamp-2"}`}>
+        <b>Khi nào?</b> {expiredNow && (t.code === "BUY" || t.code === "SELL") ? "Không mở được nữa; chờ setup mới." : t.when}
+      </p>
+      <button type="button" data-testid="action-when-toggle" aria-expanded={more} onClick={() => setMore(!more)} className="mt-0.5 text-xs font-semibold underline sm:hidden">{more ? "thu gọn" : "xem thêm"}</button>
+      {(state === "UNAVAILABLE" || state === "STALE") && errors.length > 0 && (
+        <ul data-testid="hero-problems" className="mt-1 space-y-0.5 text-sm">
+          {errors.map((c) => (
+            <li key={c.code}>{humanCondition(c.code, c.message)} <span className="font-mono text-xs">{c.code}</span></li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const mmss2 = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
 /** The state that dominates the decision area (always first, also on a phone). */
 export function DecisionHero({ view, serverNowMs }: { view: TradeView; serverNowMs: number }) {
   const { expiredNow, secondsLeft } = expiryOf(view, serverNowMs);
-  return <Hero view={view} expiredNow={expiredNow} secondsLeft={secondsLeft} compact={false} />;
+  return <ActionHero view={view} expiredNow={expiredNow} secondsLeft={secondsLeft} />;
 }
 
 /** Ticket, position, or the wait context: what the trader can read or do about the state. */

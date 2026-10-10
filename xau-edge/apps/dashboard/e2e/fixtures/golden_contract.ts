@@ -6,6 +6,11 @@
  */
 
 import type { JournalResponse, MarkersResponse, SetupHistoryResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
+import buyWatch from "./golden/buy_watch.json";
+import buyArmed from "./golden/buy_armed.json";
+import sellWatch from "./golden/sell_watch.json";
+import sellArmed from "./golden/sell_armed.json";
+import sellInvalidated from "./golden/sell_invalidated.json";
 import buy from "./golden/buy.json";
 import closedPaper from "./golden/closed_paper.json";
 import expired from "./golden/expired.json";
@@ -37,6 +42,11 @@ type Json<T> = T extends string
             : T;
 
 export const GOLDEN_VIEWS = {
+  buyWatch: buyWatch satisfies Json<TradeView>,
+  buyArmed: buyArmed satisfies Json<TradeView>,
+  sellWatch: sellWatch satisfies Json<TradeView>,
+  sellArmed: sellArmed satisfies Json<TradeView>,
+  sellInvalidated: sellInvalidated satisfies Json<TradeView>,
   wait: wait satisfies Json<TradeView>,
   buy: buy satisfies Json<TradeView>,
   sell: sell satisfies Json<TradeView>,

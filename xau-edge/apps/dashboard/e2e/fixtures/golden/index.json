@@ -1,6 +1,6 @@
 {
  "provenance": "ACCEPTANCE_REPLAY of burned FTMO bars through the real TradeEngine; NOT LIVE",
- "code_version": "7ecd477-dirty",
+ "code_version": "0f2052b-dirty",
  "files": {
   "wait.json": "GET /trade/decision, ordinary WAIT",
   "sell.json": "GET /trade/decision, real SELL setup",
@@ -16,6 +16,11 @@
   "market_closed.json": "GET /trade/decision, scenario market_closed",
   "paper_corrupt.json": "GET /trade/decision, scenario paper_corrupt",
   "writer_conflict.json": "GET /trade/decision, scenario writer_conflict",
-  "expired.json": "GET /trade/decision, scenario expired"
+  "expired.json": "GET /trade/decision, scenario expired",
+  "buy_watch.json": "GET /trade/decision, scenario buy_watch",
+  "buy_armed.json": "GET /trade/decision, scenario buy_armed",
+  "sell_watch.json": "GET /trade/decision, scenario sell_watch",
+  "sell_armed.json": "GET /trade/decision, scenario sell_armed",
+  "sell_invalidated.json": "GET /trade/decision, scenario sell_invalidated"
  }
 }

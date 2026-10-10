@@ -357,6 +357,12 @@
  },
  "generated_at": "2025-12-05T14:55:00+00:00",
  "hero": {
+  "action": {
+   "code": "HOLD",
+   "side": "BUY",
+   "stage": "OPEN",
+   "thesis": "INTACT"
+  },
   "detail": "A paper position is open",
   "label": "POSITION OPEN \u2014 BUY",
   "side": "BUY",
