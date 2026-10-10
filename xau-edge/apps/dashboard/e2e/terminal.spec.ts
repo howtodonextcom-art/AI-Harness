@@ -349,6 +349,24 @@ test.describe("chart", () => {
     expect(opened).toBe(true);
   });
 
+  test("a marker is clickable over a finger-width, not only on its own bar (user-flow finding)", async ({ page }) => {
+    await mock(page, view("closedPaper"), { markers: markersClosedGolden() });
+    await page.goto("/trade");
+    const box = await chartBox(page);
+    const y = box.y + box.height * 0.4;
+    let run = 0;
+    let longest = 0;
+    for (let x = box.x + box.width * 0.5; x < box.x + box.width - 62; x += 2) {
+      await page.mouse.click(x, y);
+      if (await page.getByTestId("marker-popover").isVisible()) {
+        run += 2;
+        longest = Math.max(longest, run); // the popover stays open while clicks keep landing on the marker
+      } else run = 0;
+    }
+    // one marker bar alone is ~3-6 px wide; with the tolerance one marker is clickable over a contiguous 20+ px run
+    expect(longest).toBeGreaterThanOrEqual(20);
+  });
+
   test.describe("marker placement follows the chart timeframe", () => {
     for (const [tf, expected] of [["M1", "2025-12-05T14:44:00.000Z"], ["M5", "2025-12-05T14:40:00.000Z"], ["M15", "2025-12-05T14:45:00.000Z"], ["H1", "2025-12-05T14:00:00.000Z"]] as const) {
       test(`${tf}: the BUY made at 14:45 sits on ${expected.slice(11, 16)}`, async ({ page }) => {

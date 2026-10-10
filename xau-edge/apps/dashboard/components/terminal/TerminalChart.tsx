@@ -352,12 +352,19 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         setMeasure((m) => (!m.a || m.fixed ? { a: { time, price }, b: null, fixed: false } : { ...m, b: { time, price }, fixed: true }));
         return;
       }
-      if (time === null) {
-        setSelected(null);
-        return;
+      // a click on (or within a finger's width of) a bar that carries markers opens their details
+      const x = param.point?.x;
+      let hit = time === null ? undefined : detailsRef.current.find((d) => d.time === time);
+      if (!hit && x !== undefined) {
+        let best = 14; // px
+        for (const d of detailsRef.current) {
+          const mx = chart.timeScale().timeToCoordinate(d.time as never);
+          if (mx !== null && Math.abs(mx - x) <= best) {
+            best = Math.abs(mx - x);
+            hit = d;
+          }
+        }
       }
-      // a click on a bar that carries markers opens their details (hover alone is not enough)
-      const hit = detailsRef.current.find((d) => d.time === time);
       setSelected(hit ? hit.detail.key : null);
     });
     const onRange = () => {
