@@ -254,4 +254,4 @@ Vì sao không chọn hai câu còn lại:
 
 ## 26. Ghi chú kết thúc
 
-Hash của commit chứa báo cáo này và kết quả CI của nó: đang chờ CI; sẽ được ghi ở commit kế tiếp ngay dưới đây.
+Hash của commit chứa báo cáo này và kết quả CI của nó: `b57e07d` (báo cáo này), CI `xau-edge-ci` xanh trên đúng commit đó (`gh run list`). Commit ghi dòng này chỉ sửa tài liệu.
