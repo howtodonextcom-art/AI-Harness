@@ -8,7 +8,7 @@ Phạm vi: `/trade`, **chỉ PAPER**. Không gửi lệnh MT5, DEMO/FUNDED vẫn
 `a8d939c648ad09b978e6df86c193807be73d8db3` (khớp; nhánh `main`, cây sạch, CI xanh 7/7 job, stack LIVE chạy build cũ).
 
 ## 2. HEAD cuối
-`2b50ea3` (commit cuối của sprint; commit tài liệu cuối nằm sau nó). CI trên HEAD cuối được ghi ở mục 36.
+`fa93696` là HEAD khi CI chạy (code cuối: `2b50ea3`); commit tài liệu ghi CI nằm sau nó. CI trên HEAD cuối được ghi ở mục 36.
 
 ## 3. Kiểm toán khoảng trống
 `TRADE08_GAP_AUDIT.md`: giả thuyết "chỉ còn chờ LIVE" **sai**. Có 5 lỗi BROKEN, 5 điểm VISUALLY AMBIGUOUS, 2 PARTIAL tự sửa được; nay đều đã xử lý (xem cột "Trạng thái" cuối tệp đó).
@@ -108,7 +108,7 @@ Marker/popover/follow (TRADE-07); ở TRADE-08: separator z-50 của thư viện
 Gốc: **race của test**, không phải lỗi sản phẩm. Banner EXITED chỉ kéo dài 30 phút replay sau lúc đóng; replay bước từng nến M5; nhảy 180 phút làm lệnh thoát ở +120 đã quá 60 phút → chỉ thấy EXITED nếu một lần poll rơi đúng giữa lúc replay đang bắt kịp. Sửa: test đi 110 rồi 15 phút (trong cửa sổ), test Python ghim hành vi (HOLD → EXIT → hết banner nhưng `last_exit` còn). Không còn "chạy lại là xanh".
 
 ## 36. CI
-Ghi sau khi push: xem phần "CI trên HEAD cuối" ở cuối tệp này.
+Xem phần "CI trên HEAD cuối" ở cuối tệp này.
 
 ## 37. LOW còn lại (trung thực)
 - Nhãn marker "TP" bị cắt ở mép phải (thư viện biểu đồ), legend vẫn liệt kê đủ.
@@ -152,4 +152,5 @@ Số vòng lặp: A/B thẻ hành động 2 vòng (4 người chấm) + A/B di �
 8. **TIME_EXIT lúc nào?** → "muộn nhất lúc HH:MM <múi giờ>" và "còn X giờ Y phút".
 
 ## CI trên HEAD cuối
-(điền sau khi push)
+- Run `38059919544` trên `fa93696` (toàn bộ sprint): **success** — dashboard (lint, types, build) + windows-latest py3.12/3.13/3.14 + ubuntu-latest py3.12/3.13/3.14, 7/7.
+- Commit tài liệu ghi kết quả này chỉ đổi `docs/`; CI của nó được kiểm riêng ngay sau khi push (xem tin nhắn bàn giao).
