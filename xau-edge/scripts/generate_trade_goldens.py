@@ -17,10 +17,15 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from xau_edge.api.trade import add_trade_routes
 from xau_edge.ops.code_version import current_code_version
 from xau_edge.trading.acceptance import SCENARIOS, AcceptanceWorld
 
 OUT = Path("apps/dashboard/e2e/fixtures/golden")
+PORT = 8100
 
 
 def collect(market: Path, out_root: Path) -> dict[str, tuple[str, Any]]:
@@ -56,9 +61,34 @@ def collect(market: Path, out_root: Path) -> dict[str, tuple[str, Any]]:
             "evidence": w.engine.evidence(),
         },
     )
-    mk = w.engine.telemetry.read_signals(w.engine.now())
-    files["signals"] = ("signal log records of the replay day", mk)
+    files["signals"] = (
+        "signal log records of the replay day",
+        w.engine.telemetry.read_signals(w.engine.now()),
+    )
+    # the real route handlers, called as the dashboard calls them
+    app = FastAPI()
+    add_trade_routes(app, w.engine, port=PORT, allowed_origins=("http://localhost:3000",))
+    http = TestClient(app, base_url=f"http://127.0.0.1:{PORT}")
+    files["markers_closed"] = (
+        "GET /trade/markers after the exit",
+        http.get("/trade/markers").json(),
+    )
+    files["signals_history"] = (
+        "GET /trade/signals after the exit",
+        http.get("/trade/signals").json(),
+    )
     w.close()
+
+    for name, key in (
+        ("stale", "stale"),
+        ("market_closed", "market_closed"),
+        ("paper_corrupt", "paper_corrupt"),
+        ("writer_conflict", "writer_conflict"),
+        ("expired", "expired"),
+    ):
+        w = world(name)
+        files[key] = (f"GET /trade/decision, scenario {name}", w.engine.view())
+        w.close()
     return files
 
 

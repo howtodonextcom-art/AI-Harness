@@ -53,6 +53,8 @@ VARIANTS: dict[str, dict[str, Any]] = {
     "ABCD": {"version": "1.2.0", "spread_veto": False},
 }  # fmt: skip
 PROGRESS_EVERY = 500
+INTERRUPTED = 75
+"""Exit code of ``--stop-after-days`` (a deterministic interruption used by the resume test)."""
 FULL_DAY_DECISIONS = 200
 """A "full trading day" has at least this many M5 closes (Sunday stubs and holidays do not)."""
 
@@ -120,7 +122,8 @@ def run_window(job: dict[str, Any]) -> str:
     out_dir = Path(job["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
     tag = f"{job['start']}_{job['end']}"
-    ckpt_path = out_dir / f"ckpt_{tag}.json"
+    file_tag = tag.replace(":", "")  # a colon is not a legal file name character on Windows
+    ckpt_path = out_dir / f"ckpt_{file_tag}.json"
     ledger = BarLedger(Path(job["root"]))
     bars = from_frames(
         {
@@ -168,6 +171,8 @@ def run_window(job: dict[str, Any]) -> str:
                     json.dumps({"variants": names, "acc": acc, "done_days": done_days}),
                     encoding="utf-8",
                 )
+                if job.get("stop_after_days") and len(done_days) >= job["stop_after_days"]:
+                    raise SystemExit(INTERRUPTED)  # test hook: an interruption at a checkpoint
             current_day = day
         if day in done_days:
             continue
@@ -262,7 +267,7 @@ def run_window(job: dict[str, Any]) -> str:
             "stream_hash": "n/a (resumed)" if resumed else stream[n].hexdigest()[:16],
             "signals": a["signals"][:200],
         }
-        (out_dir / f"eval_{n}_{tag}.json").write_text(
+        (out_dir / f"eval_{n}_{file_tag}.json").write_text(
             json.dumps(report, indent=2), encoding="utf-8"
         )
         reports[n] = {k: v for k, v in report.items() if k != "signals"}
@@ -280,6 +285,7 @@ def main() -> None:
     parser.add_argument("--root", default="data/market")
     parser.add_argument("--parity", action="store_true")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--stop-after-days", type=int, default=0, help=argparse.SUPPRESS)
     parser.add_argument("--workers", type=int, default=default_workers())
     parser.add_argument("--out-dir", default="data/trade/reports/v12")
     args = parser.parse_args()
@@ -290,7 +296,8 @@ def main() -> None:
         parser.error("give --start/--end or --windows")
     jobs = [
         {"start": s, "end": e, "variants": args.variants, "root": args.root, "parity": args.parity,
-         "resume": args.resume, "out_dir": args.out_dir}
+         "resume": args.resume, "out_dir": args.out_dir,
+         "stop_after_days": args.stop_after_days}
         for s, e in pairs
     ]  # fmt: skip
     workers = min(args.workers, len(jobs))

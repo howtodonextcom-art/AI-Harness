@@ -12,6 +12,7 @@ price evolution, exits, journal, markers, UI) end to end. It does not prove live
 
 from __future__ import annotations
 
+import json
 import shutil
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -25,7 +26,8 @@ from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.ops.notifier import NullNotifier
 from xau_edge.ops.process_lock import WriterLock
-from xau_edge.trading.engine import TradeEngine
+from xau_edge.trading.decision_core import SnapshotInputs, comparable, evaluate
+from xau_edge.trading.engine import TradeEngine, cap_validity
 from xau_edge.trading.replay_source import BURNED_TO, ReplayMarketSource
 
 WARM_STEPS = 48
@@ -222,3 +224,123 @@ class AcceptanceWorld:
             lock.release()
         if self._held is not None:
             self._held.release()
+
+
+@dataclass
+class ParityReport:
+    """Live cadence (M1 steps) against the M5 cadence and a plain ``evaluate``."""
+
+    version: str
+    start: str
+    end: str
+    m1_steps: int = 0
+    m5_compared: int = 0
+    mismatches: list[dict[str, Any]] = field(default_factory=list)
+    m1_only_actionable: list[dict[str, Any]] = field(default_factory=list)
+    duplicate_alerts: list[str] = field(default_factory=list)
+    actionable_at_m5: int = 0
+
+    @property
+    def passed(self) -> bool:
+        return not self.mismatches and not self.duplicate_alerts
+
+
+def _reference(world: AcceptanceWorld, now: datetime) -> dict[str, Any]:
+    """A decision computed without the engine: ``evaluate`` over the same snapshot."""
+    engine = world.engine
+    snap = world.source.load(now)
+    quote = snap.quote
+    inputs = SnapshotInputs(
+        bars=snap.bars,
+        now=now,
+        bid=None if quote is None else quote.bid,
+        ask=None if quote is None else quote.ask,
+        spread_points=None if quote is None else quote.spread_points,
+        spec=snap.spec,
+        equity=engine.desk.equity(quote, now),
+        news_state="UNKNOWN",
+        market_open=snap.market_open,
+        data_ok=snap.usable if snap.market_open else True,
+    )
+    state, signal = evaluate(inputs, engine.config.baseline, engine.broker_clock)
+    m5 = state.snapshots.get("M5")
+    if m5 is not None:
+        signal = cap_validity(signal, m5.bar_closed)
+    return comparable(signal)
+
+
+def m1_parity(
+    market_root: Path, out_root: Path, version: str, start: datetime, end: datetime
+) -> ParityReport:
+    """Run the production engine at LIVE cadence (every M1 close) and at M5 cadence over one window.
+
+    At every M5 close the two engines and an independent ``evaluate`` must agree on the decision,
+    setup id, prices, expiry and reasons. Between M5 closes the live-cadence engine may act on M1
+    execution timing; every actionable decision it shows that no M5-close decision showed is
+    listed (``m1_only_actionable``), and no setup may be announced twice.
+    """
+    base = Scenario("parity", "M1 cadence parity", version, start)
+    live = AcceptanceWorld(
+        market_root, out_root, Scenario("parity_m1", base.description, version, start)
+    )
+    slow = AcceptanceWorld(
+        market_root, out_root, Scenario("parity_m5", base.description, version, start)
+    )
+    report = ParityReport(version, start.isoformat(), end.isoformat())
+    m1 = live.source.frames[Timeframe.M1]
+    closes = [
+        c
+        for c in m1.filter((pl.col("available_at") > start) & (pl.col("available_at") <= end))[
+            "available_at"
+        ].to_list()
+        if isinstance(c, datetime)
+    ]
+    m5_ids: set[str] = set()
+    pending: list[dict[str, Any]] = []
+    for close in closes:
+        live.advance_to(close)
+        report.m1_steps += 1
+        signal = live.engine.current_signal()
+        on_m5 = close.minute % 5 == 0
+        if on_m5:
+            slow.advance_to(close)
+            ours = None if signal is None else comparable(signal)
+            theirs = slow.engine.current_signal()
+            theirs_c = None if theirs is None else comparable(theirs)
+            ref = _reference(slow, close)
+            report.m5_compared += 1
+            if not (ours == theirs_c == ref):
+                report.mismatches.append(
+                    {
+                        "at": close.isoformat(),
+                        "m1_cadence": ours,
+                        "m5_cadence": theirs_c,
+                        "reference": ref,
+                    }
+                )
+            if ours is not None and ours["decision"] != "WAIT":
+                report.actionable_at_m5 += 1
+                m5_ids.add(str(ours["setup_id"]))
+        elif signal is not None and signal.decision.value != "WAIT":
+            pending.append(
+                {
+                    "at": close.isoformat(),
+                    "decision": signal.decision.value,
+                    "setup_id": signal.setup_id,
+                }
+            )
+    report.m1_only_actionable = [p for p in pending if p["setup_id"] not in m5_ids]
+    alerts = live.root / "alerts.jsonl"
+    if alerts.exists():
+        seen: set[str] = set()
+        for line in alerts.read_text(encoding="utf-8").splitlines():
+            for item in json.loads(line).get("alerts", []):
+                code = str(item.get("code", ""))
+                if not code.endswith("_SETUP_READY") and "_SETUP_READY:" not in code:
+                    continue
+                if code in seen:
+                    report.duplicate_alerts.append(code)
+                seen.add(code)
+    live.close()
+    slow.close()
+    return report

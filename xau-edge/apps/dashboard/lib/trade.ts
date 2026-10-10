@@ -150,7 +150,7 @@ export interface SignalMarker {
   setup_id: string;
   side: "BUY" | "SELL";
   entry: number | null;
-  price: number | null;
+  price?: number | null;
   sl: number | null;
   tp1: number | null;
   tp2: number | null;

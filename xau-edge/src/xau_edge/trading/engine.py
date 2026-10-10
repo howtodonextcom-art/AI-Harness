@@ -179,6 +179,10 @@ class TradeEngine:
                 return False
             return True
 
+    def current_signal(self) -> TradingSignal | None:
+        """The decision computed by the last cycle (None before the first one)."""
+        return self._signal
+
     def now(self) -> datetime:
         """The engine's clock (the wall clock live, the replay clock in an acceptance replay)."""
         return self._clock()

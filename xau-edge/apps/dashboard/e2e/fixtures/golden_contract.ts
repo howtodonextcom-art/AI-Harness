@@ -5,13 +5,20 @@
  * `tests/unit/trading/test_contract_goldens.py` covers the other direction (backend vs golden).
  */
 
-import type { JournalResponse, TradeView } from "@/lib/trade";
+import type { JournalResponse, MarkersResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
 import buy from "./golden/buy.json";
 import closedPaper from "./golden/closed_paper.json";
+import expired from "./golden/expired.json";
 import journalClosed from "./golden/journal_closed.json";
+import marketClosed from "./golden/market_closed.json";
+import markersClosed from "./golden/markers_closed.json";
 import openPaper from "./golden/open_paper.json";
+import paperCorrupt from "./golden/paper_corrupt.json";
 import sell from "./golden/sell.json";
+import signalsHistory from "./golden/signals_history.json";
+import stale from "./golden/stale.json";
 import wait from "./golden/wait.json";
+import writerConflict from "./golden/writer_conflict.json";
 
 /** What JSON can say about T: string unions become string, everything else keeps its shape. */
 type Json<T> = T extends string
@@ -34,5 +41,12 @@ export const GOLDEN_VIEWS = {
   sell: sell satisfies Json<TradeView>,
   openPaper: openPaper satisfies Json<TradeView>,
   closedPaper: closedPaper satisfies Json<TradeView>,
+  stale: stale satisfies Json<TradeView>,
+  expired: expired satisfies Json<TradeView>,
+  marketClosed: marketClosed satisfies Json<TradeView>,
+  paperCorrupt: paperCorrupt satisfies Json<TradeView>,
+  writerConflict: writerConflict satisfies Json<TradeView>,
 };
 export const GOLDEN_JOURNAL = journalClosed satisfies Json<JournalResponse>;
+export const GOLDEN_MARKERS = markersClosed satisfies Json<MarkersResponse>;
+export const GOLDEN_SIGNALS = signalsHistory satisfies Json<SignalHistoryResponse>;

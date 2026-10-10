@@ -1,0 +1,569 @@
+{
+ "actionable": false,
+ "alerts": {
+  "announced_today": 1,
+  "delivery": "FILE_FALLBACK",
+  "file_fallback_active": true,
+  "last": {
+   "announced_at": "2025-12-05T14:45:00+00:00",
+   "expires_at": "2025-12-05T14:50:00+00:00",
+   "setup_id": "ade8bf4c07b2b1153240",
+   "side": "BUY"
+  },
+  "last_invalidation": null,
+  "telegram_configured": false,
+  "this_setup": {
+   "announced": true,
+   "at": "2025-12-05T14:45:00+00:00",
+   "channel": "FILE_FALLBACK"
+  }
+ },
+ "auto_paper": false,
+ "available": true,
+ "conditions": [
+  {
+   "code": "NEWS_UNKNOWN",
+   "message": "NEWS NOT VERIFIED: no economic calendar",
+   "severity": "WARN"
+  }
+ ],
+ "data_age_seconds": 0.0,
+ "data_as_of": "2025-12-05T14:45:00+00:00",
+ "decision": {
+  "active_timeframe": "M5",
+  "ask": 4236.469999999999,
+  "atr": 4.024825695839063,
+  "bid": 4236.23,
+  "code_version": "1.2.1",
+  "data_age_seconds": 0.0,
+  "decision": "BUY",
+  "decision_id": "1dd1a54ecc2d6ccf59a2",
+  "entry_price": 4236.469999999999,
+  "entry_quality": "ACCEPTABLE",
+  "entry_type": "MARKET",
+  "evidence_status": "UNVALIDATED_BASELINE",
+  "expired": true,
+  "generated_at": "2025-12-05T14:45:00Z",
+  "h1_bias": "BULLISH",
+  "h4_bias": "RANGE",
+  "inputs_hash": "",
+  "invalidation": "H1 turns bearish, or price closes beyond the stop",
+  "m15_setup": "UP/NONE",
+  "m1_execution_state": "GOOD",
+  "m30_state": "RANGE",
+  "m5_trigger": "UP",
+  "market_regime": "RANGE",
+  "metadata": {
+   "capped_by_structure": "False",
+   "gross_rr": 2.0,
+   "m15_structure": "UP",
+   "setup_armed_at": "2025-12-05T14:30:00+00:00",
+   "setup_bars_since_armed": 3,
+   "setup_phase": "TRIGGERED",
+   "variant_flags": ""
+  },
+  "news_state": "UNKNOWN",
+  "position_size": 0.03,
+  "reasons": [
+   "H4:RANGE",
+   "H1:BULLISH",
+   "M30:RANGE (context only)",
+   "M15:UP/NONE",
+   "SETUP:TRIGGERED",
+   "M5:UP",
+   "M1:GOOD",
+   "SPREAD:GOOD",
+   "VOLUME:NORMAL(TICK_VOLUME)",
+   "setup armed 3 M5 bars before the trigger",
+   "stop=HYBRID 7.02 (ATR M5 4.02)",
+   "net_rr=1.90"
+  ],
+  "refusal_reasons": [],
+  "required_win_rate": 0.34472531604134476,
+  "risk_amount": 21.06744770874957,
+  "risk_pct": 0.25,
+  "risk_reward": 1.900860347257074,
+  "seconds_to_expiry": 0.0,
+  "setup_id": "ade8bf4c07b2b1153240",
+  "signal_expiry": "2025-12-05T14:50:00Z",
+  "signal_id": "1dd1a54ecc2d6ccf59a2",
+  "source_mode": "ACCEPTANCE_REPLAY",
+  "spread": 24.0,
+  "spread_state": "GOOD",
+  "stop_loss": 4229.447517430416,
+  "stop_model": "HYBRID",
+  "strategy_id": "xau_mtf_baseline",
+  "strategy_version": "1.2.1",
+  "symbol": "XAUUSD",
+  "take_profit": 4250.514965139165,
+  "take_profit_2": 4257.537447708748,
+  "timestamp": "2025-12-05T14:45:00Z",
+  "volatility_regime": "NORMAL",
+  "volume_state": "NORMAL",
+  "volume_type": "TICK_VOLUME",
+  "warnings": [
+   "NEWS NOT VERIFIED: no economic calendar, check the news yourself"
+  ]
+ },
+ "decision_trusted": true,
+ "default_risk_pct": 0.25,
+ "demo": {
+  "how_to_unlock": "See docs/PAPER_TRADING_WORKFLOW.md section 'Demo execution contract'. Demo execution is a separate sprint: it needs your trade password and explicit flags, and is NOT part of this desk.",
+  "paper_desk_sends_orders": false,
+  "reasons": [
+   {
+    "code": "MT5_TRADE_PASSWORD_MISSING",
+    "why": "no MT5 trade password is configured (MT5_TRADE_PASSWORD)"
+   },
+   {
+    "code": "DEMO_TRADING_DISABLED",
+    "why": "XAU_EDGE_ENABLE_DEMO_TRADING is false"
+   },
+   {
+    "code": "DEMO_DRY_RUN",
+    "why": "XAU_EDGE_DEMO_DRY_RUN is true: the bot only logs decisions"
+   },
+   {
+    "code": "DEMO_ALLOWED_ACCOUNTS_EMPTY",
+    "why": "no account is whitelisted for demo orders"
+   }
+  ],
+  "status": "LOCKED"
+ },
+ "desk": {
+  "account": {
+   "balance": 10000.0,
+   "equity": 10000.0,
+   "initial_capital": 10000.0,
+   "open_lots": 0.0,
+   "open_positions": 0,
+   "simulated": true
+  },
+  "blockers": [
+   {
+    "code": "EXPIRED",
+    "message": "the setup has expired"
+   }
+  ],
+  "can_open": false,
+  "closure_policy": "BLOCK_NEW_NEAR_CLOSE",
+  "position": null,
+  "today": {
+   "losses": 0,
+   "net_pnl": 0,
+   "net_r": 0,
+   "open": 0,
+   "paper_trades": 0,
+   "wins": 0
+  }
+ },
+ "engine_errors": [],
+ "entry_blockers": [
+  {
+   "code": "EXPIRED",
+   "message": "the setup has expired"
+  }
+ ],
+ "evidence": {
+  "label": "Not a validated edge. This is a transparent operational baseline.",
+  "operational": "UNVALIDATED_OPERATIONAL_BASELINE",
+  "research": "No validated edge: Edge Program V1 = NO EDGE WITHIN BUDGET; V2 Batch A 0/20 passed Stage 1. This is an operational baseline for paper trading, not a forecast of profit.",
+  "validated_edge": false
+ },
+ "explanation": [
+  "BUY: H1 direction is bullish",
+  "M15 setup: UP/NONE",
+  "M5 trigger: UP",
+  "M1 execution: GOOD (tick volume NORMAL)",
+  "spread GOOD, volatility NORMAL",
+  "stop HYBRID, net R/R 1.90"
+ ],
+ "forward_acceptance": {
+  "counts": {},
+  "level": "F0",
+  "live": false,
+  "text": "not a live run (acceptance replay): no live evidence"
+ },
+ "funnel": {
+  "actionable_buy": 1,
+  "actionable_sell": 0,
+  "armed_setups": 6,
+  "day": "2025-12-05",
+  "decisions": 48,
+  "exit_reasons": {},
+  "expired_setups": 4,
+  "invalidated_setups": 0,
+  "paper_exits": 0,
+  "paper_opens": 0,
+  "refusals": {
+   "MARKET_CLOSED": 0,
+   "NEWS": 0,
+   "NO_DIRECTION": 0,
+   "NO_SETUP": 40,
+   "NO_TRIGGER": 0,
+   "RISK": 0,
+   "RR": 0,
+   "SPREAD": 7,
+   "STALE": 0,
+   "TIMEFRAME_CONFLICT": 0,
+   "VOLATILITY": 0,
+   "VOLUME": 0
+  },
+  "top_refusals": [
+   [
+    "NO_SETUP",
+    40
+   ],
+   [
+    "SPREAD",
+    7
+   ]
+  ],
+  "triggered_setups": 2
+ },
+ "generated_at": "2025-12-05T14:45:00+00:00",
+ "hero": {
+  "detail": "The BUY plan is no longer valid",
+  "label": "EXPIRED SETUP",
+  "side": "BUY",
+  "state": "EXPIRED_SETUP",
+  "tone": "warn"
+ },
+ "market": {
+  "open": true,
+  "status": "OPEN"
+ },
+ "news": {
+  "state": "UNKNOWN",
+  "text": "NEWS NOT VERIFIED: no economic calendar",
+  "warning": true
+ },
+ "paper_account_label": "PAPER ACCOUNT (simulated equity, not the FTMO account)",
+ "problems": [],
+ "quote": {
+  "age_seconds": 0.0,
+  "ask": 4244.43,
+  "bid": 4244.16,
+  "spread_points": 27.0,
+  "stale": false
+ },
+ "risk_choices": [
+  0.1,
+  0.25,
+  0.5
+ ],
+ "risk_plans": [
+  {
+   "errors": [],
+   "gain_at_tp": 14.04,
+   "loss_at_sl": 7.02,
+   "lots": 0.01,
+   "ok": true,
+   "risk_amount": 7.02,
+   "risk_pct": 0.1,
+   "risk_pct_actual": 0.0702,
+   "sl_distance": 7.02248,
+   "tick_value": 1.0,
+   "tp_distance": 14.04497
+  },
+  {
+   "errors": [],
+   "gain_at_tp": 42.13,
+   "loss_at_sl": 21.07,
+   "lots": 0.03,
+   "ok": true,
+   "risk_amount": 21.07,
+   "risk_pct": 0.25,
+   "risk_pct_actual": 0.2107,
+   "sl_distance": 7.02248,
+   "tick_value": 1.0,
+   "tp_distance": 14.04497
+  },
+  {
+   "errors": [],
+   "gain_at_tp": 98.31,
+   "loss_at_sl": 49.16,
+   "lots": 0.07,
+   "ok": true,
+   "risk_amount": 49.16,
+   "risk_pct": 0.5,
+   "risk_pct_actual": 0.4916,
+   "sl_distance": 7.02248,
+   "tick_value": 1.0,
+   "tp_distance": 14.04497
+  }
+ ],
+ "served_at": "2025-12-05T14:51:40+00:00",
+ "setup": {
+  "bars_since_armed": 3,
+  "phase": "TRIGGERED",
+  "strategy_version": "1.2.1",
+  "valid_bars": 6
+ },
+ "source": "ACCEPTANCE REPLAY of burned FTMO bars (NOT LIVE)",
+ "source_mode": "ACCEPTANCE_REPLAY",
+ "status_strip": {
+  "data": {
+   "detail": "bars and quote are fresh",
+   "state": "GOOD"
+  },
+  "demo": {
+   "detail": "paper only; the desk never sends an order",
+   "state": "LOCKED"
+  },
+  "edge": {
+   "detail": "UNVALIDATED_OPERATIONAL_BASELINE",
+   "state": "UNVALIDATED"
+  },
+  "forward": {
+   "detail": "not a live run (acceptance replay): no live evidence",
+   "state": "F0"
+  },
+  "hero_state": "EXPIRED_SETUP",
+  "paper_desk": {
+   "detail": "paper state verified against its journal",
+   "state": "READY"
+  },
+  "strategy": {
+   "detail": "1.2.1",
+   "label": "v1.2.1",
+   "state": "ACTIVE"
+  },
+  "trading_core": {
+   "detail": "decisions are being computed",
+   "state": "RUNNING"
+  }
+ },
+ "strategy": {
+  "active_version": "1.2.1",
+  "evidence": "UNVALIDATED OPERATIONAL BASELINE",
+  "id": "xau_mtf_baseline",
+  "installed": [
+   {
+    "note": "operational baseline (default)",
+    "status": "AVAILABLE_INACTIVE",
+    "version": "1.1.0"
+   },
+   {
+    "note": "pre-registered candidate: rejected by its own frequency band",
+    "status": "AVAILABLE_INACTIVE",
+    "version": "1.2.0"
+   },
+   {
+    "note": "v1.2.0 plus the independent-review fixes (opt-in)",
+    "status": "ACTIVE",
+    "version": "1.2.1"
+   }
+  ],
+  "label": "xau_mtf_baseline v1.2.1"
+ },
+ "structure": {
+  "bos": "NONE",
+  "choch": "NONE",
+  "h1_trend": "BULLISH",
+  "m15_structure": "UP",
+  "nearest_resistance": null,
+  "nearest_support": 4221.56,
+  "pdh": 4219.65,
+  "pdl": 4174.99,
+  "recent_swing_high": 4229.62,
+  "recent_swing_low": 4221.56,
+  "session": "LONDON_NY_OVERLAP",
+  "volatility": "NORMAL"
+ },
+ "telemetry": {
+  "buy": 1,
+  "day": "2025-12-05",
+  "decisions": 48,
+  "distinct_setups": 1,
+  "m1_counts": {
+   "GOOD": 32,
+   "QUIET": 9,
+   "SPREAD_WIDE": 7
+  },
+  "most_common_blocker": "NO_SETUP",
+  "sell": 0,
+  "setup_counts": {
+   "RANGE/NONE": 21,
+   "UP/NONE": 19,
+   "UP/PULLBACK_IN_UPTREND": 8
+  },
+  "setup_phases": {
+   "-": 7,
+   "EXPIRED": 4,
+   "NONE": 31,
+   "TRIGGERED": 6
+  },
+  "spread_counts": {
+   "GOOD": 41,
+   "WIDE": 7
+  },
+  "top_refusals": [
+   [
+    "NO_SETUP",
+    40
+   ],
+   [
+    "SPREAD_TOO_WIDE",
+    7
+   ]
+  ],
+  "trigger_counts": {
+   "DOWN": 4,
+   "FLAT": 26,
+   "UP": 18
+  },
+  "volume_counts": {
+   "HIGH": 6,
+   "LOW": 9,
+   "NORMAL": 33
+  },
+  "wait": 47,
+  "wait_pct": 97.9
+ },
+ "timeframes": [
+  {
+   "atr": 25.558271168880616,
+   "bias": 0,
+   "freshness": "FRESH",
+   "last_closed": "2025-12-05T14:00:00+00:00",
+   "relative_tick_volume": 0.8629412249521708,
+   "role": "REGIME / BLOCKER",
+   "state": "RANGE",
+   "timeframe": "H4",
+   "volume_zscore": -0.512664461194628
+  },
+  {
+   "atr": 9.711618280993362,
+   "bias": 1,
+   "freshness": "FRESH",
+   "last_closed": "2025-12-05T14:00:00+00:00",
+   "relative_tick_volume": 1.62323995366367,
+   "role": "DIRECTION",
+   "state": "BULLISH",
+   "timeframe": "H1",
+   "volume_zscore": 1.9925247495085325
+  },
+  {
+   "atr": 6.932372621723691,
+   "bias": 0,
+   "freshness": "FRESH",
+   "last_closed": "2025-12-05T14:30:00+00:00",
+   "relative_tick_volume": 1.766247044539587,
+   "role": "CONTEXT (display only)",
+   "state": "RANGE",
+   "timeframe": "M30",
+   "volume_zscore": 2.1403957067139165
+  },
+  {
+   "atr": 5.865935149263405,
+   "bias": 1,
+   "freshness": "FRESH",
+   "last_closed": "2025-12-05T14:45:00+00:00",
+   "relative_tick_volume": 2.270540340488527,
+   "role": "SETUP",
+   "state": "TRIGGERED (UP / NONE)",
+   "timeframe": "M15",
+   "volume_zscore": 2.330203236323624
+  },
+  {
+   "atr": 4.024825695839063,
+   "bias": 1,
+   "freshness": "FRESH",
+   "last_closed": "2025-12-05T14:45:00+00:00",
+   "relative_tick_volume": 1.3008672448298866,
+   "role": "TRIGGER",
+   "state": "TRIGGERED (UP)",
+   "timeframe": "M5",
+   "volume_zscore": 1.6470262535072764
+  },
+  {
+   "atr": 2.230935019067945,
+   "bias": 0,
+   "freshness": "FRESH",
+   "last_closed": "2025-12-05T14:45:00+00:00",
+   "relative_tick_volume": 0.8964186146257773,
+   "role": "EXECUTION TIMING",
+   "state": "GOOD",
+   "timeframe": "M1",
+   "volume_zscore": -0.9583641444683548
+  }
+ ],
+ "trade_plan": {
+  "complete": true,
+  "default_risk_pct": 0.25,
+  "entry_basis": "ask",
+  "expired": true,
+  "expires_at": "2025-12-05T14:50:00+00:00",
+  "invalidation": "H1 turns bearish, or price closes beyond the stop",
+  "lots": 0.03,
+  "missing": [],
+  "planned_entry": 4236.469999999999,
+  "potential_tp_value": 42.13,
+  "required_win_rate": 0.34472531604134476,
+  "risk_amount": 21.07,
+  "rr_net": 1.900860347257074,
+  "seconds_to_expiry": 0.0,
+  "setup_id": "ade8bf4c07b2b1153240",
+  "side": "BUY",
+  "sl": 4229.447517430416,
+  "strategy_version": "1.2.1",
+  "tp1": 4250.514965139165,
+  "tp2": 4257.537447708748
+ },
+ "volume": {
+  "m1_acceleration": -1.3504063110816389,
+  "m1_percentile": 0.815,
+  "m1_relative": 0.8964186146257773,
+  "m1_zscore": -0.9583641444683548,
+  "note": "tick volume (number of price changes), not exchange volume",
+  "state": "NORMAL",
+  "type": "TICK_VOLUME"
+ },
+ "why_wait": {
+  "blocked_by": [],
+  "stages": [
+   {
+    "stage": "Market & data",
+    "status": "PASS",
+    "timeframe": "M5"
+   },
+   {
+    "stage": "Spread & regime",
+    "status": "PASS",
+    "timeframe": "H4"
+   },
+   {
+    "stage": "H1 direction",
+    "status": "PASS",
+    "timeframe": "H1"
+   },
+   {
+    "stage": "H4 / M15 alignment",
+    "status": "PASS",
+    "timeframe": "M15"
+   },
+   {
+    "stage": "M15 setup",
+    "status": "PASS",
+    "timeframe": "M15"
+   },
+   {
+    "stage": "M5 trigger",
+    "status": "PASS",
+    "timeframe": "M5"
+   },
+   {
+    "stage": "M1 execution",
+    "status": "PASS",
+    "timeframe": "M1"
+   },
+   {
+    "stage": "Trade plan",
+    "status": "PASS",
+    "timeframe": "M5"
+   }
+  ],
+  "waiting_for": null
+ }
+}
