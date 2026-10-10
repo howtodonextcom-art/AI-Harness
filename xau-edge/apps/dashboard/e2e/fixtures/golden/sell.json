@@ -226,7 +226,9 @@
  "generated_at": "2025-08-14T18:05:00+00:00",
  "hero": {
   "action": {
+   "bias": "SELL",
    "code": "SELL",
+   "missing": null,
    "side": "SELL",
    "stage": "READY",
    "thesis": null

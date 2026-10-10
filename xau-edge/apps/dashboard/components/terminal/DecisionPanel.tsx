@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { actionText, type ActionTone } from "@/lib/action";
+import { lastEventText, lifecycleSteps } from "@/lib/lifecycle";
+import { TechDetail } from "@/components/terminal/TechDetail";
+import { Term } from "@/components/terminal/Term";
+import { useEffect, useState, type ReactNode } from "react";
+import { actionText } from "@/lib/action";
+import { HeroCard, TONE_STYLE } from "@/components/terminal/HeroCard";
 import { parseDecimal } from "@/lib/chartMath";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
 import { formatInZone, type DisplayZone } from "@/lib/time";
-import { fetchRisk, type PaperTrade, type RiskPlan, type TradeView } from "@/lib/trade";
-import { ACTIVITY_VI, BLOCKER_VI, EXIT_REASON_VI, HERO_VI, PAPER_ACCOUNT_VI, REFUSAL_VI, STAGE_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
+import { fetchRisk, type JournalResponse, type PaperTrade, type RiskPlan, type SetupHistoryRow, type TradeView } from "@/lib/trade";
+import { ACTIVITY_VI, BLOCKER_VI, EXIT_REASON_VI, PAPER_ACCOUNT_VI, REFUSAL_VI, STAGE_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
 
 interface Props {
   view: TradeView;
@@ -20,6 +24,8 @@ interface Props {
   tf: string;
   onFocusTf: (tf: string) => void;
   zone: DisplayZone;
+  setups?: SetupHistoryRow[] | null;
+  journal?: JournalResponse | null;
 }
 
 
@@ -31,7 +37,7 @@ function Pipeline({ view, tf, onFocusTf }: { view: TradeView; tf: string; onFocu
   return (
     <div data-testid="why-wait">
       <p data-testid="stages-progress" className="mb-1 text-sm font-semibold">
-        Đã đạt {stages.filter((s) => s.status === "PASS").length}/{stages.length} điều kiện
+        Điều kiện vào lệnh: đạt {stages.filter((s) => s.status === "PASS").length}/{stages.length} — cần đủ tất cả, chưa được vào lệnh
       </p>
       <ol data-testid="stages" className="space-y-0.5 text-sm" aria-label="Tiến trình setup">
         {stages.map((s) => (
@@ -58,7 +64,7 @@ function Pipeline({ view, tf, onFocusTf }: { view: TradeView; tf: string; onFocu
   );
 }
 
-function WaitContext({ view }: { view: TradeView }) {
+function WaitContext({ view, zone, setups, journal }: { view: TradeView; zone: DisplayZone; setups?: SetupHistoryRow[] | null; journal?: JournalResponse | null }) {
   const h1 = view.timeframes?.find((t) => t.timeframe === "H1");
   const trend = (view.structure?.h1_trend as string | undefined) ?? h1?.state;
   const bullish = trend === "BULLISH" ? true : trend === "BEARISH" ? false : null;
@@ -66,27 +72,20 @@ function WaitContext({ view }: { view: TradeView }) {
   const next = waitingText(why?.waiting_for_code ?? null, bullish, { phase: view.setup?.phase ?? null, age: view.setup?.bars_since_armed ?? null });
   const d = view.decision;
   const vol = (view.structure?.volatility as string | undefined) ?? "UNKNOWN";
-  const phase = view.setup?.phase;
   const blocked = (why?.blocked_by ?? []).map((c) => REFUSAL_VI[c] ?? c);
+  const last = lastEventText(view, setups ?? null, journal ?? null, (iso) => formatInZone(iso, zone).slice(5, 16));
   return (
     <div className="space-y-2">
-      {next && (
-        <p data-testid="waiting-for" className="rounded-md bg-slate-500/10 px-2 py-1.5 text-sm">
-          Đang chờ: <b>{next}</b>
-          <span className="block text-xs text-slate-600 dark:text-slate-400">Mô tả trạng thái hiện tại, không phải dự báo hay khuyến nghị.</span>
-        </p>
-      )}
-      {blocked.length > 0 && (
-        <p data-testid="blocked-by" className="text-xs text-slate-600 dark:text-slate-400">
-          Mã chặn: {blocked.join(" · ")}
+      {last && (
+        <p data-testid="last-event" className="rounded-md bg-slate-500/10 px-2 py-1.5 text-sm">
+          <b>Lần gần nhất:</b> {last}
         </p>
       )}
       <ul data-testid="wait-context" className="space-y-0.5 text-sm">
         <li>Xu hướng: <b>{trendText(trend)}</b></li>
-        <li>Setup: <b>{phase && phase !== "NONE" ? `${phase === "ARMED" ? "đang hình thành" : phase === "TRIGGERED" ? "đã kích hoạt" : phase}${view.setup?.bars_since_armed != null ? ` (nến ${view.setup.bars_since_armed}/${view.setup.valid_bars})` : ""}` : "chưa có"}</b></li>
         {d && (
           <li data-testid="market-activity">
-            Hoạt động: biến động <b>{ACTIVITY_VI[vol] ?? vol}</b> · tick <b>{ACTIVITY_VI[d.volume_state] ?? d.volume_state}</b> · spread <b>{ACTIVITY_VI[d.spread_state] ?? d.spread_state}</b>
+            Hoạt động: biến động <b>{ACTIVITY_VI[vol] ?? vol}</b> · <Term id="tickvol">tick</Term> <b>{ACTIVITY_VI[d.volume_state] ?? d.volume_state}</b> · <Term id="spread">spread</Term> <b>{ACTIVITY_VI[d.spread_state] ?? d.spread_state}</b>
           </li>
         )}
       </ul>
@@ -95,6 +94,20 @@ function WaitContext({ view }: { view: TradeView }) {
           Tin tức CHƯA XÁC MINH (NEWS NOT VERIFIED): chưa có lịch kinh tế, hãy tự kiểm tra.
         </p>
       )}
+      <details data-testid="wait-tech" className="text-xs">
+        <summary className="inline cursor-pointer text-slate-600 underline decoration-dotted dark:text-slate-400">Chi tiết kỹ thuật</summary>
+        {next && (
+          <p data-testid="waiting-for" className="mt-1">
+            Đang chờ: <b>{next}</b>
+            <span className="block text-slate-600 dark:text-slate-400">Mô tả trạng thái hiện tại, không phải dự báo hay khuyến nghị.</span>
+          </p>
+        )}
+        {blocked.length > 0 && (
+          <p data-testid="blocked-by" className="mt-1 text-slate-600 dark:text-slate-400">
+            Mã chặn: {blocked.join(" · ")}
+          </p>
+        )}
+      </details>
     </div>
   );
 }
@@ -120,12 +133,12 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
   const blockers = view.entry_blockers ?? [];
   const canOpen = Boolean(view.actionable && !expiredNow && !uiStale && plan.complete && chosen?.ok);
   const buy = plan.side === "BUY";
-  const cells: { k: string; v: string; id: string; strong?: boolean }[] = [
+  const cells: { k: ReactNode; v: string; id: string; strong?: boolean }[] = [
     { k: "Entry (thị trường)", v: fmt(plan.planned_entry), id: "plan-entry", strong: true },
-    { k: "SL", v: fmt(plan.sl), id: "plan-sl" },
-    { k: "TP", v: fmt(plan.tp1), id: "plan-tp" },
+    { k: <Term id="sl">SL</Term>, v: fmt(plan.sl), id: "plan-sl" },
+    { k: <Term id="tp">TP</Term>, v: fmt(plan.tp1), id: "plan-tp" },
     ...(plan.tp2 !== null ? [{ k: "TP 2", v: fmt(plan.tp2), id: "plan-tp2" }] : []),
-    { k: "R/R sau spread", v: fmt(plan.rr_net), id: "plan-rr" },
+    { k: <Term id="rr">R/R sau spread</Term>, v: fmt(plan.rr_net), id: "plan-rr" },
     { k: "Rủi ro", v: `${fmt(risk, 2)}% · ${money(chosen ? -chosen.loss_at_sl : null)}`, id: "plan-risk" },
     { k: "Lot", v: fmt(chosen?.lots, 2), id: "plan-lots", strong: true },
     { k: "Lãi nếu chạm TP", v: money(chosen?.gain_at_tp), id: "plan-tp-value" },
@@ -174,7 +187,8 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
         <ul data-testid="blockers" className="space-y-1 text-sm">
           {blockers.map((b) => (
             <li key={b.code} data-code={b.code} className={`rounded-md border px-2 py-1 ${b.code === "PAPER_STATE_ERROR" || b.code === "WRITER_LOCK" ? BAD : WARN}`}>
-              {BLOCKER_VI[b.code] ?? b.message} <span className="font-mono text-xs">{b.code}</span>
+              {BLOCKER_VI[b.code] ?? b.message}
+              <TechDetail code={b.code}><span className="ml-2">{b.message}</span></TechDetail>
             </li>
           ))}
         </ul>
@@ -189,7 +203,10 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
 
 // ---- open position -------------------------------------------------------------------------------
 
-function PositionPanel({ trade, onCloseRequest, busy }: { trade: PaperTrade; onCloseRequest: () => void; busy: boolean }) {
+function PositionPanel({ trade, onCloseRequest, busy, serverNowMs, zone }: { trade: PaperTrade; onCloseRequest: () => void; busy: boolean; serverNowMs: number; zone: DisplayZone }) {
+  const holdUntil = trade.max_hold_until ? Date.parse(trade.max_hold_until) : null;
+  const holdLeftS = holdUntil !== null && Number.isFinite(holdUntil) ? Math.max(0, Math.round((holdUntil - serverNowMs) / 1000)) : null;
+  const holdText = holdLeftS === null ? "—" : holdLeftS === 0 ? `tới ${formatInZone(trade.max_hold_until as string, zone).slice(11, 16)} — bàn đang đóng lệnh` : `tới ${formatInZone(trade.max_hold_until as string, zone).slice(11, 16)} · còn ${Math.floor(holdLeftS / 3600) > 0 ? `${Math.floor(holdLeftS / 3600)} giờ ` : ""}${Math.floor((holdLeftS % 3600) / 60)} phút`;
   const pnl = trade.unrealized_pnl ?? null;
   const tone = pnl === null ? "" : pnl >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400";
   const risk = Math.abs(trade.fill_price - trade.initial_sl);
@@ -212,14 +229,15 @@ function PositionPanel({ trade, onCloseRequest, busy }: { trade: PaperTrade; onC
         <dt className="text-slate-600 dark:text-slate-400">Giá vào (khớp)</dt><dd data-testid="position-entry" className="text-right font-mono">{fmt(trade.fill_price)}</dd>
         {slipped && (<><dt className="text-slate-600 dark:text-slate-400">Giá kế hoạch</dt><dd data-testid="position-planned" className="text-right font-mono">{fmt(trade.planned_entry)}</dd></>)}
         <dt className="text-slate-600 dark:text-slate-400">Giá hiện tại</dt><dd data-testid="position-current" className="text-right font-mono">{fmt(trade.current_price)}</dd>
-        <dt className="text-slate-600 dark:text-slate-400">SL / TP</dt><dd data-testid="position-levels" className="text-right font-mono">{fmt(trade.sl)} / {fmt(trade.tp)}</dd>
+        <dt className="text-slate-600 dark:text-slate-400"><Term id="sl">SL</Term> / <Term id="tp">TP</Term></dt><dd data-testid="position-levels" className="text-right font-mono">{fmt(trade.sl)} / {fmt(trade.tp)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Cách SL / TP</dt>
         <dd data-testid="position-distance" className="text-right font-mono">
           {trade.current_price != null ? `${Math.abs(trade.current_price - trade.sl).toFixed(2)} / ${Math.abs(trade.tp - trade.current_price).toFixed(2)} (${risk > 0 ? `${(Math.abs(trade.current_price - trade.sl) / risk).toFixed(2)}R` : "—"} / ${risk > 0 ? `${(Math.abs(trade.tp - trade.current_price) / risk).toFixed(2)}R` : "—"})` : "—"}
         </dd>
         <dt className="text-slate-600 dark:text-slate-400">Lot · rủi ro</dt><dd className="text-right font-mono">{fmt(trade.lots, 2)} · {money(trade.risk_amount)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Đã giữ</dt><dd data-testid="position-duration" className="text-right font-mono">{fmt(trade.duration_minutes, 0)} phút</dd>
-        <dt className="text-xs text-slate-600 dark:text-slate-400">MFE / MAE (R)</dt><dd data-testid="position-excursion" className="text-right font-mono text-xs text-slate-600 dark:text-slate-400">{fmt(mfeR)} / {fmt(maeR)}</dd>
+        <dt className="text-slate-600 dark:text-slate-400"><Term id="hold">Giữ tối đa</Term></dt><dd data-testid="position-max-hold" data-until={trade.max_hold_until ?? ""} className="text-right font-mono">{holdText}</dd>
+        <dt className="text-xs text-slate-600 dark:text-slate-400"><Term id="mfe">MFE</Term> / <Term id="mae">MAE</Term> (R)</dt><dd data-testid="position-excursion" className="text-right font-mono text-xs text-slate-600 dark:text-slate-400">{fmt(mfeR)} / {fmt(maeR)}</dd>
       </dl>
       <button type="button" data-testid="close-paper" disabled={busy || trade.status !== "OPEN"} onClick={onCloseRequest} className="w-full rounded-md border-2 border-slate-500 px-3 py-2 text-sm font-bold disabled:opacity-40">
         Đóng lệnh paper…
@@ -297,57 +315,41 @@ export function expiryOf(view: TradeView, serverNowMs: number) {
   return { expiredNow, secondsLeft };
 }
 
-const ACTION_STYLE: Record<ActionTone, string> = {
-  buy: "border-emerald-800 bg-emerald-700 text-white",
-  sell: "border-red-800 bg-red-700 text-white",
-  // a WATCH is not an order: amber with a dashed border, so it is never mistaken for BUY/SELL READY
-  "watch-buy": "border-dashed border-amber-700 bg-amber-500/15 text-amber-950 dark:text-amber-100",
-  "watch-sell": "border-dashed border-amber-700 bg-amber-500/15 text-amber-950 dark:text-amber-100",
-  hold: "border-sky-700 bg-sky-500/15 text-sky-900 dark:text-sky-100",
-  exit: "border-slate-600 bg-slate-500/15 text-slate-900 dark:text-slate-100",
-  wait: "border-slate-500 bg-slate-500/10 text-slate-800 dark:text-slate-200",
-  error: "border-red-700 bg-red-500/15 text-red-900 dark:text-red-100",
-};
-const ACTION_ICON: Record<ActionTone, string> = { buy: "▲", sell: "▼", "watch-buy": "👁▲", "watch-sell": "👁▼", hold: "●", exit: "✓", wait: "⏸", error: "⚠" };
-
-/** Action-first: what to do NOW in one word, why in one line, and exactly when to act. */
-function ActionHero({ view, expiredNow, secondsLeft }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null }) {
-  const [more, setMore] = useState(false);
-  const t = actionText(view, secondsLeft, expiredNow);
+/** Action-first: what the trader may do NOW in one word, why in one line, and exactly when to act. */
+function ActionHero({ view, expiredNow, secondsLeft, zone, setups }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null; zone: DisplayZone; setups: SetupHistoryRow[] | null }) {
+  const clock = (iso: string | null | undefined) => (iso ? formatInZone(iso, zone).slice(11, 16) : null);
+  const t = actionText(view, secondsLeft, expiredNow, clock);
   const state = expiredNow && (view.hero.state === "BUY_READY" || view.hero.state === "SELL_READY") ? "EXPIRED_SETUP" : view.hero.state;
-  const text = HERO_VI[state];
   const errors = view.conditions.filter((c) => c.severity === "ERROR" && c.code !== "MARKET_CLOSED");
   const solid = t.tone === "buy" || t.tone === "sell";
   const veil = solid ? "bg-black/25" : "bg-black/10 dark:bg-white/10"; // solid heroes keep white text on a darker, never lighter, panel
-  // the small label never contradicts the action word: a WATCH is not 'CHỜ', a HOLD is a position
-  const chip = t.code.startsWith("WATCH") ? (view.hero.action.stage === "ARMED" ? "SETUP ĐANG HÌNH THÀNH" : "CHƯA CÓ SETUP") : text.label;
   const urgent = secondsLeft !== null && secondsLeft <= 60 && (t.code === "BUY" || t.code === "SELL") && !expiredNow;
-  return (
-    <div data-testid="hero" data-hero-state={state} data-action={t.code} data-server-label={view.hero.label} className={`rounded-lg border-2 px-4 py-2 ${ACTION_STYLE[t.tone]}`}>
-      <div className="flex items-center justify-between gap-2 text-xs font-semibold uppercase">
-        <span>Bạn nên làm gì bây giờ?</span>
-        <span data-testid="decision" className={`rounded px-1.5 py-0.5 ${veil}`}>{chip}</span>
-      </div>
-      <div className="mt-1 flex items-center gap-2">
-        <span aria-hidden="true" className="text-2xl">{ACTION_ICON[t.tone]}</span>
-        <span data-testid="action-word" className="text-4xl font-black leading-none">{expiredNow && (t.code === "BUY" || t.code === "SELL") ? "BỎ QUA" : t.word}</span>
-      </div>
-      <p data-testid="action-sub" className="mt-1 text-sm font-semibold">
-        {expiredNow && (t.code === "BUY" || t.code === "SELL") ? "Kế hoạch đã hết hạn" : t.sub}
-        {urgent && <span data-testid="expiry" data-urgent="true"> — sắp hết hạn</span>}
-        {!urgent && secondsLeft !== null && (t.code === "BUY" || t.code === "SELL") && !expiredNow && <span data-testid="expiry" data-urgent="false" className="sr-only"> còn hiệu lực {mmss2(secondsLeft)}</span>}
-      </p>
-      <p data-testid="action-when" className={`mt-2 rounded-md px-2 py-1.5 text-sm ${veil} sm:line-clamp-none ${more ? "" : "line-clamp-2"}`}>
-        <b>Khi nào?</b> {expiredNow && (t.code === "BUY" || t.code === "SELL") ? "Không mở được nữa; chờ setup mới." : t.when}
-      </p>
-      <button type="button" data-testid="action-when-toggle" aria-expanded={more} onClick={() => setMore(!more)} className="mt-0.5 text-xs font-semibold underline sm:hidden">{more ? "thu gọn" : "xem thêm"}</button>
+  const skipped = expiredNow && (t.code === "BUY" || t.code === "SELL");
+  const extra = (
+    <>
+      {!skipped && secondsLeft !== null && (t.code === "BUY" || t.code === "SELL") && <span data-testid="expiry" data-urgent={urgent ? "true" : "false"} className={urgent ? "mt-1 block text-sm font-bold" : "sr-only"}>{urgent ? "Sắp hết hạn" : `còn hiệu lực ${mmss2(secondsLeft)}`}</span>}
       {(state === "UNAVAILABLE" || state === "STALE") && errors.length > 0 && (
         <ul data-testid="hero-problems" className="mt-1 space-y-0.5 text-sm">
           {errors.map((c) => (
-            <li key={c.code}>{humanCondition(c.code, c.message)} <span className="font-mono text-xs">{c.code}</span></li>
+            <li key={c.code}>{humanCondition(c.code, c.message)}</li>
           ))}
         </ul>
       )}
+    </>
+  );
+  return (
+    <div data-testid="hero" data-hero-state={state} data-action={t.code} data-bias={t.bias.side ?? "NONE"} data-server-label={view.hero.label} className={`rounded-lg border-2 px-4 py-2 ${TONE_STYLE[t.tone]}`}>
+      <HeroCard
+        t={t}
+        word={skipped ? "BỎ QUA" : t.word}
+        sub={skipped ? "Kế hoạch đã hết hạn" : t.sub}
+        whenLabel={skipped ? "Khi nào?" : t.whenLabel}
+        whenBody={skipped ? "Không mở được nữa; chờ setup mới." : t.whenBody}
+        whenShort={skipped ? "Không mở được nữa; chờ setup mới." : t.whenShort}
+        veil={veil}
+        extra={extra}
+        steps={lifecycleSteps(view, setups)}
+      />
     </div>
   );
 }
@@ -355,13 +357,13 @@ function ActionHero({ view, expiredNow, secondsLeft }: { view: TradeView; expire
 const mmss2 = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 /** The state that dominates the decision area (always first, also on a phone). */
-export function DecisionHero({ view, serverNowMs }: { view: TradeView; serverNowMs: number }) {
+export function DecisionHero({ view, serverNowMs, zone, setups }: { view: TradeView; serverNowMs: number; zone: DisplayZone; setups: SetupHistoryRow[] | null }) {
   const { expiredNow, secondsLeft } = expiryOf(view, serverNowMs);
-  return <ActionHero view={view} expiredNow={expiredNow} secondsLeft={secondsLeft} />;
+  return <ActionHero view={view} expiredNow={expiredNow} secondsLeft={secondsLeft} zone={zone} setups={setups} />;
 }
 
 /** Ticket, position, or the wait context: what the trader can read or do about the state. */
-export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, onCloseRequest, uiStale, busy, tf, onFocusTf, zone }: Props) {
+export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, onCloseRequest, uiStale, busy, tf, onFocusTf, zone, setups, journal }: Props) {
   const { expiredNow } = expiryOf(view, serverNowMs);
   const plan = view.trade_plan ?? null;
   const state = view.hero.state;
@@ -370,10 +372,19 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
   const waiting = state === "WAIT" || state === "SETUP_ARMED" || state === "NOT_ACTIONABLE";
   return (
     <section data-testid="decision-card" className="space-y-3">
-      {showPosition && view.desk?.position ? <PositionPanel trade={view.desk.position} onCloseRequest={onCloseRequest} busy={busy} /> : null}
-      {showTicket && <Ticket view={view} risk={risk} onRisk={onRisk} onOpenRequest={onOpenRequest} busy={busy} uiStale={uiStale} expiredNow={expiredNow} />}
+      {showPosition && view.desk?.position ? <PositionPanel trade={view.desk.position} onCloseRequest={onCloseRequest} busy={busy} serverNowMs={serverNowMs} zone={zone} /> : null}
+      {showTicket && !uiStale && <Ticket view={view} risk={risk} onRisk={onRisk} onOpenRequest={onOpenRequest} busy={busy} uiStale={uiStale} expiredNow={expiredNow} />}
+      {showTicket && uiStale && (
+        // offline or no fresh data: the last plan is history, not an instruction; it is folded away and cannot be opened
+        <details data-testid="stale-plan" className="rounded-lg border border-slate-400 p-2 text-sm">
+          <summary className="cursor-pointer font-semibold">Kế hoạch cuối cùng đã cũ — không dùng để vào lệnh</summary>
+          <div className="mt-2">
+            <Ticket view={view} risk={risk} onRisk={onRisk} onOpenRequest={onOpenRequest} busy={busy} uiStale={uiStale} expiredNow={expiredNow} />
+          </div>
+        </details>
+      )}
       {waiting && <Pipeline view={view} tf={tf} onFocusTf={onFocusTf} />}
-      {waiting && <WaitContext view={view} />}
+      {waiting && <WaitContext view={view} zone={zone} setups={setups} journal={journal} />}
       {state !== "POSITION_OPEN" && <LastExit view={view} />}
       <AlertChannelNotice view={view} />
       {state === "MARKET_CLOSED" && <ClosedInfo view={view} zone={zone} />}

@@ -176,7 +176,9 @@ def trade_plan(
 # ---- hero ---------------------------------------------------------------------------------------
 
 
-ACTIONS = ("WAIT", "WATCH_BUY", "WATCH_SELL", "BUY", "SELL", "HOLD", "EXIT", "UNAVAILABLE")
+ACTIONS = ("WAIT", "BUY", "SELL", "HOLD", "EXIT", "UNAVAILABLE")
+"""The primary action vocabulary: what the trader may DO now. A lean of the market is not an action:
+it is ``bias`` (BUY / SELL / None), shown beside the action, never in its place."""
 
 
 def _bias_side(bias: str | None) -> str | None:
@@ -189,20 +191,30 @@ def action_for(
     position: dict[str, Any] | None,
     blockers: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
-    """The ONE thing the trader should do now, derived from the same state as the hero.
+    """The ONE thing the trader may do now, derived from the same state as the hero.
 
-    code: WAIT / WATCH_BUY / WATCH_SELL / BUY / SELL / HOLD / EXIT / UNAVAILABLE.
+    code: WAIT / BUY / SELL / HOLD / EXIT / UNAVAILABLE. Only BUY and SELL are permission to open a
+    paper trade. ``bias`` (BUY / SELL / None) says which way the market currently leans while the
+    action is still WAIT; ``missing`` (SETUP / TRIGGER / None) names the one thing still missing.
     ``stage`` says how far along it is (WATCHING, ARMED, READY, OPEN, DONE, CLOSED, EXPIRED,
-    INVALIDATED, ...). ``thesis`` (HOLD only) says whether the entry reason still stands: the H1
-    direction of the open position against the current H1 direction. It is information, not a new
-    exit rule: the paper desk exits only by SL, TP, time or the closure policy.
+    INVALIDATED, BLOCKED, INCOMPLETE, ...). ``thesis`` (HOLD only) says whether the entry reason
+    still stands: the H1 direction of the open position against the current H1 direction. It is
+    information, not a new exit rule: the paper desk exits only by SL, TP, time or the closure
+    policy.
 
     A READY setup that the desk would refuse (already taken, cooldown, risk limits, ...) is never
     shown as BUY/SELL: it is WAIT with stage BLOCKED and the server's reason in ``blocked_by``.
     """
     state = hero["state"]
     phase = None if signal is None else signal.metadata.get("setup_phase")
-    out: dict[str, Any] = {"code": "WAIT", "stage": "WAITING", "side": None, "thesis": None}
+    out: dict[str, Any] = {
+        "code": "WAIT",
+        "stage": "WAITING",
+        "side": None,
+        "bias": None,
+        "thesis": None,
+        "missing": None,
+    }
     if state in ("UNAVAILABLE", "STALE"):
         out.update(code="UNAVAILABLE", stage=state)
     elif state == "MARKET_CLOSED":
@@ -211,13 +223,13 @@ def action_for(
         held = str((position or {}).get("side") or hero.get("side"))
         now_side = _bias_side(None if signal is None else signal.h1_bias)
         thesis = "UNKNOWN" if now_side is None else "INTACT" if now_side == held else "WEAK"
-        out.update(code="HOLD", stage="OPEN", side=held, thesis=thesis)
+        out.update(code="HOLD", stage="OPEN", side=held, bias=now_side, thesis=thesis)
     elif state in ("BUY_READY", "SELL_READY"):
         ready = state.split("_")[0]
         if blockers:
-            out.update(stage="BLOCKED", side=ready, blocked_by=blockers[0])
+            out.update(stage="BLOCKED", side=ready, bias=ready, blocked_by=blockers[0])
         else:
-            out.update(code=ready, stage="READY", side=ready)
+            out.update(code=ready, stage="READY", side=ready, bias=ready)
     elif state in ("EXPIRED_SETUP", "NOT_ACTIONABLE"):
         out.update(
             stage="EXPIRED" if state == "EXPIRED_SETUP" else "INCOMPLETE", side=hero.get("side")
@@ -226,12 +238,12 @@ def action_for(
         out.update(code="EXIT", stage="DONE")
     elif state == "SETUP_ARMED":
         armed = _bias_side(None if signal is None else signal.h1_bias)
-        out.update(code=f"WATCH_{armed}" if armed else "WAIT", stage="ARMED", side=armed)
-    elif signal is not None:  # WAIT: is there a direction worth watching?
+        out.update(stage="ARMED", side=armed, bias=armed, missing="TRIGGER")
+    elif signal is not None:  # WAIT: does the market lean one way, and what is missing?
         side = _bias_side(signal.h1_bias)
         first = signal.refusal_reasons[0].value if signal.refusal_reasons else None
         if side and first in ("NO_SETUP", "NO_TRIGGER"):
-            out.update(code=f"WATCH_{side}", stage="WATCHING", side=side)
+            out.update(stage="WATCHING", side=side, bias=side, missing="SETUP")
         elif phase in ("INVALIDATED", "EXPIRED"):
             out.update(stage=str(phase))
     return out

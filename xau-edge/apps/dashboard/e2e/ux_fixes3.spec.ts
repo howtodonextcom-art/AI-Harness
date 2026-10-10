@@ -69,13 +69,13 @@ test("the validity countdown turns urgent in its last minute and says what expir
   await page.goto("/trade");
   const e = page.getByTestId("expiry");
   await expect(e).toHaveAttribute("data-urgent", "true");
-  await expect(e).toContainText("sắp hết hạn");
+  await expect(e).toContainText(/sắp hết hạn/i);
 });
 
 test("fullscreen keeps the actions: open from the chart summary", async ({ page }) => {
   await mock(page, view("buy"));
   await page.goto("/trade");
-  await expect(page.getByTestId("decision")).toBeVisible();
+  await expect(page.getByTestId("action-word")).toBeVisible();
   await page.getByTestId("chart-fullscreen").click();
   await page.getByTestId("fs-open").click();
   await expect(page.getByTestId("confirm-open-modal")).toBeVisible();

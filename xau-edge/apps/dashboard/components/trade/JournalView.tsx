@@ -5,6 +5,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { fetchJournal, type JournalResponse, type PaperTrade } from "@/lib/trade";
 import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
 import { fmt, money } from "@/components/trade/ui";
+import { sourceText, viState } from "@/lib/vi";
 
 function Stat({ k, v, testId }: { k: string; v: string; testId: string }) {
   return (
@@ -258,15 +259,15 @@ export function JournalView() {
                   <tr>
                     <td colSpan={14} className="pb-2">
                       <dl data-testid="journal-detail" className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 rounded-md bg-slate-500/10 p-2 text-xs sm:grid-cols-[auto_1fr_auto_1fr]">
-                        <dt className="text-slate-600 dark:text-slate-400">Nguồn dữ liệu</dt><dd>{t.source_mode === "LIVE" ? "LIVE" : `${t.source_mode} (không phải live)`}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Nguồn dữ liệu</dt><dd>{sourceText(t.source_mode)}</dd>
                         <dt className="text-slate-600 dark:text-slate-400">Chiến lược</dt><dd>v{t.strategy_version ?? "?"}</dd>
                         <dt className="text-slate-600 dark:text-slate-400">Phiên bản mã</dt><dd className="font-mono">{t.code_version ?? "—"}</dd>
                         <dt className="text-slate-600 dark:text-slate-400">Setup</dt><dd className="font-mono">{t.setup_id}</dd>
-                        <dt className="text-slate-600 dark:text-slate-400">Phiên giao dịch</dt><dd>{String(t.market?.session ?? "—")}</dd>
-                        <dt className="text-slate-600 dark:text-slate-400">H4 / H1 / M15 / M5</dt><dd>{[t.market?.h4, t.market?.h1, t.market?.m15, t.market?.m5].map((x) => String(x ?? "—")).join(" · ")}</dd>
-                        <dt className="text-slate-600 dark:text-slate-400">Spread lúc vào</dt><dd>{String(t.market?.spread_points ?? "—")} điểm ({String(t.market?.spread_state ?? "—")})</dd>
-                        <dt className="text-slate-600 dark:text-slate-400">Biến động / tick volume</dt><dd>{String(t.market?.volatility ?? "—")} / {String(t.market?.volume_state ?? "—")}</dd>
-                        <dt className="text-slate-600 dark:text-slate-400">Tin tức</dt><dd>{String(t.market?.news_state ?? "—")}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Phiên giao dịch</dt><dd>{viState(t.market?.session)}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">H4 / H1 / M15 / M5</dt><dd>{[t.market?.h4, t.market?.h1, t.market?.m15, t.market?.m5].map((x) => viState(x)).join(" · ")}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Spread lúc vào</dt><dd>{String(t.market?.spread_points ?? "—")} điểm ({viState(t.market?.spread_state)})</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Biến động / tick volume</dt><dd>{viState(t.market?.volatility)} / {viState(t.market?.volume_state)}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Tin tức</dt><dd>{viState(t.market?.news_state)}</dd>
                         <dt className="text-slate-600 dark:text-slate-400">Tuổi dữ liệu</dt><dd>{String(t.market?.data_age_seconds ?? "—")} s</dd>
                         {t.cancel_reason && (<><dt className="text-slate-600 dark:text-slate-400">Lý do hủy</dt><dd>{t.cancel_reason}</dd></>)}
                       </dl>

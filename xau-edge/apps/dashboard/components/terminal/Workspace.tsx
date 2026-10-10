@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Term } from "@/components/terminal/Term";
+import { useMemo, useState, type ReactNode } from "react";
 import { AccountCard, AlertCard, DemoLockCard, ForwardCard, FunnelCard, StrategyCard, SystemStatus } from "@/components/terminal/SystemCards";
 import { Card, NEUTRAL, Pill, Row, fmt, money } from "@/components/trade/ui";
 import type { ManualLevel, PriceAlert, Tab } from "@/lib/prefs";
@@ -17,6 +18,8 @@ const TABS: [Tab, string][] = [
 ];
 
 interface Props {
+  /** the source + symbol the trader's own levels and alerts belong to */
+  toolsScope: string | null;
   tab: Tab;
   onTab: (t: Tab) => void;
   view: TradeView | null;
@@ -50,7 +53,7 @@ interface Item {
   onClick?: () => void;
 }
 
-function Meter({ k, v, tone }: { k: string; v: string; tone: string }) {
+function Meter({ k, v, tone }: { k: ReactNode; v: string; tone: string }) {
   return (
     <div className="rounded-md border border-slate-300 px-2 py-1 text-center dark:border-slate-700">
       <div className="text-[11px] text-slate-600 dark:text-slate-400">{k}</div>
@@ -61,7 +64,7 @@ function Meter({ k, v, tone }: { k: string; v: string; tone: string }) {
 
 const meterTone = (v: string) => (v === "HIGH" || v === "SHOCK" || v === "WIDE" ? "text-red-700 dark:text-red-400" : v === "ELEVATED" ? "text-amber-600" : "text-emerald-700 dark:text-emerald-300");
 
-function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert, notify, sound, onNotify, onSound }: Pick<Props, "view" | "levels" | "onRemoveLevel" | "alerts" | "onRemoveAlert" | "notify" | "sound" | "onNotify" | "onSound">) {
+function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert, notify, sound, onNotify, onSound, toolsScope }: Pick<Props, "toolsScope" | "view" | "levels" | "onRemoveLevel" | "alerts" | "onRemoveAlert" | "notify" | "sound" | "onNotify" | "onSound">) {
   const d = view?.decision;
   const vol = (view?.structure?.volatility as string | undefined) ?? "UNKNOWN";
   const st = view?.structure;
@@ -71,8 +74,8 @@ function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert, notify, 
       <Card title="Hoạt động thị trường" testId="activity-card">
         <div className="grid grid-cols-3 gap-2">
           <Meter k="Biến động" v={ACTIVITY_VI[vol] ?? vol} tone={meterTone(vol)} />
-          <Meter k="Tick volume" v={ACTIVITY_VI[d?.volume_state ?? "UNKNOWN"] ?? "—"} tone={meterTone(d?.volume_state ?? "")} />
-          <Meter k="Spread" v={ACTIVITY_VI[d?.spread_state ?? "UNKNOWN"] ?? "—"} tone={meterTone(d?.spread_state ?? "")} />
+          <Meter k={<Term id="tickvol">Tick volume</Term>} v={ACTIVITY_VI[d?.volume_state ?? "UNKNOWN"] ?? "—"} tone={meterTone(d?.volume_state ?? "")} />
+          <Meter k={<Term id="spread">Spread</Term>} v={ACTIVITY_VI[d?.spread_state ?? "UNKNOWN"] ?? "—"} tone={meterTone(d?.spread_state ?? "")} />
         </div>
         <p data-testid="volume-line" className="mt-2 text-sm">
           Tick volume M1: tương đối <b className="font-mono">×{fmt(view?.volume?.m1_relative)}</b> · percentile{" "}
@@ -89,6 +92,7 @@ function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert, notify, 
         <Row k="Cao / thấp ngày" v={`${fmt(daily?.high)} / ${fmt(daily?.low)}`} />
       </Card>
       <Card title="Công cụ của tôi" testId="tools-card">
+        {toolsScope && <p data-testid="tools-scope" className="mb-1 inline-block rounded border border-slate-500 px-1.5 py-0.5 text-xs font-bold">Chỉ dùng cho: {toolsScope}</p>}
         <p className="text-xs text-slate-600 dark:text-slate-400">Đường ngang và cảnh báo giá chỉ là ghi chú của bạn: không ảnh hưởng quyết định hay giao dịch.</p>
         <div data-testid="setup-notify" className="mt-2 space-y-1 rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700">
           <label className="flex items-center gap-2">
@@ -330,7 +334,7 @@ export function Workspace(props: Props) {
         ))}
       </div>
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="p-3">
-        {tab === "overview" && <Overview view={props.view} levels={props.levels} onRemoveLevel={props.onRemoveLevel} alerts={props.alerts} onRemoveAlert={props.onRemoveAlert} notify={props.notify} sound={props.sound} onNotify={props.onNotify} onSound={props.onSound} />}
+        {tab === "overview" && <Overview toolsScope={props.toolsScope} view={props.view} levels={props.levels} onRemoveLevel={props.onRemoveLevel} alerts={props.alerts} onRemoveAlert={props.onRemoveAlert} notify={props.notify} sound={props.sound} onNotify={props.onNotify} onSound={props.onSound} />}
         {tab === "why" && <Why view={props.view} onFocusTf={props.onFocusTf} />}
         {tab === "position" && <PositionTab view={props.view} journal={props.journal} zone={props.zone} onFocusPaper={props.onFocusPaper} />}
         {tab === "activity" && <Activity view={props.view} journal={props.journal} signals={props.signals} setups={props.setups} zone={props.zone} mode={props.mode} onFocusPaper={props.onFocusPaper} onFocusSignal={props.onFocusSignal} alerts={props.alerts} />}

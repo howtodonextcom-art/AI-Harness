@@ -18,7 +18,9 @@ test("journal lists the real closed trade, labels replay, links to the chart and
   await expect(page.getByTestId("journal-replay-banner")).toContainText("KHÔNG PHẢI LIVE");
   await expect(page.getByTestId("journal-note")).toContainText("Chưa có bằng chứng");
   await page.getByTestId("journal-detail-toggle").first().click();
-  await expect(page.getByTestId("journal-detail")).toContainText("ACCEPTANCE_REPLAY");
+  await expect(page.getByTestId("journal-detail")).toContainText("ACCEPTANCE REPLAY — dữ liệu lịch sử phát lại, KHÔNG PHẢI LIVE");
+  const raw = await page.getByTestId("journal-detail").innerText();
+  expect(raw).not.toMatch(/(BULLISH|BEARISH|UNKNOWN|NEWS_UNKNOWN|LONDON_NY_OVERLAP)/); // market states are in words
   const href = await page.getByTestId("journal-view-on-chart").first().getAttribute("href");
   expect(href).toContain("/trade?focus=");
   expect(href).toContain(`trade=${t.trade_id}`);

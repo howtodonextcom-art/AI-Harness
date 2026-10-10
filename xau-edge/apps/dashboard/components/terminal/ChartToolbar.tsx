@@ -28,7 +28,8 @@ interface Props {
   onHelp: () => void;
 }
 
-const btn = "inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-semibold";
+const btn = "h-8 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-semibold";
+const shown = "inline-flex";
 const on = "border-sky-600 bg-sky-500/15 text-sky-800 dark:text-sky-200";
 const off = "border-slate-400 hover:bg-slate-500/10";
 
@@ -46,6 +47,8 @@ export function ChartToolbar(p: Props) {
   const [alertOpen, setAlertOpen] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [price, setPrice] = useState("");
+  const [more, setMore] = useState(false); // phone only: the secondary tools
+  const sec = `${more ? "inline-flex" : "hidden"} sm:inline-flex`; // a phone shows only the timeframes, fullscreen and ⋯
 
   const submitAlert = () => {
     const v = parseDecimal(price);
@@ -60,25 +63,25 @@ export function ChartToolbar(p: Props) {
     <div data-testid="chart-toolbar" role="toolbar" aria-label="Công cụ biểu đồ" className="relative flex flex-wrap items-center gap-1">
       <div role="group" aria-label="Khung thời gian biểu đồ" className="flex gap-1">
         {TFS.map((t) => (
-          <button key={t} type="button" data-testid={`chart-tf-${t}`} aria-pressed={t === p.tf} onClick={() => p.onTf(t)} className={`${btn} ${t === p.tf ? on : off}`}>
+          <button key={t} type="button" data-testid={`chart-tf-${t}`} aria-pressed={t === p.tf} onClick={() => p.onTf(t)} className={`${shown} ${btn} ${t === p.tf ? on : off}`}>
             {t}
           </button>
         ))}
       </div>
       <span className="mx-1 hidden h-5 w-px bg-slate-400/50 sm:block" aria-hidden="true" />
-      <button type="button" data-testid="chart-fit" title="Vừa khung (F)" aria-label="Vừa khung nhìn" onClick={p.onFit} className={`${btn} ${off}`}>⤢</button>
-      <button type="button" data-testid="chart-latest" title="Về nến mới nhất (L)" aria-label="Về nến mới nhất" onClick={p.onLatest} className={`${btn} ${off}`}>⇥</button>
-      <button type="button" data-testid="chart-follow" title="Tự theo nến mới (W)" aria-pressed={p.follow} onClick={() => p.onFollow(!p.follow)} className={`${btn} ${p.follow ? on : off}`}>
+      <button type="button" data-testid="chart-fit" title="Vừa khung (F)" aria-label="Vừa khung nhìn" onClick={p.onFit} className={`${btn} ${off} ${sec}`}>⤢</button>
+      <button type="button" data-testid="chart-latest" title="Về nến mới nhất (L)" aria-label="Về nến mới nhất" onClick={p.onLatest} className={`${btn} ${off} ${sec}`}>⇥</button>
+      <button type="button" data-testid="chart-follow" title="Tự theo nến mới (W)" aria-pressed={p.follow} onClick={() => p.onFollow(!p.follow)} className={`${btn} ${p.follow ? on : off} ${sec}`}>
         ⟳<span className="hidden sm:inline">&nbsp;Theo nến</span>&nbsp;{p.follow ? "BẬT" : "TẮT"}
       </button>
-      <button type="button" data-testid="chart-fullscreen" title="Toàn màn hình (X)" aria-pressed={p.fullscreen} aria-label={p.fullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"} onClick={() => p.onFullscreen(!p.fullscreen)} className={`${btn} ${p.fullscreen ? on : off}`}>
+      <button type="button" data-testid="chart-fullscreen" title="Toàn màn hình (X)" aria-pressed={p.fullscreen} aria-label={p.fullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"} onClick={() => p.onFullscreen(!p.fullscreen)} className={`${shown} ${btn} ${p.fullscreen ? on : off}`}>
         {p.fullscreen ? "⤡" : "⛶"}
       </button>
       <span className="mx-1 hidden h-5 w-px bg-slate-400/50 sm:block" aria-hidden="true" />
-      <button type="button" data-testid="tool-measure" title="Đo giá/thời gian (M)" aria-pressed={p.tool === "measure"} onClick={() => p.onTool(p.tool === "measure" ? "none" : "measure")} aria-label="Đo giá và thời gian" className={`${btn} ${p.tool === "measure" ? on : off}`}>📏&nbsp;Đo</button>
-      <button type="button" data-testid="tool-line" title="Vẽ đường ngang (T)" aria-pressed={p.tool === "line"} onClick={() => p.onTool(p.tool === "line" ? "none" : "line")} aria-label="Vẽ đường ngang" className={`${btn} ${p.tool === "line" ? on : off}`}>—&nbsp;Đường</button>
-      <div className="relative">
-        <button type="button" data-testid="tool-alert" title="Cảnh báo giá" aria-expanded={alertOpen} onClick={() => { setAlertOpen(!alertOpen); setOverlayOpen(false); }} className={`${btn} ${alertOpen ? on : off}`}>
+      <button type="button" data-testid="tool-measure" title="Đo giá/thời gian (M)" aria-pressed={p.tool === "measure"} onClick={() => p.onTool(p.tool === "measure" ? "none" : "measure")} aria-label="Đo giá và thời gian" className={`${btn} ${p.tool === "measure" ? on : off} ${sec}`}>📏&nbsp;Đo</button>
+      <button type="button" data-testid="tool-line" title="Vẽ đường ngang (T)" aria-pressed={p.tool === "line"} onClick={() => p.onTool(p.tool === "line" ? "none" : "line")} aria-label="Vẽ đường ngang" className={`${btn} ${p.tool === "line" ? on : off} ${sec}`}>—&nbsp;Đường</button>
+      <div className={`relative ${more ? "block" : "hidden"} sm:block`}>
+        <button type="button" data-testid="tool-alert" title="Cảnh báo giá" aria-expanded={alertOpen} onClick={() => { setAlertOpen(!alertOpen); setOverlayOpen(false); }} className={`${shown} ${btn} ${alertOpen ? on : off}`}>
           🔔&nbsp;Báo giá{p.alertCount > 0 ? ` (${p.alertCount})` : ""}
         </button>
         {alertOpen && (
@@ -92,8 +95,8 @@ export function ChartToolbar(p: Props) {
           </div>
         )}
       </div>
-      <div className="relative">
-        <button type="button" data-testid="overlay-menu" title="Lớp phủ" aria-expanded={overlayOpen} aria-haspopup="true" onClick={() => { setOverlayOpen(!overlayOpen); setAlertOpen(false); }} aria-label="Lớp phủ trên biểu đồ" className={`${btn} ${overlayOpen ? on : off}`}>☰&nbsp;Lớp phủ</button>
+      <div className={`relative ${more ? "block" : "hidden"} sm:block`}>
+        <button type="button" data-testid="overlay-menu" title="Lớp phủ" aria-expanded={overlayOpen} aria-haspopup="true" onClick={() => { setOverlayOpen(!overlayOpen); setAlertOpen(false); }} aria-label="Lớp phủ trên biểu đồ" className={`${shown} ${btn} ${overlayOpen ? on : off}`}>☰&nbsp;Lớp phủ</button>
         {overlayOpen && (
           <div role="group" aria-label="Lớp phủ trên biểu đồ" className="absolute right-0 top-9 z-30 w-56 space-y-1 rounded-lg border border-slate-400 bg-white p-2 text-xs shadow-lg sm:left-0 sm:right-auto dark:bg-slate-900" onKeyDown={(e) => e.key === "Escape" && setOverlayOpen(false)}>
             {OVERLAY_LABELS.map(([key, label]) => (
@@ -109,7 +112,8 @@ export function ChartToolbar(p: Props) {
           </div>
         )}
       </div>
-      <button type="button" data-testid="shortcut-help" title="Phím tắt (?)" aria-label="Xem phím tắt" onClick={p.onHelp} className={`${btn} ${off}`}>⌨</button>
+      <button type="button" data-testid="shortcut-help" title="Phím tắt (?)" aria-label="Xem phím tắt" onClick={p.onHelp} className={`${btn} ${off} ${sec}`}>⌨</button>
+      <button type="button" data-testid="toolbar-more" aria-expanded={more} aria-label={more ? "Ẩn công cụ" : "Thêm công cụ"} onClick={() => setMore(!more)} className={`${shown} ${btn} ${more ? on : off} sm:hidden`}>⋯</button>
     </div>
   );
 }

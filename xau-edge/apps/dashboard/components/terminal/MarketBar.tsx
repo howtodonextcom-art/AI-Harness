@@ -1,5 +1,6 @@
 "use client";
 
+import { Term } from "@/components/terminal/Term";
 import { useEffect, useRef, useState } from "react";
 import { countdownText } from "@/lib/chartMath";
 import { ZONE_LABEL, clockInZone, formatInZone, type DisplayZone } from "@/lib/time";
@@ -38,6 +39,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
   const daily = ctx?.daily ?? null;
   const prev = useRef<number | null>(null);
   const [dir, setDir] = useState<"up" | "down" | "flat">("flat");
+  const [more, setMore] = useState(false); // phone only: the day statistics and the zone selector
 
   useEffect(() => {
     if (!quote) return;
@@ -77,7 +79,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
           </div>
           <div className="mt-1 flex flex-wrap items-end gap-x-5 gap-y-1" data-testid="quote">
             <div className={stalePrice ? "grayscale" : ""} aria-label="Giá bid">
-              <div className={`hidden text-xs font-semibold uppercase sm:block ${MUTED}`}>Bid (giá bán ra)</div>
+              <div className={`hidden text-xs font-semibold uppercase sm:block ${MUTED}`}><Term id="bid">Bid (giá bán ra)</Term></div>
               <div className="flex items-baseline gap-1.5">
                 {quote ? <BigPrice value={quote.bid} /> : <span className="text-4xl font-black">—</span>}
                 <span data-testid="price-dir" aria-hidden="true" className={dir === "up" ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}>{arrow}</span>
@@ -85,8 +87,8 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
               <span data-testid="price-bid" className="sr-only">{quote ? fmt(quote.bid) : "—"}</span>
             </div>
             <div className={`font-mono text-sm ${stalePrice ? "grayscale" : ""}`}>
-              <div>Ask <b data-testid="price-ask" className="text-base">{quote ? fmt(quote.ask) : "—"}</b></div>
-              <div data-testid="spread" className={MUTED}>Spread {quote ? `${fmt(quote.spread_points, 0)} điểm (${fmt(quote.spread_points / 100)})` : "—"}</div>
+              <div><Term id="ask">Ask</Term> <b data-testid="price-ask" className="text-base">{quote ? fmt(quote.ask) : "—"}</b></div>
+              <div data-testid="spread" className={MUTED}><Term id="spread">Spread</Term> {quote ? `${fmt(quote.spread_points, 0)} điểm (${fmt(quote.spread_points / 100)})` : "—"}</div>
             </div>
             {lastPrice && quote && (
               <span data-testid="price-last-close" className={`${pill} border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300`}>
@@ -102,7 +104,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
         </div>
 
         {/* the day */}
-        <dl data-testid="day-stats" aria-label="Thống kê trong ngày" className="flex flex-wrap gap-x-4 gap-y-0.5 text-sm lg:grid lg:grid-cols-[auto_auto] lg:gap-x-4">
+        <dl data-testid="day-stats" aria-label="Thống kê trong ngày" className={`${more ? "flex" : "hidden"} flex-wrap gap-x-4 gap-y-0.5 text-sm sm:flex lg:grid lg:grid-cols-[auto_auto] lg:gap-x-4`}>
           <div className="flex gap-1.5 lg:contents">
             <dt className={MUTED}>{daily && !daily.is_current_day ? "Phiên gần nhất" : "Hôm nay"}</dt>
             <dd data-testid="day-change" className={`font-mono font-semibold tabular-nums ${changeTone}`}>
@@ -134,7 +136,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
               {serverNowMs > 0 ? clockInZone(serverNowMs, zone) : "--:--:--"}
               {!live && view ? <span className="ml-1 text-xs font-normal text-red-700 dark:text-red-300">(giờ replay)</span> : null}
             </span>
-            <select aria-label="Múi giờ hiển thị" value={zone} onChange={(e) => onZone(e.target.value as DisplayZone)} className="max-w-44 rounded border border-slate-400 bg-transparent px-1 py-0.5 text-xs">
+            <select aria-label="Múi giờ hiển thị" value={zone} onChange={(e) => onZone(e.target.value as DisplayZone)} className={`${more ? "block" : "hidden"} max-w-44 rounded border border-slate-400 bg-transparent px-1 py-0.5 text-xs sm:block`}>
               {(Object.keys(ZONE_LABEL) as DisplayZone[]).map((z) => (
                 <option key={z} value={z}>{ZONE_LABEL[z]}</option>
               ))}
@@ -144,6 +146,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
             {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
           </div>
           <span data-testid="data-age" className={`hidden text-xs sm:inline ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds)}</span>
+          <button type="button" data-testid="market-more" aria-expanded={more} onClick={() => setMore(!more)} className="text-xs font-semibold underline sm:hidden">{more ? "Ẩn chi tiết thị trường ▴" : "Chi tiết thị trường ▾"}</button>
         </div>
       </div>
     </section>

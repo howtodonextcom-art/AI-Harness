@@ -1,5 +1,6 @@
 "use client";
 
+import { TechDetail } from "@/components/terminal/TechDetail";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChartToolbar } from "@/components/terminal/ChartToolbar";
 import { CloseConfirmModal, OpenConfirmModal, planMatches, type FrozenPlan } from "@/components/terminal/ConfirmModals";
@@ -11,7 +12,7 @@ import { TerminalChart, type ChartHandle, type Tool } from "@/components/termina
 import { Workspace } from "@/components/terminal/Workspace";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
 import { fetchBars, type BarsResponse, type MarketTimeframe } from "@/lib/market";
-import { DEFAULT_PREFS, crossed, loadAlerts, loadLevels, loadPrefs, newId, saveAlerts, saveLevels, savePrefs, type ManualLevel, type Prefs, type PriceAlert, type Tab } from "@/lib/prefs";
+import { DEFAULT_PREFS, crossed, loadAlerts, loadLevels, loadPrefs, migrateLegacy, newId, saveAlerts, saveLevels, savePrefs, scopeId, scopeLabel, scopeOf, type ManualLevel, type Prefs, type PriceAlert, type Scope, type Tab } from "@/lib/prefs";
 import { loadZone, saveZone, type DisplayZone } from "@/lib/time";
 import {
   closePaperTrade,
@@ -33,6 +34,7 @@ import { BASE_TITLE, beep, isNewSetup, readyTitle, systemNotify } from "@/lib/no
 import { EXIT_REASON_VI, HERO_ICON, HERO_VI, humanCondition } from "@/lib/vi";
 
 const POLL_MS = 3000;
+const SYMBOL = "XAUUSD"; // this terminal is single-symbol: the symbol is part of the storage scope
 const STALE_UI_SECONDS = 15; // longer than one aborted poll (8 s) plus the interval, so one slow answer does not flicker the ticket
 
 const SHORTCUTS: [string, string][] = [
@@ -59,6 +61,7 @@ export function TerminalView() {
   const [lastOk, setLastOk] = useState<number | null>(null);
   const [now, setNow] = useState(0);
   const [skew, setSkew] = useState(0);
+  const [servedMs, setServedMs] = useState<number | null>(null);
   const [prefs, setPrefsState] = useState<Prefs>(DEFAULT_PREFS);
   const [hydrated, setHydrated] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -96,31 +99,51 @@ export function TerminalView() {
       const link = from && Number.isFinite(Date.parse(from)) && Number.isFinite(Date.parse(params.get("to") ?? from)) ? { from, to: params.get("to") ?? from } : null;
       const linkTf = params.get("tf");
       setPrefsState({ ...loaded, zone, ...(linkTf && ["M1", "M5", "M15", "M30", "H1", "H4"].includes(linkTf) ? { tf: linkTf } : {}), ...(link ? { history: true, tab: "position" as Tab } : {}) });
-      setLevels(loadLevels());
-      const stored = loadAlerts();
-      alertsRef.current = stored;
-      setAlerts(stored);
       if (link) setFocus(link);
       setHydrated(true);
     }, 0);
     return () => clearTimeout(t);
   }, []);
+  // the trader's own levels and alerts belong to ONE source and symbol: a replay line never shows on LIVE
+  const sourceMode = view?.source_mode ?? null;
+  const scope = useMemo<Scope | null>(() => (sourceMode ? scopeOf(sourceMode, SYMBOL) : null), [sourceMode]);
+  const scopeKey = scope ? scopeId(scope) : null;
+  const scopeRef = useRef<Scope | null>(null);
+  const loadedScopeId = useRef<string | null>(null);
+  const [toolsScope, setToolsScope] = useState<string | null>(null);
+  useEffect(() => {
+    scopeRef.current = scope;
+    if (!hydrated || !scope) return;
+    const t = setTimeout(() => {
+      migrateLegacy(scope);
+      setLevels(loadLevels(scope));
+      const stored = loadAlerts(scope);
+      alertsRef.current = stored;
+      setAlerts(stored);
+      if (loadedScopeId.current !== null && loadedScopeId.current !== scopeId(scope)) prevBid.current = null; // never compare a price of another source with this one
+      loadedScopeId.current = scopeId(scope);
+      setToolsScope(scopeId(scope));
+    }, 0);
+    return () => clearTimeout(t);
+  }, [hydrated, scope]);
   useEffect(() => {
     if (hydrated) savePrefs(prefs);
   }, [prefs, hydrated]);
   useEffect(() => {
     const onStorage = () => {
-      const stored = loadAlerts();
+      const sc = scopeRef.current;
+      if (!sc) return;
+      const stored = loadAlerts(sc);
       alertsRef.current = stored;
       setAlerts(stored);
-      setLevels(loadLevels());
+      setLevels(loadLevels(sc));
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
   useEffect(() => {
-    if (hydrated) saveLevels(levels);
-  }, [levels, hydrated]);
+    if (hydrated && scope && toolsScope === scopeKey) saveLevels(scope, levels);
+  }, [levels, hydrated, scope, scopeKey, toolsScope]);
 
   // ---- the decision (every 3 s) -----------------------------------------------------------------
   const fireAlerts = useCallback((bid: number) => {
@@ -137,7 +160,7 @@ export function TerminalView() {
     if (fired.length === 0) return;
     alertsRef.current = next;
     setAlerts(next);
-    saveAlerts(next);
+    if (scopeRef.current) saveAlerts(scopeRef.current, next);
     const text = fired.map((a) => `XAUUSD ${a.direction === "UP" ? "vượt" : "xuống dưới"} ${a.price.toFixed(2)}`).join(" · ");
     setMessage({ tone: "border-amber-600 bg-amber-500/15", text: `🔔 Cảnh báo giá: ${text}` });
     try {
@@ -163,6 +186,7 @@ export function TerminalView() {
       // expiry and every countdown run on the SERVER clock (served_at), never the browser clock
       const served = data.served_at ? Date.parse(data.served_at) : Date.parse(data.generated_at);
       setSkew(Number.isFinite(served) ? served - Date.now() : 0);
+      setServedMs(Number.isFinite(served) ? served : null);
       if (data.quote && !data.quote.stale && data.source_mode === "LIVE") fireAlerts(data.quote.bid); // never on replay prices
     } catch {
       if (seq === decisionSeq.current) setError("API /trade/decision không phản hồi");
@@ -246,7 +270,9 @@ export function TerminalView() {
 
   // ---- derived ---------------------------------------------------------------------------------
   const uiStale = lastOk === null || (now - lastOk) / 1000 > STALE_UI_SECONDS;
-  const serverNow = now + skew;
+  // LIVE: the server clock, corrected for skew, keeps advancing between polls. REPLAY: the replay clock only moves when the
+  // server says so, so the page must not invent time from its own wall clock (that made countdowns run, then jump back).
+  const serverNow = view?.source_mode !== "LIVE" && servedMs !== null ? servedMs : now + skew;
   const hero = view?.hero;
   const plan = view?.trade_plan ?? null;
   const expiresMs = plan?.expires_at ? Date.parse(plan.expires_at) : null;
@@ -307,7 +333,7 @@ export function TerminalView() {
     const next = [...alertsRef.current, alert].slice(-30);
     alertsRef.current = next;
     setAlerts(next);
-    saveAlerts(next);
+    if (scopeRef.current) saveAlerts(scopeRef.current, next);
     try {
       if ("Notification" in window && Notification.permission === "default") void Notification.requestPermission();
     } catch {
@@ -318,7 +344,7 @@ export function TerminalView() {
     const next = alertsRef.current.filter((a) => a.id !== id);
     alertsRef.current = next;
     setAlerts(next);
-    saveAlerts(next);
+    if (scopeRef.current) saveAlerts(scopeRef.current, next);
   }, []);
 
   const changeZone = (zone: DisplayZone) => {
@@ -380,7 +406,7 @@ export function TerminalView() {
 
   // no connection (or data that stopped arriving): never keep a green BUY on screen, whatever the last view said
   const heroView = view && (error || uiStale) ? { ...view, hero: { ...view.hero, action: { ...view.hero.action, code: "UNAVAILABLE" as const, stage: "API_DOWN" } } } : view;
-  const heroNode = heroView && <DecisionHero view={heroView} serverNowMs={serverNow} />;
+  const heroNode = heroView && <DecisionHero view={heroView} serverNowMs={serverNow} zone={prefs.zone} setups={setups && setups.source_mode === mode ? setups.setups : null} />;
   const bodyNode = view && (
     <DecisionBody
       view={view}
@@ -394,11 +420,13 @@ export function TerminalView() {
       tf={prefs.tf}
       onFocusTf={focusTf}
       zone={prefs.zone}
+      setups={setups && setups.source_mode === mode ? setups.setups : null}
+      journal={journal && journal.source_mode === mode ? journal : null}
     />
   );
   const ready = hero?.state === "BUY_READY" || hero?.state === "SELL_READY";
   const canOpen = Boolean(view?.actionable && !uiStale && !error && !expiredNow && plan?.complete && chosen?.ok);
-  const showActionBar = Boolean(view && ((ready && !expiredNow) || hero?.state === "POSITION_OPEN"));
+  const showActionBar = Boolean(view && ((ready && !expiredNow && !uiStale && !error) || hero?.state === "POSITION_OPEN")); // a stale READY offers nothing
 
   const chartBlock = (
     <section
@@ -445,6 +473,7 @@ export function TerminalView() {
           onFollowChange={(v) => setPrefs({ follow: v })}
           levels={levels}
           alerts={alerts}
+          setups={setups && setups.source_mode === mode ? setups.setups : null}
           tool={tool}
           onAddLevel={addLevel}
           onToolDone={() => setTool("none")}
@@ -456,7 +485,7 @@ export function TerminalView() {
           {planLive && plan && <span className="font-mono">Entry {fmt(plan.planned_entry)} · SL {fmt(plan.sl)} · TP {fmt(plan.tp1)} · R/R {fmt(plan.rr_net)}</span>}
           {position && <span className="font-mono">{position.side} {fmt(position.fill_price)} · P&L {money(position.unrealized_pnl)} · {fmt(position.unrealized_r, 2)}R</span>}
           <span className="font-mono text-slate-600 dark:text-slate-400">{view.quote ? `${fmt(view.quote.bid)} / ${fmt(view.quote.ask)}` : ""}</span>
-          {ready && !expiredNow && <button type="button" data-testid="fs-open" disabled={!canOpen || busy} onClick={requestOpen} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Mở lệnh…</button>}
+          {ready && !expiredNow && !uiStale && !error && <button type="button" data-testid="fs-open" disabled={!canOpen || busy} onClick={requestOpen} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Mở lệnh…</button>}
           {hero?.state === "POSITION_OPEN" && <button type="button" data-testid="fs-close" disabled={busy} onClick={() => setClosing(true)} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Đóng lệnh…</button>}
           <button type="button" onClick={() => setFullscreen(false)} className="ml-auto rounded border border-slate-400 px-2 py-0.5 text-xs font-semibold">⤡ Thu nhỏ (Esc)</button>
         </div>
@@ -471,12 +500,13 @@ export function TerminalView() {
 
       {mode !== "LIVE" && (
         <div role="alert" data-testid="replay-banner" className={`rounded-md border-2 px-3 py-1 text-xs font-semibold ${BAD}`}>
-          {mode.replace("_", " ")} — KHÔNG PHẢI LIVE: dữ liệu lịch sử đã đốt phát lại qua đúng đường quyết định, không phải thị trường sống.
+          {mode.replace("_", " ")} — KHÔNG PHẢI LIVE<span className="hidden sm:inline">: dữ liệu lịch sử đã đốt phát lại qua đúng đường quyết định, không phải thị trường sống.</span>
         </div>
       )}
       {(error || uiStale) && (
         <div role="alert" data-testid="api-down-banner" className={`rounded-md border px-3 py-1.5 text-sm ${BAD}`}>
-          <b>Không kết nối được API.</b> {error ?? "Đang chờ dữ liệu."} Những gì hiển thị có thể đã cũ, đây KHÔNG phải trạng thái CHỜ; không được vào lệnh. <span className="font-mono text-xs">API_UNAVAILABLE</span>
+          <b>Mất kết nối với máy chủ dữ liệu.</b> Những gì hiển thị có thể đã cũ — đây KHÔNG phải trạng thái CHỜ; không được vào lệnh. Trang sẽ tự cập nhật khi kết nối trở lại.
+          <TechDetail code="API_UNAVAILABLE">{error ? <span className="ml-2">{error}</span> : null}</TechDetail>
         </div>
       )}
       {banners.length > 0 && (
@@ -484,7 +514,8 @@ export function TerminalView() {
           {banners.map((c) => (
             <li key={c.code} data-code={c.code} data-severity={c.severity}>
               <div role={c.severity === "ERROR" ? "alert" : undefined} className={`rounded-md border px-3 py-1 text-sm ${c.severity === "ERROR" ? BAD : WARN}`}>
-                {humanCondition(c.code, c.message)} <span className="font-mono text-xs">{c.code}</span>
+                {humanCondition(c.code, c.message)}
+                <TechDetail code={c.code}><span className="ml-2">{c.message}</span></TechDetail>
               </div>
             </li>
           ))}
@@ -492,7 +523,8 @@ export function TerminalView() {
       )}
       {barsError && (
         <div role="alert" data-testid="chart-unavailable" className={`rounded-md border px-3 py-1.5 text-sm ${WARN}`}>
-          <b>Không tải được dữ liệu biểu đồ {prefs.tf}.</b> Đang hiển thị dữ liệu cuối cùng (nếu có). <span className="font-mono text-xs">CHART_DATA_UNAVAILABLE</span>
+          <b>Không tải được dữ liệu biểu đồ {prefs.tf}.</b> Đang hiển thị dữ liệu cuối cùng (nếu có).
+          <TechDetail code="CHART_DATA_UNAVAILABLE" />
         </div>
       )}
       {message && (
@@ -524,6 +556,7 @@ export function TerminalView() {
       </div>
 
       <Workspace
+        toolsScope={scope ? scopeLabel(scope) : null}
         tab={prefs.tab}
         onTab={(t) => setPrefs({ tab: t })}
         view={view}
@@ -555,7 +588,7 @@ export function TerminalView() {
 
       </div>
       {showActionBar && view && (
-        <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
+        <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="fixed inset-x-0 bottom-0 z-[45] flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
           {hero?.state === "POSITION_OPEN" && position ? (
             <>
               <div className="min-w-0 flex-1 text-sm">

@@ -158,25 +158,26 @@ def test_the_documented_acceptance_replay_script_still_runs(tmp_path: Path) -> N
 
 
 @pytest.mark.parametrize(
-    ("name", "code", "stage"),
+    ("name", "expected"),
     [
-        ("buy_watch", "WATCH_BUY", "WATCHING"),
-        ("buy_armed", "WATCH_BUY", "ARMED"),
-        ("sell_watch", "WATCH_SELL", "WATCHING"),
-        ("sell_armed", "WATCH_SELL", "ARMED"),
-        ("sell_invalidated", "WAIT", "INVALIDATED"),
-        ("buy_tp", "BUY", "READY"),
-        ("sell_ready", "SELL", "READY"),
-        ("market_closed", "WAIT", "CLOSED"),
-        ("stale", "UNAVAILABLE", "STALE"),
+        ("buy_watch", ("WAIT", "WATCHING", "BUY", "SETUP")),
+        ("buy_armed", ("WAIT", "ARMED", "BUY", "TRIGGER")),
+        ("sell_watch", ("WAIT", "WATCHING", "SELL", "SETUP")),
+        ("sell_armed", ("WAIT", "ARMED", "SELL", "TRIGGER")),
+        ("sell_invalidated", ("WAIT", "INVALIDATED", None, None)),
+        ("buy_tp", ("BUY", "READY", "BUY", None)),
+        ("sell_ready", ("SELL", "READY", "SELL", None)),
+        ("market_closed", ("WAIT", "CLOSED", None, None)),
+        ("stale", ("UNAVAILABLE", "STALE", None, None)),
     ],
 )
 def test_each_lifecycle_state_is_reachable_with_its_action(
-    tmp_path: Path, name: str, code: str, stage: str
+    tmp_path: Path, name: str, expected: tuple[str, str, str | None, str | None]
 ) -> None:
+    """A lean of the market is a bias, never the primary action: only BUY/SELL are permission."""
     world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS[name])
     action = world.engine.view()["hero"]["action"]
-    assert (action["code"], action["stage"]) == (code, stage)
+    assert (action["code"], action["stage"], action["bias"], action["missing"]) == expected
     world.close()
 
 

@@ -22,7 +22,7 @@ for (const scheme of ["light", "dark"] as const) {
       await page.emulateMedia({ colorScheme: scheme });
       await mock(page, view(state), { markers: markersClosedGolden(), journal: journalClosedGolden() });
       await page.goto("/trade");
-      await expect(page.getByTestId("decision").or(page.getByTestId("api-down-banner"))).toBeVisible();
+      await expect(page.getByTestId("action-word").or(page.getByTestId("api-down-banner"))).toBeVisible();
       await audit(page);
     });
   }

@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { DEFAULT_PREFS, crossed, loadAlerts, loadLevels, loadPrefs, savePrefs, type PriceAlert } from "../../lib/prefs";
+import { DEFAULT_PREFS, crossed, loadAlerts, loadLevels, loadPrefs, migrateLegacy, saveAlerts, saveLevels, savePrefs, scopeOf, storageKey, type PriceAlert } from "../../lib/prefs";
+
+const LIVE = scopeOf("LIVE", "XAUUSD");
+const REPLAY = scopeOf("ACCEPTANCE_REPLAY", "XAUUSD");
 
 /** Local preferences: validated on read, never crash, never hold anything that authorises a trade. */
 
@@ -23,10 +26,10 @@ test("a hand-edited or old value falls back to the defaults field by field", () 
 });
 
 test("corrupt JSON and blocked storage never throw", () => {
-  fakeStorage({ "xau-edge.trade.prefs.v1": "{not json", "xau-edge.trade.levels.v1": "5", "xau-edge.trade.price-alerts.v1": "null" });
+  fakeStorage({ "xau-edge.trade.prefs.v1": "{not json", [storageKey(LIVE, "levels")]: "5", [storageKey(LIVE, "alerts")]: "null" });
   expect(loadPrefs()).toEqual(DEFAULT_PREFS);
-  expect(loadLevels()).toEqual([]);
-  expect(loadAlerts()).toEqual([]);
+  expect(loadLevels(LIVE)).toEqual([]);
+  expect(loadAlerts(LIVE)).toEqual([]);
   (globalThis as unknown as { window: unknown }).window = { localStorage: { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } } };
   expect(loadPrefs()).toEqual(DEFAULT_PREFS);
   expect(() => savePrefs(DEFAULT_PREFS)).not.toThrow();
@@ -45,4 +48,42 @@ test("a price alert fires once, only when the bid crosses in its direction", () 
   const down: PriceAlert = { ...up, direction: "DOWN", price: 4230 };
   expect(crossed(down, 4231, 4229.5)).toBe(true);
   expect(crossed(down, 4229, 4228)).toBe(false);
+});
+
+const alert = (price: number): PriceAlert => ({ id: `a${price}`, price, direction: "UP", createdAt: "", firedAt: null });
+
+test("levels and alerts are scoped by source mode and symbol: a replay tool never appears on LIVE", () => {
+  const data = fakeStorage();
+  saveAlerts(REPLAY, [alert(3350)]);
+  saveLevels(REPLAY, [{ id: "l", price: 3340, label: "Đường" }]);
+  expect(loadAlerts(LIVE)).toEqual([]);
+  expect(loadLevels(LIVE)).toEqual([]);
+  expect(loadAlerts(REPLAY).map((a) => a.price)).toEqual([3350]);
+  expect(loadAlerts(scopeOf("LIVE", "EURUSD"))).toEqual([]); // another symbol is another scope
+  expect(Object.keys(data).every((k) => k.startsWith("xau-edge:v3:"))).toBe(true);
+  expect(storageKey(LIVE, "alerts")).toBe("xau-edge:v3:LIVE:XAUUSD:alerts");
+  expect(storageKey(REPLAY, "levels")).toBe("xau-edge:v3:REPLAY:XAUUSD:levels");
+});
+
+test("migration moves the TRADE-06/07 keys into the first scope that loads, once, without destroying anything newer", () => {
+  const old = { "xau-edge.trade.price-alerts.v1": JSON.stringify([alert(4240)]), "xau-edge.trade.levels.v1": JSON.stringify([{ id: "l", price: 4200, label: "Đường" }, { id: "bad", price: -1, label: "x" }]) };
+  const data = fakeStorage(old);
+  expect(migrateLegacy(LIVE)).toEqual({ alerts: 1, levels: 1 });
+  expect(loadAlerts(LIVE).map((a) => a.price)).toEqual([4240]);
+  expect(loadLevels(LIVE).map((l) => l.price)).toEqual([4200]); // the invalid line is dropped, not carried over
+  expect("xau-edge.trade.price-alerts.v1" in data).toBe(false); // retired
+  expect(loadAlerts(REPLAY)).toEqual([]); // a second scope never inherits it
+  expect(migrateLegacy(REPLAY)).toEqual({ alerts: 0, levels: 0 });
+  // a scope that already has data keeps it: the old key is not read into it
+  const d2 = fakeStorage({ ...old, [storageKey(LIVE, "alerts")]: JSON.stringify([alert(5000)]) });
+  expect(migrateLegacy(LIVE).alerts).toBe(0);
+  expect(loadAlerts(LIVE).map((a) => a.price)).toEqual([5000]);
+  expect("xau-edge.trade.price-alerts.v1" in d2).toBe(false);
+});
+
+test("migration never throws when storage is blocked or the old value is corrupt", () => {
+  fakeStorage({ "xau-edge.trade.price-alerts.v1": "{broken", "xau-edge.trade.levels.v1": "7" });
+  expect(() => migrateLegacy(LIVE)).not.toThrow();
+  (globalThis as unknown as { window: unknown }).window = { localStorage: { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); }, removeItem() { throw new Error("blocked"); } } };
+  expect(migrateLegacy(LIVE)).toEqual({ alerts: 0, levels: 0 });
 });

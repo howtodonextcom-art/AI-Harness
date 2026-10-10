@@ -1,6 +1,6 @@
 {
  "provenance": "ACCEPTANCE_REPLAY of burned FTMO bars through the real TradeEngine; NOT LIVE",
- "code_version": "0f2052b-dirty",
+ "code_version": "a8d939c-dirty",
  "files": {
   "wait.json": "GET /trade/decision, ordinary WAIT",
   "sell.json": "GET /trade/decision, real SELL setup",

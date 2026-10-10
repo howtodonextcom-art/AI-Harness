@@ -217,7 +217,9 @@
  "generated_at": "2025-12-02T19:15:00+00:00",
  "hero": {
   "action": {
+   "bias": null,
    "code": "WAIT",
+   "missing": null,
    "side": null,
    "stage": "INVALIDATED",
    "thesis": null

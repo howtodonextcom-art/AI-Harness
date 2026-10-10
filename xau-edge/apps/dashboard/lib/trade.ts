@@ -27,10 +27,15 @@ export type HeroState =
   | "WAIT";
 
 export interface HeroAction {
-  code: "WAIT" | "WATCH_BUY" | "WATCH_SELL" | "BUY" | "SELL" | "HOLD" | "EXIT" | "UNAVAILABLE";
+  /** the primary action: only BUY and SELL are permission to open a paper trade */
+  code: "WAIT" | "BUY" | "SELL" | "HOLD" | "EXIT" | "UNAVAILABLE";
   stage: string;
   side: "BUY" | "SELL" | null;
+  /** which way the market leans while the action is still WAIT (a description, never permission) */
+  bias: "BUY" | "SELL" | null;
   thesis: "INTACT" | "WEAK" | "UNKNOWN" | null;
+  /** the one thing still absent while waiting */
+  missing: "SETUP" | "TRIGGER" | null;
   /** READY setup the desk would refuse: the action is WAIT, stage BLOCKED, and this is why (server text). */
   blocked_by?: { code: string; message: string };
 }
@@ -253,6 +258,8 @@ export interface PaperTrade {
   created_at: string;
   opened_at: string | null;
   closed_at?: string | null;
+  /** the server's single time exit: the paper desk closes the position at this instant at the latest */
+  max_hold_until?: string | null;
   planned_entry?: number | null;
   fill_price: number;
   sl: number;

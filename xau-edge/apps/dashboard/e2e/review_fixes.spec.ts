@@ -105,6 +105,9 @@ test("with the API failing there is no live ticket to click", async ({ page }) =
   await page.route("**/trade/decision", (route) => route.abort());
   await expect(page.getByTestId("api-down-banner")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("take-paper")).toBeDisabled();
+  // the last plan is folded away (history, not an instruction); unfolded it still says it cannot be used
+  await expect(page.getByTestId("stale-plan")).toBeVisible();
+  await page.getByTestId("stale-plan").locator("summary").click();
   await expect(page.getByTestId("plan-stale")).toBeVisible();
 });
 
@@ -125,14 +128,14 @@ test("a decimal comma works in the price alert and the calculator", async ({ pag
 test("single-key shortcuts can be switched off (WCAG 2.1.4) and the choice is remembered", async ({ page }) => {
   await mock(page, view("buy"));
   await page.goto("/trade");
-  await expect(page.getByTestId("decision")).toBeVisible();
+  await expect(page.getByTestId("action-word")).toBeVisible();
   await page.keyboard.press("?");
   await page.getByTestId("shortcuts-enabled").uncheck();
   await page.keyboard.press("Escape");
   await page.keyboard.press("h");
   await expect(page.getByTestId("chart-tf-H1")).toHaveAttribute("aria-pressed", "false");
   await page.reload();
-  await expect(page.getByTestId("decision")).toBeVisible();
+  await expect(page.getByTestId("action-word")).toBeVisible();
   await page.keyboard.press("h");
   await expect(page.getByTestId("chart-tf-H1")).toHaveAttribute("aria-pressed", "false"); // still off
 });
@@ -162,6 +165,6 @@ test("markers of another source mode are never drawn on this chart", async ({ pa
   const markers = { ...markersClosedGolden(), source_mode: "LIVE" as const }; // the view is a replay
   await mock(page, view("closedPaper"), { markers });
   await page.goto("/trade");
-  await expect(page.getByTestId("decision")).toBeVisible();
+  await expect(page.getByTestId("action-word")).toBeVisible();
   await expect(page.getByTestId("chart-markers").locator("li")).toHaveCount(0);
 });

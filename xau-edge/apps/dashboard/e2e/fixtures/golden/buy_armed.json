@@ -209,7 +209,9 @@
  "generated_at": "2025-12-01T11:15:00+00:00",
  "hero": {
   "action": {
-   "code": "WATCH_BUY",
+   "bias": "BUY",
+   "code": "WAIT",
+   "missing": "TRIGGER",
    "side": "BUY",
    "stage": "ARMED",
    "thesis": null

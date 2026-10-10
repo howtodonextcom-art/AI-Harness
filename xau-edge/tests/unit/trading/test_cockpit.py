@@ -420,12 +420,15 @@ def test_every_hero_state_maps_to_one_action() -> None:
         "code": "WAIT",
         "stage": "CLOSED",
         "side": None,
+        "bias": None,
         "thesis": None,
+        "missing": None,
     }
     assert action_for(_hero("EXITED"), wait, None)["code"] == "EXIT"
     assert action_for(_hero("EXPIRED_SETUP", "BUY"), buy, None)["code"] == "WAIT"
     for state in ("WAIT", "SETUP_ARMED"):
-        assert action_for(_hero(state), wait, None)["code"] in ("WAIT", "WATCH_BUY", "WATCH_SELL")
+        # a lean of the market is a bias, never the primary action
+        assert action_for(_hero(state), wait, None)["code"] == "WAIT"
 
 
 def test_a_ready_setup_the_desk_would_refuse_is_never_a_buy_or_sell() -> None:

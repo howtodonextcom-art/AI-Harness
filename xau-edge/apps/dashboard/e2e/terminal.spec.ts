@@ -97,7 +97,7 @@ test.describe("decision", () => {
     await mock(page, v);
     await page.goto("/trade");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "WAIT");
-    await expect(page.getByTestId("decision")).toHaveText("CHỜ");
+    await expect(page.getByTestId("action-word")).toHaveText("CHỜ");
     await expect(page.getByTestId("waiting-for")).toContainText("Đang chờ:");
     await expect(page.getByTestId("waiting-for")).toContainText("không phải dự báo");
     await expect(page.getByTestId("blocked-by")).toContainText("Mã chặn");
@@ -117,7 +117,7 @@ test.describe("decision", () => {
     const chosen = (r: number) => v.risk_plans!.find((p) => p.risk_pct === r)!;
     await mock(page, v);
     await page.goto("/trade");
-    await expect(page.getByTestId("decision")).toHaveText("SẴN SÀNG MUA");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "BUY_READY");
     await expect(page.getByTestId("hero")).toContainText("▲");
     await expect(page.getByTestId("line-ENTRY")).toHaveText(`ENTRY ${fixed(plan.planned_entry)}`);
     await expect(page.getByTestId("line-SL")).toHaveText(`SL ${fixed(plan.sl)}`);
@@ -136,7 +136,7 @@ test.describe("decision", () => {
   test("SELL is visibly different from BUY (icon, label, text, colour)", async ({ page }) => {
     await mock(page, view("sell"));
     await page.goto("/trade");
-    await expect(page.getByTestId("decision")).toHaveText("SẴN SÀNG BÁN");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "SELL_READY");
     await expect(page.getByTestId("hero")).toContainText("▼");
     await expect(page.getByTestId("plan-side")).toContainText("BÁN");
     await expect(page.getByTestId("take-paper")).toContainText("BÁN");
@@ -146,9 +146,10 @@ test.describe("decision", () => {
     await mock(page, view("stale"));
     await page.goto("/trade");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "STALE");
-    await expect(page.getByTestId("decision")).toHaveText("DỮ LIỆU CŨ");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "STALE");
     await expect(page.getByTestId("hero-problems")).toContainText("Dữ liệu giá đã quá cũ");
-    await expect(page.getByTestId("hero-problems")).toContainText("DATA_STALE");
+    await expect(page.getByTestId("hero-problems")).not.toContainText("DATA_STALE"); // the code is not in front of the trader
+    await expect(page.getByTestId("conditions").locator("details").first()).toContainText("DATA_STALE"); // ...it is in the technical details
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await expect(page.getByTestId("line-ENTRY")).toHaveCount(0);
     await expect(page.getByTestId("price-stale")).toBeVisible();
@@ -156,7 +157,7 @@ test.describe("decision", () => {
     await mock(page, view("writerConflict"));
     await page.goto("/trade");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "UNAVAILABLE");
-    await expect(page.getByTestId("decision")).toHaveText("KHÔNG THỂ TÍNH");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "UNAVAILABLE");
     await expect(page.getByTestId("conditions")).toContainText("quyền ghi");
 
     await mock(page, view("paperCorrupt"));
@@ -166,13 +167,13 @@ test.describe("decision", () => {
 
     await mock(page, view("marketClosed"));
     await page.goto("/trade");
-    await expect(page.getByTestId("decision")).toHaveText("THỊ TRƯỜNG ĐÓNG CỬA");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "MARKET_CLOSED");
   });
 
   test("an expired setup says HẾT HẠN and cannot be taken", async ({ page }) => {
     await mock(page, view("expired"));
     await page.goto("/trade");
-    await expect(page.getByTestId("decision")).toHaveText("HẾT HẠN");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "EXPIRED_SETUP");
     await expect(page.getByTestId("mobile-action-bar")).toHaveCount(0);
   });
 
@@ -180,10 +181,10 @@ test.describe("decision", () => {
     await page.route("**/trade/**", (route) => route.abort());
     await page.route("**/md/XAUUSD/bars**", (route) => route.abort());
     await page.goto("/trade");
-    await expect(page.getByTestId("api-down-banner")).toContainText("Không kết nối được API");
+    await expect(page.getByTestId("api-down-banner")).toContainText("Mất kết nối với máy chủ dữ liệu");
     await expect(page.getByTestId("api-down-banner")).toContainText("API_UNAVAILABLE");
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
-    await expect(page.getByTestId("decision")).toHaveCount(0);
+    await expect(page.getByTestId("action-word")).toHaveCount(0);
   });
 });
 
@@ -303,10 +304,10 @@ test.describe("chart", () => {
     const signal = list.locator('li[data-kind="BUY"]');
     await expect(signal).toHaveCount(1);
     await expect(signal).toHaveAttribute("data-bar-time", new Date(sig.bar_time).toISOString()); // M5: the trigger bar
-    await expect(signal).toContainText(`BUY signal @ ${fixed(sig.entry)}`);
+    await expect(signal).toContainText(`Tín hiệu MUA tại ${fixed(sig.entry)}`);
     const exit = list.locator('li[data-kind="EXIT"]');
     await expect(exit).toHaveCount(1);
-    await expect(exit).toContainText(`EXIT ${trade.exit_reason} @ ${fixed(trade.exit_price)}`);
+    await expect(exit).toContainText(`tại ${fixed(trade.exit_price)}`);
     await signal.getByRole("button", { name: "Xem chi tiết" }).focus(); // keyboard path: the list appears on focus
     await page.keyboard.press("Enter");
     const pop = page.getByTestId("marker-popover");
@@ -566,7 +567,7 @@ test.describe("timeframes and context", () => {
   test("keyboard shortcuts switch timeframe and tools but never touch an order; typing is not hijacked", async ({ page }) => {
     await mock(page, view("buy"));
     await page.goto("/trade");
-    await expect(page.getByTestId("decision")).toBeVisible(); // hydrated: the key handler is attached
+    await expect(page.getByTestId("action-word")).toBeVisible(); // hydrated: the key handler is attached
     await page.keyboard.press("h");
     await expect(page.getByTestId("chart-tf-H1")).toHaveAttribute("aria-pressed", "true");
     await page.keyboard.press("1");
@@ -717,7 +718,7 @@ test.describe("layouts", () => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto("/trade");
       await expect(page.getByTestId("price-bid")).toBeAttached();
-      await expect(page.getByTestId("decision")).toBeVisible();
+      await expect(page.getByTestId("action-word")).toBeVisible();
       const chart = await chartBox(page);
       expect(chart.width).toBeGreaterThan(Math.min(300, vp.width - 40));
       expect(chart.height).toBeGreaterThan(220);
@@ -728,7 +729,7 @@ test.describe("layouts", () => {
   test("desktop: price, decision, chart and the multi-timeframe strip are all in the first screen", async ({ page }) => {
     await mock(page, view("buy"));
     await page.goto("/trade");
-    for (const id of ["market-bar", "decision", "trade-chart", "matrix-H1", "take-paper"]) {
+    for (const id of ["market-bar", "action-word", "trade-chart", "matrix-H1", "take-paper"]) {
       const box = await page.getByTestId(id).boundingBox();
       expect(box, id).not.toBeNull();
       expect(box!.y, id).toBeLessThan(900);
@@ -740,8 +741,8 @@ test.describe("layouts", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/trade");
     const y = async (id: string) => (await page.getByTestId(id).boundingBox())!.y;
-    expect(await y("market-bar")).toBeLessThan(await y("decision"));
-    expect(await y("decision")).toBeLessThan(await y("trade-chart"));
+    expect(await y("market-bar")).toBeLessThan(await y("action-word"));
+    expect(await y("action-word")).toBeLessThan(await y("trade-chart"));
     expect(await y("trade-chart")).toBeLessThan(await y("plan-card"));
     expect(await y("trade-chart")).toBeLessThan(844); // the chart is on the first screen
     await expect(page.getByTestId("mobile-action-bar")).toBeVisible();
@@ -766,7 +767,7 @@ test.describe("layouts", () => {
     await mock(page, view("wait"));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/trade");
-    await expect(page.getByTestId("decision")).toHaveText("CHỜ");
+    await expect(page.getByTestId("action-word")).toHaveText("CHỜ");
     await expect(page.getByTestId("mobile-action-bar")).toHaveCount(0);
   });
 
@@ -785,7 +786,7 @@ test.describe("layouts", () => {
     await page.emulateMedia({ colorScheme: "dark" });
     await mock(page, view("buy"));
     await page.goto("/trade");
-    await expect(page.getByTestId("decision")).toBeVisible();
+    await expect(page.getByTestId("action-word")).toBeVisible();
     await expect(page.getByTestId("ohlc-readout")).toBeVisible();
     expect(errors).toEqual([]);
   });
@@ -806,4 +807,76 @@ test("AUTO_PAPER is visible when it is on and absent when it is off", async ({ p
   await mock(page, { ...view("wait"), auto_paper: false });
   await page.goto("/trade");
   await expect(page.getByTestId("auto-paper-banner")).toHaveCount(0);
+});
+
+test.describe("chart label collisions (TRADE-08)", () => {
+  const seed = (page: Page, levels: number[], alerts: number[]) =>
+    page.addInitScript(
+      ([lv, al]) => {
+        localStorage.setItem("xau-edge:v3:REPLAY:XAUUSD:levels", JSON.stringify((lv as number[]).map((p, i) => ({ id: `l${i}`, price: p, label: "Đường" }))));
+        localStorage.setItem("xau-edge:v3:REPLAY:XAUUSD:alerts", JSON.stringify((al as number[]).map((p, i) => ({ id: `a${i}`, price: p, direction: "UP", createdAt: "", firedAt: null }))));
+      },
+      [levels, alerts],
+    );
+
+  test("entry, SL, TP, last price, manual levels and alerts within a label's height: the plan keeps its labels, the rest yield", async ({ page }) => {
+    const v = view("buy");
+    const e = v.trade_plan!.planned_entry!;
+    await seed(page, [e + 0.05, e - 0.08, e + 0.12], [e + 0.2, e - 0.15]);
+    await mock(page, v);
+    await page.goto("/trade");
+    const chart = page.getByTestId("trade-chart");
+    await expect(page.getByTestId("line-ENTRY")).toBeVisible(); // the legend always lists every line
+    await expect.poll(async () => Number(await chart.getAttribute("data-hidden-axis-labels"))).toBeGreaterThanOrEqual(4);
+    // the five trader tools and the last price crowd the entry: at most the entry keeps one label in that band
+    await expect.poll(async () => Number(await chart.getAttribute("data-hidden-axis-labels"))).toBeLessThanOrEqual(6);
+    const legend = page.getByTestId("chart-legend");
+    await expect(legend).toContainText("ENTRY");
+    await expect(legend).toContainText("SL");
+    await expect(legend).toContainText("TP1");
+    await expect(legend.locator("li")).toHaveCount(4 + 3 + 2); // entry, SL, TP1, TP2 + 3 levels + 2 alerts: nothing is removed from the legend
+  });
+
+  test("far apart lines keep every label", async ({ page }) => {
+    const v = view("buy");
+    const e = v.trade_plan!.planned_entry!;
+    await seed(page, [e + 18], []);
+    await mock(page, v);
+    await page.goto("/trade");
+    const chart = page.getByTestId("trade-chart");
+    await expect(page.getByTestId("line-ENTRY")).toBeVisible();
+    await page.waitForTimeout(1800);
+    // entry/SL/TP1/TP2 are a few price units apart on a ~50-unit scale: at most the last-price tag yields next to the entry
+    expect(Number(await chart.getAttribute("data-hidden-axis-labels"))).toBeLessThanOrEqual(1);
+  });
+
+  test("a setup, a signal, the paper entry and the exit on the same or adjacent bars: every marker has a detail and no label pile-up", async ({ page }) => {
+    const markers = markersClosedGolden();
+    await mock(page, view("closedPaper"), { markers });
+    await page.goto("/trade");
+    const chart = page.getByTestId("trade-chart");
+    await expect(page.getByTestId("chart-markers").locator("li")).toHaveCount(3); // signal, entry, exit: every one reachable by keyboard
+    await expect.poll(async () => await chart.getAttribute("data-marker-sig")).not.toBeNull();
+    const hidden = Number(await chart.getAttribute("data-hidden-marker-labels"));
+    expect(hidden).toBeGreaterThanOrEqual(0);
+    // zoomed far out the markers crowd together: labels yield, shapes and details stay
+    const box = await chartBox(page);
+    await page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.5);
+    await page.mouse.wheel(0, 900);
+    await expect.poll(async () => Number(await chart.getAttribute("data-hidden-marker-labels"))).toBeGreaterThanOrEqual(hidden);
+    await expect(page.getByTestId("chart-markers").locator("li")).toHaveCount(3);
+  });
+
+  test("the marker popover names the display zone, shows the exit time and says MUA/BÁN", async ({ page }) => {
+    await mock(page, view("closedPaper"), { markers: markersClosedGolden() });
+    await page.goto("/trade");
+    const exit = page.getByTestId("chart-markers").locator('li[data-kind="EXIT"]');
+    await exit.getByRole("button", { name: "Xem chi tiết" }).focus();
+    await page.keyboard.press("Enter");
+    const pop = page.getByTestId("marker-popover");
+    await expect(page.getByTestId("popover-zone")).toContainText("Giờ hiển thị:");
+    await expect(page.getByTestId("popover-exit-time")).toContainText(/\d{4}-\d\d-\d\d \d\d:\d\d/);
+    await expect(pop).toContainText("MUA");
+    await expect(pop).not.toContainText(/\bBUY\b|\bSELL\b/);
+  });
 });

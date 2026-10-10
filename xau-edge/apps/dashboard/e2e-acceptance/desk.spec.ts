@@ -44,15 +44,15 @@ test.describe("replay is always labelled", () => {
   test("WAIT: market bar, pipeline, what is awaited, clickable stages", async ({ page, request }) => {
     await load(page, request, "wait");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "WAIT");
-    await expect(page.getByTestId("decision")).toHaveText("CHỜ");
+    await expect(page.getByTestId("action-word")).toHaveText("CHỜ");
     await expect(page.getByTestId("replay-banner")).toContainText("KHÔNG PHẢI LIVE");
     await expect(page.getByTestId("source-pill")).toContainText("NOT LIVE");
     await expect(page.getByTestId("price-bid")).not.toHaveText("—");
     await expect(page.getByTestId("day-change")).not.toHaveText("—");
     await expect(page.getByTestId("session")).not.toHaveText("—");
     await expect(page.getByTestId("countdown")).toContainText("đóng sau");
-    await expect(page.getByTestId("waiting-for")).toBeVisible();
-    await expect(page.getByTestId("blocked-by")).toBeVisible();
+    await expect(page.getByTestId("waiting-for")).toBeAttached();
+    await expect(page.getByTestId("blocked-by")).toBeAttached();
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await expect(page.getByTestId("status-strip")).toHaveCount(0); // engineering status is in the System tab
     const stages = page.getByTestId("stages").getByRole("button");
@@ -74,7 +74,7 @@ test.describe("replay is always labelled", () => {
   test("real BUY setup: plan, chart lines, confirmation, paper position", async ({ page, request }) => {
     await load(page, request, "buy_tp");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "BUY_READY");
-    await expect(page.getByTestId("decision")).toHaveText("SẴN SÀNG MUA");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "BUY_READY");
     for (const id of ["plan-entry", "plan-sl", "plan-tp", "plan-rr", "plan-lots", "plan-risk", "plan-version"]) {
       await expect(page.getByTestId(id)).not.toContainText("—");
     }
@@ -103,7 +103,7 @@ test.describe("replay is always labelled", () => {
   test("real SELL setup", async ({ page, request }) => {
     await load(page, request, "sell_ready");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "SELL_READY");
-    await expect(page.getByTestId("decision")).toHaveText("SẴN SÀNG BÁN");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "SELL_READY");
     await expect(page.getByTestId("plan-side")).toContainText("BÁN");
     await expect(page.getByTestId("replay-banner")).toContainText("KHÔNG PHẢI LIVE");
     await shot(page, "05-replay-sell-ready");
@@ -255,7 +255,7 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
 
   test("expired setup cannot be opened", async ({ page, request }) => {
     await load(page, request, "expired");
-    await expect(page.getByTestId("decision")).toHaveText("HẾT HẠN");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "EXPIRED_SETUP");
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await shot(page, "15-replay-expired");
   });
@@ -289,7 +289,7 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
   test("market closed", async ({ page, request }) => {
     await load(page, request, "market_closed");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "MARKET_CLOSED");
-    await expect(page.getByTestId("decision")).toHaveText("THỊ TRƯỜNG ĐÓNG CỬA");
+    await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "MARKET_CLOSED");
     await expect(page.getByTestId("session")).toHaveText("Ngoài giờ giao dịch");
     await expect(page.getByTestId("reopen-at")).toContainText("mở lại lúc");
     await expect(page.getByTestId("countdown")).toContainText("Mở lại lúc");
@@ -362,18 +362,20 @@ test.describe("layouts", () => {
 });
 
 test.describe("action lifecycle through the real API: WAIT, WATCH, READY, HOLD, EXIT", () => {
-  const WATCHES: [string, string, string][] = [
-    ["buy_watch", "WATCH_BUY", "THEO DÕI MUA"],
-    ["buy_armed", "WATCH_BUY", "THEO DÕI MUA"],
-    ["sell_watch", "WATCH_SELL", "THEO DÕI BÁN"],
-    ["sell_armed", "WATCH_SELL", "THEO DÕI BÁN"],
+  const WATCHES: [string, string][] = [
+    ["buy_watch", "BUY"],
+    ["buy_armed", "BUY"],
+    ["sell_watch", "SELL"],
+    ["sell_armed", "SELL"],
   ];
-  for (const [scenario, code, word] of WATCHES) {
-    test(`${scenario}: ${code} says when, offers no order`, async ({ page, request }) => {
+  for (const [scenario, bias] of WATCHES) {
+    test(`${scenario}: the bias is ${bias} but the action is CHỜ, it says when and offers no order`, async ({ page, request }) => {
       await load(page, request, scenario);
-      await expect(hero(page)).toHaveAttribute("data-action", code);
-      await expect(page.getByTestId("action-word")).toHaveText(word);
-      await expect(page.getByTestId("action-when")).toContainText("Khi nào?");
+      await expect(hero(page)).toHaveAttribute("data-action", "WAIT");
+      await expect(hero(page)).toHaveAttribute("data-bias", bias);
+      await expect(page.getByTestId("action-word")).toHaveText("CHỜ");
+      await expect(page.getByTestId("no-entry")).toBeVisible();
+      await expect(page.getByTestId("action-when")).toContainText(`Chỉ ${bias === "BUY" ? "MUA" : "BÁN"} khi:`);
       await expect(page.getByTestId("take-paper")).toHaveCount(0);
       await noHorizontalScroll(page);
       await shot(page, `lifecycle-${scenario}`);
@@ -391,7 +393,7 @@ test.describe("action lifecycle through the real API: WAIT, WATCH, READY, HOLD, 
     await expect(hero(page)).toHaveAttribute("data-action", "BUY");
     await openPaper(page);
     await expect(hero(page)).toHaveAttribute("data-action", "HOLD");
-    await expect(page.getByTestId("action-word")).toHaveText("GIỮ LỆNH");
+    await expect(page.getByTestId("action-word")).toHaveText("GIỮ VỊ THẾ");
     await advance(request, 110);
     await advance(request, 15); // past max hold, still inside the 30-minute EXIT banner
     await expect(hero(page)).toHaveAttribute("data-action", "EXIT", { timeout: 30_000 });

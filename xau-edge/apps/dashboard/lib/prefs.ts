@@ -44,8 +44,9 @@ export const DEFAULT_PREFS: Prefs = {
 };
 
 const PREFS_KEY = "xau-edge.trade.prefs.v1";
-const LEVELS_KEY = "xau-edge.trade.levels.v1";
-const ALERTS_KEY = "xau-edge.trade.price-alerts.v1";
+// TRADE-06/07 keys (not scoped by source): read once by `migrateLegacy`, then retired
+const LEGACY_LEVELS_KEY = "xau-edge.trade.levels.v1";
+const LEGACY_ALERTS_KEY = "xau-edge.trade.price-alerts.v1";
 
 const RISKS = [0.1, 0.25, 0.5];
 const TFS = ["M1", "M5", "M15", "M30", "H1", "H4"];
@@ -99,6 +100,26 @@ export function savePrefs(prefs: Prefs): void {
   write(PREFS_KEY, prefs);
 }
 
+// ---- where the trader's own tools live: one scope per source mode and symbol ------------------------
+//
+// A level or an alert drawn on REPLAY prices must never appear on the LIVE chart (or the reverse), even
+// when both are served from the same browser origin: the storage key itself carries the source.
+
+export interface Scope {
+  /** LIVE, or REPLAY for every non-live source (acceptance replay, ...) */
+  mode: "LIVE" | "REPLAY";
+  symbol: string;
+}
+
+export const scopeOf = (sourceMode: string | null | undefined, symbol: string | null | undefined): Scope => ({
+  mode: sourceMode === "LIVE" ? "LIVE" : "REPLAY",
+  symbol: (symbol ?? "XAUUSD").toUpperCase(),
+});
+
+export const scopeId = (s: Scope) => `${s.mode}:${s.symbol}`;
+export const scopeLabel = (s: Scope) => `${s.mode === "LIVE" ? "LIVE" : "REPLAY (không phải live)"} ${s.symbol}`;
+export const storageKey = (s: Scope, kind: "alerts" | "levels") => `xau-edge:v3:${s.mode}:${s.symbol}:${kind}`;
+
 // ---- the trader's own horizontal lines (no effect on any decision) ------------------------------
 
 export interface ManualLevel {
@@ -108,15 +129,15 @@ export interface ManualLevel {
 }
 
 const validPrice = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v > 0;
+const validLevels = (raw: unknown): ManualLevel[] =>
+  Array.isArray(raw) ? raw.filter((l) => l && typeof l.id === "string" && validPrice(l.price)).slice(0, 20) : [];
 
-export function loadLevels(): ManualLevel[] {
-  const raw = read<ManualLevel[]>(LEVELS_KEY);
-  if (!Array.isArray(raw)) return [];
-  return raw.filter((l) => l && typeof l.id === "string" && validPrice(l.price)).slice(0, 20);
+export function loadLevels(scope: Scope): ManualLevel[] {
+  return validLevels(read<ManualLevel[]>(storageKey(scope, "levels")));
 }
 
-export function saveLevels(levels: ManualLevel[]): void {
-  write(LEVELS_KEY, levels.slice(0, 20));
+export function saveLevels(scope: Scope, levels: ManualLevel[]): void {
+  write(storageKey(scope, "levels"), levels.slice(0, 20));
 }
 
 // ---- price alerts: evaluated in the open page only, they never trade ----------------------------
@@ -130,16 +151,49 @@ export interface PriceAlert {
   firedAt: string | null;
 }
 
-export function loadAlerts(): PriceAlert[] {
-  const raw = read<PriceAlert[]>(ALERTS_KEY);
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((a) => a && typeof a.id === "string" && validPrice(a.price) && (a.direction === "UP" || a.direction === "DOWN"))
-    .slice(0, 30);
+const validAlerts = (raw: unknown): PriceAlert[] =>
+  Array.isArray(raw)
+    ? raw.filter((a) => a && typeof a.id === "string" && validPrice(a.price) && (a.direction === "UP" || a.direction === "DOWN")).slice(0, 30)
+    : [];
+
+export function loadAlerts(scope: Scope): PriceAlert[] {
+  return validAlerts(read<PriceAlert[]>(storageKey(scope, "alerts")));
 }
 
-export function saveAlerts(alerts: PriceAlert[]): void {
-  write(ALERTS_KEY, alerts.slice(0, 30));
+export function saveAlerts(scope: Scope, alerts: PriceAlert[]): void {
+  write(storageKey(scope, "alerts"), alerts.slice(0, 30));
+}
+
+/**
+ * One-time, non-destructive migration of the TRADE-06/07 keys. The old data belongs to the origin it was
+ * written on, and an origin serves one source in practice, so the first scope that loads claims it:
+ * it is copied into that scope (only when the scope has nothing of its own) and the old key is retired.
+ * If the scope already has data the old key is left untouched and never read again.
+ */
+export function migrateLegacy(scope: Scope): { alerts: number; levels: number } {
+  const moved = { alerts: 0, levels: 0 };
+  try {
+    const ls = window.localStorage;
+    const oldAlerts = validAlerts(read<PriceAlert[]>(LEGACY_ALERTS_KEY));
+    if (ls.getItem(LEGACY_ALERTS_KEY) !== null) {
+      if (ls.getItem(storageKey(scope, "alerts")) === null && oldAlerts.length > 0) {
+        write(storageKey(scope, "alerts"), oldAlerts);
+        moved.alerts = oldAlerts.length;
+      }
+      ls.removeItem(LEGACY_ALERTS_KEY);
+    }
+    const oldLevels = validLevels(read<ManualLevel[]>(LEGACY_LEVELS_KEY));
+    if (ls.getItem(LEGACY_LEVELS_KEY) !== null) {
+      if (ls.getItem(storageKey(scope, "levels")) === null && oldLevels.length > 0) {
+        write(storageKey(scope, "levels"), oldLevels);
+        moved.levels = oldLevels.length;
+      }
+      ls.removeItem(LEGACY_LEVELS_KEY);
+    }
+  } catch {
+    /* storage unavailable: nothing to migrate */
+  }
+  return moved;
 }
 
 /** Pure crossing test: which alerts fire when the price moves from ``prev`` to ``now``. */

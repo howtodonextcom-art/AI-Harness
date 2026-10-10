@@ -61,6 +61,12 @@ export const BLOCKER_VI: Record<string, string> = {
   COOLDOWN: "Đang nghỉ sau lệnh trước.",
   OPEN_POSITION: "Đang có lệnh paper mở.",
   DUPLICATE_SETUP: "Setup này đã được vào lệnh rồi, không mở lại.",
+  RISK_LIMIT: "Đang có lệnh mở hoặc đã chạm giới hạn rủi ro tổng: không mở thêm.",
+  DAILY_LIMIT: "Đã chạm giới hạn số lệnh hoặc mức lỗ trong ngày/phiên.",
+  STALE_DATA: "Dữ liệu thị trường chưa đủ mới để vào lệnh.",
+  NOT_ACTIONABLE: "Kế hoạch chưa đầy đủ nên chưa mở được.",
+  RISK_INVALID: "Kế hoạch rủi ro không hợp lệ (lot, SL hoặc R/R).",
+  NO_SYMBOL_SPEC: "Thiếu thông số hợp đồng của broker nên không tính được lot.",
   QUOTE_STALE: "Giá quá cũ để khớp lệnh.",
 };
 
@@ -175,3 +181,20 @@ export function invalidationText(text: string | null): string | null {
 }
 
 export const PAPER_ACCOUNT_VI = "Tài khoản PAPER (vốn giả lập, không phải tài khoản FTMO)";
+
+/** Plain Vietnamese for the market-state words the engine logs with a trade (the raw word stays the fallback). */
+const STATE_VI: Record<string, string> = {
+  BULLISH: "tăng", BEARISH: "giảm", NEUTRAL: "đi ngang", RANGE: "đi ngang", TREND_UP: "xu hướng tăng", TREND_DOWN: "xu hướng giảm",
+  UNKNOWN: "chưa rõ", NORMAL: "bình thường", LOW: "thấp", HIGH: "cao", SHOCK: "đột biến", QUIET: "yên ắng", GOOD: "tốt", ELEVATED: "nhỉnh", WIDE: "rộng",
+  PULLBACK: "pullback", WAITING: "đang chờ", FLAT: "đi ngang", TRIGGERED: "đã kích hoạt", ARMED: "đã hình thành", NONE: "chưa có",
+  VERIFIED: "đã xác minh", NOT_VERIFIED: "chưa xác minh", NEWS_UNKNOWN: "chưa xác minh",
+  ASIA: "phiên Á", LONDON: "phiên Âu", NEW_YORK: "phiên Mỹ", LONDON_NY_OVERLAP: "Âu-Mỹ chồng phiên",
+};
+export const viState = (v: unknown): string => {
+  const raw = v === null || v === undefined || v === "" ? "—" : String(v);
+  return STATE_VI[raw] ?? raw;
+};
+
+/** Where a record came from, in words a trader does not need a glossary for. */
+export const sourceText = (mode: string | null | undefined): string =>
+  mode === "LIVE" ? "LIVE (thị trường thật, chỉ giao dịch PAPER)" : mode === "ACCEPTANCE_REPLAY" ? "ACCEPTANCE REPLAY — dữ liệu lịch sử phát lại, KHÔNG PHẢI LIVE" : `${mode ?? "?"} (không phải live)`;

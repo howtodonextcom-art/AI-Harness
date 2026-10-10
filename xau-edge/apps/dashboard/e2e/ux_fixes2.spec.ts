@@ -20,19 +20,19 @@ test("a ready setup updates the tab title (LIVE only, once per setup) and the op
 test("replay and WAIT never retitle the tab", async ({ page }) => {
   await mock(page, view("buy")); // a replay
   await page.goto("/trade");
-  await expect(page.getByTestId("decision")).toBeVisible();
+  await expect(page.getByTestId("action-word")).toBeVisible();
   await expect(page).toHaveTitle(/Terminal giao dịch PAPER/);
   await mock(page, live(view("wait")));
   await page.reload();
-  await expect(page.getByTestId("decision")).toHaveText("CHỜ");
+  await expect(page.getByTestId("action-word")).toHaveText("CHỜ");
   await expect(page).toHaveTitle(/Terminal giao dịch PAPER/);
 });
 
 test("the waiting panel gives one reason and how far the pipeline got", async ({ page }) => {
   await mock(page, view("wait"));
   await page.goto("/trade");
-  await expect(page.getByTestId("stages-progress")).toContainText(/Đã đạt \d\/8 điều kiện/);
-  await expect(page.getByTestId("waiting-for")).toBeVisible();
+  await expect(page.getByTestId("stages-progress")).toContainText(/đạt \d\/8/);
+  await expect(page.getByTestId("waiting-for")).toBeAttached();
   await expect(page.getByTestId("blocked-by")).toContainText("Mã chặn");
 });
 
@@ -73,7 +73,7 @@ test("the journal breaks results down by exit reason and by week and shows prove
   await page.getByTestId("journal-detail-toggle").first().click();
   const detail = page.getByTestId("journal-detail");
   await expect(detail).toContainText("Phiên bản mã");
-  await expect(detail).toContainText("ACCEPTANCE_REPLAY");
+  await expect(detail).toContainText("ACCEPTANCE REPLAY");
   expect(await detail.evaluate((el) => el.tagName)).toBe("DL");
 });
 
