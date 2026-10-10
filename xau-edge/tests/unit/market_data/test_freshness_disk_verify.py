@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import shutil
 import threading
+from collections import namedtuple
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -13,6 +15,7 @@ from tests.unit.market_data.test_collector_ledger import FakeClient, bars, make_
 from tests.unit.market_data.test_tick_ledger import ticks, window
 from xau_edge.domain.market import MarketStatus
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.market_data import disk
 from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.market_data.disk import DiskThresholds, disk_report
 from xau_edge.market_data.event_log import append_event, read_events
@@ -161,3 +164,27 @@ def test_verify_ticks_detects_crossed_quotes_and_changed_history(tmp_path: Path)
     assert not report["ok"]
     assert report["crossed_ticks"] == 2
     assert any("historical days changed" in p for p in report["problems"])
+
+
+def test_drives_report_flags_a_nearly_full_drive_that_does_not_hold_the_data(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    usage = namedtuple("usage", "total used free")
+    anchor = tmp_path.resolve().anchor
+    monkeypatch.setattr(disk, "_drive_roots", lambda: [Path(anchor), Path("Q:/")])
+    monkeypatch.setattr(
+        shutil,
+        "disk_usage",
+        lambda p: (
+            usage(100e9, 87e9, 13e9)
+            if str(p).upper().startswith("Q")
+            else usage(200e9, 100e9, 100e9)
+        ),
+    )
+    report = disk.drives_report(tmp_path)
+    by_level = {d["drive"]: d for d in report}
+    low = next(d for d in report if str(d["drive"]).upper().startswith("Q"))
+    assert low["level"] == "WARN" and low["free_gb"] == 13.0 and low["holds_market_data"] is False
+    holder = next(d for d in report if d["holds_market_data"])
+    assert holder["level"] == "GOOD"
+    assert len(by_level) == 2

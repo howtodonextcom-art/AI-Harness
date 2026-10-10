@@ -24,7 +24,7 @@ import polars as pl
 from xau_edge.domain.market import FeedHealth, MarketStatus, Quote
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.atomic import atomic_write_text
-from xau_edge.market_data.disk import disk_report
+from xau_edge.market_data.disk import disk_report, drives_report
 from xau_edge.market_data.freshness import (
     bar_freshness,
     consistency_warnings,
@@ -434,6 +434,8 @@ class MarketCollector:
             if (e.get("timeframe"), t) not in repaired
         )
         disk = disk_report(self.ledger.root, self.symbol)
+        drives = drives_report(self.ledger.root)
+        disk = {**disk, "drives": drives}
         tick_store = self._tick_store(now)
         health, reasons, stale = evaluate_health(
             connected=bool(facts.connected),
@@ -450,6 +452,9 @@ class MarketCollector:
         warnings = consistency_warnings(quote, self._last_forming)
         if disk["level"] == "WARN":
             warnings.append("disk space is getting low")
+        for drive in drives:
+            if drive["level"] != "GOOD" and not drive["holds_market_data"]:
+                warnings.append(f"drive {drive['drive']} has only {drive['free_gb']} GB free")
         return CollectorStatus(
             updated_at=now.isoformat(),
             health=health.value,

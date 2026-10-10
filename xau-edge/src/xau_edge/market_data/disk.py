@@ -7,6 +7,7 @@ stored day), not guessed.
 
 from __future__ import annotations
 
+import os
 import shutil
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -57,3 +58,47 @@ def disk_report(
         "estimated_days_remaining": None if days_left is None else round(days_left),
         "thresholds": asdict(limit),
     }
+
+
+def _drive_roots() -> list[Path]:
+    """Every fixed drive that exists (Windows letters), or just the filesystem root elsewhere."""
+    if os.name != "nt":
+        return [Path("/")]
+    return [Path(f"{c}:\\") for c in "CDEFGHIJKLMNOPQRSTUVWXYZ" if Path(f"{c}:\\").exists()]
+
+
+def drives_report(
+    data_root: Path, thresholds: DiskThresholds | None = None
+) -> list[dict[str, object]]:
+    """Free space of EVERY drive, flagged when it is under the warning threshold.
+
+    The collector only watched the drive holding the market data; the drive with MT5 and Windows
+    (where a full disk stops the terminal itself) was invisible. A WARN here never changes the feed
+    health, it is shown in the System health panel.
+    """
+    limit = thresholds or DiskThresholds()
+    holder = data_root.resolve().anchor.upper() if data_root.exists() else ""
+    out: list[dict[str, object]] = []
+    for root in _drive_roots():
+        try:
+            usage = shutil.disk_usage(root)
+        except OSError:
+            continue
+        free_gb = usage.free / 1e9
+        level = (
+            "CRITICAL"
+            if free_gb < limit.critical_free_gb
+            else "WARN"
+            if free_gb < limit.warn_free_gb
+            else "GOOD"
+        )
+        out.append(
+            {
+                "drive": str(root).rstrip(r"\/"),
+                "free_gb": round(free_gb, 1),
+                "total_gb": round(usage.total / 1e9, 1),
+                "level": level,
+                "holds_market_data": str(root).upper() == holder,
+            }
+        )
+    return out
