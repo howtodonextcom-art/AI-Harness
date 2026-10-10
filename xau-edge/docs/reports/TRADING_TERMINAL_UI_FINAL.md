@@ -35,7 +35,7 @@ Mã phương án thua đã gỡ. Bằng chứng thêm: bài kiểm tra "5 giây"
 ## 3. Báo cáo 61 mục
 
 1. **HEAD khởi đầu:** `6d75582`.
-2. **HEAD cuối:** xem `git log` (commit `TRADE-06g` và các commit tài liệu cuối).
+2. **HEAD cuối:** xem `git log` (commit `TRADE-06h` là commit tài liệu cuối).
 3. **Skill ECC tìm thấy:** 293 trong `ECC/skills`; liên quan: 11 (mục 1).
 4. **Skill thực dùng:** frontend-design-direction, frontend-a11y, browser-qa, e2e-testing, react-patterns, react-performance, verification-loop, product-lens.
 5. **Vấn đề UI baseline:** mục 2 và `TRADING_UI_BEFORE_AFTER.md` §2.
@@ -93,7 +93,7 @@ Mã phương án thua đã gỡ. Bằng chứng thêm: bài kiểm tra "5 giây"
 57. **Ma trận tính năng cơ bản:** mục 6.
 58. **Tính năng hoãn và lý do:** mục 7.
 59. **Số test:** `pytest -m "not mt5"` 2545 passed, 1 SKIP (symlink cần quyền trên Windows), 0 XFAIL; `pytest -m mt5` 3 passed; dashboard 175 test (89 e2e mock trên golden thật, unit thuần, 17 axe, journal, các hồi quy review) + 21 ca nghiệm thu trình duyệt thật trên API replay; ruff, `mypy --strict`, eslint, `tsc`, `next build` PASS.
-60. **CI:** CI_RESULT
+60. **CI:** xanh trên `384db68` (Windows và Ubuntu py3.12–3.14, dashboard lint/types/build); commit tài liệu cuối chỉ đổi Markdown
 61. **Chủ có thể làm gì hôm nay:** mở `/trade`, đọc giá/ngữ cảnh/trạng thái, xem kế hoạch, mở và đóng lệnh paper qua hộp xác nhận, xem vị thế, hoạt động, journal (lọc, thống kê, CSV), đặt cảnh báo giá, vẽ đường ngang, đo, bật thông báo setup. Việc của chủ: cấu hình Telegram (cảnh báo khi đóng trình duyệt), cung cấp nguồn lịch kinh tế nếu muốn.
 
 ## 4. Các lỗi tìm thấy qua review độc lập và cách xử lý
