@@ -33,7 +33,7 @@ test("corrupt JSON and blocked storage never throw", () => {
 });
 
 test("preferences hold no authorisation, strategy choice or credential", () => {
-  expect(Object.keys(DEFAULT_PREFS).sort()).toEqual(["follow", "history", "overlays", "risk", "tab", "tf", "zone"]);
+  expect(Object.keys(DEFAULT_PREFS).sort()).toEqual(["follow", "history", "overlays", "risk", "shortcuts", "tab", "tf", "zone"]);
 });
 
 test("a price alert fires once, only when the bid crosses in its direction", () => {

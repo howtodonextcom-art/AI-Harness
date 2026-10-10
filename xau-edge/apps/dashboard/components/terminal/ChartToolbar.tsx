@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { parseDecimal } from "@/lib/chartMath";
 import type { Overlays } from "@/lib/prefs";
 import type { Tool } from "@/components/terminal/TerminalChart";
 
@@ -47,7 +48,7 @@ export function ChartToolbar(p: Props) {
   const [price, setPrice] = useState("");
 
   const submitAlert = () => {
-    const v = Number(price);
+    const v = parseDecimal(price);
     if (v > 0 && Number.isFinite(v)) {
       p.onAlert(v);
       setPrice("");

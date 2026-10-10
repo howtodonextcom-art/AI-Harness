@@ -27,6 +27,13 @@ export function signalBarIndex(times: number[], atSeconds: number, tfSeconds: nu
   return tfSeconds <= 300 ? barIndexAt(times, atSeconds - tfSeconds) : barIndexAt(times, atSeconds);
 }
 
+/** A number typed on a Vietnamese keyboard may use a decimal comma ("4050,5"); NaN when it is not a number. */
+export function parseDecimal(text: string): number {
+  const t = text.trim().replace(/\s/g, "");
+  if (t === "") return Number.NaN;
+  return Number(t.includes(",") && !t.includes(".") ? t.replace(",", ".") : t);
+}
+
 /** Countdown text ``mm:ss`` (or ``h:mm:ss``) to ``closeMs`` on the server-corrected clock. */
 export function countdownText(closeMs: number | null, serverNowMs: number): string | null {
   if (closeMs === null) return null;

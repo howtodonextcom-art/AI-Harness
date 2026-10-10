@@ -142,6 +142,12 @@
   "blockers": [],
   "can_open": true,
   "closure_policy": "BLOCK_NEW_NEAR_CLOSE",
+  "limits": {
+   "daily_loss_pct": 0.0,
+   "daily_loss_stop_pct": 2.0,
+   "day_start_equity": 10000.0,
+   "max_trades_per_day": 6
+  },
   "position": null,
   "today": {
    "losses": 0,
@@ -250,6 +256,7 @@
    "range": 44.9699999999998,
    "range_position": 0.14809873248832298
   },
+  "next_open": null,
   "server_time": "2025-08-14T18:05:00+00:00",
   "session": {
    "code": "NEW_YORK",

@@ -20,6 +20,7 @@ async function serve(page: Page, initial: TradeView, extra: Parameters<typeof mo
 }
 
 async function chartBox(page: Page) {
+  await expect(page.getByTestId("ohlc-readout")).toBeVisible(); // the chart exists once the page has hydrated
   const box = await page.getByTestId("trade-chart").boundingBox();
   if (!box) throw new Error("chart has no box");
   return box;
@@ -59,7 +60,25 @@ test.describe("market bar", () => {
     await page.goto("/trade");
     await expect(page.getByTestId("session")).toHaveText("Ngoài giờ giao dịch");
     await expect(page.getByTestId("day-stats")).toContainText("Phiên gần nhất");
-    await expect(page.getByTestId("countdown")).toContainText("thị trường đóng");
+    await expect(page.getByTestId("countdown")).toContainText("Mở lại lúc");
+    await expect(page.getByTestId("closed-info")).toContainText("Thị trường đang nghỉ");
+  });
+
+  test("an old quote while the market is closed is the last close, not an alarm", async ({ page }) => {
+    const v = view("marketClosed");
+    v.quote = { ...v.quote!, stale: true, age_seconds: 25_000 };
+    await mock(page, v);
+    await page.goto("/trade");
+    await expect(page.getByTestId("price-last-close")).toContainText("Giá đóng cửa gần nhất");
+    await expect(page.getByTestId("price-stale")).toHaveCount(0);
+  });
+
+  test("an old quote while the market is open IS an alarm", async ({ page }) => {
+    const v = view("buy");
+    v.quote = { ...v.quote!, stale: true, age_seconds: 300 };
+    await mock(page, v);
+    await page.goto("/trade");
+    await expect(page.getByTestId("price-stale")).toContainText("GIÁ CŨ");
   });
 
   test("the display zone is selectable and remembered", async ({ page }) => {
@@ -362,6 +381,35 @@ test.describe("chart", () => {
     await expect(page.getByTestId("trade-chart")).toBeVisible();
   });
 
+  test("new data never resets the trader's zoom or pan; with follow on it only advances", async ({ page }) => {
+    const v = view("buy");
+    const state = await serve(page, v);
+    let extra = 0;
+    await page.route("**/md/XAUUSD/bars**", (route) => {
+      const b = bars(v, "M5");
+      const last = b.bars[b.bars.length - 1];
+      for (let i = 1; i <= extra; i++) b.bars.push({ ...last, time: new Date(Date.parse(last.time) + i * 300_000).toISOString(), is_closed: false });
+      return route.fulfill({ json: b });
+    });
+    await page.goto("/trade");
+    const chart = page.getByTestId("trade-chart");
+    const box = await chartBox(page);
+    // zoom in with the wheel, then pan into the past
+    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+    await page.mouse.wheel(0, -400);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.5 + 300, box.y + box.height * 0.5, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(3000);
+    await expect(page.getByTestId("chart-follow")).toHaveAttribute("aria-pressed", "false");
+    const before = await chart.getAttribute("data-range");
+    expect(before).toBeTruthy();
+    extra = 2; // two new bars arrive while the trader is studying history
+    await page.waitForTimeout(7000); // at least two polls
+    expect(await chart.getAttribute("data-range")).toBe(before);
+    expect(state.view.available).toBe(true);
+  });
+
   test("fullscreen keeps the same chart, toolbar and a decision summary; Escape returns", async ({ page }) => {
     await mock(page, view("buy"));
     await page.goto("/trade");
@@ -384,9 +432,9 @@ test.describe("chart", () => {
   test("measure tool: two clicks give price distance, points, percent and bars", async ({ page }) => {
     await mock(page, view("buy"));
     await page.goto("/trade");
+    const box = await chartBox(page);
     await page.getByTestId("tool-measure").click();
     await expect(page.getByTestId("tool-measure")).toHaveAttribute("aria-pressed", "true");
-    const box = await chartBox(page);
     await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.6);
     await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.3, { steps: 5 });
     await page.mouse.click(box.x + box.width * 0.6, box.y + box.height * 0.3);
@@ -402,8 +450,8 @@ test.describe("chart", () => {
     const v = view("wait");
     await mock(page, v);
     await page.goto("/trade");
-    await page.getByTestId("tool-line").click();
     const box = await chartBox(page);
+    await page.getByTestId("tool-line").click();
     await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.5);
     await expect(page.getByTestId("chart-legend")).toContainText("Đường");
     await expect(page.getByTestId("tool-line")).toHaveAttribute("aria-pressed", "false");
@@ -560,6 +608,7 @@ test.describe("workspace", () => {
 
   test("a price alert is stored locally and fires when the bid crosses it", async ({ page }) => {
     const first = view("buy");
+    first.source_mode = "LIVE"; // price alerts only ever fire on live prices
     const state = await serve(page, first);
     await page.goto("/trade");
     await page.getByTestId("tool-alert").click();
@@ -568,12 +617,26 @@ test.describe("workspace", () => {
     await expect(page.getByTestId("my-alerts")).toContainText("4240.00");
     await expect(page.getByTestId("chart-legend")).toContainText("CẢNH BÁO");
     const next = view("buy");
+    next.source_mode = "LIVE";
     next.quote = { ...next.quote!, bid: 4241.5, ask: 4241.9 };
     state.view = next;
     await expect(page.getByTestId("action-message")).toContainText("Cảnh báo giá", { timeout: 15_000 });
     await expect(page.getByTestId("my-alerts")).toContainText("đã báo");
     await page.reload();
     await expect(page.getByTestId("my-alerts")).toContainText("đã báo"); // still remembered, and not fired twice
+  });
+
+  test("a price alert never fires on replay prices", async ({ page }) => {
+    const state = await serve(page, view("buy"));
+    await page.goto("/trade");
+    await page.getByTestId("tool-alert").click();
+    await page.getByTestId("alert-price").fill("4240");
+    await page.getByTestId("alert-add").click();
+    const next = view("buy");
+    next.quote = { ...next.quote!, bid: 4245, ask: 4245.4 };
+    state.view = next;
+    await page.waitForTimeout(7000);
+    await expect(page.getByTestId("my-alerts")).not.toContainText("đã báo");
   });
 
   test("the calculator works without a setup and says it is not a signal", async ({ page }) => {

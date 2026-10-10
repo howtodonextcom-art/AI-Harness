@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { countdownText } from "@/lib/chartMath";
-import { ZONE_LABEL, clockInZone, type DisplayZone } from "@/lib/time";
+import { ZONE_LABEL, clockInZone, formatInZone, type DisplayZone } from "@/lib/time";
 import type { TradeView } from "@/lib/trade";
 import { ageText, fmt } from "@/components/trade/ui";
 
@@ -50,7 +50,11 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
   const status = view?.market?.status ?? "—";
   const closeIso = ctx?.bar_close?.[tf] ?? null;
   const countdown = countdownText(closeIso ? Date.parse(closeIso) : null, serverNowMs);
-  const stalePrice = uiStale || Boolean(quote?.stale);
+  const reopen = !open && ctx?.next_open ? Date.parse(ctx.next_open) : null;
+  const reopenIn = countdownText(reopen, serverNowMs);
+  // an old quote while the market is closed is normal (the last price); it is only an alarm while trading is open
+  const stalePrice = uiStale || (open && Boolean(quote?.stale));
+  const lastPrice = !open && Boolean(quote?.stale) && !uiStale;
   const live = view?.source_mode === "LIVE";
   const change = daily?.change ?? null;
   const changeTone = change === null ? "" : change >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400";
@@ -84,6 +88,11 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
               <div>Ask <b data-testid="price-ask" className="text-base">{quote ? fmt(quote.ask) : "—"}</b></div>
               <div data-testid="spread" className={MUTED}>Spread {quote ? `${fmt(quote.spread_points, 0)} điểm (${fmt(quote.spread_points / 100)})` : "—"}</div>
             </div>
+            {lastPrice && quote && (
+              <span data-testid="price-last-close" className={`${pill} border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300`}>
+                Giá đóng cửa gần nhất · {ageText(quote.age_seconds)} trước
+              </span>
+            )}
             {stalePrice && (
               <span data-testid="price-stale" role="status" className={`${pill} border-red-600 bg-red-500/15 text-red-800 dark:text-red-200`}>
                 GIÁ CŨ{quote ? ` · ${ageText(quote.age_seconds)}` : ""}
@@ -132,7 +141,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
             </select>
           </div>
           <div data-testid="countdown" className={`font-mono text-xs ${MUTED}`}>
-            {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>Nến {tf}: {open ? "chờ dữ liệu" : "thị trường đóng"}</span>}
+            {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
           </div>
           <span data-testid="data-age" className={`text-xs ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds)}</span>
         </div>

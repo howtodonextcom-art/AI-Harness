@@ -15,7 +15,8 @@ export function shortState(state: string): { text: string; tone: "up" | "down" |
   if (s.startsWith("BEAR")) return { text: "GIẢM", tone: "down" };
   if (s === "UP") return { text: "↑ TĂNG", tone: "up" };
   if (s === "DOWN") return { text: "↓ GIẢM", tone: "down" };
-  const table: Record<string, string> = { RANGE: "ĐI NGANG", NEUTRAL: "TRUNG TÍNH", FLAT: "ĐỨNG", GOOD: "TỐT", NORMAL: "BÌNH THƯỜNG", STALE: "CŨ", NONE: "—" };
+  if (s.includes("REVERSAL")) return { text: `ĐẢO CHIỀU ${tone === "up" ? "↑" : tone === "down" ? "↓" : ""}`.trim(), tone };
+  const table: Record<string, string> = { RANGE: "ĐI NGANG", SPREAD_WIDE: "SPREAD RỘNG", WIDE: "RỘNG", ELEVATED: "NHỈNH", NEUTRAL: "TRUNG TÍNH", FLAT: "ĐỨNG", GOOD: "TỐT", NORMAL: "BÌNH THƯỜNG", STALE: "CŨ", NONE: "—" };
   return { text: table[s] ?? state, tone };
 }
 

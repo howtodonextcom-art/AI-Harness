@@ -23,7 +23,10 @@ async function load(page: Page, request: APIRequestContext, name: string, path =
 
 const advance = (request: APIRequestContext, minutes: number) => request.post(`${API}/acceptance/advance?minutes=${minutes}`);
 const hero = (page: Page) => page.getByTestId("hero");
-const shot = (page: Page, name: string, full = false) => page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: full });
+const shot = async (page: Page, name: string, full = false) => {
+  await page.evaluate(() => window.scrollTo(0, 0)); // every screenshot starts at the top: the price and the decision
+  await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: full });
+};
 
 async function noHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -268,6 +271,8 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
     await expect(hero(page)).toHaveAttribute("data-hero-state", "MARKET_CLOSED");
     await expect(page.getByTestId("decision")).toHaveText("THỊ TRƯỜNG ĐÓNG CỬA");
     await expect(page.getByTestId("session")).toHaveText("Ngoài giờ giao dịch");
+    await expect(page.getByTestId("reopen-at")).toContainText("mở lại lúc");
+    await expect(page.getByTestId("countdown")).toContainText("Mở lại lúc");
     await shot(page, "19-replay-market-closed");
   });
 

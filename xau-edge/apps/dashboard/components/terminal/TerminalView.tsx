@@ -30,7 +30,7 @@ import {
 import { EXIT_REASON_VI, HERO_ICON, HERO_VI, humanCondition } from "@/lib/vi";
 
 const POLL_MS = 3000;
-const STALE_UI_SECONDS = 20;
+const STALE_UI_SECONDS = 12;
 
 const SHORTCUTS: [string, string][] = [
   ["1", "Biểu đồ M1"],
@@ -75,6 +75,8 @@ export function TerminalView() {
   const [help, setHelp] = useState(false);
   const chart = useRef<ChartHandle>(null);
   const inFlight = useRef(false);
+  const decisionSeq = useRef(0);
+  const sideSeq = useRef(0);
   const alertsRef = useRef<PriceAlert[]>([]);
   const prevBid = useRef<number | null>(null);
 
@@ -87,7 +89,7 @@ export function TerminalView() {
       const zone = loadZone(loaded.zone);
       const params = new URLSearchParams(window.location.search);
       const from = params.get("focus");
-      const link = from ? { from, to: params.get("to") ?? from } : null;
+      const link = from && Number.isFinite(Date.parse(from)) && Number.isFinite(Date.parse(params.get("to") ?? from)) ? { from, to: params.get("to") ?? from } : null;
       const linkTf = params.get("tf");
       setPrefsState({ ...loaded, zone, ...(linkTf && ["M1", "M5", "M15", "M30", "H1", "H4"].includes(linkTf) ? { tf: linkTf } : {}), ...(link ? { history: true, tab: "position" as Tab } : {}) });
       setLevels(loadLevels());
@@ -102,6 +104,16 @@ export function TerminalView() {
   useEffect(() => {
     if (hydrated) savePrefs(prefs);
   }, [prefs, hydrated]);
+  useEffect(() => {
+    const onStorage = () => {
+      const stored = loadAlerts();
+      alertsRef.current = stored;
+      setAlerts(stored);
+      setLevels(loadLevels());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
   useEffect(() => {
     if (hydrated) saveLevels(levels);
   }, [levels, hydrated]);
@@ -131,13 +143,15 @@ export function TerminalView() {
     }
   }, []);
 
-  const load = useCallback(async () => {
-    if (inFlight.current) return;
+  const load = useCallback(async (force = false) => {
+    if (inFlight.current && !force) return;
+    const seq = ++decisionSeq.current; // only the newest request may change what is shown
     inFlight.current = true;
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 8000);
     try {
       const data = await fetchDecision(ctl.signal);
+      if (seq !== decisionSeq.current) return;
       setView(data);
       setError(null);
       setLastOk(Date.now());
@@ -145,12 +159,12 @@ export function TerminalView() {
       // expiry and every countdown run on the SERVER clock (served_at), never the browser clock
       const served = data.served_at ? Date.parse(data.served_at) : Date.parse(data.generated_at);
       setSkew(Number.isFinite(served) ? served - Date.now() : 0);
-      if (data.quote && !data.quote.stale) fireAlerts(data.quote.bid);
+      if (data.quote && !data.quote.stale && data.source_mode === "LIVE") fireAlerts(data.quote.bid); // never on replay prices
     } catch {
-      setError("API /trade/decision không phản hồi");
+      if (seq === decisionSeq.current) setError("API /trade/decision không phản hồi");
     } finally {
       clearTimeout(timer);
-      inFlight.current = false;
+      if (seq === decisionSeq.current) inFlight.current = false;
     }
   }, [fireAlerts]);
 
@@ -169,13 +183,15 @@ export function TerminalView() {
   const tf = prefs.tf as MarketTimeframe;
   useEffect(() => {
     let alive = true;
+    let seq = 0;
     const run = async () => {
+      const mine = ++seq;
       try {
         const b = await fetchBars(tf, 400, true);
-        if (alive) {
+        if (alive && mine === seq && b.timeframe === tf) {
           setBars(b);
           setBarsError(b.bars.length === 0);
-        }
+        } else if (alive && mine === seq) setBarsError(true);
       } catch {
         if (alive) setBarsError(true);
       }
@@ -191,7 +207,9 @@ export function TerminalView() {
 
   // markers, signal history and journal; reloaded right after a paper action
   const loadSide = useCallback(async () => {
+    const seq = ++sideSeq.current;
     const [m, s, j] = await Promise.allSettled([fetchMarkers(), fetchSignals(), fetchJournal()]);
+    if (seq !== sideSeq.current) return;
     if (m.status === "fulfilled") setMarkers(m.value);
     if (s.status === "fulfilled") setSignals(s.value);
     if (j.status === "fulfilled") setJournal(j.value);
@@ -212,14 +230,14 @@ export function TerminalView() {
   const plan = view?.trade_plan ?? null;
   const expiresMs = plan?.expires_at ? Date.parse(plan.expires_at) : null;
   const expiredNow = plan !== null && (plan.expired || (expiresMs !== null && expiresMs <= serverNow));
-  const planLive = !uiStale && !expiredNow && Boolean(plan?.complete) && (hero?.state === "BUY_READY" || hero?.state === "SELL_READY");
+  const planLive = !uiStale && !error && !expiredNow && Boolean(plan?.complete) && (hero?.state === "BUY_READY" || hero?.state === "SELL_READY");
   const untrusted = hero?.state === "UNAVAILABLE" || hero?.state === "STALE";
   const dim = uiStale || untrusted;
   const mode = view?.source_mode ?? "LIVE";
   const position = view?.desk?.position ?? null;
   const chosen = view?.risk_plans?.find((p) => Math.abs(p.risk_pct - prefs.risk) < 1e-9);
 
-  const frozenValid = useMemo(() => (openFrozen ? planMatches(openFrozen, plan, prefs.risk, Boolean(view?.actionable && !uiStale && !expiredNow)) : false), [openFrozen, plan, prefs.risk, view?.actionable, uiStale, expiredNow]);
+  const frozenValid = useMemo(() => (openFrozen ? planMatches(openFrozen, plan, prefs.risk, Boolean(view?.actionable && !uiStale && !error && !expiredNow)) : false), [openFrozen, plan, prefs.risk, view?.actionable, uiStale, error, expiredNow]);
 
   // ---- actions ---------------------------------------------------------------------------------
   const requestOpen = () => {
@@ -237,9 +255,8 @@ export function TerminalView() {
         ? { tone: "border-emerald-600 bg-emerald-500/15", text: `Đã mở lệnh PAPER ${res.data.side === "BUY" ? "MUA" : "BÁN"} ${fmt(res.data.lots, 2)} lot: kế hoạch ${fmt(res.data.planned_entry ?? null)}, khớp ${fmt(res.data.fill_price)}` }
         : { tone: BAD, text: `Không mở được lệnh PAPER: ${res.error.message} (${res.error.code})` },
     );
+    await Promise.all([load(true), loadSide()]);
     setBusy(false);
-    void load();
-    void loadSide();
   };
   const confirmClose = async () => {
     if (!position) return;
@@ -251,9 +268,8 @@ export function TerminalView() {
         ? { tone: "border-emerald-600 bg-emerald-500/15", text: `Đã đóng lệnh paper: ${money(res.data.net_pnl ?? null)} (${fmt(res.data.r_multiple ?? null, 2)}R) — ${EXIT_REASON_VI[res.data.exit_reason ?? ""] ?? res.data.exit_reason}` }
         : { tone: BAD, text: `Không đóng được lệnh: ${res.error.message} (${res.error.code})` },
     );
+    await Promise.all([load(true), loadSide()]);
     setBusy(false);
-    void load();
-    void loadSide();
   };
 
   const focusTf = useCallback((target: string) => setPrefs({ tf: target }), [setPrefs]);
@@ -302,7 +318,7 @@ export function TerminalView() {
         else if (fullscreen) setFullscreen(false);
         return;
       }
-      if (typing || modalOpen) return;
+      if (typing || modalOpen || !prefs.shortcuts) return;
       const k = e.key.toLowerCase();
       const map: Record<string, string> = { "1": "M1", "5": "M5", "2": "M15", "3": "M30", h: "H1", "4": "H4" };
       if (map[k]) setPrefs({ tf: map[k] });
@@ -316,7 +332,7 @@ export function TerminalView() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modalOpen, tool, fullscreen, prefs.follow, setPrefs]);
+  }, [modalOpen, tool, fullscreen, prefs.follow, prefs.shortcuts, setPrefs]);
 
   // ---- conditions that need attention are banners with a human sentence first -------------------
   const banners = (view?.conditions ?? []).filter((c) => (c.severity === "ERROR" || c.severity === "WARN") && c.code !== "MARKET_CLOSED" && c.code !== "NEWS_UNKNOWN");
@@ -330,14 +346,15 @@ export function TerminalView() {
       onRisk={(r) => setPrefs({ risk: r })}
       onOpenRequest={requestOpen}
       onCloseRequest={() => setClosing(true)}
-      uiStale={uiStale}
+      uiStale={uiStale || Boolean(error)}
       busy={busy}
       tf={prefs.tf}
       onFocusTf={focusTf}
+      zone={prefs.zone}
     />
   );
   const ready = hero?.state === "BUY_READY" || hero?.state === "SELL_READY";
-  const canOpen = Boolean(view?.actionable && !uiStale && !expiredNow && plan?.complete && chosen?.ok);
+  const canOpen = Boolean(view?.actionable && !uiStale && !error && !expiredNow && plan?.complete && chosen?.ok);
   const showActionBar = Boolean(view && ((ready && !expiredNow) || hero?.state === "POSITION_OPEN"));
 
   const chartBlock = (
@@ -369,14 +386,14 @@ export function TerminalView() {
       />
       <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[24rem] sm:h-[28rem] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
         {dim && <div data-testid="chart-veil" aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] bg-white/60 dark:bg-slate-950/60" />}
-        <TerminalChart
+        {hydrated && <TerminalChart
           ref={chart}
-          bars={bars?.bars ?? []}
+          bars={bars && bars.timeframe === prefs.tf ? bars.bars : []}
           timeframe={prefs.tf}
           zone={prefs.zone}
           overlays={prefs.overlays}
           view={view}
-          markers={markers}
+          markers={markers && markers.source_mode === mode ? markers : null}
           history={prefs.history}
           planLive={planLive}
           plan={plan}
@@ -388,7 +405,7 @@ export function TerminalView() {
           tool={tool}
           onAddLevel={addLevel}
           onToolDone={() => setTool("none")}
-        />
+        />}
       </div>
       {fullscreen && view && (
         <div data-testid="fullscreen-summary" className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border border-slate-400 px-3 py-1.5 text-sm">
@@ -404,6 +421,7 @@ export function TerminalView() {
 
   return (
     <main className={`mx-auto w-full max-w-[1800px] space-y-2 px-2 py-2 sm:px-3 ${showActionBar ? "pb-20 lg:pb-2" : ""}`}>
+      <div inert={modalOpen} className="space-y-2">
       <MarketBar view={view} tf={prefs.tf} zone={prefs.zone} onZone={changeZone} serverNowMs={serverNow} uiStale={uiStale} />
 
       {mode !== "LIVE" && (
@@ -472,8 +490,9 @@ export function TerminalView() {
         onRemoveAlert={removeAlert}
       />
 
+      </div>
       {showActionBar && view && (
-        <div data-testid="mobile-action-bar" className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
+        <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
           {hero?.state === "POSITION_OPEN" && position ? (
             <>
               <div className="min-w-0 flex-1 text-sm">
@@ -498,7 +517,7 @@ export function TerminalView() {
       {openFrozen && (
         <OpenConfirmModal frozen={openFrozen} liveEntry={plan?.planned_entry ?? null} valid={frozenValid} busy={busy} onConfirm={() => void confirmOpen()} onCancel={() => setOpenFrozen(null)} />
       )}
-      {closing && position && <CloseConfirmModal trade={position} busy={busy} onConfirm={() => void confirmClose()} onCancel={() => setClosing(false)} />}
+      {closing && position && <CloseConfirmModal trade={position} busy={busy} unsure={uiStale || Boolean(error)} onConfirm={() => void confirmClose()} onCancel={() => setClosing(false)} />}
       {help && (
         <Modal title="Phím tắt" testId="shortcut-modal" onClose={() => setHelp(false)}>
           <dl className="grid grid-cols-[3rem_1fr] gap-y-1 text-sm">
@@ -509,6 +528,10 @@ export function TerminalView() {
               </div>
             ))}
           </dl>
+          <label className="mt-2 flex items-center gap-2 text-sm">
+            <input type="checkbox" data-testid="shortcuts-enabled" checked={prefs.shortcuts} onChange={(e) => setPrefs({ shortcuts: e.target.checked })} />
+            Bật phím tắt một phím
+          </label>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">Không có phím tắt nào mở hay đóng lệnh.</p>
           <button type="button" data-autofocus onClick={() => setHelp(false)} className="mt-3 w-full rounded-md border-2 border-slate-400 px-3 py-1.5 font-semibold">Đóng</button>
         </Modal>

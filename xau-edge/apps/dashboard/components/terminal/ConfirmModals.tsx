@@ -56,7 +56,7 @@ export function OpenConfirmModal({ frozen, liveEntry, valid, busy, onConfirm, on
   );
 }
 
-export function CloseConfirmModal({ trade, busy, onConfirm, onCancel }: { trade: PaperTrade; busy: boolean; onConfirm: () => void; onCancel: () => void }) {
+export function CloseConfirmModal({ trade, busy, unsure, onConfirm, onCancel }: { trade: PaperTrade; busy: boolean; unsure: boolean; onConfirm: () => void; onCancel: () => void }) {
   const pnl = trade.unrealized_pnl ?? null;
   return (
     <Modal title="Xác nhận đóng lệnh PAPER" testId="confirm-close-modal" onClose={onCancel}>
@@ -67,6 +67,11 @@ export function CloseConfirmModal({ trade, busy, onConfirm, onCancel }: { trade:
         <dt className="text-slate-600 dark:text-slate-400">R ước tính</dt><dd className="text-right font-mono">{fmt(trade.unrealized_r, 2)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Mã lệnh</dt><dd className="text-right font-mono">{trade.trade_id}</dd>
       </dl>
+      {unsure && (
+        <p role="alert" data-testid="close-unsure" className={`mt-2 rounded border px-2 py-1 text-sm font-semibold ${BAD}`}>
+          Mất kết nối hoặc dữ liệu cũ: giá ước tính ở trên có thể không còn đúng.
+        </p>
+      )}
       <p className={`mt-2 rounded border px-2 py-1 text-xs ${WARN}`}>Giá và lãi/lỗ cuối cùng được máy chủ đọc lại ngay lúc đóng, có thể khác ước tính.</p>
       <div className="mt-3 flex gap-2">
         <button type="button" data-testid="confirm-close" data-autofocus disabled={busy} onClick={onConfirm} className="flex-1 rounded-md border-2 border-slate-700 bg-slate-800 px-3 py-2 font-black text-white disabled:opacity-40">

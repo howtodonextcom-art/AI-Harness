@@ -308,6 +308,7 @@ export interface MarketContext {
   session: { code: string; label: string };
   daily: DailyStats | null;
   bar_close: Record<string, string | null>;
+  next_open: string | null;
 }
 
 export interface TradeView {
@@ -358,6 +359,7 @@ export interface TradeView {
     position: PaperTrade | null;
     today: Record<string, number | string | null>;
     closure_policy: string;
+    limits: { daily_loss_stop_pct: number; daily_loss_pct: number; max_trades_per_day: number; day_start_equity: number };
   };
   funnel?: Funnel;
   telemetry?: {

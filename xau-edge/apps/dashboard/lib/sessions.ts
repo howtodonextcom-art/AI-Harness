@@ -36,7 +36,19 @@ const within = (ms: number, z: (typeof ZONES)[keyof typeof ZONES]) => {
   return t >= z.from && t < z.to;
 };
 
+const memo = new Map<number, Session>();
+
 export function sessionAt(ms: number): Session {
+  const key = Math.floor(ms / 60_000); // the label only changes on minute boundaries
+  const hit = memo.get(key);
+  if (hit !== undefined) return hit;
+  const value = labelAt(ms);
+  if (memo.size > 20_000) memo.clear();
+  memo.set(key, value);
+  return value;
+}
+
+function labelAt(ms: number): Session {
   const london = within(ms, ZONES.london);
   const ny = within(ms, ZONES.newYork);
   if (london && ny) return "LONDON_NY_OVERLAP";

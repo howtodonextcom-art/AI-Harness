@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { parseDecimal } from "@/lib/chartMath";
 import { BAD, GOOD, INFO, NEUTRAL, WARN, fmt, money } from "@/components/trade/ui";
+import { formatInZone, type DisplayZone } from "@/lib/time";
 import { fetchRisk, type PaperTrade, type RiskPlan, type TradeView } from "@/lib/trade";
 import { ACTIVITY_VI, BLOCKER_VI, EXIT_REASON_VI, HERO_ICON, HERO_VI, PAPER_ACCOUNT_VI, REFUSAL_VI, STAGE_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
 
@@ -16,6 +18,7 @@ interface Props {
   busy: boolean;
   tf: string;
   onFocusTf: (tf: string) => void;
+  zone: DisplayZone;
 }
 
 const TONE: Record<string, string> = { buy: GOOD, sell: BAD, neutral: NEUTRAL, info: INFO, warn: WARN, error: BAD };
@@ -164,6 +167,11 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
           Phát hiện setup nhưng CHƯA ĐỦ KẾ HOẠCH ({plan.missing.join(", ")}): không thể mở lệnh.
         </p>
       )}
+      {(expiredNow || uiStale) && (
+        <p data-testid="plan-stale" role="status" className={`rounded-md border px-2 py-1 text-sm font-semibold ${WARN}`}>
+          {expiredNow ? "KẾ HOẠCH ĐÃ HẾT HẠN — chỉ để tham khảo, không thể mở lệnh." : "Dữ liệu hoặc kết nối không chắc chắn — chỉ để tham khảo, không thể mở lệnh."}
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <span data-testid="plan-side" className={`rounded px-2 py-0.5 text-sm font-black ${buy ? "bg-emerald-700 text-white" : "bg-red-700 text-white"}`}>
           {buy ? "▲ MUA (BUY)" : "▼ BÁN (SELL)"}
@@ -257,9 +265,9 @@ function Calculator({ bid }: { bid: number | null }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const e = Number(entry);
-    const s = Number(stop);
-    const r = Number(riskPct);
+    const e = parseDecimal(entry);
+    const s = parseDecimal(stop);
+    const r = parseDecimal(riskPct);
     if (!open || !(e > 0) || !(s > 0) || !(r > 0 && r <= 0.5)) return;
     const ctl = new AbortController();
     const t = setTimeout(() => {
@@ -276,7 +284,7 @@ function Calculator({ bid }: { bid: number | null }) {
     };
   }, [open, entry, stop, riskPct]);
 
-  const valid = Number(entry) > 0 && Number(stop) > 0 && Number(riskPct) > 0 && Number(riskPct) <= 0.5;
+  const valid = parseDecimal(entry) > 0 && parseDecimal(stop) > 0 && parseDecimal(riskPct) > 0 && parseDecimal(riskPct) <= 0.5;
   return (
     <details data-testid="calculator" open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)} className="rounded-lg border border-slate-300 p-2 dark:border-slate-700">
       <summary className="cursor-pointer text-sm font-semibold">Máy tính lệnh (chỉ để tính)</summary>
@@ -322,7 +330,7 @@ export function DecisionHero({ view, serverNowMs }: { view: TradeView; serverNow
 }
 
 /** Ticket, position, or the wait context: what the trader can read or do about the state. */
-export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, onCloseRequest, uiStale, busy, tf, onFocusTf }: Props) {
+export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, onCloseRequest, uiStale, busy, tf, onFocusTf, zone }: Props) {
   const { expiredNow } = expiryOf(view, serverNowMs);
   const plan = view.trade_plan ?? null;
   const state = view.hero.state;
@@ -336,6 +344,8 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
       {waiting && <Pipeline view={view} tf={tf} onFocusTf={onFocusTf} />}
       {waiting && <WaitContext view={view} />}
       {state === "EXITED" && <LastExit view={view} />}
+      {state === "MARKET_CLOSED" && <ClosedInfo view={view} zone={zone} />}
+      <AccountStrip view={view} />
       {!showTicket && !showPosition && <Calculator bid={view.quote?.bid ?? null} />}
     </section>
   );
@@ -347,5 +357,56 @@ function LastExit({ view }: { view: TradeView }) {
     <p data-testid="last-exit" className="text-sm">
       Hôm nay: {String(t?.paper_trades ?? 0)} lệnh · P&L {money(t?.net_pnl as number | null)} · {fmt(t?.net_r as number | null)}R. Xem tab «Hoạt động» để biết chi tiết ({EXIT_REASON_VI.TAKE_PROFIT}/{EXIT_REASON_VI.STOP_LOSS}…).
     </p>
+  );
+}
+
+/** While the market is closed the right column is not empty: what happened last and what comes next. */
+function ClosedInfo({ view, zone }: { view: TradeView; zone: DisplayZone }) {
+  const d = view.market_context?.daily ?? null;
+  const t = view.desk?.today;
+  return (
+    <div data-testid="closed-info" className="space-y-2 rounded-lg border border-slate-300 p-3 text-sm dark:border-slate-700">
+      <p className="font-semibold">Thị trường đang nghỉ</p>
+      <p>Bộ máy quyết định tạm dừng và sẽ tự tính lại khi thị trường mở cửa. Biểu đồ và giá hiển thị là dữ liệu cuối cùng.</p>
+      {view.market_context?.next_open && <p data-testid="reopen-at">Thị trường mở lại lúc <b className="font-mono">{formatInZone(view.market_context.next_open, zone).slice(0, 16)}</b>.</p>}
+      {d && (
+        <p>
+          Phiên giao dịch gần nhất: {d.change >= 0 ? "tăng" : "giảm"} <b className="font-mono">{fmt(Math.abs(d.change))}</b> ({d.change_pct === null ? "—" : `${d.change_pct >= 0 ? "+" : ""}${d.change_pct.toFixed(2)}%`}), biên <b className="font-mono">{fmt(d.range)}</b>, đóng cửa tại <b className="font-mono">{fmt(d.last)}</b>.
+        </p>
+      )}
+      <p>Bàn PAPER: {String(t?.paper_trades ?? 0)} lệnh trong ngày · P&L {money(t?.net_pnl as number | null)}.</p>
+    </div>
+  );
+}
+
+/** The paper account at a glance: equity, floating and today's result, and how close the daily loss limit is. */
+function AccountStrip({ view }: { view: TradeView }) {
+  const a = view.desk?.account;
+  const t = view.desk?.today;
+  const l = view.desk?.limits;
+  if (!a) return null;
+  const floating = a.equity - a.balance;
+  const used = l ? Math.min(100, (Math.max(0, l.daily_loss_pct) / l.daily_loss_stop_pct) * 100) : 0;
+  return (
+    <section data-testid="account-strip" aria-label="Tài khoản PAPER" className="rounded-lg border border-slate-300 p-2 text-sm dark:border-slate-700">
+      <div className="mb-1 flex items-center justify-between">
+        <b>Tài khoản PAPER</b>
+        <span className="text-xs text-slate-600 dark:text-slate-400">vốn giả lập</span>
+      </div>
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+        <dt className="text-slate-600 dark:text-slate-400">Equity</dt><dd data-testid="acct-equity" className="text-right font-mono">{money(a.equity)}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Đang chạy</dt><dd data-testid="acct-floating" className={`text-right font-mono ${floating < 0 ? "text-red-700 dark:text-red-400" : ""}`}>{money(floating)}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Hôm nay</dt><dd data-testid="acct-today" className="text-right font-mono">{money(t?.net_pnl as number | null)} · {fmt(t?.net_r as number | null)}R</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Số lệnh hôm nay</dt><dd className="text-right font-mono">{String(t?.paper_trades ?? 0)}{l ? ` / ${l.max_trades_per_day}` : ""}</dd>
+      </dl>
+      {l && (
+        <div className="mt-1" data-testid="acct-limit">
+          <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400"><span>Lỗ trong ngày</span><span className="font-mono">{l.daily_loss_pct.toFixed(2)}% / giới hạn {l.daily_loss_stop_pct}%</span></div>
+          <div role="progressbar" aria-label="Mức lỗ trong ngày so với giới hạn" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(used)} className="mt-0.5 h-1.5 w-full rounded bg-slate-300 dark:bg-slate-700">
+            <div className={`h-1.5 rounded ${used >= 80 ? "bg-red-600" : used >= 50 ? "bg-amber-500" : "bg-emerald-600"}`} style={{ width: `${used}%` }} />
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

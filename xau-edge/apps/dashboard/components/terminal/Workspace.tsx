@@ -69,6 +69,10 @@ function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert }: Pick<P
           <Meter k="Tick volume" v={ACTIVITY_VI[d?.volume_state ?? "UNKNOWN"] ?? "—"} tone={meterTone(d?.volume_state ?? "")} />
           <Meter k="Spread" v={ACTIVITY_VI[d?.spread_state ?? "UNKNOWN"] ?? "—"} tone={meterTone(d?.spread_state ?? "")} />
         </div>
+        <p data-testid="volume-line" className="mt-2 text-sm">
+          Tick volume M1: tương đối <b className="font-mono">×{fmt(view?.volume?.m1_relative)}</b> · percentile{" "}
+          <b className="font-mono">{view?.volume?.m1_percentile == null ? "—" : `${(view.volume.m1_percentile * 100).toFixed(0)}%`}</b> · z <b className="font-mono">{fmt(view?.volume?.m1_zscore)}</b>
+        </p>
         <p data-testid="volume-note" className="mt-2 text-xs text-slate-600 dark:text-slate-400">Volume là tick volume (số lần giá đổi), không phải khối lượng sàn.</p>
         {view?.news?.warning && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">Tin tức chưa được xác minh (không có lịch kinh tế).</p>}
       </Card>
@@ -101,7 +105,7 @@ function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert }: Pick<P
         </ul>
       </Card>
       <div className="lg:col-span-3">
-        <p data-testid="evidence-text" className="text-xs text-slate-600 dark:text-slate-400">{view?.evidence.label} {view?.evidence.research}</p>
+        <p data-testid="evidence-text" className="text-xs text-slate-600 dark:text-slate-400">Chưa phải lợi thế (edge) được kiểm chứng: đây là baseline vận hành minh bạch, không phải dự báo lợi nhuận. Chưa có bằng chứng thống kê; số liệu nhỏ không chứng minh gì.</p>
       </div>
     </div>
   );
@@ -279,14 +283,18 @@ export function Workspace(props: Props) {
             role="tab"
             id={`tab-${id}`}
             aria-selected={tab === id}
-            aria-controls={`panel-${id}`}
+            aria-controls={tab === id ? `panel-${id}` : undefined}
             tabIndex={tab === id ? 0 : -1}
             data-testid={`tab-${id}`}
             onClick={() => onTab(id)}
             onKeyDown={(e) => {
               const i = TABS.findIndex(([t]) => t === tab);
-              if (e.key === "ArrowRight") onTab(TABS[(i + 1) % TABS.length][0]);
-              if (e.key === "ArrowLeft") onTab(TABS[(i + TABS.length - 1) % TABS.length][0]);
+              const move = (to: Tab) => {
+                onTab(to);
+                requestAnimationFrame(() => document.getElementById(`tab-${to}`)?.focus()); // roving focus follows the selection
+              };
+              if (e.key === "ArrowRight") move(TABS[(i + 1) % TABS.length][0]);
+              if (e.key === "ArrowLeft") move(TABS[(i + TABS.length - 1) % TABS.length][0]);
             }}
             className={`whitespace-nowrap rounded-t-md border border-b-0 px-3 py-1.5 text-sm ${tab === id ? "border-slate-400 bg-slate-500/10 font-bold" : "border-transparent text-slate-600 dark:text-slate-400 hover:text-inherit"}`}
           >

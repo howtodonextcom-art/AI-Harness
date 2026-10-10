@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { fetchJournal, type JournalResponse, type PaperTrade } from "@/lib/trade";
 import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
 import { fmt, money } from "@/components/trade/ui";
@@ -30,6 +30,7 @@ export function JournalView() {
   const [error, setError] = useState<string | null>(null);
   const [zone, setZone] = useState<DisplayZone>("UTC");
   const [open, setOpen] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "win" | "loss" | "BUY" | "SELL">("all");
 
   useEffect(() => {
     const t = setTimeout(() => setZone(loadZone()), 0);
@@ -51,15 +52,40 @@ export function JournalView() {
     };
   }, []);
 
+  const matches = useCallback(
+    (t: PaperTrade) => filter === "all" || (filter === "win" ? (t.net_pnl ?? 0) > 0 : filter === "loss" ? (t.net_pnl ?? 0) <= 0 : t.side === filter),
+    [filter],
+  );
+  const closedAll = useMemo(() => (data?.trades ?? []).filter((t) => t.status === "CLOSED" && matches(t)), [data, matches]);
   const stats = useMemo(() => {
-    const closed = (data?.trades ?? []).filter((t) => t.status === "CLOSED");
-    const wins = closed.filter((t) => (t.net_pnl ?? 0) > 0).length;
-    const pnl = closed.reduce((a, t) => a + (t.net_pnl ?? 0), 0);
-    const r = closed.reduce((a, t) => a + (t.r_multiple ?? 0), 0);
-    return { n: closed.length, wins, pnl, r };
-  }, [data]);
+    const wins = closedAll.filter((t) => (t.net_pnl ?? 0) > 0).length;
+    const pnl = closedAll.reduce((a, t) => a + (t.net_pnl ?? 0), 0);
+    const r = closedAll.reduce((a, t) => a + (t.r_multiple ?? 0), 0);
+    const n = closedAll.length;
+    return { n, wins, pnl, r, winRate: n === 0 ? null : (wins / n) * 100, avgR: n === 0 ? null : r / n };
+  }, [closedAll]);
+  // cumulative R in the order the trades closed
+  const curve = useMemo(() => {
+    const ordered = [...closedAll].sort((x, y) => Date.parse(x.closed_at ?? "") - Date.parse(y.closed_at ?? ""));
+    const out: number[] = [];
+    for (const t of ordered) out.push((out.length > 0 ? out[out.length - 1] : 0) + (t.r_multiple ?? 0));
+    return out;
+  }, [closedAll]);
 
-  const rows: PaperTrade[] = [...(data?.open ? [data.open] : []), ...(data?.trades ?? [])];
+  const rows: PaperTrade[] = [...(data?.open && filter === "all" ? [data.open] : []), ...(data?.trades ?? []).filter(matches)];
+
+  const exportCsv = () => {
+    const head = ["trade_id", "setup_id", "side", "opened_at", "closed_at", "fill_price", "exit_price", "sl", "tp", "lots", "exit_reason", "r_multiple", "net_pnl", "mfe_r", "mae_r", "duration_minutes", "strategy_version", "code_version", "source_mode"];
+    const lines = rows.map((t) => head.map((k) => JSON.stringify((t as unknown as Record<string, unknown>)[k === "sl" ? "initial_sl" : k] ?? "")).join(","));
+    const blob = new Blob([[head.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `paper-journal-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const replay = data !== null && data.source_mode !== "LIVE";
 
   return (
@@ -67,7 +93,7 @@ export function JournalView() {
       <h1 className="text-xl font-bold">Journal · lệnh PAPER (giả lập)</h1>
       {replay && (
         <div data-testid="journal-replay-banner" role="status" className="rounded-md border-2 border-amber-600 bg-amber-500/15 px-3 py-2 text-sm font-bold">
-          {data.source_mode.replace("_", " ")} — KHÔNG PHẢI LIVE. Các lệnh dưới đây chạy trên dữ liệu lịch sử đã đốt, không tính vào bằng chứng forward.
+          REPLAY NGHIỆM THU ({data.source_mode.replace("_", " ")}) — KHÔNG PHẢI LIVE. Các lệnh dưới đây chạy trên dữ liệu lịch sử đã đốt, không tính vào bằng chứng forward.
         </div>
       )}
       <p data-testid="journal-note" className="text-xs text-slate-600 dark:text-slate-400">
@@ -79,11 +105,41 @@ export function JournalView() {
         </div>
       )}
       {error && <div role="alert" className="rounded-md border border-red-600 bg-red-500/15 px-3 py-2 text-sm">{error}</div>}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
         <Stat k="Lệnh đã đóng" v={String(stats.n)} testId="stat-n" />
         <Stat k="Thắng" v={`${stats.wins}`} testId="stat-wins" />
         <Stat k="P&L ròng (paper)" v={money(stats.pnl)} testId="stat-pnl" />
         <Stat k="Tổng R" v={fmt(stats.r)} testId="stat-r" />
+        <Stat k="Tỷ lệ thắng" v={stats.winRate === null ? "—" : `${stats.winRate.toFixed(0)}%`} testId="stat-winrate" />
+        <Stat k="R trung bình / lệnh" v={fmt(stats.avgR)} testId="stat-avgr" />
+        <div className="col-span-2 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-700">
+          <div className="text-xs text-slate-600 dark:text-slate-400">Đường R tích lũy</div>
+          <svg data-testid="r-curve" role="img" aria-label={`Đường R tích lũy qua ${curve.length} lệnh`} viewBox="0 0 200 40" className="mt-1 h-10 w-full">
+            {curve.length >= 2 ? (
+              (() => {
+                const lo = Math.min(0, ...curve);
+                const hi = Math.max(0, ...curve);
+                const span = hi - lo || 1;
+                const pts = curve.map((v, i) => `${(i / (curve.length - 1)) * 200},${38 - ((v - lo) / span) * 36}`).join(" ");
+                const zero = 38 - ((0 - lo) / span) * 36;
+                return (
+                  <>
+                    <line x1="0" x2="200" y1={zero} y2={zero} stroke="#94a3b8" strokeDasharray="3 3" />
+                    <polyline points={pts} fill="none" stroke="#0369a1" strokeWidth="1.8" />
+                  </>
+                );
+              })()
+            ) : (
+              <text x="4" y="24" fontSize="9" fill="#64748b">cần ít nhất 2 lệnh đã đóng</text>
+            )}
+          </svg>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-1 text-xs" role="group" aria-label="Lọc lệnh">
+        {([["all", "Tất cả"], ["win", "Thắng"], ["loss", "Thua"], ["BUY", "MUA"], ["SELL", "BÁN"]] as [typeof filter, string][]).map(([k, label]) => (
+          <button key={k} type="button" data-testid={`filter-${k}`} aria-pressed={filter === k} onClick={() => setFilter(k)} className={`rounded-md border px-2 py-1 ${filter === k ? "border-sky-600 bg-sky-500/15 font-semibold" : "border-slate-400"}`}>{label}</button>
+        ))}
+        <button type="button" data-testid="export-csv" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto rounded-md border border-slate-400 px-2 py-1 font-semibold disabled:opacity-40">Xuất CSV</button>
       </div>
       <div className="overflow-x-auto">
         <table data-testid="journal-table" className="w-full text-left text-sm">

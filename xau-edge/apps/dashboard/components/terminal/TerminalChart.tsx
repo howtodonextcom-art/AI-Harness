@@ -159,11 +159,12 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     bands: SessionPrimitive;
     lines: IPriceLine[];
   } | null>(null);
-  const applied = useRef<{ first: number; count: number } | null>(null);
+  const applied = useRef<{ last: number } | null>(null);
   const fitted = useRef<string | null>(null);
   const followRef = useRef(follow);
   const toolRef = useRef(tool);
   const interacting = useRef(false);
+  const hasOverlay = useRef(false);
   const [readout, setReadout] = useState<number | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [atLatest, setAtLatest] = useState(true);
@@ -174,6 +175,9 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     followRef.current = follow;
     handles.current?.chart.timeScale().applyOptions({ shiftVisibleRangeOnNewBar: follow });
   }, [follow]);
+  useEffect(() => {
+    hasOverlay.current = measure.a !== null; // the ruler is the only thing positioned from the visible range
+  }, [measure.a]);
   useEffect(() => {
     toolRef.current = tool;
     if (tool !== "measure") setMeasure({ a: null, b: null, fixed: false });
@@ -344,12 +348,14 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       setSelected(hit ? hit.detail.key : null);
     });
     const onRange = () => {
+      const logical = chart.timeScale().getVisibleLogicalRange();
+      if (logical) element.dataset.range = `${logical.from.toFixed(1)}:${logical.to.toFixed(1)}`; // observable, no re-render
       const pos = chart.timeScale().scrollPosition();
       const latest = pos > -1.5;
       setAtLatest(latest);
       // only the trader's own scroll/zoom turns follow off (never a programmatic fit or jump), and the chart never snaps back
       if (!latest && followRef.current && interacting.current) onFollowChangeRef.current(false);
-      setTick((n) => n + 1);
+      if (hasOverlay.current) setTick((n) => n + 1);
     };
     chart.timeScale().subscribeVisibleLogicalRangeChange(onRange);
     let quiet: ReturnType<typeof setTimeout> | undefined;
@@ -363,7 +369,8 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     const onDown = () => touch(2500); // covers the kinetic scroll after a drag
     const onWheel = () => touch(1200);
     element.addEventListener("pointerdown", onDown);
-    element.addEventListener("pointermove", (e) => e.buttons > 0 && touch(2500));
+    const onMove = (e: PointerEvent) => e.buttons > 0 && touch(2500);
+    element.addEventListener("pointermove", onMove);
     element.addEventListener("wheel", onWheel, { passive: true });
     const onScheme = (e: MediaQueryListEvent) => chart.applyOptions(palette(e.matches));
     scheme.addEventListener("change", onScheme);
@@ -372,6 +379,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       clearTimeout(quiet);
       element.removeEventListener("pointerdown", onDown);
       element.removeEventListener("wheel", onWheel);
+      element.removeEventListener("pointermove", onMove);
       chart.remove();
       handles.current = null;
     };
@@ -403,10 +411,12 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       value: b.tick_volume,
       color: b.is_closed ? (b.close >= b.open ? `${GREEN}99` : `${RED}99`) : `${GREY}66`,
     });
+    // incremental: continue from the last bar already drawn. A sliding 400-bar window (the oldest bar
+    // drops off, a new one arrives) therefore only appends, and the trader's zoom and pan stay put.
     const prev = applied.current;
-    const first = series[0].time;
-    if (prev && prev.first === first && series.length >= prev.count) {
-      for (let i = prev.count - 1; i < series.length; i++) {
+    const at = prev ? barIndexAt(times, prev.last) : -1;
+    if (prev && at >= 0 && times[at] === prev.last) {
+      for (let i = at; i < series.length; i++) {
         h.candles.update(candlePoint(series[i]));
         h.volume.update(volumePoint(series[i]));
       }
@@ -414,7 +424,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       h.candles.setData(series.map(candlePoint));
       h.volume.setData(series.map(volumePoint));
     }
-    applied.current = { first, count: series.length };
+    applied.current = { last: times[times.length - 1] };
     const last = series[series.length - 1].bar;
     h.candles.applyOptions({ priceLineColor: last.close >= last.open ? GREEN : RED });
     if (fitted.current !== timeframe) {
@@ -422,7 +432,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       h.chart.timeScale().scrollToRealTime();
       fitted.current = timeframe;
     }
-  }, [series, timeframe]);
+  }, [series, times, timeframe]);
 
   useEffect(() => {
     handles.current?.plugin.setMarkers(chartMarkers);
@@ -464,14 +474,20 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     return out;
   }, [view, plan, overlays.plan, overlays.paper, overlays.structure, planLive, levels, alerts]);
 
+  const lineKey = useMemo(() => lineSpecs.map((l) => `${l.id}|${l.price}|${l.color}|${l.style}|${l.width}`).join(";"), [lineSpecs]);
+  const lineSpecsRef = useRef(lineSpecs);
+  useEffect(() => {
+    lineSpecsRef.current = lineSpecs;
+  }, [lineSpecs]);
   useEffect(() => {
     const h = handles.current;
     if (!h) return;
+    const lineSpecs = lineSpecsRef.current;
     for (const line of h.lines) h.candles.removePriceLine(line);
     extraPrices.current = lineSpecs.filter((l) => !l.id.startsWith("level-") && !l.id.startsWith("alert-")).map((l) => l.price);
     h.candles.priceScale().applyOptions({ autoScale: true });
     h.lines = lineSpecs.map((l) => h.candles.createPriceLine({ price: l.price, color: l.color, lineWidth: l.width, lineStyle: l.style, axisLabelVisible: true, title: `${l.title} ${l.price.toFixed(2)}` }));
-  }, [lineSpecs, timeframe]);
+  }, [lineKey, timeframe]);
 
   // trading sessions (DST-correct, see lib/sessions.ts): shaded runs of bars behind the candles
   useEffect(() => {
@@ -490,18 +506,29 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     h.bands.setRuns(runs);
   }, [overlays.sessions, series, times, tfSeconds, timeframe]);
 
-  // journal / history -> chart
+  // journal / history -> chart: a ONE-SHOT request, applied when asked (or once its bars have loaded),
+  // never again on a later poll, so the trader can pan away afterwards
+  const pendingFocus = useRef<{ from: string; to: string } | null>(null);
+  useEffect(() => {
+    pendingFocus.current = focus;
+  }, [focus]);
   useEffect(() => {
     const h = handles.current;
-    if (!h || !focus || times.length === 0) return;
-    const from = shiftedSeconds(focus.from, zone);
-    const to = shiftedSeconds(focus.to, zone);
+    const want = pendingFocus.current;
+    if (!h || !want || times.length === 0) return;
+    const from = shiftedSeconds(want.from, zone);
+    const to = shiftedSeconds(want.to, zone);
+    if (!Number.isFinite(from) || !Number.isFinite(to)) {
+      pendingFocus.current = null;
+      return;
+    }
+    pendingFocus.current = null;
     try {
       h.chart.timeScale().setVisibleRange({ from: (from - 40 * tfSeconds) as UTCTimestamp, to: (to + 40 * tfSeconds) as UTCTimestamp });
     } catch {
       /* the period is outside the loaded bars: keep the current view */
     }
-  }, [focus, zone, times, tfSeconds]);
+  }, [focus, times, zone, tfSeconds]);
 
   // ---- OHLC readout: the hovered bar, or the latest one ----------------------------------------
   const shown = useMemo(() => {
