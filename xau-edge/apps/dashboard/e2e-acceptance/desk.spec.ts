@@ -333,6 +333,16 @@ test.describe("layouts", () => {
     await shot(page, "23-replay-mobile-390x844-full", true);
   });
 
+  test("phone with an open position, on every workspace tab: no horizontal scroll (red team)", async ({ page, request }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await load(page, request, "buy_tp");
+    await openPaper(page);
+    for (const tab of ["overview", "why", "position", "activity", "system"]) {
+      await page.getByTestId(`tab-${tab}`).click();
+      await noHorizontalScroll(page);
+    }
+  });
+
   test("200% zoom (720x450 CSS px)", async ({ page, request }) => {
     await page.setViewportSize({ width: 720, height: 450 });
     await load(page, request, "buy_tp");

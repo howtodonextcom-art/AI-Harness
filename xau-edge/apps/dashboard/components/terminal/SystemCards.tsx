@@ -38,8 +38,8 @@ export function SystemStatus({ strip }: { strip: StatusStripData | undefined }) 
           const state = key === "strategy" && item.label ? item.label : item.state;
           return (
             <li key={key} data-testid={`status-${key}`} className="flex flex-wrap items-center gap-2">
-              <span className="w-40 text-slate-600 dark:text-slate-400">{name}</span>
-              <Pill value={state} tone={CHIP_TONE[item.state] ?? NEUTRAL} />
+              <span className="w-full text-slate-600 sm:w-40 dark:text-slate-400">{name}</span>
+              <span className="min-w-0 max-w-full [&>*]:max-w-full [&>*]:whitespace-normal [&>*]:break-words"><Pill value={state} tone={CHIP_TONE[item.state] ?? NEUTRAL} /></span>
               <span className="min-w-0 flex-1 text-xs text-slate-600 dark:text-slate-400">{item.detail}</span>
             </li>
           );
