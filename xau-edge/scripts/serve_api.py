@@ -73,7 +73,11 @@ def main() -> None:
             data_dir=Path.cwd() / settings.data_dir,
         )
         print("Web control plane ON (/control/*); token written for the dashboard server.")
-    trade = build_trade_engine(Path("data/market"), Path("data/trade"))
+    trade = build_trade_engine(
+        Path("data/market"),
+        Path("data/trade"),
+        news_calendar_path=settings.news_calendar_path,
+    )
     ctx = ApiContext(
         load_frames=load,
         registry=ExperimentRegistry("experiments/runs"),

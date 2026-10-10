@@ -2,7 +2,8 @@
 
 > Trạng thái: **khung vận hành đã sẵn sàng, chưa có nguồn dữ liệu**. Chủ dự án chưa chỉ định nguồn
 > lịch kinh tế; code không bundle và không tự lấy dữ liệu từ bất kỳ website nào. Không có lịch =
-> `NEWS_UNKNOWN` = tín hiệu luôn `WAIT` (fail-closed, đúng thiết kế, xem pre-mortem b1).
+> `NEWS_UNKNOWN`: bot demo legacy luôn `WAIT` (fail-closed); Trading Core `/trade` hiện cảnh báo
+> "NEWS NOT VERIFIED" (baseline vận hành chạy với `allow_unknown_news=True`). Xem mục 3.
 
 ## 1. Định dạng file (point-in-time)
 
@@ -51,6 +52,19 @@ Nếu nguồn không có `available_at`, job cập nhật gán **thời điểm 
 
 Cách trỏ vào nguồn: đặt `XAU_EDGE_NEWS_SOURCE` (đường dẫn file hoặc URL https) và
 `XAU_EDGE_NEWS_CALENDAR_PATH=data/news/calendar.csv` trong `.env` (chỉ tên biến, không commit `.env`).
+
+### Ai đọc `XAU_EDGE_NEWS_CALENDAR_PATH`
+
+| Nơi đọc | Cách dùng | Hành vi khi không có lịch / hết coverage |
+|---|---|---|
+| Trading Core `/trade` (`scripts/serve_api.py` → `build_trade_engine(news_calendar_path=...)` → `trading/live_source.py:news_state`) | `load_calendar_asof` (PIT, `future_rows="raise"`), cửa sổ 30 phút trước / 15 phút sau tin `high` | `news.state=UNKNOWN`, điều kiện `NEWS_UNKNOWN` (WARN). Baseline chạy với `allow_unknown_news=True` nên chỉ cảnh báo; `BLOCKED` thì từ chối bằng `NEWS_WINDOW` |
+| Bot demo legacy (`scripts/demo_trader.py`) | `load_calendar_file` | `NEWS_UNKNOWN` → `WAIT` (fail-closed) |
+| Control plane (`control/preflight.py`, `control/service.py`) | kiểm tra file và coverage | preflight báo thiếu lịch |
+
+`/trade` chỉ đọc biến này **khi API khởi động**: sau khi đặt biến hoặc đổi đường dẫn, phải khởi động
+lại API (`scripts/stop_market_stack.ps1` rồi `scripts/start_market_stack.ps1`). Nội dung file thì được
+đọc lại ở mỗi lần engine tính lại quyết định (mỗi nến M1 mới), nên job cập nhật hằng ngày không cần
+restart. Acceptance replay không nhận lịch live (tham số tường minh, mặc định `None`).
 
 ## 4. Job cập nhật hằng ngày
 

@@ -74,7 +74,7 @@ class EngineConfig:
     baseline: BaselineConfig = field(
         default_factory=lambda: BaselineConfig(allow_unknown_news=True)
     )
-    news_calendar_path: str | None = None
+    news_calendar_path: Path | str | None = None
     default_risk_pct: float = DEFAULT_RISK_PCT
     code_version: str = "unknown"
     auto_paper: bool = False
@@ -434,7 +434,7 @@ class TradeEngine:
                 condition("SPEC_MISSING", "ERROR", "the broker symbol specification is unknown")
             )
         if state.news_state == "UNKNOWN":
-            out.append(condition("NEWS_UNKNOWN", "WARN", "NEWS NOT VERIFIED: no economic calendar"))
+            out.append(condition("NEWS_UNKNOWN", "WARN", self._news_unknown_text()))
         if self._errors:
             out.append(
                 condition("ENGINE_ERROR", "WARN", "recent engine error: " + self._errors[-1])
@@ -768,7 +768,7 @@ class TradeEngine:
                 "news": {
                     "state": state.news_state,
                     "warning": state.news_state == "UNKNOWN",
-                    "text": "NEWS NOT VERIFIED: no economic calendar"
+                    "text": self._news_unknown_text()
                     if state.news_state == "UNKNOWN"
                     else state.news_state,
                 },
@@ -794,6 +794,14 @@ class TradeEngine:
                 "problems": problems,
                 "engine_errors": self._errors[-3:],
             }
+
+    def _news_unknown_text(self) -> str:
+        if self.config.news_calendar_path is None:
+            return "NEWS NOT VERIFIED: no economic calendar"
+        return (
+            "NEWS NOT VERIFIED: the economic calendar is missing, unreadable, has no coverage "
+            "for now or lists a row published after now"
+        )
 
     def _limits(self, quote: Any, stamp: datetime) -> dict[str, Any]:
         """The governor daily limits next to where today stands."""

@@ -50,12 +50,17 @@ def build_trade_engine(
     clock: Callable[[], datetime] | None = None,
     baseline_version: str | None = None,
     notifier: Notifier | None = None,
+    news_calendar_path: Path | None = None,
 ) -> TradeEngine:
     """The production wiring: collector files in, paper desk + journal + alerts out.
 
     ``source`` / ``clock`` / ``notifier`` exist for the acceptance replay, which runs THE SAME
     wiring (writer lock, desk, alerts, engine) over burned bars with a replay clock; the source
     decides the namespace (LIVE or ACCEPTANCE_REPLAY) and a root can never mix the two.
+
+    ``news_calendar_path`` is the point-in-time calendar (``XAU_EDGE_NEWS_CALENDAR_PATH``); it is
+    passed explicitly so a replay never picks up the live file by accident. Without it, or when it
+    does not cover now, the news state is UNKNOWN (never CLEAR).
     """
     code_version = code_version or current_code_version()
     source = source or LiveTradingMarketSource(market_root, ftmo_calendar())
@@ -99,6 +104,7 @@ def build_trade_engine(
             root=trade_root,
             code_version=code_version,
             baseline=BaselineConfig(allow_unknown_news=True, version=version),
+            news_calendar_path=news_calendar_path,
             auto_paper=auto_paper and mode == "LIVE",  # never auto-open inside a replay
         ),
         broker_clock=SERVER_CLOCK,
