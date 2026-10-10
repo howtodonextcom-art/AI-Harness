@@ -39,6 +39,7 @@ export function OpenConfirmModal({ frozen, liveEntry, maxDriftR, valid, busy, on
         </p>
       )}
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+        <dt className="text-slate-600 dark:text-slate-400">Setup</dt><dd data-testid="confirm-setup" className="text-right font-mono">{frozen.setup_id.slice(0, 12)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Hướng</dt><dd className="text-right font-bold">{buy ? "MUA (BUY)" : "BÁN (SELL)"}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Entry (giá thị trường hiện tại)</dt><dd data-testid="confirm-entry" className="text-right font-mono">{fmt(liveEntry ?? frozen.entry)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">SL</dt><dd data-testid="confirm-sl" className="text-right font-mono">{fmt(frozen.sl)}</dd>

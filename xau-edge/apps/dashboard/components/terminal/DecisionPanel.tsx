@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { actionText, type ActionTone } from "@/lib/action";
 import { parseDecimal } from "@/lib/chartMath";
-import { BAD, GOOD, INFO, NEUTRAL, WARN, fmt, money } from "@/components/trade/ui";
+import { BAD, WARN, fmt, money } from "@/components/trade/ui";
 import { formatInZone, type DisplayZone } from "@/lib/time";
 import { fetchRisk, type PaperTrade, type RiskPlan, type TradeView } from "@/lib/trade";
 import { ACTIVITY_VI, BLOCKER_VI, EXIT_REASON_VI, HERO_VI, PAPER_ACCOUNT_VI, REFUSAL_VI, STAGE_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
@@ -319,12 +319,14 @@ function ActionHero({ view, expiredNow, secondsLeft }: { view: TradeView; expire
   const errors = view.conditions.filter((c) => c.severity === "ERROR" && c.code !== "MARKET_CLOSED");
   const solid = t.tone === "buy" || t.tone === "sell";
   const veil = solid ? "bg-black/25" : "bg-black/10 dark:bg-white/10"; // solid heroes keep white text on a darker, never lighter, panel
+  // the small label never contradicts the action word: a WATCH is not 'CHỜ', a HOLD is a position
+  const chip = t.code.startsWith("WATCH") ? (view.hero.action.stage === "ARMED" ? "SETUP ĐANG HÌNH THÀNH" : "CHƯA CÓ SETUP") : text.label;
   const urgent = secondsLeft !== null && secondsLeft <= 60 && (t.code === "BUY" || t.code === "SELL") && !expiredNow;
   return (
     <div data-testid="hero" data-hero-state={state} data-action={t.code} data-server-label={view.hero.label} className={`rounded-lg border-2 px-4 py-2 ${ACTION_STYLE[t.tone]}`}>
       <div className="flex items-center justify-between gap-2 text-xs font-semibold uppercase">
         <span>Bạn nên làm gì bây giờ?</span>
-        <span data-testid="decision" className={`rounded px-1.5 py-0.5 ${veil}`}>{text.label}</span>
+        <span data-testid="decision" className={`rounded px-1.5 py-0.5 ${veil}`}>{chip}</span>
       </div>
       <div className="mt-1 flex items-center gap-2">
         <span aria-hidden="true" className="text-2xl">{ACTION_ICON[t.tone]}</span>

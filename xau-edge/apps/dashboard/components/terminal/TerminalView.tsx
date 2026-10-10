@@ -228,6 +228,22 @@ export function TerminalView() {
     };
   }, [loadSide]);
 
+  // a trade opened or closed (possibly by the engine itself): refresh markers/journal at once instead of at the next 6 s poll
+  const exitedId = view?.desk?.last_exit?.trade_id ?? null;
+  const openId = view?.desk?.position?.trade_id ?? null;
+  useEffect(() => {
+    if (exitedId === null && openId === null) return;
+    const t = setTimeout(() => void loadSide(), 0);
+    return () => clearTimeout(t);
+  }, [exitedId, openId, loadSide]);
+
+  // a success message is a receipt, not a status: it goes away by itself (errors stay until dismissed)
+  useEffect(() => {
+    if (!message || message.tone === BAD) return;
+    const t = setTimeout(() => setMessage(null), 12_000);
+    return () => clearTimeout(t);
+  }, [message]);
+
   // ---- derived ---------------------------------------------------------------------------------
   const uiStale = lastOk === null || (now - lastOk) / 1000 > STALE_UI_SECONDS;
   const serverNow = now + skew;

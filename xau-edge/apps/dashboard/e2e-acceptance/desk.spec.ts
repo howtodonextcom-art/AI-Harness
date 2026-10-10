@@ -330,3 +330,41 @@ test.describe("layouts", () => {
     await shot(page, "26-replay-dark-mobile");
   });
 });
+
+test.describe("action lifecycle through the real API: WAIT, WATCH, READY, HOLD, EXIT", () => {
+  const WATCHES: [string, string, string][] = [
+    ["buy_watch", "WATCH_BUY", "THEO DÕI MUA"],
+    ["buy_armed", "WATCH_BUY", "THEO DÕI MUA"],
+    ["sell_watch", "WATCH_SELL", "THEO DÕI BÁN"],
+    ["sell_armed", "WATCH_SELL", "THEO DÕI BÁN"],
+  ];
+  for (const [scenario, code, word] of WATCHES) {
+    test(`${scenario}: ${code} says when, offers no order`, async ({ page, request }) => {
+      await load(page, request, scenario);
+      await expect(hero(page)).toHaveAttribute("data-action", code);
+      await expect(page.getByTestId("action-word")).toHaveText(word);
+      await expect(page.getByTestId("action-when")).toContainText("Khi nào?");
+      await expect(page.getByTestId("take-paper")).toHaveCount(0);
+      await noHorizontalScroll(page);
+      await shot(page, `lifecycle-${scenario}`);
+    });
+  }
+
+  test("sell_invalidated: the dead setup is not an order, the engine waits", async ({ page, request }) => {
+    await load(page, request, "sell_invalidated");
+    await expect(hero(page)).toHaveAttribute("data-action", "WAIT");
+    await expect(page.getByTestId("take-paper")).toHaveCount(0);
+  });
+
+  test("BUY READY -> HOLD -> EXIT (TIME) with the action word following each step", async ({ page, request }) => {
+    await load(page, request, "buy_time");
+    await expect(hero(page)).toHaveAttribute("data-action", "BUY");
+    await openPaper(page);
+    await expect(hero(page)).toHaveAttribute("data-action", "HOLD");
+    await expect(page.getByTestId("action-word")).toHaveText("GIỮ LỆNH");
+    await advance(request, 110);
+    await advance(request, 15); // past max hold, still inside the 30-minute EXIT banner
+    await expect(hero(page)).toHaveAttribute("data-action", "EXIT", { timeout: 30_000 });
+    await expect(page.getByTestId("action-sub")).toContainText("Hết thời gian giữ");
+  });
+});
