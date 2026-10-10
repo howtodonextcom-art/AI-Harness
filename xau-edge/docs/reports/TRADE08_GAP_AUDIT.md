@@ -36,3 +36,23 @@ Giả thuyết cần phản bác: "giao diện tín hiệu đã xong, chỉ còn
 ## LIVE UNVERIFIED
 
 Toàn bộ giao diện trên stack :3000 với bản build mới nhất; bộ đếm LIVE; header thị trường đóng cửa; nhiều khung giờ/crosshair/zoom/pan/follow/fullscreen trên dữ liệu thật. → làm trong TRADE-08 (xem `TRADE08_LIVE_BROWSER_ACCEPTANCE.md`).
+
+---
+
+## Trạng thái sau TRADE-08 (HEAD cuối `2b50ea3`)
+
+| mục kiểm toán | trạng thái | bằng chứng |
+|---|---|---|
+| BROKEN 1 — biểu đồ phone 87–93 px | **ĐÃ SỬA** | 288–411 px; ngang/zoom 192/234 px (LIVE); 14 test cổng |
+| BROKEN 2 — đồng hồ replay nhảy | **ĐÃ SỬA** | chạy theo đồng hồ replay; test 6 giây đứng yên; LIVE giảm đều |
+| BROKEN 3 — localStorage không tách nguồn | **ĐÃ SỬA** | khóa `xau-edge:v3:{LIVE|REPLAY}:XAUUSD:*`, nhãn nguồn, migration chỉ vào LIVE |
+| BROKEN 4 — mã nội bộ đi đầu | **ĐÃ SỬA** | câu người trước, mã dưới "Chi tiết kỹ thuật" (hero, banner, lệnh bị từ chối, System, Journal) |
+| BROKEN 5 — thanh hành động bị separator che | **ĐÃ SỬA** | chart `isolate`, thanh z-[45]; test phone |
+| AMBIGUOUS 1 — THEO DÕI MUA/BÁN | **ĐÃ SỬA** | CHỜ + thiên hướng nhỏ có nhãn; 4 người chấm mù, 0 lần đọc nhầm |
+| AMBIGUOUS 2 — "Setup ✓" mâu thuẫn "đang hình thành" | **ĐÃ SỬA** | "Đã hình thành, chờ trigger M5 (còn N nến)" |
+| AMBIGUOUS 3 — lặp thông tin | **ĐÃ SỬA** | lỗi hệ thống nói một lần; chi tiết kỹ thuật gập |
+| AMBIGUOUS 4 — thiếu giải thích thuật ngữ | **ĐÃ SỬA** | 18 thuật ngữ có tooltip |
+| AMBIGUOUS 5 — popover/trục giá | **ĐÃ SỬA** | múi giờ, giờ thoát, MUA/BÁN; nhãn trục/marker nhường nhau |
+| PARTIAL — `max_hold` | **ĐÃ SỬA** | `max_hold_until` hiển thị + đếm ngược theo múi giờ |
+| PARTIAL — Journal tiếng Anh | **ĐÃ SỬA** | "ACCEPTANCE REPLAY — dữ liệu lịch sử phát lại, KHÔNG PHẢI LIVE", trạng thái bằng chữ |
+| LIVE UNVERIFIED | **ĐÃ NGHIỆM THU UI**; tín hiệu LIVE hành động **CHƯA quan sát được** | `TRADE08_LIVE_BROWSER_ACCEPTANCE.md` |

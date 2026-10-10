@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| build SHA | `18017fa` (HEAD lúc nghiệm thu); dashboard build id `01IJhtEMqAtDANBC0tspv` |
+| build SHA | `2b50ea3` (HEAD cuối; phiên LIVE chính chạy trên `18017fa`, sau đó chỉ đổi một chuỗi nhãn giá và đã chạy lại LIVE rồi kiểm nhanh 1440 + 390) |
 | khởi động lại stack | `scripts\stop_market_stack.ps1` rồi `start_market_stack.ps1 -Dashboard` (không kill MT5) ngay sau lần build cuối; kiểm API trả `hero.action.bias/missing` (mã mới) và dashboard phục vụ chuỗi UI mới |
 | sức khỏe lúc khởi động | `GOOD`, collector chạy, heartbeat 4 s. Về sau `status_market_stack` báo "Feed health DEGRADED: 5–10 stored bar(s) differ from the terminal" — **vấn đề đồng nhất dữ liệu bar đã lưu của collector, không thuộc sprint UI này, không đụng tới**; bar mới nhất còn FRESH, thị trường ĐÓNG |
 | công cụ trình duyệt | Playwright MCP (chuột/bàn phím thật theo tọa độ) + Chrome DevTools MCP (giả lập di động có cảm ứng) |
