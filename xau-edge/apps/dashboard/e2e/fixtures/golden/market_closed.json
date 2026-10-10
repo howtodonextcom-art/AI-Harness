@@ -201,6 +201,35 @@
   "open": false,
   "status": "CLOSED"
  },
+ "market_context": {
+  "bar_close": {
+   "H1": null,
+   "H4": null,
+   "M1": null,
+   "M15": null,
+   "M30": null,
+   "M5": null
+  },
+  "daily": {
+   "change": -11.730000000000473,
+   "change_basis": "PREV_CLOSE",
+   "change_pct": -0.2787156743707625,
+   "day": "2025-12-05",
+   "high": 4259.21,
+   "is_current_day": false,
+   "last": 4196.86,
+   "low": 4191.95,
+   "open": 4208.9,
+   "prev_close": 4208.59,
+   "range": 67.26000000000022,
+   "range_position": 0.07300029735355097
+  },
+  "server_time": "2025-12-06T12:00:00+00:00",
+  "session": {
+   "code": "LONDON",
+   "label": "Phi\u00ean \u00c2u (London)"
+  }
+ },
  "news": {
   "state": "UNKNOWN",
   "text": "NEWS NOT VERIFIED: no economic calendar",
@@ -457,6 +486,7 @@
     "timeframe": "M5"
    }
   ],
-  "waiting_for": "the market to open"
+  "waiting_for": "the market to open",
+  "waiting_for_code": "MARKET_CLOSED"
  }
 }

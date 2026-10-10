@@ -32,11 +32,12 @@ export const signalsGolden = (): SignalHistoryResponse => clone(signalsHistory) 
 
 export const TFS = ["H4", "H1", "M30", "M15", "M5", "M1"];
 
-// 5-minute bars that end at the golden's own server time, so markers and plan lines line up
+// Bars end at the golden's own server time (so markers and plan lines line up), one grid per timeframe.
 export const STEP = 300_000;
+const TF_MS: Record<string, number> = { M1: 60_000, M5: 300_000, M15: 900_000, M30: 1_800_000, H1: 3_600_000, H4: 14_400_000 };
 export const anchorMs = (v: TradeView) => Date.parse(v.served_at ?? v.generated_at);
-export const lastOpen = (v: TradeView) => Math.floor(anchorMs(v) / STEP) * STEP;
-export const barOpen = (v: TradeView, back: number) => new Date(lastOpen(v) - back * STEP).toISOString();
+export const lastOpen = (v: TradeView, tf = "M5") => Math.floor(anchorMs(v) / TF_MS[tf]) * TF_MS[tf];
+export const barOpen = (v: TradeView, back: number, tf = "M5") => new Date(lastOpen(v, tf) - back * TF_MS[tf]).toISOString();
 
 /** Synthetic candles (the chart's data feed, not a trading object) around the golden's quote. */
 export function bars(v: TradeView, timeframe: string) {
@@ -44,7 +45,7 @@ export function bars(v: TradeView, timeframe: string) {
   const out = [];
   for (let i = 120; i >= 0; i--) {
     const mid = base - 6 + (120 - i) * 0.05 + Math.sin(i / 4) * 1.5;
-    out.push({ time: barOpen(v, i), open: mid, high: mid + 1.5, low: mid - 1.5, close: mid + 0.5, tick_volume: 100 + i, spread: 20, is_closed: i !== 0 });
+    out.push({ time: barOpen(v, i, timeframe), open: mid, high: mid + 1.5, low: mid - 1.5, close: mid + 0.5, tick_volume: 100 + i, spread: 20, is_closed: i !== 0 });
   }
   return { symbol: "XAUUSD", timeframe, source: "ACCEPTANCE REPLAY (test candles)", volume_type: "TICK_VOLUME", real_volume_policy: "tick volume only", closed_only: false, bars: out };
 }

@@ -45,7 +45,7 @@ export function ageText(seconds: number | null | undefined): string {
 export function Pill({ label, value, tone, testId }: { label?: string; value: string; tone: string; testId?: string }) {
   return (
     <span data-testid={testId} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold ${tone}`}>
-      {label ? <span className="font-normal opacity-80">{label}</span> : null}
+      {label ? <span className="font-normal">{label}</span> : null}
       {value}
     </span>
   );
@@ -54,7 +54,7 @@ export function Pill({ label, value, tone, testId }: { label?: string; value: st
 export function Card({ title, children, testId, className = "" }: { title: string; children: ReactNode; testId?: string; className?: string }) {
   return (
     <section data-testid={testId} className={`min-w-0 rounded-lg border border-slate-300 p-3 dark:border-slate-700 ${className}`}>
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{title}</h2>
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{title}</h2>
       {children}
     </section>
   );
@@ -63,7 +63,7 @@ export function Card({ title, children, testId, className = "" }: { title: strin
 export function Row({ k, v, testId }: { k: string; v: ReactNode; testId?: string }) {
   return (
     <div className="flex justify-between gap-3 py-0.5 text-sm">
-      <span className="text-slate-500">{k}</span>
+      <span className="text-slate-600 dark:text-slate-400">{k}</span>
       <span data-testid={testId} className="font-mono tabular-nums">{v}</span>
     </div>
   );

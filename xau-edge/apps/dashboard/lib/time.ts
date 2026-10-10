@@ -4,9 +4,10 @@
  * Nothing here changes data: it only shifts what is drawn.
  */
 
-export type DisplayZone = "UTC" | "BROKER" | "LOCAL";
+export type DisplayZone = "VN" | "UTC" | "BROKER" | "LOCAL";
 
 export const ZONE_LABEL: Record<DisplayZone, string> = {
+  VN: "Giờ Việt Nam (GMT+7)",
   UTC: "UTC",
   BROKER: "Giờ broker (NY+7)",
   LOCAL: "Giờ máy tôi",
@@ -24,6 +25,7 @@ function newYorkOffsetSeconds(ms: number): number {
 
 export function offsetSeconds(zone: DisplayZone, ms: number): number {
   if (zone === "UTC") return 0;
+  if (zone === "VN") return 7 * 3600; // Vietnam has no daylight saving
   if (zone === "LOCAL") return -new Date(ms).getTimezoneOffset() * 60;
   return newYorkOffsetSeconds(ms) + 7 * 3600;
 }
@@ -44,14 +46,19 @@ export function formatInZone(iso: string | null | undefined, zone: DisplayZone):
 
 const KEY = "xau-edge.market.zone";
 
-export function loadZone(): DisplayZone {
+export function loadZone(fallback: DisplayZone = "UTC"): DisplayZone {
   try {
     const value = window.localStorage.getItem(KEY);
-    if (value === "UTC" || value === "BROKER" || value === "LOCAL") return value;
+    if (value === "VN" || value === "UTC" || value === "BROKER" || value === "LOCAL") return value;
   } catch {
-    /* storage unavailable: fall back to UTC */
+    /* storage unavailable: fall back */
   }
-  return "UTC";
+  return fallback;
+}
+
+/** ``HH:mm:ss`` in the chosen zone. */
+export function clockInZone(ms: number, zone: DisplayZone): string {
+  return new Date(ms + offsetSeconds(zone, ms) * 1000).toISOString().slice(11, 19);
 }
 
 export function saveZone(zone: DisplayZone): void {

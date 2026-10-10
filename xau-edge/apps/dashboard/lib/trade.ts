@@ -134,6 +134,7 @@ export interface WhyStage {
 export interface WhyWait {
   stages: WhyStage[];
   waiting_for: string | null;
+  waiting_for_code: string | null;
   blocked_by: string[];
 }
 
@@ -287,6 +288,28 @@ export interface AlertsSummary {
   this_setup: { announced: boolean; at: string; channel: string } | null;
 }
 
+export interface DailyStats {
+  day: string;
+  is_current_day: boolean;
+  open: number;
+  high: number;
+  low: number;
+  range: number;
+  prev_close: number | null;
+  last: number;
+  change: number;
+  change_pct: number | null;
+  change_basis: "PREV_CLOSE" | "DAY_OPEN";
+  range_position: number | null;
+}
+
+export interface MarketContext {
+  server_time: string;
+  session: { code: string; label: string };
+  daily: DailyStats | null;
+  bar_close: Record<string, string | null>;
+}
+
 export interface TradeView {
   available: boolean;
   source_mode: SourceMode;
@@ -295,6 +318,7 @@ export interface TradeView {
   hero: Hero;
   decision_trusted: boolean;
   status_strip: StatusStrip;
+  market_context?: MarketContext;
   strategy: StrategyInfo;
   conditions: Condition[];
   forward_acceptance: ForwardAcceptance;
@@ -399,3 +423,7 @@ async function post<T>(path: string, body: unknown): Promise<{ ok: true; data: T
 export const openPaperTrade = (setup_id: string, risk_pct: number) =>
   post<PaperTrade>("paper/open", { setup_id, risk_pct });
 export const closePaperTrade = (trade_id: string) => post<PaperTrade>("paper/close", { trade_id });
+
+/** Quick risk calculator (read-only; the same sizing the paper desk uses). Not a signal. */
+export const fetchRisk = (entry: number, stopLoss: number, riskPct: number, signal?: AbortSignal) =>
+  getJson<RiskPlan>(`/trade/risk?entry=${entry}&stop_loss=${stopLoss}&risk_pct=${riskPct}`, signal);

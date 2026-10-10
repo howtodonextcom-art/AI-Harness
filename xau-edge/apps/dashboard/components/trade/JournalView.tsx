@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { fetchJournal, type JournalResponse, type PaperTrade } from "@/lib/trade";
 import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
@@ -8,7 +9,7 @@ import { fmt, money } from "@/components/trade/ui";
 function Stat({ k, v, testId }: { k: string; v: string; testId: string }) {
   return (
     <div className="rounded-md border border-slate-300 px-3 py-2 dark:border-slate-700">
-      <div className="text-xs text-slate-500">{k}</div>
+      <div className="text-xs text-slate-600 dark:text-slate-400">{k}</div>
       <div data-testid={testId} className="font-mono text-lg">{v}</div>
     </div>
   );
@@ -69,7 +70,7 @@ export function JournalView() {
           {data.source_mode.replace("_", " ")} — KHÔNG PHẢI LIVE. Các lệnh dưới đây chạy trên dữ liệu lịch sử đã đốt, không tính vào bằng chứng forward.
         </div>
       )}
-      <p data-testid="journal-note" className="text-xs text-slate-500">
+      <p data-testid="journal-note" className="text-xs text-slate-600 dark:text-slate-400">
         Mọi lệnh ở đây là mô phỏng. Chưa có bằng chứng thống kê rằng baseline này có lợi thế — số liệu nhỏ không chứng minh gì.
       </p>
       {data?.desk_fault && (
@@ -86,7 +87,7 @@ export function JournalView() {
       </div>
       <div className="overflow-x-auto">
         <table data-testid="journal-table" className="w-full text-left text-sm">
-          <thead className="text-xs text-slate-500">
+          <thead className="text-xs text-slate-600 dark:text-slate-400">
             <tr>
               <th className="pr-3">Setup</th>
               <th className="pr-3">Hướng</th>
@@ -107,7 +108,7 @@ export function JournalView() {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={14} className="py-3 text-slate-500">
+                <td colSpan={14} className="py-3 text-slate-600 dark:text-slate-400">
                   {error ? "Không tải được journal." : "Chưa có lệnh paper nào. Khi bạn mở một lệnh từ trang Trade, nó sẽ hiện ở đây."}
                 </td>
               </tr>
@@ -127,8 +128,11 @@ export function JournalView() {
                   <td className="pr-3 font-mono">{money(t.net_pnl)}</td>
                   <td className="pr-3 font-mono">{fmt(t.mfe_r)} / {fmt(t.mae_r)}</td>
                   <td className="pr-3 font-mono">{fmt(t.duration_minutes, 0)}</td>
-                  <td className="pr-3 text-xs">v{t.strategy_version ?? "?"}<span className="block text-slate-500">{t.code_version ?? ""}</span></td>
-                  <td>
+                  <td className="pr-3 text-xs">v{t.strategy_version ?? "?"}<span className="block text-slate-600 dark:text-slate-400">{t.code_version ?? ""}</span></td>
+                  <td className="whitespace-nowrap">
+                    <Link data-testid="journal-view-on-chart" href={`/trade?focus=${encodeURIComponent(t.opened_at ?? t.created_at)}&to=${encodeURIComponent(t.closed_at ?? t.opened_at ?? t.created_at)}&tf=M5&trade=${encodeURIComponent(t.trade_id)}`} className="mr-2 text-xs underline">
+                      xem trên biểu đồ
+                    </Link>
                     <button type="button" data-testid="journal-detail-toggle" className="text-xs underline" onClick={() => setOpen(open === t.trade_id ? null : t.trade_id)}>
                       {open === t.trade_id ? "ẩn" : "nguồn gốc"}
                     </button>

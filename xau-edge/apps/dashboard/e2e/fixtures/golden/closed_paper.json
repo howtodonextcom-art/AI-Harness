@@ -213,6 +213,35 @@
   "open": true,
   "status": "OPEN"
  },
+ "market_context": {
+  "bar_close": {
+   "H1": "2025-12-05T16:00:00+00:00",
+   "H4": "2025-12-05T18:00:00+00:00",
+   "M1": "2025-12-05T15:46:00+00:00",
+   "M15": "2025-12-05T16:00:00+00:00",
+   "M30": "2025-12-05T16:00:00+00:00",
+   "M5": "2025-12-05T15:50:00+00:00"
+  },
+  "daily": {
+   "change": 45.19999999999982,
+   "change_basis": "PREV_CLOSE",
+   "change_pct": 1.073993902946113,
+   "day": "2025-12-05",
+   "high": 4259.21,
+   "is_current_day": true,
+   "last": 4253.79,
+   "low": 4194.75,
+   "open": 4208.9,
+   "prev_close": 4208.59,
+   "range": 64.46000000000004,
+   "range_position": 0.915916847657461
+  },
+  "server_time": "2025-12-05T15:45:00+00:00",
+  "session": {
+   "code": "LONDON_NY_OVERLAP",
+   "label": "\u00c2u-M\u1ef9 ch\u1ed3ng phi\u00ean"
+  }
+ },
  "news": {
   "state": "UNKNOWN",
   "text": "NEWS NOT VERIFIED: no economic calendar",
@@ -485,6 +514,7 @@
     "timeframe": "M5"
    }
   ],
-  "waiting_for": "an M15 pullback inside the H1 trend (it then stays armed 6 M5 bars)"
+  "waiting_for": "an M15 pullback inside the H1 trend (it then stays armed 6 M5 bars)",
+  "waiting_for_code": "NO_SETUP"
  }
 }

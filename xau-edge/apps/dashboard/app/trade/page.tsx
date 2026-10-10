@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { TradeView } from "@/components/trade/TradeView";
+import { TerminalView } from "@/components/terminal/TerminalView";
 
 export const metadata: Metadata = {
-  title: "XAU EDGE — Trade (PAPER, FTMO DEMO data)",
+  title: "XAU EDGE — Terminal giao dịch PAPER (XAUUSD)",
 };
 
 export default function Page() {
-  return <TradeView />;
+  return <TerminalView />;
 }

@@ -233,6 +233,35 @@
   "open": true,
   "status": "OPEN"
  },
+ "market_context": {
+  "bar_close": {
+   "H1": "2025-12-05T15:00:00+00:00",
+   "H4": "2025-12-05T18:00:00+00:00",
+   "M1": null,
+   "M15": "2025-12-05T15:00:00+00:00",
+   "M30": "2025-12-05T15:00:00+00:00",
+   "M5": null
+  },
+  "daily": {
+   "change": 35.56999999999971,
+   "change_basis": "PREV_CLOSE",
+   "change_pct": 0.8451761753936523,
+   "day": "2025-12-05",
+   "high": 4244.16,
+   "is_current_day": true,
+   "last": 4244.16,
+   "low": 4194.75,
+   "open": 4208.9,
+   "prev_close": 4208.59,
+   "range": 49.409999999999854,
+   "range_position": 1.0
+  },
+  "server_time": "2025-12-05T14:51:40+00:00",
+  "session": {
+   "code": "LONDON_NY_OVERLAP",
+   "label": "\u00c2u-M\u1ef9 ch\u1ed3ng phi\u00ean"
+  }
+ },
  "news": {
   "state": "UNKNOWN",
   "text": "NEWS NOT VERIFIED: no economic calendar",
@@ -564,6 +593,7 @@
     "timeframe": "M5"
    }
   ],
-  "waiting_for": null
+  "waiting_for": null,
+  "waiting_for_code": null
  }
 }

@@ -205,6 +205,35 @@
   "open": true,
   "status": "OPEN"
  },
+ "market_context": {
+  "bar_close": {
+   "H1": "2025-12-02T13:00:00+00:00",
+   "H4": "2025-12-02T14:00:00+00:00",
+   "M1": "2025-12-02T12:01:00+00:00",
+   "M15": "2025-12-02T12:15:00+00:00",
+   "M30": "2025-12-02T12:30:00+00:00",
+   "M5": "2025-12-02T12:05:00+00:00"
+  },
+  "daily": {
+   "change": -27.26000000000022,
+   "change_basis": "PREV_CLOSE",
+   "change_pct": -0.6440698789829135,
+   "day": "2025-12-02",
+   "high": 4235.83,
+   "is_current_day": true,
+   "last": 4205.2,
+   "low": 4181.1,
+   "open": 4231.41,
+   "prev_close": 4232.46,
+   "range": 54.72999999999956,
+   "range_position": 0.44034350447651466
+  },
+  "server_time": "2025-12-02T12:00:00+00:00",
+  "session": {
+   "code": "LONDON",
+   "label": "Phi\u00ean \u00c2u (London)"
+  }
+ },
  "news": {
   "state": "UNKNOWN",
   "text": "NEWS NOT VERIFIED: no economic calendar",
@@ -475,6 +504,7 @@
     "timeframe": "M5"
    }
   ],
-  "waiting_for": "H1 to establish a bullish or bearish direction"
+  "waiting_for": "H1 to establish a bullish or bearish direction",
+  "waiting_for_code": "NO_DIRECTION"
  }
 }
