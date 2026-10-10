@@ -61,7 +61,7 @@ test.describe("market bar", () => {
     await expect(page.getByTestId("session")).toHaveText("Ngoài giờ giao dịch");
     await expect(page.getByTestId("day-stats")).toContainText("Phiên gần nhất");
     await expect(page.getByTestId("countdown")).toContainText("Mở lại lúc");
-    await expect(page.getByTestId("closed-info")).toContainText("Thị trường đang nghỉ");
+    await expect(page.getByTestId("closed-info")).toContainText("Bộ máy quyết định tạm dừng");
   });
 
   test("an old quote while the market is closed is the last close, not an alarm", async ({ page }) => {

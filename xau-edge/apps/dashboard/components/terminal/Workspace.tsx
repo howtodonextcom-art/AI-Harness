@@ -323,7 +323,7 @@ export function Workspace(props: Props) {
               if (e.key === "ArrowRight") move(TABS[(i + 1) % TABS.length][0]);
               if (e.key === "ArrowLeft") move(TABS[(i + TABS.length - 1) % TABS.length][0]);
             }}
-            className={`whitespace-nowrap rounded-t-md border border-b-0 px-3 py-1.5 text-sm ${tab === id ? "border-slate-400 bg-slate-500/10 font-bold" : "border-transparent text-slate-600 dark:text-slate-400 hover:text-inherit"}`}
+            className={`whitespace-nowrap rounded-t-md border border-b-0 px-2 py-1.5 text-sm sm:px-3 ${tab === id ? "border-slate-400 bg-slate-500/10 font-bold" : "border-transparent text-slate-600 dark:text-slate-400 hover:text-inherit"}`}
           >
             {label}
           </button>

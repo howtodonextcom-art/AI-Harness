@@ -75,6 +75,7 @@ const GREY = "#64748b";
 const AMBER = "#d97706";
 const PURPLE = "#7c3aed";
 
+const EXIT_SHORT: Record<string, string> = { TAKE_PROFIT: "TP", STOP_LOSS: "SL", TIME_EXIT: "HẾT GIỜ", MANUAL_CLOSE: "TAY", CLOSURE_CLOSE: "ĐÓNG CỬA", INVALIDATED: "VÔ HIỆU" };
 const fmt = (v: number | null | undefined, d = 2) => (v === null || v === undefined ? "—" : v.toFixed(d));
 
 // ---- session bands drawn behind the candles (a series primitive) --------------------------------
@@ -244,12 +245,12 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       for (const t of trades) {
         const entry = byTime(t.entry_time, "containing");
         if (entry) {
-          list.push({ time: entry.time as UTCTimestamp, position: t.side === "BUY" ? "belowBar" : "aboveBar", shape: "circle", color: BLUE, text: `PAPER ${SIDE_VI[t.side]}` });
+          list.push({ time: entry.time as UTCTimestamp, position: t.side === "BUY" ? "belowBar" : "aboveBar", shape: "circle", color: BLUE, text: "" }); // the circle is enough; a label collides with the signal arrow
           out.push({ key: `in-${t.trade_id}`, kind: "PAPER_ENTRY", barTime: entry.barIso, trade: t, lines: [`PAPER ${t.side} opened @ ${fmt(t.entry_price)}`] });
         }
         const exit = t.status === "CLOSED" ? byTime(t.exit_time, "containing") : null;
         if (exit) {
-          list.push({ time: exit.time as UTCTimestamp, position: t.side === "BUY" ? "aboveBar" : "belowBar", shape: "square", color: (t.net_pnl ?? 0) >= 0 ? GREEN : RED, text: `THOÁT ${EXIT_REASON_VI[t.exit_reason ?? ""] ?? t.exit_reason ?? ""}` });
+          list.push({ time: exit.time as UTCTimestamp, position: t.side === "BUY" ? "aboveBar" : "belowBar", shape: "square", color: (t.net_pnl ?? 0) >= 0 ? GREEN : RED, text: EXIT_SHORT[t.exit_reason ?? ""] ?? "THOÁT" });
           out.push({
             key: `out-${t.trade_id}`,
             kind: "EXIT",

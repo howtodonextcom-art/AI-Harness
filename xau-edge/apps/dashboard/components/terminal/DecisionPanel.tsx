@@ -393,8 +393,7 @@ function ClosedInfo({ view, zone }: { view: TradeView; zone: DisplayZone }) {
   const t = view.desk?.today;
   return (
     <div data-testid="closed-info" className="space-y-2 rounded-lg border border-slate-300 p-3 text-sm dark:border-slate-700">
-      <p className="font-semibold">Thị trường đang nghỉ</p>
-      <p>Bộ máy quyết định tạm dừng và sẽ tự tính lại khi thị trường mở cửa. Biểu đồ và giá hiển thị là dữ liệu cuối cùng.</p>
+      <p>Bộ máy quyết định tạm dừng và tự tính lại khi thị trường mở cửa; giá và biểu đồ là dữ liệu cuối cùng.</p>
       {view.market_context?.next_open && <p data-testid="reopen-at">Thị trường mở lại lúc <b className="font-mono">{formatInZone(view.market_context.next_open, zone).slice(0, 16)}</b>.</p>}
       {d && (
         <p>
