@@ -132,7 +132,14 @@ SCENARIOS: dict[str, Scenario] = {
 class AcceptanceWorld:
     """One scenario's engine, desk and replay clock (a fresh root each time)."""
 
-    def __init__(self, market_root: Path, out_root: Path, scenario: Scenario) -> None:
+    def __init__(
+        self,
+        market_root: Path,
+        out_root: Path,
+        scenario: Scenario,
+        *,
+        until: datetime | None = None,
+    ) -> None:
         self.scenario = scenario
         self.market_root = market_root
         self.root = out_root / scenario.name
@@ -140,7 +147,7 @@ class AcceptanceWorld:
             shutil.rmtree(self.root, ignore_errors=True)
         self.root.mkdir(parents=True)
         start = scenario.moment - timedelta(minutes=5 * WARM_STEPS)
-        end = min(scenario.moment + timedelta(days=2), BURNED_TO)
+        end = min(until or scenario.moment + timedelta(days=2), BURNED_TO)
         self.source = ReplayMarketSource(market_root, ftmo_calendar(), start, end)
         self.source.fault = scenario.fault
         self.now = start
@@ -281,10 +288,10 @@ def m1_parity(
     """
     base = Scenario("parity", "M1 cadence parity", version, start)
     live = AcceptanceWorld(
-        market_root, out_root, Scenario("parity_m1", base.description, version, start)
+        market_root, out_root, Scenario("parity_m1", base.description, version, start), until=end
     )
     slow = AcceptanceWorld(
-        market_root, out_root, Scenario("parity_m5", base.description, version, start)
+        market_root, out_root, Scenario("parity_m5", base.description, version, start), until=end
     )
     report = ParityReport(version, start.isoformat(), end.isoformat())
     m1 = live.source.frames[Timeframe.M1]

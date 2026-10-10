@@ -194,8 +194,10 @@ test("market closed, unavailable engine and a corrupt paper state each have thei
   await expect(page.getByTestId("take-paper")).toHaveCount(0);
   await mock(page, view("paperCorrupt"));
   await page.goto("/trade");
-  await expect(page.getByTestId("blockers").locator("[data-code='PAPER_STATE_ERROR']")).toBeVisible();
-  await expect(page.getByTestId("take-paper")).toBeDisabled();
+  await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "UNAVAILABLE");
+  await expect(page.getByTestId("decision")).not.toContainText("READY");
+  await expect(page.getByTestId("conditions")).toContainText("PAPER STATE ERROR");
+  await expect(page.getByTestId("take-paper")).toHaveCount(0);
 });
 
 test("the API refusing a stale setup is shown, not hidden", async ({ page }) => {
@@ -231,6 +233,27 @@ test("journal lists the real closed trade, labels replay, and says it proves not
   await expect(page.getByTestId("journal-note")).toContainText("Chưa có bằng chứng");
   await page.getByTestId("journal-detail-toggle").first().click();
   await expect(page.getByTestId("journal-detail")).toContainText("ACCEPTANCE_REPLAY");
+});
+
+test("a faulted desk is shown on the journal instead of an empty list", async ({ page }) => {
+  const journal = { ...journalClosedGolden(), trades: [], desk_fault: "the paper state and its journal disagree" };
+  await page.route("**/trade/journal**", (route) => route.fulfill({ json: journal }));
+  await page.goto("/journal");
+  await expect(page.getByTestId("journal-desk-fault")).toContainText("PAPER_STATE_ERROR");
+});
+
+test("the confirmation closes when the setup under it changes", async ({ page }) => {
+  const first = view("buy");
+  const next = view("buy");
+  next.trade_plan!.setup_id = "ffffffffffffffffffff";
+  let served = first;
+  await mock(page, first);
+  await page.route("**/trade/decision", (route) => route.fulfill({ json: served }));
+  await page.goto("/trade");
+  await page.getByTestId("take-paper").click();
+  await expect(page.getByTestId("confirm-card")).toBeVisible();
+  served = next;
+  await expect(page.getByTestId("confirm-card")).toHaveCount(0, { timeout: 15_000 });
 });
 
 test("journal API down is an error, not an empty journal", async ({ page }) => {

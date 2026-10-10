@@ -215,6 +215,7 @@ def add_trade_routes(  # noqa: PLR0915 - one small function per route
             return {
                 "simulated": True,
                 "source_mode": engine.source_mode,
+                "desk_fault": engine.desk.load_error or engine.desk.integrity_error,
                 "open": engine.desk.open_trade(),
                 "trades": engine.desk.closed_trades()[:limit],
                 "evidence": engine.evidence(),

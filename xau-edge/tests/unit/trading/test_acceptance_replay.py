@@ -7,6 +7,8 @@ end-to-end paper lifecycle. They skip when the burned market data is not in the 
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -79,6 +81,7 @@ def test_a_corrupt_paper_state_fails_closed(tmp_path: Path) -> None:
     view = world.engine.view()
     assert "PAPER_STATE_ERROR" in {b["code"] for b in view["entry_blockers"]}
     assert view["desk"]["can_open"] is False
+    assert view["hero"]["state"] == "UNAVAILABLE"  # never a green BUY READY over a faulted desk
     world.close()
 
 
@@ -127,3 +130,28 @@ def test_live_cadence_matches_m5_cadence_and_plain_evaluate(tmp_path: Path) -> N
     assert report.actionable_at_m5 >= 1  # the real BUY at 14:45 is inside the window
     assert report.mismatches == []
     assert report.duplicate_alerts == []
+
+
+def test_the_documented_acceptance_replay_script_still_runs(tmp_path: Path) -> None:
+    """The script behind the acceptance reports must keep working against the current engine."""
+    root = Path(__file__).resolve().parents[3]
+    done = subprocess.run(  # noqa: S603 - our own script, fixed arguments
+        [
+            sys.executable,
+            str(root / "scripts" / "trade_acceptance_replay.py"),
+            "--start", "2025-12-05T14:00",
+            "--end", "2025-12-05T15:40",
+            "--version", "1.2.1",
+            "--root", str(MARKET),
+            "--out", str(tmp_path),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=root,
+        timeout=600,
+        check=False,
+    )  # fmt: skip
+    assert done.returncode == 0, done.stderr[-800:]
+    journals = list(tmp_path.glob("*/paper_journal.jsonl"))
+    assert journals
+    assert '"paper.close"' in journals[0].read_text(encoding="utf-8")

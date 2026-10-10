@@ -10,7 +10,7 @@ Trạng thái tổng: **Acceptance Replay ĐẠT; Forward live: `FORWARD_ACCEPTA
 |---|---|---|
 | Test tổng hợp (đơn vị) | `test_paper_desk.py` (24 test), `test_engine_alerts_lock.py`, `test_ui_contract.py` | đạt: mở ở ask+slippage, một lệnh/setup, thoát SL/TP (SL thắng khi chạm cả hai), TIME_EXIT, đóng tay không lặp, sống qua restart, MFE/MAE tại thời điểm thoát |
 | Acceptance Replay (dữ liệu đã đốt) | `scripts/trade_acceptance_replay.py`: `ReplayMarketSource → TradeEngine → decision_core → PaperDesk → journal`, AUTO_PAPER bật cục bộ, không logic riêng | đạt (mục 2) |
-| Hợp đồng UI ↔ bản ghi thật | `test_ui_contract.py` + e2e dùng bản ghi desk THẬT (`e2e/fixtures/real_paper_trade.json`) | đạt; phát hiện và sửa lệch tên trường (mục 4) |
+| Hợp đồng UI ↔ bản ghi thật | `test_ui_contract.py` + e2e và `tsc` dùng golden sinh từ backend thật (`e2e/fixtures/golden/*.json`, `scripts/generate_trade_goldens.py`) và test `test_contract_goldens.py` khóa hai chiều | đạt; phát hiện và sửa lệch tên trường (mục 4) |
 | Forward live | bàn paper chạy trong API, theo dõi mỗi nến M1 đóng | **PENDING** (mục 5) |
 
 ## 2. Acceptance Replay (dữ liệu đã đốt: E1 2025-08-04→09-01, E2 2025-12-01→12-29)

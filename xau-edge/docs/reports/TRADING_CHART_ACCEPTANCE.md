@@ -2,22 +2,25 @@
 
 Biểu đồ dùng lightweight-charts sẵn có (không thêm thư viện), dữ liệu nến từ `/md/XAUUSD/bars` (ledger MT5 chuẩn, 6 khung M1/M5/M15/M30/H1/H4, mặc định **M5**). Không có nguồn TradingView, không `data/raw`. Mọi lớp phủ chỉ đến từ đối tượng server; frontend không tự suy ra tín hiệu.
 
-Ảnh bên dưới là **fixture có hình dạng giống dữ liệu server** (đánh dấu rõ), trừ ảnh 09 là màn hình thật trên dữ liệu sống. Không có số dư, đăng nhập hay thông tin tài khoản trong ảnh (vốn paper giả lập 10 000).
+Ảnh nghiệm thu nay được chụp từ **trình duyệt thật chạy trên trang production** với API thật trên dữ liệu FTMO đã đốt phát lại (ACCEPTANCE REPLAY, mọi ảnh tự ghi "NOT LIVE" trên trang), không còn fixture viết tay. Chi tiết và bảng ảnh: `TRADING_DESK_FINAL_COMPLETION.md`. Ảnh `00-LIVE-market-closed.png` là màn hình LIVE thật. Không có số dư, đăng nhập hay thông tin tài khoản trong ảnh (vốn paper giả lập 10 000).
 
 ## 1. Ảnh
 
-| # | Nội dung | Tệp |
-|---|---|---|
-| 01 | WAIT: "Blocked by", Why WAIT (PASS/FAIL), Waiting for | `img/trading-chart/01-wait-desktop.png` |
-| 02 | BUY (fixture): đường ENTRY/SL/TP1/TP2, marker BUY, kế hoạch + lot | `img/trading-chart/02-buy-desktop.png` |
-| 03 | SELL (fixture) | `img/trading-chart/03-sell-desktop.png` |
-| 04 | Lệnh paper đang mở: PAPER ENTRY/SL/TP + NOW, R và P&L, thời gian giữ | `img/trading-chart/04-open-paper-desktop.png` |
-| 05 | Lệnh paper đã đóng + bật "Paper trade history": marker EXIT | `img/trading-chart/05-closed-history-desktop.png` |
-| 06–07 | Di động 390×844 (WAIT, BUY) | `img/trading-chart/06-wait-mobile.png`, `07-buy-mobile.png` |
-| 08 | Giao diện tối | `img/trading-chart/08-buy-dark.png` |
-| 09 | **Màn hình thật** trên dữ liệu FTMO sống (WAIT, bản v1.1) | `img/trading-chart/09-live-wait-real-data.png` |
+Thư mục `img/trading-desk/` (tạo bằng `npx playwright test -c playwright.acceptance.config.ts` trong `apps/dashboard`; ảnh 00 chụp trên stack sống):
 
-Tạo lại: `SCREENSHOTS=1 npx playwright test e2e/screenshots.spec.ts` (trong `apps/dashboard`).
+| # | Nội dung |
+|---|---|
+| 00 | LIVE: thị trường đóng cửa (màn hình thật, nguồn LIVE) |
+| 01 | Replay WAIT (Blocked by, Why WAIT, Waiting for) |
+| 02 / 04 | BUY thật / SELL thật: đường ENTRY/SL/TP, kế hoạch, lot |
+| 03 | Lệnh paper đang mở |
+| 05 / 07 / 08 | Thoát TAKE_PROFIT / STOP_LOSS / TIME_EXIT |
+| 06 | Đóng tay |
+| 09 | Journal |
+| 10–16 | STALE, EXPIRED, PAPER_STATE_ERROR, WRITER_LOCK, API down, MARKET CLOSED, CLOSURE_NEAR |
+| 17 / 18 | Di động 390×844 / zoom 200% |
+
+`img/trading-chart/09-live-wait-real-data.png` là ảnh LIVE của bản trước sprint này (giữ làm lịch sử).
 
 ## 2. Đối chiếu yêu cầu
 

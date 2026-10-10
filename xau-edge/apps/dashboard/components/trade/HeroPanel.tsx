@@ -16,7 +16,7 @@ interface Props {
 
 /** Hero state + trade plan + the (confirmed) paper action. The state itself comes from the server. */
 export function HeroPanel({ view, nowMs, risk, onRisk, onOpen, busy, uiStale }: Props) {
-  const [confirming, setConfirming] = useState(false);
+  const [confirmKey, setConfirmKey] = useState<string | null>(null);
   const hero = view.hero;
   const plan = view.trade_plan ?? null;
   const expiresMs = plan?.expires_at ? Date.parse(plan.expires_at) : null;
@@ -26,6 +26,10 @@ export function HeroPanel({ view, nowMs, risk, onRisk, onOpen, busy, uiStale }: 
   const label = showExpired ? "EXPIRED SETUP" : hero.label;
   const toneKey = showExpired ? "warn" : hero.tone;
   const icon = showExpired ? TONE_ICON.EXPIRED_SETUP : (TONE_ICON[hero.state] ?? "•");
+  // the confirmation belongs to the setup, levels and risk it was opened for; if any changes it closes
+  const planKey = plan ? `${plan.setup_id}|${plan.sl}|${plan.tp1}|${risk}` : "";
+  const confirming = confirmKey !== null && confirmKey === planKey;
+  const setConfirming = (on: boolean) => setConfirmKey(on ? planKey : null);
   const blockers = view.entry_blockers ?? [];
   const chosen = view.risk_plans?.find((p) => Math.abs(p.risk_pct - risk) < 1e-9);
   const canOpen = Boolean(view.actionable && !expiredNow && !uiStale && plan?.complete && chosen?.ok);

@@ -19,7 +19,8 @@ const REASON_TEXT: Record<string, string> = {
   TAKE_PROFIT: "Chạm TP",
   TIME_EXIT: "Hết thời gian giữ",
   MANUAL_CLOSE: "Đóng tay",
-  CLOSURE_EXIT: "Đóng trước giờ thị trường nghỉ",
+  CLOSURE_CLOSE: "Đóng trước giờ thị trường nghỉ",
+  INVALIDATED: "Setup bị vô hiệu",
 };
 
 /** The paper trade journal: every simulated trade with its plan, result and provenance (no real orders). */
@@ -71,6 +72,11 @@ export function JournalView() {
       <p data-testid="journal-note" className="text-xs text-slate-500">
         Mọi lệnh ở đây là mô phỏng. Chưa có bằng chứng thống kê rằng baseline này có lợi thế — số liệu nhỏ không chứng minh gì.
       </p>
+      {data?.desk_fault && (
+        <div data-testid="journal-desk-fault" role="alert" className="rounded-md border-2 border-red-600 bg-red-500/15 px-3 py-2 text-sm font-semibold">
+          PAPER_STATE_ERROR: {data.desk_fault}. Danh sách bên dưới có thể THIẾU lệnh; nguồn đầy đủ là paper_journal.jsonl.
+        </div>
+      )}
       {error && <div role="alert" className="rounded-md border border-red-600 bg-red-500/15 px-3 py-2 text-sm">{error}</div>}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Stat k="Lệnh đã đóng" v={String(stats.n)} testId="stat-n" />

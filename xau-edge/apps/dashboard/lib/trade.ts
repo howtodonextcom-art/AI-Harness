@@ -358,6 +358,7 @@ export interface TradeView {
 export interface JournalResponse {
   simulated: boolean;
   source_mode: SourceMode;
+  desk_fault: string | null;
   open: PaperTrade | null;
   trades: PaperTrade[];
   evidence: TradeView["evidence"];

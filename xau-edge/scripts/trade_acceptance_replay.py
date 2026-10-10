@@ -41,14 +41,19 @@ def main() -> None:
     lower_priority()
     start = datetime.fromisoformat(args.start).replace(tzinfo=UTC)
     end = datetime.fromisoformat(args.end).replace(tzinfo=UTC)
-    out = Path(args.out) / f"{args.version}_{args.start}_{args.end}"
+    name = f"{args.version}_{args.start}_{args.end}".replace(":", "")  # Windows-safe
+    out = Path(args.out) / name
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
     source = ReplayMarketSource(args.root, ftmo_calendar(), start, end)
     clock = {"now": start}
     desk = PaperDesk(
-        out, DeskConfig(), code_version=f"replay-{args.version}", clock=lambda: clock["now"]
+        out,
+        DeskConfig(),
+        code_version=f"replay-{args.version}",
+        clock=lambda: clock["now"],
+        source_mode=source.SOURCE_MODE,
     )
     engine = TradeEngine(
         source,

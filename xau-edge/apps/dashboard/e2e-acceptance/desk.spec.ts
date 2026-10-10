@@ -176,8 +176,9 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
 
   test("corrupt paper state fails closed and says so", async ({ page, request }) => {
     await load(page, request, "paper_corrupt");
-    await expect(page.getByTestId("blockers")).toContainText(/PAPER|trạng thái|state/i);
-    await expect(page.getByTestId("take-paper")).toBeDisabled();
+    await expect(hero(page)).toHaveAttribute("data-hero-state", "UNAVAILABLE");
+    await expect(page.getByTestId("conditions")).toContainText("PAPER STATE ERROR");
+    await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await shot(page, "12-replay-paper-state-error");
   });
 

@@ -56,6 +56,7 @@ def collect(market: Path, out_root: Path) -> dict[str, tuple[str, Any]]:
         {
             "simulated": True,
             "source_mode": w.engine.source_mode,
+            "desk_fault": w.engine.desk.load_error or w.engine.desk.integrity_error,
             "open": w.engine.desk.open_trade(),
             "trades": w.engine.desk.closed_trades(),
             "evidence": w.engine.evidence(),

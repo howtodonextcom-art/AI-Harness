@@ -176,7 +176,9 @@ class TradeEngine:
                 self._errors.append(f"{type(exc).__name__}: {exc}"[:300])
                 _LOG.exception("trade engine cycle failed")
                 self._key = None
+                self._signal = None  # never keep serving a decision that could not be refreshed
                 return False
+            self._errors.clear()  # a recovered engine stops warning about the old failure
             return True
 
     def current_signal(self) -> TradingSignal | None:
@@ -787,9 +789,9 @@ class TradeEngine:
                 )
             if not snap.usable:
                 raise DeskRefusal("STALE_DATA", "market data is not fresh enough to trade on")
-            quote = snap.quote
-            if quote is None:
-                raise DeskRefusal("QUOTE_STALE", "no live quote")
+            quote = self._live_quote(stamp)
+            if quote is None or quote.stale:
+                raise DeskRefusal("QUOTE_STALE", "no fresh live quote")
             market = {
                 "session": state.session,
                 "h4": state.h4_regime,

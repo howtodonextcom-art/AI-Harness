@@ -1,4 +1,5 @@
 {
+ "desk_fault": null,
  "evidence": {
   "label": "Not a validated edge. This is a transparent operational baseline.",
   "operational": "UNVALIDATED_OPERATIONAL_BASELINE",

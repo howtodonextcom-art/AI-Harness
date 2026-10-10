@@ -234,7 +234,11 @@ class PaperDesk:
             return
         try:
             raw = json.loads(self._state_path.read_text(encoding="utf-8"))
-        except OSError:
+        except OSError as exc:
+            self.load_error = (
+                f"paper desk state could not be read ({type(exc).__name__}); nothing was changed"
+            )
+            _LOG.error(self.load_error)
             return
         except ValueError as exc:
             self._set_aside(type(exc).__name__)
