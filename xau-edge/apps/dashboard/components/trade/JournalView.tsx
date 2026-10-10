@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { fetchJournal, type JournalResponse, type PaperTrade } from "@/lib/trade";
-import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
+import { ZONE_SHORT, formatInZone, loadZone, type DisplayZone } from "@/lib/time";
 import { fmt, money } from "@/components/trade/ui";
 import { sourceText, viState } from "@/lib/vi";
 
@@ -208,7 +208,7 @@ export function JournalView() {
             <tr>
               <th className="pr-3">Setup</th>
               <th className="pr-3">Hướng</th>
-              <th className="pr-3">Mở lúc</th>
+              <th className="pr-3">Mở lúc ({ZONE_SHORT[zone]})</th>
               <th className="pr-3">Vào</th>
               <th className="pr-3">Thoát</th>
               <th className="pr-3">SL / TP</th>

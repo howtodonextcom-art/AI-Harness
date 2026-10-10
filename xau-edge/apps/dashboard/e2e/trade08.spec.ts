@@ -47,10 +47,10 @@ test("the basic words have a one-sentence help: hover, keyboard focus and Esc", 
   await expect(tip).toHaveCount(0);
 });
 
-test("a BUY plan and an open position explain SL, TP, R/R, MFE and MAE", async ({ page }) => {
+test("a BUY plan and an open position explain Entry, risk, lot, SL, TP, R/R, MFE and MAE", async ({ page }) => {
   await mock(page, view("buy"));
   await page.goto("/trade");
-  for (const id of ["sl", "tp", "rr"] as const) await expect(page.getByTestId(`term-${id}`).first()).toBeVisible();
+  for (const id of ["entry", "risk", "lot", "sl", "tp", "rr"] as const) await expect(page.getByTestId(`term-${id}`).first()).toBeVisible();
   await mock(page, view("openPaper"));
   await page.reload();
   for (const id of ["mfe", "mae", "hold"] as const) await expect(page.getByTestId(`term-${id}`).first()).toBeVisible();
@@ -64,7 +64,7 @@ test("an open position shows the server's latest time exit and how long is left"
   await page.goto("/trade");
   const row = page.getByTestId("position-max-hold");
   await expect(row).toHaveAttribute("data-until", until);
-  await expect(row).toContainText(/tới \d\d:\d\d · còn/);
+  await expect(row).toContainText(/tới \d\d:\d\d \(GMT\+7\) · còn/);
   // the same instant is in the hero sentence ("muộn nhất lúc HH:MM")
   const hhmm = (await row.innerText()).match(/tới (\d\d:\d\d)/)![1];
   await expect(page.getByTestId("action-when")).toContainText(`muộn nhất lúc ${hhmm}`);
@@ -176,4 +176,33 @@ test("offline, the ages keep counting and the market pill says 'Mất kết nố
   await expect(page.getByTestId("market-pill")).toHaveText("Mất kết nối");
   await expect(page.getByTestId("price-stale")).not.toContainText(/· 0\s?s/);
   await expect(page.getByTestId("data-age")).not.toHaveText(/dữ liệu: 0\s?s$/);
+});
+
+test("every clock time next to a deadline or an event names its zone, and the zone follows the selector", async ({ page }) => {
+  const v = view("openPaper");
+  await mock(page, v, { setups: setupsGolden() });
+  await page.goto("/trade");
+  const row = page.getByTestId("position-max-hold");
+  await expect(row).toContainText("(GMT+7)");
+  await expect(page.getByTestId("action-when")).toContainText(/muộn nhất lúc \d\d:\d\d GMT\+7/);
+  const zone = page.getByRole("combobox", { name: "Múi giờ hiển thị" });
+  await zone.selectOption("UTC");
+  await expect(row).toContainText("(UTC)");
+  await expect(page.getByTestId("action-when")).toContainText(/muộn nhất lúc \d\d:\d\d UTC/);
+  const hhmmUtc = (await row.innerText()).match(/tới (\d\d:\d\d)/)![1];
+  expect(hhmmUtc).toBe(v.desk!.position!.max_hold_until!.slice(11, 16)); // UTC shows the server instant itself
+});
+
+test("the Journal column header names the display zone", async ({ page }) => {
+  const { journalClosedGolden } = await import("./fixtures/trade");
+  await page.route("**/trade/journal**", (route) => route.fulfill({ json: journalClosedGolden() }));
+  await page.goto("/journal");
+  await expect(page.locator("th", { hasText: "Mở lúc" })).toContainText(/\((GMT\+7|UTC|NY\+7|giờ máy)\)/);
+});
+
+test("an invalidated setup points at the checklist for the reason instead of leaving the trader guessing", async ({ page }) => {
+  await mock(page, view("sellInvalidated"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("action-when")).toContainText("Điều kiện vào lệnh");
+  await expect(page.getByTestId("stages-progress")).toBeVisible();
 });

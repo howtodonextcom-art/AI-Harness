@@ -101,7 +101,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
       ? `Bàn tự thoát khi chạm SL ${px(pos.sl)} (-1R) hoặc TP ${px(pos.tp)}${latest ? `, hoặc muộn nhất lúc ${latest} (hết thời gian giữ)` : ", hoặc khi hết thời gian giữ"}. Hiện ${thesis}.`
       : "Bàn tự thoát khi chạm SL, TP hoặc hết thời gian giữ.";
     const short = pos ? `Tự thoát khi chạm SL ${px(pos.sl)} hoặc TP ${px(pos.tp)}${latest ? `, muộn nhất lúc ${latest}` : ""}. ${a.thesis === "INTACT" ? "Luận điểm còn vững." : a.thesis === "WEAK" ? "Luận điểm đang YẾU." : ""}`.trim() : body;
-    return make("HOLD", "hold", "GIỮ VỊ THẾ", sub, "Chưa có điều kiện thoát.", body, short);
+    return make("HOLD", "hold", "GIỮ VỊ THẾ", sub, "Chưa chạm điều kiện thoát nào.", body, short);
   }
 
   if (a.code === "EXIT") {
@@ -136,7 +136,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
   }
   if (a.stage === "CLOSED") return make("WAIT", "wait", "CHỜ", "Thị trường đóng cửa", "Khi nào?", "Chưa làm gì. Bộ máy tự tính lại khi thị trường mở cửa.");
   if (a.stage === "EXPIRED" || expiredNow) return make("WAIT", "wait", "CHỜ", "Setup đã hết hiệu lực, không còn mở được", "Khi nào?", "Chưa làm gì. Chờ setup mới.");
-  if (a.stage === "INVALIDATED") return make("WAIT", "wait", "CHỜ", "Setup vừa bị vô hiệu", "Khi nào?", "Chưa làm gì. Bộ máy chờ setup mới; không có lệnh nào để thoát.");
+  if (a.stage === "INVALIDATED") return make("WAIT", "wait", "CHỜ", "Setup vừa bị vô hiệu", "Khi nào?", "Chưa làm gì: không có lệnh nào để thoát. Xem \"Điều kiện vào lệnh\" bên dưới để biết điều kiện nào đang không đạt; bộ máy chờ setup mới.");
   if (a.stage === "INCOMPLETE") return make("WAIT", "wait", "CHỜ", "Có setup nhưng kế hoạch chưa đầy đủ, chưa được vào lệnh", "Khi nào?", "Chưa làm gì. Chờ kế hoạch đầy đủ hoặc setup mới.");
 
   if (bias.side && a.missing === "TRIGGER") {

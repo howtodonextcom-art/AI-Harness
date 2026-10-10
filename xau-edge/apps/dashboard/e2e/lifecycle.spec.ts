@@ -16,7 +16,7 @@ const CASES: [GoldenName, string, string, string, RegExp][] = [
   ["sellWatch", "WAIT", "CHỜ", "SELL", /Chỉ BÁN khi: M15 có nhịp pullback/],
   ["sellArmed", "WAIT", "CHỜ", "SELL", /Chỉ BÁN khi: nến M5 kế tiếp đóng xác nhận trigger giảm/],
   ["sell", "SELL", "BÁN PAPER", "SELL", /Tín hiệu BÁN đã xác nhận\. Bán ngay ở khoảng/],
-  ["openPaper", "HOLD", "GIỮ VỊ THẾ", "BUY", /Chưa có điều kiện thoát\./],
+  ["openPaper", "HOLD", "GIỮ VỊ THẾ", "BUY", /Chưa chạm điều kiện thoát nào\./],
   ["closedPaper", "EXIT", "ĐÃ THOÁT", "NONE", /Đã thoát vì chạm tp/i],
   ["sellInvalidated", "WAIT", "CHỜ", "NONE", /Chưa làm gì/],
   ["expired", "WAIT", "CHỜ", "NONE", /Chưa làm gì/],

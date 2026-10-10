@@ -13,6 +13,9 @@ export const ZONE_LABEL: Record<DisplayZone, string> = {
   LOCAL: "Giờ máy tôi",
 };
 
+/** A short tag to put next to a clock time: "GMT+7", "UTC", "NY+7", "giờ máy". */
+export const ZONE_SHORT: Record<DisplayZone, string> = { VN: "GMT+7", UTC: "UTC", BROKER: "NY+7", LOCAL: "giờ máy" };
+
 const NY = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "longOffset" });
 
 function newYorkOffsetSeconds(ms: number): number {

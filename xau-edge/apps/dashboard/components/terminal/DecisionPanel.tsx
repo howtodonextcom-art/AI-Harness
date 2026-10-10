@@ -8,7 +8,7 @@ import { actionText } from "@/lib/action";
 import { HeroCard, TONE_STYLE } from "@/components/terminal/HeroCard";
 import { parseDecimal } from "@/lib/chartMath";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
-import { formatInZone, type DisplayZone } from "@/lib/time";
+import { ZONE_SHORT, formatInZone, type DisplayZone } from "@/lib/time";
 import { fetchRisk, type JournalResponse, type PaperTrade, type RiskPlan, type SetupHistoryRow, type TradeView } from "@/lib/trade";
 import { ACTIVITY_VI, BLOCKER_VI, EXIT_REASON_VI, PAPER_ACCOUNT_VI, REFUSAL_VI, STAGE_VI, humanCondition, invalidationText, trendText, waitingText } from "@/lib/vi";
 
@@ -73,7 +73,7 @@ function WaitContext({ view, zone, setups, journal }: { view: TradeView; zone: D
   const d = view.decision;
   const vol = (view.structure?.volatility as string | undefined) ?? "UNKNOWN";
   const blocked = (why?.blocked_by ?? []).map((c) => REFUSAL_VI[c] ?? c);
-  const last = lastEventText(view, setups ?? null, journal ?? null, (iso) => formatInZone(iso, zone).slice(5, 16));
+  const last = lastEventText(view, setups ?? null, journal ?? null, (iso) => `${formatInZone(iso, zone).slice(5, 16)} ${ZONE_SHORT[zone]}`);
   return (
     <div className="space-y-2">
       {last && (
@@ -134,13 +134,13 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
   const canOpen = Boolean(view.actionable && !expiredNow && !uiStale && plan.complete && chosen?.ok);
   const buy = plan.side === "BUY";
   const cells: { k: ReactNode; v: string; id: string; strong?: boolean }[] = [
-    { k: "Entry (thị trường)", v: fmt(plan.planned_entry), id: "plan-entry", strong: true },
+    { k: <><Term id="entry">Entry</Term> (thị trường)</>, v: fmt(plan.planned_entry), id: "plan-entry", strong: true },
     { k: <Term id="sl">SL</Term>, v: fmt(plan.sl), id: "plan-sl" },
     { k: <Term id="tp">TP</Term>, v: fmt(plan.tp1), id: "plan-tp" },
     ...(plan.tp2 !== null ? [{ k: "TP 2", v: fmt(plan.tp2), id: "plan-tp2" }] : []),
     { k: <Term id="rr">R/R sau spread</Term>, v: fmt(plan.rr_net), id: "plan-rr" },
-    { k: "Rủi ro", v: `${fmt(risk, 2)}% · ${money(chosen ? -chosen.loss_at_sl : null)}`, id: "plan-risk" },
-    { k: "Lot", v: fmt(chosen?.lots, 2), id: "plan-lots", strong: true },
+    { k: <Term id="risk">Rủi ro</Term>, v: `${fmt(risk, 2)}% · ${money(chosen ? -chosen.loss_at_sl : null)}`, id: "plan-risk" },
+    { k: <Term id="lot">Lot</Term>, v: fmt(chosen?.lots, 2), id: "plan-lots", strong: true },
     { k: "Lãi nếu chạm TP", v: money(chosen?.gain_at_tp), id: "plan-tp-value" },
   ];
   return (
@@ -207,7 +207,7 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
 function PositionPanel({ trade, onCloseRequest, busy, serverNowMs, zone }: { trade: PaperTrade; onCloseRequest: () => void; busy: boolean; serverNowMs: number; zone: DisplayZone }) {
   const holdUntil = trade.max_hold_until ? Date.parse(trade.max_hold_until) : null;
   const holdLeftS = holdUntil !== null && Number.isFinite(holdUntil) ? Math.max(0, Math.round((holdUntil - serverNowMs) / 1000)) : null;
-  const holdText = holdLeftS === null ? "—" : holdLeftS === 0 ? `tới ${formatInZone(trade.max_hold_until as string, zone).slice(11, 16)} — bàn đang đóng lệnh` : `tới ${formatInZone(trade.max_hold_until as string, zone).slice(11, 16)} · còn ${Math.floor(holdLeftS / 3600) > 0 ? `${Math.floor(holdLeftS / 3600)} giờ ` : ""}${Math.floor((holdLeftS % 3600) / 60)} phút`;
+  const holdText = holdLeftS === null ? "—" : holdLeftS === 0 ? `tới ${formatInZone(trade.max_hold_until as string, zone).slice(11, 16)} (${ZONE_SHORT[zone]}) — bàn đang đóng lệnh` : `tới ${formatInZone(trade.max_hold_until as string, zone).slice(11, 16)} (${ZONE_SHORT[zone]}) · còn ${Math.floor(holdLeftS / 3600) > 0 ? `${Math.floor(holdLeftS / 3600)} giờ ` : ""}${Math.floor((holdLeftS % 3600) / 60)} phút`;
   const pnl = trade.unrealized_pnl ?? null;
   const tone = pnl === null ? "" : pnl >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400";
   const risk = Math.abs(trade.fill_price - trade.initial_sl);
@@ -318,7 +318,7 @@ export function expiryOf(view: TradeView, serverNowMs: number) {
 
 /** Action-first: what the trader may do NOW in one word, why in one line, and exactly when to act. */
 function ActionHero({ view, expiredNow, secondsLeft, zone, setups }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null; zone: DisplayZone; setups: SetupHistoryRow[] | null }) {
-  const clock = (iso: string | null | undefined) => (iso ? formatInZone(iso, zone).slice(11, 16) : null);
+  const clock = (iso: string | null | undefined) => (iso ? `${formatInZone(iso, zone).slice(11, 16)} ${ZONE_SHORT[zone]}` : null);
   const t = actionText(view, secondsLeft, expiredNow, clock);
   const state = expiredNow && (view.hero.state === "BUY_READY" || view.hero.state === "SELL_READY") ? "EXPIRED_SETUP" : view.hero.state;
   const errors = view.conditions.filter((c) => c.severity === "ERROR" && c.code !== "MARKET_CLOSED");
