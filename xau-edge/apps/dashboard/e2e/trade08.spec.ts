@@ -206,3 +206,12 @@ test("an invalidated setup points at the checklist for the reason instead of lea
   await expect(page.getByTestId("action-when")).toContainText("Điều kiện vào lệnh");
   await expect(page.getByTestId("stages-progress")).toBeVisible();
 });
+
+test("a price distrusted because the engine faulted never says 'stale for 0 seconds'", async ({ page }) => {
+  await mock(page, view("writerConflict"));
+  await page.goto("/trade");
+  const chip = page.getByTestId("price-stale");
+  await expect(chip).toBeVisible();
+  await expect(chip).not.toContainText(/· 0\s?s/);
+  await expect(chip).toContainText(/GIÁ KHÔNG ĐÁNG TIN|GIÁ CŨ · \d/);
+});

@@ -101,7 +101,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
             )}
             {stalePrice && (
               <span data-testid="price-stale" role="status" className={`${pill} border-red-600 bg-red-500/15 text-red-800 dark:text-red-200`}>
-                GIÁ CŨ{quote ? ` · ${ageText(quote.age_seconds + extra)}` : ""}
+                {quote && quote.age_seconds + extra >= 10 ? `GIÁ CŨ · ${ageText(quote.age_seconds + extra)}` : "GIÁ KHÔNG ĐÁNG TIN"}
               </span>
             )}
           </div>
