@@ -3,9 +3,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { fetchJournal, type JournalResponse, type PaperTrade } from "@/lib/trade";
 import { formatInZone, loadZone, type DisplayZone } from "@/lib/time";
-
-const fmt = (v: number | null | undefined, d = 2) => (v === null || v === undefined ? "—" : v.toFixed(d));
-const money = (v: number | null | undefined) => (v === null || v === undefined ? "—" : `${v >= 0 ? "" : "-"}$${Math.abs(v).toFixed(2)}`);
+import { fmt, money } from "@/components/trade/ui";
 
 function Stat({ k, v, testId }: { k: string; v: string; testId: string }) {
   return (
@@ -16,7 +14,15 @@ function Stat({ k, v, testId }: { k: string; v: string; testId: string }) {
   );
 }
 
-/** The paper trade journal: every simulated trade with its decision snapshot (no real orders). */
+const REASON_TEXT: Record<string, string> = {
+  STOP_LOSS: "Chạm SL",
+  TAKE_PROFIT: "Chạm TP",
+  TIME_EXIT: "Hết thời gian giữ",
+  MANUAL_CLOSE: "Đóng tay",
+  CLOSURE_EXIT: "Đóng trước giờ thị trường nghỉ",
+};
+
+/** The paper trade journal: every simulated trade with its plan, result and provenance (no real orders). */
 export function JournalView() {
   const [data, setData] = useState<JournalResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +38,7 @@ export function JournalView() {
           setData(d);
           setError(null);
         })
-        .catch(() => setError("Không kết nối được API /trade/journal"));
+        .catch(() => setError("Không kết nối được API /trade/journal — chưa có dữ liệu để hiển thị (không có nghĩa là chưa có lệnh)"));
     const first = setTimeout(run, 0);
     const poll = setInterval(run, 5000);
     return () => {
@@ -52,12 +58,18 @@ export function JournalView() {
   }, [data]);
 
   const rows: PaperTrade[] = [...(data?.open ? [data.open] : []), ...(data?.trades ?? [])];
+  const replay = data !== null && data.source_mode !== "LIVE";
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-3 px-4 py-4">
       <h1 className="text-xl font-bold">Journal · lệnh PAPER (giả lập)</h1>
+      {replay && (
+        <div data-testid="journal-replay-banner" role="status" className="rounded-md border-2 border-amber-600 bg-amber-500/15 px-3 py-2 text-sm font-bold">
+          {data.source_mode.replace("_", " ")} — KHÔNG PHẢI LIVE. Các lệnh dưới đây chạy trên dữ liệu lịch sử đã đốt, không tính vào bằng chứng forward.
+        </div>
+      )}
       <p data-testid="journal-note" className="text-xs text-slate-500">
-        Mọi lệnh ở đây là mô phỏng trên dữ liệu FTMO demo. Chưa có bằng chứng thống kê rằng baseline này có lợi thế — số liệu nhỏ không chứng minh gì.
+        Mọi lệnh ở đây là mô phỏng. Chưa có bằng chứng thống kê rằng baseline này có lợi thế — số liệu nhỏ không chứng minh gì.
       </p>
       {error && <div role="alert" className="rounded-md border border-red-600 bg-red-500/15 px-3 py-2 text-sm">{error}</div>}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -70,47 +82,61 @@ export function JournalView() {
         <table data-testid="journal-table" className="w-full text-left text-sm">
           <thead className="text-xs text-slate-500">
             <tr>
-              <th className="pr-3">Mở lúc</th>
+              <th className="pr-3">Setup</th>
               <th className="pr-3">Hướng</th>
+              <th className="pr-3">Mở lúc</th>
               <th className="pr-3">Vào</th>
+              <th className="pr-3">Thoát</th>
               <th className="pr-3">SL / TP</th>
               <th className="pr-3">Lot</th>
-              <th className="pr-3">Thoát</th>
+              <th className="pr-3">Lý do thoát</th>
               <th className="pr-3">R</th>
               <th className="pr-3">P&L</th>
               <th className="pr-3">MFE / MAE (R)</th>
+              <th className="pr-3">Phút</th>
+              <th className="pr-3">Bản</th>
               <th />
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={10} className="py-3 text-slate-500">Chưa có lệnh paper nào.</td>
+                <td colSpan={14} className="py-3 text-slate-500">
+                  {error ? "Không tải được journal." : "Chưa có lệnh paper nào. Khi bạn mở một lệnh từ trang Trade, nó sẽ hiện ở đây."}
+                </td>
               </tr>
             )}
             {rows.map((t) => (
               <Fragment key={t.trade_id}>
-                <tr data-testid="journal-row" className="border-t border-slate-200 dark:border-slate-800">
-                  <td className="pr-3">{formatInZone(t.opened_at ?? t.created_at, zone)}</td>
+                <tr data-testid="journal-row" data-status={t.status} className="border-t border-slate-200 dark:border-slate-800">
+                  <td className="pr-3 font-mono text-xs">{t.setup_id.slice(0, 8)}</td>
                   <td className="pr-3 font-semibold">{t.side}</td>
+                  <td className="pr-3">{formatInZone(t.opened_at ?? t.created_at, zone)}</td>
                   <td className="pr-3 font-mono">{fmt(t.fill_price)}</td>
+                  <td className="pr-3 font-mono">{fmt(t.exit_price)}</td>
                   <td className="pr-3 font-mono">{fmt(t.initial_sl)} / {fmt(t.tp)}</td>
                   <td className="pr-3 font-mono">{fmt(t.lots, 2)}</td>
-                  <td className="pr-3">{t.status === "CLOSED" ? (t.exit_reason ?? "—") : t.status}</td>
+                  <td className="pr-3">{t.status === "CLOSED" ? (REASON_TEXT[t.exit_reason ?? ""] ?? t.exit_reason ?? "—") : t.status}</td>
                   <td className="pr-3 font-mono">{fmt(t.r_multiple)}</td>
                   <td className="pr-3 font-mono">{money(t.net_pnl)}</td>
                   <td className="pr-3 font-mono">{fmt(t.mfe_r)} / {fmt(t.mae_r)}</td>
+                  <td className="pr-3 font-mono">{fmt(t.duration_minutes, 0)}</td>
+                  <td className="pr-3 text-xs">v{t.strategy_version ?? "?"}<span className="block text-slate-500">{t.code_version ?? ""}</span></td>
                   <td>
-                    <button type="button" className="text-xs underline" onClick={() => setOpen(open === t.trade_id ? null : t.trade_id)}>
-                      {open === t.trade_id ? "ẩn" : "chi tiết"}
+                    <button type="button" data-testid="journal-detail-toggle" className="text-xs underline" onClick={() => setOpen(open === t.trade_id ? null : t.trade_id)}>
+                      {open === t.trade_id ? "ẩn" : "nguồn gốc"}
                     </button>
                   </td>
                 </tr>
                 {open === t.trade_id && (
                   <tr>
-                    <td colSpan={10} className="pb-2">
+                    <td colSpan={14} className="pb-2">
                       <pre data-testid="journal-detail" className="max-h-64 overflow-auto rounded-md bg-slate-500/10 p-2 text-xs">
-                        {JSON.stringify({ market: t.market, decision: t.decision, setup_id: t.setup_id, cancel_reason: t.cancel_reason }, null, 2)}
+                        {JSON.stringify(
+                          { source_mode: t.source_mode, strategy_version: t.strategy_version, code_version: t.code_version, market: t.market, decision: t.decision, setup_id: t.setup_id, cancel_reason: t.cancel_reason },
+                          null,
+                          2,
+                        )}
                       </pre>
                     </td>
                   </tr>

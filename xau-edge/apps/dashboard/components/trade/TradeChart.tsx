@@ -19,7 +19,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MarketBar } from "@/lib/market";
 import { shiftedSeconds, type DisplayZone } from "@/lib/time";
-import type { MarkersResponse, PaperTrade, TradeView } from "@/lib/trade";
+import type { MarkersResponse, PaperTrade, TradePlan, TradeView } from "@/lib/trade";
 
 export interface Overlays {
   signals: boolean;
@@ -39,6 +39,10 @@ interface Props {
   history: boolean;
   /** False when the decision must not be drawn as a live plan (stale data, expired, WAIT). */
   planLive: boolean;
+  /** Bring this period (ISO from/to) into view, e.g. when a history row is clicked. */
+  focus?: { from: string; to: string } | null;
+  /** The decision's own plan (server `trade_plan`): the lines use exactly these values. */
+  plan?: TradePlan | null;
 }
 
 const GREEN = "#16a34a";
@@ -68,7 +72,7 @@ const fmt = (v: number | null | undefined, d = 2) => (v === null || v === undefi
  * entry/SL/TP, the paper position, logged decisions (BUY/SELL markers) and closed paper trades
  * (EXIT markers). Nothing is inferred in the browser.
  */
-export function TradeChart({ bars, timeframe, zone, overlays, view, markers, history, planLive }: Props) {
+export function TradeChart({ bars, timeframe, zone, overlays, view, markers, history, planLive, focus, plan }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const handles = useRef<{
     chart: IChartApi;
@@ -123,7 +127,7 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
             color: s.side === "BUY" ? GREEN : RED,
             text: s.side,
           }),
-          `${s.side} signal @ ${fmt(s.entry)} · SL ${fmt(s.sl)} · TP ${fmt(s.tp1)} · RR ${fmt(s.rr)}${s.taken ? " · taken (paper)" : ""} · v${s.strategy_version}`,
+          `${s.side} signal @ ${fmt(s.price ?? s.entry)} · SL ${fmt(s.sl)} · TP ${fmt(s.tp1)} · RR ${fmt(s.rr)}${s.taken ? " · taken (paper)" : ""} · v${s.strategy_version} · ${s.source_mode}`,
         );
       }
     }
@@ -153,7 +157,7 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
               color: (t.net_pnl ?? 0) >= 0 ? GREEN : RED,
               text: `EXIT ${t.exit_reason ?? ""}`,
             }),
-            `EXIT ${t.exit_reason} @ ${fmt(t.exit_price)} · P&L ${fmt(t.net_pnl)} · ${fmt(t.r_multiple)}R · ${fmt(t.duration_minutes, 0)} min`,
+            `EXIT ${t.exit_reason} @ ${fmt(t.exit_price)} · P&L ${fmt(t.net_pnl)} · ${fmt(t.r_multiple)}R · ${fmt(t.duration_minutes, 0)} min${t.strategy_version ? ` · v${t.strategy_version}` : ""}`,
           );
         }
       }
@@ -264,12 +268,11 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
       if (price === null || price === undefined || !Number.isFinite(price)) return;
       out.push({ title, price, color, style, width });
     };
-    const decision = view?.decision;
-    if (overlays.plan && planLive && decision && decision.decision !== "WAIT") {
-      add(decision.entry_price, "ENTRY", BLUE, LineStyle.Solid, 2);
-      add(decision.stop_loss, "SL", RED);
-      add(decision.take_profit, "TP1", GREEN);
-      add(decision.take_profit_2 ?? null, "TP2", GREEN, LineStyle.Dotted);
+    if (overlays.plan && planLive && plan && plan.complete) {
+      add(plan.planned_entry, "ENTRY", BLUE, LineStyle.Solid, 2); // solid + thick
+      add(plan.sl, "SL", RED, LineStyle.Dashed, 2); // dashed
+      add(plan.tp1, "TP1", GREEN, LineStyle.Dotted, 2); // dotted
+      add(plan.tp2, "TP2", GREEN, LineStyle.SparseDotted, 1);
     }
     const position: PaperTrade | null | undefined = view?.desk?.position;
     if (overlays.paper && position && position.status === "OPEN") {
@@ -286,7 +289,7 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
       add(st.pdl as number | null, "PDL", "#7c3aed", LineStyle.SparseDotted);
     }
     return out;
-  }, [view, overlays.plan, overlays.paper, overlays.structure, planLive]);
+  }, [view, plan, overlays.plan, overlays.paper, overlays.structure, planLive]);
 
   useEffect(() => {
     const h = handles.current;
@@ -298,6 +301,19 @@ export function TradeChart({ bars, timeframe, zone, overlays, view, markers, his
       h.candles.createPriceLine({ price: l.price, color: l.color, lineWidth: l.width, lineStyle: l.style, axisLabelVisible: true, title: `${l.title} ${l.price.toFixed(2)}` }),
     );
   }, [lineSpecs, timeframe]);
+
+  useEffect(() => {
+    const h = handles.current;
+    if (!h || !focus || times.length === 0) return;
+    const from = shiftedSeconds(focus.from, zone);
+    const to = shiftedSeconds(focus.to, zone);
+    const bar = times.length > 1 ? times[times.length - 1] - times[times.length - 2] : 300;
+    try {
+      h.chart.timeScale().setVisibleRange({ from: (from - 40 * bar) as UTCTimestamp, to: (to + 40 * bar) as UTCTimestamp });
+    } catch {
+      /* the period is outside the loaded bars: keep the current view */
+    }
+  }, [focus, zone, times]);
 
   return (
     <div className="relative min-w-0">

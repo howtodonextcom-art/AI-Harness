@@ -2,11 +2,95 @@
  * Typed client for the live PAPER trading desk (`/trade/*`). Reads go straight to the API; the two
  * paper actions go through the dashboard's own server route (`/api/trade/*`), which adds the
  * Origin/desk header. No function here can reach MT5 or place a real order.
+ *
+ * These types are the frontend half of the contract: `e2e/fixtures/golden/*.json` are serialized by
+ * the real backend and type-checked against them (`tsc`), and the backend test suite fails when the
+ * serialized shape drifts from those goldens.
  */
 
 import { API_URL } from "@/lib/api";
 
 export type Side = "BUY" | "SELL" | "WAIT";
+export type SourceMode = "LIVE" | "ACCEPTANCE_REPLAY" | "FIXTURE";
+
+export type HeroState =
+  | "UNAVAILABLE"
+  | "STALE"
+  | "MARKET_CLOSED"
+  | "POSITION_OPEN"
+  | "BUY_READY"
+  | "SELL_READY"
+  | "NOT_ACTIONABLE"
+  | "EXPIRED_SETUP"
+  | "SETUP_ARMED"
+  | "EXITED"
+  | "WAIT";
+
+export interface Hero {
+  state: HeroState;
+  label: string;
+  tone: "buy" | "sell" | "neutral" | "info" | "warn" | "error";
+  detail: string;
+  side: "BUY" | "SELL" | null;
+}
+
+export interface Condition {
+  code: string;
+  severity: "ERROR" | "WARN" | "INFO";
+  message: string;
+}
+
+export interface Blocker {
+  code: string;
+  message: string;
+}
+
+export interface StatusItem {
+  state: string;
+  detail: string;
+}
+
+export interface StatusStrip {
+  data: StatusItem;
+  trading_core: StatusItem;
+  strategy: StatusItem & { label: string };
+  paper_desk: StatusItem;
+  forward: StatusItem;
+  demo: StatusItem;
+  edge: StatusItem;
+  hero_state: HeroState;
+}
+
+export interface StrategyInfo {
+  id: string;
+  active_version: string;
+  label: string;
+  evidence: string;
+  installed: { version: string; status: "ACTIVE" | "AVAILABLE_INACTIVE"; note: string }[];
+}
+
+export interface TradePlan {
+  side: "BUY" | "SELL";
+  entry_basis: "ask" | "bid";
+  planned_entry: number | null;
+  sl: number | null;
+  tp1: number | null;
+  tp2: number | null;
+  rr_net: number | null;
+  required_win_rate: number | null;
+  default_risk_pct: number;
+  lots: number | null;
+  risk_amount: number | null;
+  potential_tp_value: number | null;
+  expires_at: string | null;
+  seconds_to_expiry: number | null;
+  expired: boolean;
+  invalidation: string | null;
+  strategy_version: string;
+  setup_id: string;
+  complete: boolean;
+  missing: string[];
+}
 
 export interface TradeDecisionBody {
   decision: Side;
@@ -38,10 +122,17 @@ export interface TradeDecisionBody {
   volume_state: string;
   volume_type: string;
   m1_execution_state: string;
+  source_mode: SourceMode;
+}
+
+export interface WhyStage {
+  stage: string;
+  status: "PASS" | "FAIL" | "NOT_REACHED";
+  timeframe: string;
 }
 
 export interface WhyWait {
-  stages: { stage: string; status: "PASS" | "FAIL" | "NOT_REACHED" }[];
+  stages: WhyStage[];
   waiting_for: string | null;
   blocked_by: string[];
 }
@@ -59,6 +150,7 @@ export interface SignalMarker {
   setup_id: string;
   side: "BUY" | "SELL";
   entry: number | null;
+  price: number | null;
   sl: number | null;
   tp1: number | null;
   tp2: number | null;
@@ -66,6 +158,7 @@ export interface SignalMarker {
   lots: number | null;
   expires_at: string | null;
   strategy_version: string;
+  source_mode: SourceMode;
   taken: boolean;
 }
 
@@ -83,12 +176,19 @@ export interface PaperMarker {
   duration_minutes: number | null;
   sl: number | null;
   tp: number | null;
+  strategy_version?: string | null;
 }
 
 export interface MarkersResponse {
   simulated: boolean;
+  source_mode?: SourceMode;
   signals: SignalMarker[];
   paper_trades: PaperMarker[];
+}
+
+export interface SignalHistoryResponse {
+  source_mode: SourceMode;
+  signals: SignalMarker[];
 }
 
 export interface TimeframeRow {
@@ -123,9 +223,11 @@ export interface PaperTrade {
   setup_id: string;
   status: string;
   side: Side;
+  source_mode?: SourceMode;
   created_at: string;
   opened_at: string | null;
-  closed_at: string | null;
+  closed_at?: string | null;
+  planned_entry?: number | null;
   fill_price: number;
   sl: number;
   initial_sl: number;
@@ -133,10 +235,14 @@ export interface PaperTrade {
   lots: number;
   risk_pct: number;
   risk_amount: number | null;
+  strategy_version?: string;
+  code_version?: string;
   exit_price?: number | null;
   exit_reason?: string | null;
   net_pnl?: number | null;
   r_multiple?: number | null;
+  mfe?: number | null;
+  mae?: number | null;
   mfe_r?: number | null;
   mae_r?: number | null;
   duration_minutes?: number | null;
@@ -148,21 +254,63 @@ export interface PaperTrade {
   cancel_reason?: string | null;
 }
 
+export interface Funnel {
+  day: string;
+  decisions: number;
+  armed_setups: number;
+  triggered_setups: number;
+  expired_setups: number;
+  invalidated_setups: number;
+  actionable_buy: number;
+  actionable_sell: number;
+  paper_opens: number;
+  paper_exits: number;
+  exit_reasons: Record<string, number>;
+  refusals: Record<string, number>;
+  top_refusals: [string, number][];
+}
+
+export interface ForwardAcceptance {
+  level: "F0" | "F1" | "F2" | "F3" | "F4";
+  text: string;
+  live: boolean;
+  counts: Record<string, number>;
+}
+
+export interface AlertsSummary {
+  announced_today: number;
+  last: { setup_id: string; side: string; announced_at: string; expires_at: string; closed?: string } | null;
+  delivery: "TELEGRAM" | "FILE_FALLBACK";
+  telegram_configured: boolean;
+  file_fallback_active: boolean;
+  last_invalidation: { setup_id: string; side: string; at: string | null } | null;
+  this_setup: { announced: boolean; at: string; channel: string } | null;
+}
+
 export interface TradeView {
   available: boolean;
+  source_mode: SourceMode;
   generated_at: string;
   served_at?: string;
+  hero: Hero;
+  decision_trusted: boolean;
+  status_strip: StatusStrip;
+  strategy: StrategyInfo;
+  conditions: Condition[];
+  forward_acceptance: ForwardAcceptance;
+  paper_account_label: string;
   data_as_of?: string | null;
   data_age_seconds?: number | null;
   source?: string;
   market?: { status: string; open: boolean };
   quote?: { bid: number; ask: number; spread_points: number; age_seconds: number; stale: boolean } | null;
   decision?: TradeDecisionBody;
+  trade_plan?: TradePlan | null;
+  entry_blockers?: Blocker[];
   actionable?: boolean;
   explanation?: string[];
   why_wait?: WhyWait;
   setup?: SetupInfo;
-  auto_paper?: boolean;
   timeframes?: TimeframeRow[];
   volume?: {
     type: string;
@@ -181,11 +329,13 @@ export interface TradeView {
   evidence: { operational: string; validated_edge: boolean; research: string; label: string };
   desk?: {
     can_open: boolean;
-    blockers: string[];
+    blockers: Blocker[];
     account: { simulated: boolean; initial_capital: number; balance: number; equity: number; open_positions: number; open_lots: number };
     position: PaperTrade | null;
     today: Record<string, number | string | null>;
+    closure_policy: string;
   };
+  funnel?: Funnel;
   telemetry?: {
     day: string;
     decisions: number;
@@ -198,6 +348,8 @@ export interface TradeView {
     most_common_blocker: string | null;
     setup_phases?: Record<string, number>;
   };
+  alerts?: AlertsSummary | null;
+  auto_paper?: boolean;
   demo: { status: string; reasons: { code: string; why: string }[]; paper_desk_sends_orders: boolean; how_to_unlock: string };
   problems: string[];
   engine_errors?: string[];
@@ -205,6 +357,7 @@ export interface TradeView {
 
 export interface JournalResponse {
   simulated: boolean;
+  source_mode: SourceMode;
   open: PaperTrade | null;
   trades: PaperTrade[];
   evidence: TradeView["evidence"];
@@ -218,6 +371,7 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 export const fetchDecision = (signal?: AbortSignal) => getJson<TradeView>("/trade/decision", signal);
 export const fetchMarkers = (signal?: AbortSignal) => getJson<MarkersResponse>("/trade/markers?days=7", signal);
+export const fetchSignals = (signal?: AbortSignal) => getJson<SignalHistoryResponse>("/trade/signals?limit=20", signal);
 export const fetchJournal = (signal?: AbortSignal) => getJson<JournalResponse>("/trade/journal?limit=500", signal);
 
 export interface ActionError {
