@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { mock, setupsGolden, view } from "./fixtures/trade";
+import { coverageIncompleteGolden, mock, setupsGolden, view } from "./fixtures/trade";
 
 /** TRADE-08: plain language first, help on the basic words, tools that belong to ONE source, the hold deadline, the last event. */
 
@@ -214,4 +214,33 @@ test("a price distrusted because the engine faulted never says 'stale for 0 seco
   await expect(chip).toBeVisible();
   await expect(chip).not.toContainText(/· 0\s?s/);
   await expect(chip).toContainText(/GIÁ KHÔNG ĐÁNG TIN|GIÁ CŨ · \d/);
+});
+
+test("System shows decision coverage and says when forward evidence is incomplete (never a plain F0)", async ({ page }) => {
+  const v = view("wait");
+  v.source_mode = "LIVE";
+  const cov = coverageIncompleteGolden();
+  v.decision_coverage = cov;
+  v.forward_acceptance = { ...v.forward_acceptance, live: true, evidence_complete: false, coverage_pct: cov.coverage_pct, text: "FORWARD EVIDENCE INCOMPLETE: ..." };
+  await mock(page, v);
+  await page.goto("/trade");
+  await page.getByTestId("tab-system").click();
+  await expect(page.getByTestId("coverage-pct")).toContainText("70.4%");
+  await expect(page.getByTestId("coverage-expected")).toHaveText("240");
+  await expect(page.getByTestId("coverage-recorded")).toHaveText("169");
+  await expect(page.getByTestId("coverage-missing")).toHaveText("71");
+  await expect(page.getByTestId("coverage-gaps")).toContainText("2 khoảng thiếu");
+  await expect(page.getByTestId("forward-incomplete")).toContainText("BẰNG CHỨNG FORWARD CHƯA ĐỦ");
+  await expect(page.getByTestId("forward-incomplete")).toContainText("70.4%");
+  // none of this is on the trading surface
+  await page.getByTestId("tab-overview").click();
+  await expect(page.getByTestId("coverage-card")).toHaveCount(0);
+});
+
+test("a replay has no coverage to show; the System card says so", async ({ page }) => {
+  await mock(page, view("wait"));
+  await page.goto("/trade");
+  await page.getByTestId("tab-system").click();
+  await expect(page.getByTestId("coverage-card")).toContainText("hoặc đây là replay");
+  await expect(page.getByTestId("forward-incomplete")).toHaveCount(0);
 });

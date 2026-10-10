@@ -2,7 +2,7 @@
 
 import { Term } from "@/components/terminal/Term";
 import { useMemo, useState, type ReactNode } from "react";
-import { AccountCard, AlertCard, DemoLockCard, ForwardCard, FunnelCard, StrategyCard, SystemStatus } from "@/components/terminal/SystemCards";
+import { AccountCard, AlertCard, CoverageCard, DemoLockCard, ForwardCard, FunnelCard, StrategyCard, SystemStatus } from "@/components/terminal/SystemCards";
 import { Card, NEUTRAL, Pill, Row, fmt, money } from "@/components/trade/ui";
 import type { ManualLevel, PriceAlert, Tab } from "@/lib/prefs";
 import { formatInZone, type DisplayZone } from "@/lib/time";
@@ -280,7 +280,7 @@ function Activity({ view, journal, signals, setups, zone, mode, onFocusPaper, on
   );
 }
 
-function System({ view, mode }: { view: TradeView | null; mode: string }) {
+function System({ view, mode, zone }: { view: TradeView | null; mode: string; zone: DisplayZone }) {
   if (!view) return <p className="text-sm text-slate-600 dark:text-slate-400">Chưa có dữ liệu hệ thống.</p>;
   return (
     <div className="space-y-3">
@@ -288,6 +288,7 @@ function System({ view, mode }: { view: TradeView | null; mode: string }) {
       <div className="grid gap-3 lg:grid-cols-3">
         <StrategyCard strategy={view.strategy} />
         <ForwardCard view={view} />
+        <CoverageCard view={view} zone={zone} />
         <FunnelCard funnel={view.funnel} />
         <AlertCard alerts={view.alerts} mode={mode} />
         <AccountCard view={view} />
@@ -338,7 +339,7 @@ export function Workspace(props: Props) {
         {tab === "why" && <Why view={props.view} onFocusTf={props.onFocusTf} />}
         {tab === "position" && <PositionTab view={props.view} journal={props.journal} zone={props.zone} onFocusPaper={props.onFocusPaper} />}
         {tab === "activity" && <Activity view={props.view} journal={props.journal} signals={props.signals} setups={props.setups} zone={props.zone} mode={props.mode} onFocusPaper={props.onFocusPaper} onFocusSignal={props.onFocusSignal} alerts={props.alerts} />}
-        {tab === "system" && <System view={props.view} mode={props.mode} />}
+        {tab === "system" && <System view={props.view} mode={props.mode} zone={props.zone} />}
       </div>
     </section>
   );

@@ -2,6 +2,7 @@
 
 import { BAD, Card, GOOD, INFO, NEUTRAL, Pill, Row, WARN, fmt, money } from "@/components/trade/ui";
 import type { AlertsSummary, Funnel, StatusStrip as StatusStripData, StrategyInfo, TradeView } from "@/lib/trade";
+import { ZONE_SHORT, formatInZone, type DisplayZone } from "@/lib/time";
 import { PAPER_ACCOUNT_VI, REFUSAL_VI } from "@/lib/vi";
 
 const CHIP_TONE: Record<string, string> = {
@@ -137,6 +138,11 @@ export function ForwardCard({ view }: { view: TradeView }) {
   return (
     <Card title="Forward paper acceptance" testId="forward-card">
       <p data-testid="forward-level" className="text-sm"><b>{f.level}</b> — {FORWARD_VI[f.level] ?? f.text}</p>
+      {f.evidence_complete === false && (
+        <p data-testid="forward-incomplete" role="status" className={`mt-1 rounded-md border px-2 py-1 text-xs font-semibold ${WARN}`}>
+          BẰNG CHỨNG FORWARD CHƯA ĐỦ: mới ghi được {f.coverage_pct?.toFixed(1) ?? "?"}% số quyết định đáng ra phải có, nên “chưa thấy setup” chưa chứng minh được gì.
+        </p>
+      )}
       <ul className="mt-1 text-xs text-slate-600 dark:text-slate-400">
         {Object.entries(f.counts).map(([k, n]) => (
           <li key={k}>{k.replaceAll("_", " ")}: {n}</li>
@@ -169,6 +175,46 @@ export function AccountCard({ view }: { view: TradeView }) {
       <Row k="P&L ròng" v={money(view.desk?.today.net_pnl as number | null)} />
       <Row k="Tổng R" v={fmt(view.desk?.today.net_r as number | null)} />
       <Row k="Chính sách đóng thị trường" v={view.desk?.closure_policy ?? "—"} />
+    </Card>
+  );
+}
+
+/** Telemetry coverage lives in System, never on the trading surface. */
+export function CoverageCard({ view, zone }: { view: TradeView; zone: DisplayZone }) {
+  const c = view.decision_coverage;
+  if (c === undefined) return null;
+  if (c === null) {
+    return (
+      <Card title="Độ phủ quyết định" testId="coverage-card">
+        <p className="text-sm text-slate-600 dark:text-slate-400">Chưa có dữ liệu quyết định để tính độ phủ (hoặc đây là replay).</p>
+      </Card>
+    );
+  }
+  const fmtTime = (iso: string) => formatInZone(iso, zone).slice(5, 16);
+  return (
+    <Card title="Độ phủ quyết định" testId="coverage-card">
+      <p data-testid="coverage-pct" className="text-sm">
+        <b className={c.complete ? "" : "text-red-700 dark:text-red-400"}>{c.coverage_pct.toFixed(1)}%</b>{" "}
+        <span className="text-slate-600 dark:text-slate-400">(ngưỡng {c.threshold_pct}% để bằng chứng forward được tin)</span>
+      </p>
+      <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 text-sm">
+        <dt className="text-slate-600 dark:text-slate-400">Cần có</dt><dd data-testid="coverage-expected" className="font-mono">{c.expected_m1_decisions}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Đã ghi</dt><dd data-testid="coverage-recorded" className="font-mono">{c.recorded_m1_decisions}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Thiếu</dt><dd data-testid="coverage-missing" className="font-mono">{c.missing}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Trùng / trễ</dt><dd className="font-mono">{c.duplicate_rows} / {c.late_rows}</dd>
+      </dl>
+      {c.missing_intervals.length > 0 && (
+        <details data-testid="coverage-gaps" className="mt-1 text-xs">
+          <summary className="cursor-pointer font-semibold">{c.missing_intervals.length} khoảng thiếu (giờ {ZONE_SHORT[zone]})</summary>
+          <ul className="mt-1 space-y-0.5 font-mono">
+            {c.missing_intervals.slice(0, 8).map((g) => (
+              <li key={g.from}>{fmtTime(g.from)} → {fmtTime(g.to)} · {g.minutes} phút</li>
+            ))}
+          </ul>
+          <p className="mt-1 text-slate-600 dark:text-slate-400">Một khoảng thiếu thường là tiến trình API/bộ máy không chạy (khởi động lại): bộ máy chỉ ghi nến M1 mới nó thấy, không ghi bù.</p>
+        </details>
+      )}
+      <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Mỗi nến M1 đã đóng trong lúc thị trường mở là một quyết định phải có; nến collector không giao thì không tính.</p>
     </Card>
   );
 }

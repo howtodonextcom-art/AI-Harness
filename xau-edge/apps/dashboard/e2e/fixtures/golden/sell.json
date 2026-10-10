@@ -105,6 +105,7 @@
    "NEWS NOT VERIFIED: no economic calendar, check the news yourself"
   ]
  },
+ "decision_coverage": null,
  "decision_trusted": true,
  "default_risk_pct": 0.25,
  "demo": {
@@ -178,6 +179,8 @@
  ],
  "forward_acceptance": {
   "counts": {},
+  "coverage_pct": null,
+  "evidence_complete": null,
   "level": "F0",
   "live": false,
   "text": "not a live run (acceptance replay): no live evidence"

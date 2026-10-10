@@ -308,6 +308,25 @@ export interface ForwardAcceptance {
   text: string;
   live: boolean;
   counts: Record<string, number>;
+  /** false when too few of the expected decisions were recorded to trust "no setup seen" */
+  evidence_complete: boolean | null;
+  coverage_pct: number | null;
+}
+
+/** How many of the decisions that should exist (one per closed M1 bar while the engine could see it) were recorded. */
+export interface DecisionCoverage {
+  window: { from: string; to: string };
+  expected_m1_decisions: number;
+  recorded_m1_decisions: number;
+  coverage_pct: number;
+  missing: number;
+  missing_intervals: { from: string; to: string; minutes: number }[];
+  duplicate_rows: number;
+  late_rows: number;
+  approx_rows: number;
+  outside_expected_rows: number;
+  complete: boolean;
+  threshold_pct: number;
 }
 
 export interface AlertsSummary {
@@ -355,6 +374,7 @@ export interface TradeView {
   strategy: StrategyInfo;
   conditions: Condition[];
   forward_acceptance: ForwardAcceptance;
+  decision_coverage?: DecisionCoverage | null;
   paper_account_label: string;
   data_as_of?: string | null;
   data_age_seconds?: number | null;

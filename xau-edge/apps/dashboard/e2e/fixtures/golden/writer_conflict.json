@@ -6,7 +6,7 @@
  "conditions": [
   {
    "code": "WRITER_LOCK",
-   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-1zrndg6u\\writer_conflict\\writer.lock is owned by pid 10820 (another-api-process); only one process may write it",
+   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-sd0z2m0k\\writer_conflict\\writer.lock is owned by pid 27592 (another-api-process); only one process may write it",
    "severity": "ERROR"
   },
   {
@@ -93,6 +93,7 @@
    "NEWS NOT VERIFIED: no economic calendar, check the news yourself"
   ]
  },
+ "decision_coverage": null,
  "decision_trusted": false,
  "default_risk_pct": 0.25,
  "demo": {
@@ -176,6 +177,8 @@
  ],
  "forward_acceptance": {
   "counts": {},
+  "coverage_pct": null,
+  "evidence_complete": null,
   "level": "F0",
   "live": false,
   "text": "not a live run (acceptance replay): no live evidence"

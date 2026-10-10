@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -38,6 +39,7 @@ from xau_edge.trading.cockpit import (
     strategy_info,
     trade_plan,
 )
+from xau_edge.trading.coverage import apply_to_forward, decision_coverage
 from xau_edge.trading.decision_core import ROLES, SnapshotInputs, evaluate, explain
 from xau_edge.trading.demo_lock import demo_lock_status
 from xau_edge.trading.funnel import stages_from_signal, waiting_for
@@ -58,6 +60,9 @@ from xau_edge.trading.setup_alerts import SetupAlerts
 from xau_edge.trading.setup_machine import VALID_BARS
 from xau_edge.trading.sizing import SymbolSpec
 from xau_edge.trading.telemetry import DecisionTelemetry
+
+COVERAGE_DAYS = 7
+COVERAGE_REFRESH_SECONDS = 60.0
 
 _LOG = logging.getLogger(__name__)
 OPERATIONAL_LABEL = "UNVALIDATED_OPERATIONAL_BASELINE"
@@ -133,6 +138,8 @@ class TradeEngine:
         self._state: MarketState | None = None
         self._snap: LiveSnapshot | None = None
         self._last_telemetry_m1: datetime | None = None
+        self._run_id = uuid.uuid4().hex[:8]  # which engine process wrote a telemetry row
+        self._coverage_cache: tuple[datetime, dict[str, Any] | None] | None = None
         self._errors: list[str] = []
         self._memo = SnapshotMemo()
         self.source_mode: str = getattr(source, "SOURCE_MODE", "LIVE")
@@ -258,7 +265,8 @@ class TradeEngine:
         )
         if newest is not None and newest != self._last_telemetry_m1 and not self.writer_error:
             self._last_telemetry_m1 = newest  # type: ignore[assignment]
-            self.telemetry.append(signal, at=now)
+            bar = newest if isinstance(newest, datetime) else None
+            self.telemetry.append(signal, at=now, m1_bar=bar, run=self._run_id)
         if signal.decision is not TradeDecision.WAIT and not self.writer_error:
             m5_bar = state.snapshots.get("M5")
             self.telemetry.append_signal(
@@ -489,6 +497,37 @@ class TradeEngine:
                 out.append(blocker(code))
         return out
 
+    def _coverage(self, stamp: datetime) -> dict[str, Any] | None:
+        """Decision coverage since observation began (at most 7 days), cached for a minute."""
+        if self.source_mode != "LIVE":
+            return None  # a replay has no live observation to cover
+        cached = self._coverage_cache
+        if cached is not None and (stamp - cached[0]).total_seconds() < COVERAGE_REFRESH_SECONDS:
+            return cached[1]
+        result: dict[str, Any] | None = None
+        try:
+            rows = [
+                row
+                for back in range(COVERAGE_DAYS + 1)
+                for row in self.telemetry.read_day(stamp - timedelta(days=back))
+            ]
+            if rows:
+                first = min(r["m1_bar"] if r.get("m1_bar") else r["at"] for r in rows)
+                observed_from = datetime.fromisoformat(str(first))
+                start = max(
+                    stamp - timedelta(days=COVERAGE_DAYS),
+                    observed_from.astimezone(UTC).replace(second=0, microsecond=0),
+                )
+                m1 = self.source.ledger.load("XAUUSD", Timeframe.M1, start=start)
+                bars = [b for b in m1["timestamp"].to_list() if isinstance(b, datetime)]
+                result = decision_coverage(
+                    bars, rows, window_from=start, window_to=stamp - timedelta(minutes=2)
+                )
+        except Exception:  # coverage is information: it must never break the decision
+            _LOG.exception("decision coverage failed")
+        self._coverage_cache = (stamp, result)
+        return result
+
     def _forward(self, stamp: datetime) -> dict[str, Any]:
         signals_dir = self.config.root
         files = sorted(signals_dir.glob("signals-*.jsonl"))
@@ -604,12 +643,14 @@ class TradeEngine:
             demo = demo_lock_status(collector)
             version = self.config.baseline.version
             conditions = self._conditions(snap, state, stamp)
-            forward = self._forward(stamp)
+            coverage = self._coverage(stamp)
+            forward = apply_to_forward(self._forward(stamp), coverage)
             base: dict[str, Any] = {
                 "source_mode": self.source_mode,
                 "strategy": strategy_info(version),
                 "conditions": conditions,
                 "forward_acceptance": forward,
+                "decision_coverage": coverage,
                 "demo": demo,
                 "evidence": self._evidence(),
                 "generated_at": stamp.isoformat(),

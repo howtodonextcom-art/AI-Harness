@@ -136,7 +136,7 @@ def test_goldens_are_what_the_real_engine_serializes_today(tmp_path: Path) -> No
     for name, (_what, payload) in fresh.items():
         again = json.loads(json.dumps(payload, sort_keys=True, default=str))
         assert shape_diff(golden(name), again) == [], name
-        if name != "signals":
+        if name not in ("signals", "coverage_incomplete"):
             assert (
                 golden(name)["source_mode" if "source_mode" in again else "simulated"]
                 == (again["source_mode" if "source_mode" in again else "simulated"])

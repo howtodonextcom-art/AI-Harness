@@ -1,6 +1,6 @@
 {
  "provenance": "ACCEPTANCE_REPLAY of burned FTMO bars through the real TradeEngine; NOT LIVE",
- "code_version": "a8d939c-dirty",
+ "code_version": "17f3d8e-dirty",
  "files": {
   "wait.json": "GET /trade/decision, ordinary WAIT",
   "sell.json": "GET /trade/decision, real SELL setup",
@@ -21,6 +21,7 @@
   "buy_armed.json": "GET /trade/decision, scenario buy_armed",
   "sell_watch.json": "GET /trade/decision, scenario sell_watch",
   "sell_armed.json": "GET /trade/decision, scenario sell_armed",
-  "sell_invalidated.json": "GET /trade/decision, scenario sell_invalidated"
+  "sell_invalidated.json": "GET /trade/decision, scenario sell_invalidated",
+  "coverage_incomplete.json": "decision_coverage() over a restart gap"
  }
 }

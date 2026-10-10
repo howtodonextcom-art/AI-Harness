@@ -1,0 +1,28 @@
+{
+ "approx_rows": 0,
+ "complete": false,
+ "coverage_pct": 70.42,
+ "duplicate_rows": 0,
+ "expected_m1_decisions": 240,
+ "late_rows": 0,
+ "missing": 71,
+ "missing_intervals": [
+  {
+   "from": "2026-10-09T14:43:00+00:00",
+   "minutes": 31,
+   "to": "2026-10-09T15:13:00+00:00"
+  },
+  {
+   "from": "2026-10-09T16:13:00+00:00",
+   "minutes": 40,
+   "to": "2026-10-09T16:52:00+00:00"
+  }
+ ],
+ "outside_expected_rows": 0,
+ "recorded_m1_decisions": 169,
+ "threshold_pct": 95.0,
+ "window": {
+  "from": "2026-10-09T12:53:00+00:00",
+  "to": "2026-10-09T16:53:00+00:00"
+ }
+}

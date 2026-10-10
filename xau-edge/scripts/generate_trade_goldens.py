@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,7 @@ from fastapi.testclient import TestClient
 from xau_edge.api.trade import add_trade_routes
 from xau_edge.ops.code_version import current_code_version
 from xau_edge.trading.acceptance import SCENARIOS, AcceptanceWorld
+from xau_edge.trading.coverage import decision_coverage
 
 OUT = Path("apps/dashboard/e2e/fixtures/golden")
 PORT = 8100
@@ -96,7 +98,23 @@ def collect(market: Path, out_root: Path) -> dict[str, tuple[str, Any]]:
         w = world(name)
         files[key] = (f"GET /trade/decision, scenario {name}", w.engine.view())
         w.close()
+    files["coverage_incomplete"] = ("decision_coverage() over a restart gap", incomplete_coverage())
     return files
+
+
+def incomplete_coverage() -> dict[str, Any]:
+    """The real ``decision_coverage`` for the 2026-10-09 pattern: two runs of ~1 row/min and a restart gap."""
+    start = datetime(2026, 10, 9, 12, 53, tzinfo=UTC)
+    bars = [start + timedelta(minutes=i) for i in range(240)]
+    kept = [i for i in range(240) if i < 110 or 141 <= i < 200]
+    rows = [
+        {"at": (bars[i] + timedelta(minutes=1, seconds=4)).isoformat(), "m1_bar": bars[i].isoformat(),
+         "run": "a1b2c3d4" if i < 110 else "e5f6a7b8"}
+        for i in kept
+    ]  # fmt: skip
+    return decision_coverage(
+        bars, rows, window_from=start, window_to=start + timedelta(minutes=240)
+    )
 
 
 def main() -> None:

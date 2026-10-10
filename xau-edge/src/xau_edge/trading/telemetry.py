@@ -17,9 +17,17 @@ from typing import Any
 from xau_edge.trading.schema import TradingSignal
 
 
-def record_of(signal: TradingSignal, *, at: datetime) -> dict[str, Any]:
+def record_of(
+    signal: TradingSignal,
+    *,
+    at: datetime,
+    m1_bar: datetime | None = None,
+    run: str | None = None,
+) -> dict[str, Any]:
     return {
         "at": at.isoformat(),
+        "m1_bar": None if m1_bar is None else m1_bar.isoformat(),  # the closed M1 bar decided on
+        "run": run,  # which engine process wrote it: a gap between two runs is a restart
         "decision_id": signal.decision_id,
         "setup_id": signal.setup_id or None,
         "decision": signal.decision.value,
@@ -76,11 +84,20 @@ class DecisionTelemetry:
     def _path(self, day: datetime) -> Path:
         return self.root / f"decisions-{day.astimezone(UTC):%Y%m%d}.jsonl"
 
-    def append(self, signal: TradingSignal, *, at: datetime) -> None:
+    def append(
+        self,
+        signal: TradingSignal,
+        *,
+        at: datetime,
+        m1_bar: datetime | None = None,
+        run: str | None = None,
+    ) -> None:
         path = self._path(at)
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record_of(signal, at=at), sort_keys=True) + "\n")
+            handle.write(
+                json.dumps(record_of(signal, at=at, m1_bar=m1_bar, run=run), sort_keys=True) + "\n"
+            )
 
     def _signals_path(self, day: datetime) -> Path:
         return self.root / f"signals-{day.astimezone(UTC):%Y%m%d}.jsonl"
