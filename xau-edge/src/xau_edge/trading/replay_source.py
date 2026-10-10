@@ -26,6 +26,7 @@ from xau_edge.market_data.session import market_status
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
 from xau_edge.trading.frames import ORDER, MultiTfBars, from_frames
 from xau_edge.trading.live_source import (
+    REQUIRED,
     TAILS,
     LiveSnapshot,
     LiveTradingMarketSource,
@@ -47,6 +48,8 @@ WARMUP = {
 
 class ReplayMarketSource(LiveTradingMarketSource):
     """Serves ``LiveSnapshot`` objects for a moving replay clock (``set_time``)."""
+
+    SOURCE_MODE = "ACCEPTANCE_REPLAY"
 
     def __init__(
         self,
@@ -74,6 +77,8 @@ class ReplayMarketSource(LiveTradingMarketSource):
         live = json.loads(live_path.read_text(encoding="utf-8")) if live_path.exists() else {}
         self._spec = spec_from_broker(live.get("symbol_spec"))
         self.now = start
+        self.fault: str | None = None
+        """Test-only fault for acceptance runs: STALE_DATA, COLLECTOR_DOWN or NO_SPEC."""
 
     def set_time(self, now: datetime) -> None:
         self.now = now
@@ -96,10 +101,11 @@ class ReplayMarketSource(LiveTradingMarketSource):
         bid = float(closed["close"][-1])
         spread = float(closed["spread"][-1])
         point = self._spec.point if self._spec else 0.01
-        return QuoteView(bid, bid + spread * point, spread, now, 0.0)
+        age = 120.0 if self.fault == "STALE_DATA" else 0.0
+        return QuoteView(bid, bid + spread * point, spread, now, age)
 
     def collector_alive(self, now: datetime) -> bool:
-        return True
+        return self.fault != "COLLECTOR_DOWN"
 
     def load(self, now: datetime | None = None) -> LiveSnapshot:
         stamp = now or self.now
@@ -115,11 +121,15 @@ class ReplayMarketSource(LiveTradingMarketSource):
             now=stamp,
             bars=bars,
             quote=self.current_quote(stamp),
-            spec=self._spec,
+            spec=None if self.fault == "NO_SPEC" else self._spec,
             status=market_status(stamp, self.calendar),
-            stale_timeframes=(),
-            freshness={tf.value: "FRESH" for tf in bars.frames},
-            collector_alive=True,
+            stale_timeframes=tuple(tf.value for tf in REQUIRED)
+            if self.fault == "STALE_DATA" and market_status(stamp, self.calendar).value == "OPEN"
+            else (),
+            freshness={
+                tf.value: "STALE" if self.fault == "STALE_DATA" else "FRESH" for tf in bars.frames
+            },
+            collector_alive=self.collector_alive(stamp),
             latest_m1_close=latest,
             problems=(),
         )

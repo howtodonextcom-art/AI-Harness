@@ -99,7 +99,7 @@ class TradingSignal(BaseModel):
     refusal_reasons: tuple[Refusal, ...] = ()
     code_version: str = ""
     inputs_hash: str = ""
-    metadata: dict[str, float | str | None] = Field(default_factory=dict)
+    metadata: dict[str, float | int | str | None] = Field(default_factory=dict)
     setup_id: str = ""
     """Stable while the same M5 trigger bar holds: the identity used for alerts and paper orders."""
     news_state: str = "UNKNOWN"

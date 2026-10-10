@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import os
 import threading
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
@@ -21,14 +22,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.ops.code_version import current_code_version
-from xau_edge.ops.notifier import build_dispatcher
+from xau_edge.ops.notifier import Notifier, build_dispatcher
+from xau_edge.ops.process_lock import WriterLock, WriterLockError
+from xau_edge.ops.settings import OpsSettings
 from xau_edge.strategies.edge_program import SERVER_CLOCK
 from xau_edge.trading.baseline import BaselineConfig
 from xau_edge.trading.engine import EngineConfig, TradeEngine
 from xau_edge.trading.live_source import LiveTradingMarketSource
+from xau_edge.trading.namespace import claim_root
 from xau_edge.trading.paper_desk import DeskConfig, DeskRefusal, PaperDesk
 from xau_edge.trading.risk_calc import RISK_CHOICES
 from xau_edge.trading.setup_alerts import SetupAlerts
+from xau_edge.trading.telemetry import DecisionTelemetry
 
 _LOG = logging.getLogger(__name__)
 DESK_HEADER = "x-paper-desk"
@@ -36,33 +41,73 @@ STEP_SECONDS = 5.0
 
 
 def build_trade_engine(
-    market_root: Path, trade_root: Path, *, code_version: str | None = None
+    market_root: Path,
+    trade_root: Path,
+    *,
+    code_version: str | None = None,
+    source: LiveTradingMarketSource | None = None,
+    clock: Callable[[], datetime] | None = None,
+    baseline_version: str | None = None,
+    notifier: Notifier | None = None,
 ) -> TradeEngine:
-    """The production wiring: collector files in, paper desk + journal + alerts out."""
+    """The production wiring: collector files in, paper desk + journal + alerts out.
+
+    ``source`` / ``clock`` / ``notifier`` exist for the acceptance replay, which runs THE SAME
+    wiring (writer lock, desk, alerts, engine) over burned bars with a replay clock; the source
+    decides the namespace (LIVE or ACCEPTANCE_REPLAY) and a root can never mix the two.
+    """
     code_version = code_version or current_code_version()
-    source = LiveTradingMarketSource(market_root, ftmo_calendar())
-    desk = PaperDesk(trade_root, DeskConfig(), code_version=code_version)
-    alerts = SetupAlerts(
-        build_dispatcher(fallback_path=trade_root / "alerts.jsonl"),
-        trade_root / "alerts_state.json",
+    source = source or LiveTradingMarketSource(market_root, ftmo_calendar())
+    mode = source.SOURCE_MODE
+    claim_root(trade_root, mode)
+    lock = WriterLock(trade_root / "writer.lock", role="trade-engine", code_version=code_version)
+    writer_error: str | None = None
+    try:
+        lock.acquire()
+    except WriterLockError as exc:  # another API process owns the desk: read-only, loudly
+        writer_error = f"SINGLE WRITER CONFLICT: {exc}"
+        _LOG.error(writer_error)
+    now = clock or (lambda: datetime.now(UTC))
+    desk = PaperDesk(
+        trade_root,
+        DeskConfig(),
+        code_version=code_version,
+        clock=now,
+        writable=writer_error is None,
+        source_mode=mode,
     )
-    version = os.environ.get("XAU_EDGE_BASELINE_VERSION", "1.1.0")
+    telegram = notifier is None and OpsSettings().telegram_configured  # a boolean only
+    alerts = (
+        None
+        if writer_error
+        else SetupAlerts(
+            build_dispatcher(notifier=notifier, fallback_path=trade_root / "alerts.jsonl"),
+            trade_root / "alerts_state.json",
+            delivery="TELEGRAM" if telegram else "FILE_FALLBACK",
+        )
+    )
+    version = baseline_version or os.environ.get("XAU_EDGE_BASELINE_VERSION", "1.1.0")
     if version not in ("1.1.0", "1.2.0", "1.2.1"):
         msg = f"XAU_EDGE_BASELINE_VERSION must be 1.1.0, 1.2.0 or 1.2.1, not {version!r}"
         raise ValueError(msg)
     auto_paper = os.environ.get("XAU_EDGE_AUTO_PAPER", "false").lower() == "true"
-    return TradeEngine(
+    engine = TradeEngine(
         source,
         desk,
         EngineConfig(
             root=trade_root,
             code_version=code_version,
             baseline=BaselineConfig(allow_unknown_news=True, version=version),
-            auto_paper=auto_paper,  # paper desk only: nothing here can reach an MT5 order function
+            auto_paper=auto_paper and mode == "LIVE",  # never auto-open inside a replay
         ),
         broker_clock=SERVER_CLOCK,
         alerts=alerts,
+        telemetry=DecisionTelemetry(trade_root, source_mode=mode),
+        clock=now,
     )
+    engine.writer_error = writer_error
+    engine.writer_lock = lock  # held for the life of the process
+    return engine
 
 
 class EngineRunner:
@@ -106,7 +151,7 @@ def _refusal(exc: DeskRefusal) -> HTTPException:
     return HTTPException(status_code=409, detail={"code": exc.code, "message": exc.message})
 
 
-def add_trade_routes(
+def add_trade_routes(  # noqa: PLR0915 - one small function per route
     app: FastAPI, engine: TradeEngine, *, port: int, allowed_origins: tuple[str, ...]
 ) -> None:
     hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
@@ -153,7 +198,7 @@ def add_trade_routes(
 
     @app.get("/trade/paper", dependencies=reader)
     def paper() -> dict[str, Any]:
-        now = datetime.now(UTC)
+        now = engine.now()
         with engine.lock:
             quote = engine.current_quote(now)
             return {
@@ -169,6 +214,7 @@ def add_trade_routes(
         with engine.lock:
             return {
                 "simulated": True,
+                "source_mode": engine.source_mode,
                 "open": engine.desk.open_trade(),
                 "trades": engine.desk.closed_trades()[:limit],
                 "evidence": engine.evidence(),
@@ -177,14 +223,24 @@ def add_trade_routes(
     @app.get("/trade/markers", dependencies=reader)
     def markers(days: Annotated[int, Query(ge=1, le=14)] = 3) -> dict[str, Any]:
         """Chart markers from the REAL objects: logged actionable decisions and paper trades."""
-        now = datetime.now(UTC)
+        now = engine.now()
         with engine.lock:
             trades = list(engine.desk.trades.values())
+        mode = engine.source_mode
         taken = {t["setup_id"] for t in trades}
         signals: list[dict[str, Any]] = []
         for back in range(days):
             for record in engine.telemetry.read_signals(now - timedelta(days=back)):
-                signals.append({**record, "taken": record["setup_id"] in taken})
+                if record.get("source_mode", "LIVE") != mode:
+                    continue  # replay / fixture records never appear as live markers
+                signals.append(
+                    {
+                        **record,
+                        "price": record.get("entry"),
+                        "source_mode": mode,
+                        "taken": record["setup_id"] in taken,
+                    }
+                )
         paper = [
             {
                 "trade_id": t["trade_id"],
@@ -201,15 +257,31 @@ def add_trade_routes(
                 "sl": t.get("sl"),
                 "initial_sl": t.get("initial_sl"),
                 "tp": t.get("tp"),
+                "strategy_version": t.get("strategy_version"),
             }
             for t in trades
-            if t["status"] in ("OPEN", "CLOSED")
+            if t["status"] in ("OPEN", "CLOSED") and t.get("source_mode", "LIVE") == mode
         ]
-        return {"simulated": True, "signals": signals, "paper_trades": paper}
+        return {"simulated": True, "source_mode": mode, "signals": signals, "paper_trades": paper}
+
+    @app.get("/trade/signals", dependencies=reader)
+    def signal_history(limit: Annotated[int, Query(ge=1, le=200)] = 30) -> dict[str, Any]:
+        """Recent actionable decisions of THIS source mode (never mixed with replay)."""
+        now = engine.now()
+        mode = engine.source_mode
+        with engine.lock:
+            taken = {t["setup_id"] for t in engine.desk.trades.values()}
+        rows: list[dict[str, Any]] = []
+        for back in range(14):
+            for record in engine.telemetry.read_signals(now - timedelta(days=back)):
+                if record.get("source_mode", "LIVE") == mode:
+                    rows.append({**record, "taken": record["setup_id"] in taken})
+        rows.sort(key=lambda r: str(r.get("at")), reverse=True)
+        return {"source_mode": mode, "signals": rows[:limit]}
 
     @app.get("/trade/telemetry", dependencies=reader)
     def telemetry() -> dict[str, Any]:
-        return engine.telemetry.summary(datetime.now(UTC))
+        return engine.telemetry.summary(engine.now())
 
     @app.post("/trade/paper/open")
     def paper_open(body: OpenRequest, request: Request) -> dict[str, Any]:

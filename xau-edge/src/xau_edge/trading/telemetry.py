@@ -36,11 +36,16 @@ def record_of(signal: TradingSignal, *, at: datetime) -> dict[str, Any]:
         "news": signal.news_state,
         "strategy_version": signal.strategy_version,
         "setup_phase": signal.metadata.get("setup_phase"),
+        "armed_at": signal.metadata.get("setup_armed_at"),
     }
 
 
 def signal_record(
-    signal: TradingSignal, *, at: datetime, bar_time: datetime | None = None
+    signal: TradingSignal,
+    *,
+    at: datetime,
+    bar_time: datetime | None = None,
+    source_mode: str = "LIVE",
 ) -> dict[str, Any]:
     """An actionable decision exactly as served (the chart markers come from these)."""
     return {
@@ -57,14 +62,16 @@ def signal_record(
         "lots": signal.position_size,
         "expires_at": None if signal.signal_expiry is None else signal.signal_expiry.isoformat(),
         "strategy_version": signal.strategy_version,
+        "source_mode": source_mode,
     }
 
 
 class DecisionTelemetry:
     """Append-only daily files ``decisions-YYYYMMDD.jsonl`` under ``root``."""
 
-    def __init__(self, root: Path | str) -> None:
+    def __init__(self, root: Path | str, *, source_mode: str = "LIVE") -> None:
         self.root = Path(root)
+        self.source_mode = source_mode
 
     def _path(self, day: datetime) -> Path:
         return self.root / f"decisions-{day.astimezone(UTC):%Y%m%d}.jsonl"
@@ -89,7 +96,7 @@ class DecisionTelemetry:
             return
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            record = signal_record(signal, at=at, bar_time=bar_time)
+            record = signal_record(signal, at=at, bar_time=bar_time, source_mode=self.source_mode)
             handle.write(json.dumps(record, sort_keys=True) + "\n")
 
     def read_signals(self, day: datetime) -> list[dict[str, Any]]:

@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -32,6 +33,7 @@ from xau_edge.execution.interface import ClosedTrade, Order
 from xau_edge.execution.paper import MarketBar, PaperExecutionBroker
 from xau_edge.market_data.atomic import atomic_write_text
 from xau_edge.trading.governor import GovernorConfig, TradeGovernor
+from xau_edge.trading.paper_recovery import diff_against_state, replay_journal
 from xau_edge.trading.position_manager import (
     ManagerConfig,
     ManagerContext,
@@ -88,6 +90,26 @@ class DeskExit(StrEnum):
     TIME_EXIT = "TIME_EXIT"
     INVALIDATED = "INVALIDATED"
     MANUAL_CLOSE = "MANUAL_CLOSE"
+    CLOSURE_CLOSE = "CLOSURE_CLOSE"
+
+
+class ClosurePolicy(StrEnum):
+    """What the PAPER desk does about a market closure (weekend, daily break, holiday).
+
+    This is position management for the simulated account only; it never changes a decision.
+    """
+
+    BLOCK_NEW_NEAR_CLOSE = "BLOCK_NEW_NEAR_CLOSE"
+    """Safe default: no new entry when the maximum hold could run into a closure."""
+    CLOSE_BEFORE_CLOSURE = "CLOSE_BEFORE_CLOSURE"
+    """Entries allowed; an open trade is closed shortly before the closure."""
+    HOLD_ACROSS_CLOSE = "HOLD_ACROSS_CLOSE"
+    """Entries allowed; the trade is held across the closure (exits at the first bar after)."""
+
+
+STATE_ERROR = "PAPER_STATE_ERROR"
+WRITER_ERROR = "WRITER_LOCK"
+CLOSURE_NEAR = "CLOSURE_NEAR"
 
 
 _BROKER_REASON = {
@@ -120,6 +142,9 @@ class DeskConfig:
         )
     )
     governor: GovernorConfig = field(default_factory=GovernorConfig)
+    closure_policy: ClosurePolicy = ClosurePolicy.BLOCK_NEW_NEAR_CLOSE
+    closure_buffer_minutes: int = 5
+    """Used by CLOSE_BEFORE_CLOSURE: close when a closure starts within this many minutes."""
 
 
 def _iso(value: datetime | None) -> str | None:
@@ -141,7 +166,14 @@ class PaperDesk:
         costs: CostModel | None = None,
         code_version: str = "unknown",
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        writable: bool = True,
+        source_mode: str = "LIVE",
     ) -> None:
+        self.writable = writable
+        """False when another process owns the directory: the desk then only reads."""
+        self.source_mode = source_mode
+        self.closure_probe: Callable[[datetime, int], tuple[datetime, str] | None] | None = None
+        """``(now, horizon_minutes) -> (closure start, kind)`` or None; set by the engine."""
         self.root = Path(root)
         self.config = config or DeskConfig()
         self.code_version = code_version
@@ -156,7 +188,10 @@ class PaperDesk:
         self.governor = TradeGovernor(self.config.governor)
         self.last_bar: datetime | None = None
         self.load_error: str | None = None
+        self.integrity_error: str | None = None
+        self.recovered_orphans: list[str] = []
         self._load()
+        self._reconcile()
 
     # ---- persistence -------------------------------------------------------------------------
 
@@ -169,6 +204,8 @@ class PaperDesk:
         return self.root / "paper_journal.jsonl"
 
     def _save(self) -> None:
+        if not self.writable:
+            raise DeskRefusal(WRITER_ERROR, "another process owns the paper desk")
         payload = {
             "version": 1,
             "saved_at": _iso(self._clock()),
@@ -227,12 +264,70 @@ class PaperDesk:
                 )
 
     def _journal(self, event: str, record: dict[str, Any]) -> None:
+        """Append a line and fsync it: the journal is the commit log (see paper_recovery)."""
+        if not self.writable:
+            raise DeskRefusal(WRITER_ERROR, "another process owns the paper desk")
         self.root.mkdir(parents=True, exist_ok=True)
         line = json.dumps(
             {"event": event, "at": _iso(self._clock()), **record}, default=str, sort_keys=True
         )
         with self._journal_path.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+
+    # ---- integrity ---------------------------------------------------------------------------
+
+    @property
+    def fault(self) -> tuple[str, str] | None:
+        """(code, message) when the desk must not take or change anything, else None."""
+        if not self.writable:
+            return WRITER_ERROR, "another process owns the paper desk (single writer)"
+        if self.load_error:
+            return STATE_ERROR, self.load_error
+        if self.integrity_error:
+            return STATE_ERROR, self.integrity_error
+        return None
+
+    def _reconcile(self) -> None:
+        """Compare snapshot and journal; close crashed intents; fail closed on a mismatch."""
+        if self.load_error:
+            return
+        replay = replay_journal(self._journal_path)
+        state_exists = self._state_path.exists()
+        if not replay.events and not state_exists:
+            return
+        state: dict[str, Any] | None = None
+        if state_exists:
+            try:
+                state = json.loads(self._state_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                return  # _load already reported it
+        differences = diff_against_state(replay, state, initial_capital=self.config.capital)
+        if replay.orphans and self.writable and not differences:
+            for tid in replay.orphans:  # crash before the fill committed: nothing exists to recover
+                record = replay.trades[tid]
+                self._journal(
+                    "paper.abort",
+                    {
+                        "trade_id": tid,
+                        "setup_id": record.get("setup_id"),
+                        "why": "CRASH_BEFORE_COMMIT",
+                    },
+                )
+                record.update(
+                    status=PaperStatus.CANCELLED.value, cancel_reason="CRASH_BEFORE_COMMIT"
+                )
+                self.trades[tid] = record
+            self.recovered_orphans = list(replay.orphans)
+            self._save()
+        if differences:
+            shown = "; ".join(differences[:3]) + (" ..." if len(differences) > 3 else "")
+            self.integrity_error = (
+                "the paper state and its journal disagree (" + shown + "). New paper entries are "
+                "blocked: run scripts/paper_recover.py (dry-run), then --apply"
+            )
+            _LOG.error(self.integrity_error)
 
     # ---- reading -----------------------------------------------------------------------------
 
@@ -282,14 +377,42 @@ class PaperDesk:
     def can_open(
         self, now: datetime, session: str, risk_pct: float, quote: QuoteLike | None
     ) -> list[str]:
-        """The governor's reasons a NEW paper trade is refused right now (empty: allowed)."""
+        """Why a NEW paper trade is refused right now (empty: allowed): desk faults, a closure that
+        the maximum hold could run into, then the governor's reasons."""
+        out: list[str] = []
+        if self.fault is not None:
+            out.append(self.fault[0])
+        if self.closure_blocks(now):
+            out.append(CLOSURE_NEAR)
         equity = self.equity(quote, now)
-        return [
+        out.extend(
             r.value
             for r in self.governor.check(
                 now, session, risk_pct, day_start_equity=self.day_start_equity(now), equity=equity
             )
-        ]
+        )
+        return out
+
+    def closure_blocks(self, now: datetime) -> tuple[datetime, str] | None:
+        """(closure start, kind) when the policy refuses an entry now, else None."""
+        policy = self.config.closure_policy
+        if self.closure_probe is None or policy is ClosurePolicy.HOLD_ACROSS_CLOSE:
+            return None
+        horizon = (
+            self.config.max_hold_minutes
+            if policy is ClosurePolicy.BLOCK_NEW_NEAR_CLOSE
+            else self.config.closure_buffer_minutes
+        )
+        return self.closure_probe(now, horizon)
+
+    def closure_due(self, now: datetime) -> bool:
+        """CLOSE_BEFORE_CLOSURE: a closure starts within the buffer."""
+        if (
+            self.config.closure_policy is not ClosurePolicy.CLOSE_BEFORE_CLOSURE
+            or not self.closure_probe
+        ):
+            return False
+        return self.closure_probe(now, self.config.closure_buffer_minutes) is not None
 
     def position_view(self, quote: QuoteLike | None, now: datetime) -> dict[str, Any] | None:
         rec = self.open_trade()
@@ -322,6 +445,8 @@ class PaperDesk:
         market: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Take the CURRENT decision as a paper trade (explicit, idempotent per setup)."""
+        if self.fault is not None:
+            raise DeskRefusal(*self.fault)  # fail closed: never trade from an untrusted state
         if decision.decision is TradeDecision.WAIT:
             raise DeskRefusal("NOT_ACTIONABLE", "there is no trade plan to take")
         if decision.signal_expiry is not None and now >= decision.signal_expiry:
@@ -342,9 +467,13 @@ class PaperDesk:
                 "RISK_PCT_NOT_ALLOWED", f"choose one of {list(self.config.allowed_risk)}"
             )
         if any(
-            r["setup_id"] == decision.setup_id and r["status"] != PaperStatus.CANCELLED
+            r["setup_id"] == decision.setup_id
+            and (
+                r["status"] != PaperStatus.CANCELLED
+                or r.get("cancel_reason") == "CRASH_BEFORE_COMMIT"
+            )
             for r in self.trades.values()
-        ):
+        ):  # a setup that crashed mid-open stays consumed: never a duplicate order
             raise DeskRefusal("DUPLICATE_SETUP", "this setup was already taken")
         if quote.stale:
             raise DeskRefusal("QUOTE_STALE", "the quote is too old to fill against")
@@ -354,7 +483,7 @@ class PaperDesk:
         blockers = self.can_open(now, session, risk_pct, quote)
         if blockers:
             raise DeskRefusal(
-                blockers[0], "the trade governor refuses a new trade: " + ", ".join(blockers)
+                blockers[0], "the paper desk refuses a new trade: " + ", ".join(blockers)
             )
         side = 1 if decision.decision is TradeDecision.BUY else -1
         planned = quote.ask if side > 0 else quote.bid
@@ -374,6 +503,7 @@ class PaperDesk:
             "decision_id": decision.decision_id,
             "side": decision.decision.value,
             "created_at": _iso(now),
+            "source_mode": self.source_mode,
             "session": session,
             "planned_entry": decision.entry_price,
             "quote": {"bid": quote.bid, "ask": quote.ask, "spread_points": quote.spread_points},
@@ -426,6 +556,7 @@ class PaperDesk:
             return self._cancel(record, f"FILL_REJECTED: {type(exc).__name__}: {exc}"[:200], now)
         record.update(
             status=PaperStatus.OPEN.value,
+            broker_position=position.model_dump(mode="json"),
             position_id=position.position_id,
             opened_at=_iso(position.entry_time),
             fill_price=position.entry_price,
@@ -447,15 +578,20 @@ class PaperDesk:
 
     # ---- close -------------------------------------------------------------------------------
 
-    def manual_close(self, trade_id: str, quote: QuoteLike, now: datetime) -> dict[str, Any]:
+    def manual_close(
+        self, trade_id: str, quote: QuoteLike, now: datetime, reason: str | None = None
+    ) -> dict[str, Any]:
+        if self.fault is not None:
+            raise DeskRefusal(*self.fault)
         rec = self.trades.get(trade_id)
         if rec is None:
             raise DeskRefusal("NOT_FOUND", "no such paper trade")
         if rec["status"] != PaperStatus.OPEN:
             raise DeskRefusal("NOT_OPEN", f"the trade is {rec['status']}, nothing to close")
         self.broker.set_quote(now, bid=quote.bid, spread_points=quote.spread_points)
-        closed = self.broker.close_position(rec["position_id"], DeskExit.MANUAL_CLOSE.value)
-        return self._finalize(rec, closed, DeskExit.MANUAL_CLOSE.value)
+        why = reason or DeskExit.MANUAL_CLOSE.value
+        closed = self.broker.close_position(rec["position_id"], why)
+        return self._finalize(rec, closed, why)
 
     def _finalize(self, rec: dict[str, Any], closed: ClosedTrade, reason: str) -> dict[str, Any]:
         risk_distance = abs(rec["fill_price"] - rec["initial_sl"])
@@ -463,6 +599,7 @@ class PaperDesk:
         rec["mfe"], rec["mae"] = self._settled_excursions(rec, closed.exit_price, reason)
         rec.update(
             status=PaperStatus.CLOSED.value,
+            broker_closed=closed.model_dump(mode="json"),
             closed_at=_iso(closed.exit_time),
             exit_price=closed.exit_price,
             exit_reason=reason,
@@ -497,8 +634,8 @@ class PaperDesk:
     ) -> list[dict[str, Any]]:
         """Apply new CLOSED M1 bars (oldest first) to the open position; returns trades closed."""
         finished: list[dict[str, Any]] = []
-        if m1.height == 0:
-            return finished
+        if m1.height == 0 or self.fault is not None:
+            return finished  # a faulted or read-only desk changes nothing
         rows = m1.sort("timestamp")
         for row in rows.iter_rows(named=True):
             opened: datetime = row["timestamp"]

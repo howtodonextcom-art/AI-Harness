@@ -21,16 +21,35 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from xau_edge.domain.market import MarketStatus
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.atomic import atomic_write_text
 from xau_edge.market_data.broker_clock import BrokerClock
+from xau_edge.market_data.session import market_status
 from xau_edge.trading.baseline import BaselineConfig
+from xau_edge.trading.cockpit import (
+    blocker,
+    condition,
+    forward_acceptance,
+    funnel,
+    hero_state,
+    read_all_signals,
+    strategy_info,
+    trade_plan,
+)
 from xau_edge.trading.decision_core import ROLES, SnapshotInputs, evaluate, explain
 from xau_edge.trading.demo_lock import demo_lock_status
 from xau_edge.trading.funnel import stages_from_signal, waiting_for
 from xau_edge.trading.live_source import LiveSnapshot, LiveTradingMarketSource, news_state
 from xau_edge.trading.market_state import MarketState, SnapshotMemo
-from xau_edge.trading.paper_desk import BarExtras, DeskRefusal, PaperDesk
+from xau_edge.trading.namespace import claim_root
+from xau_edge.trading.paper_desk import (
+    CLOSURE_NEAR,
+    BarExtras,
+    DeskExit,
+    DeskRefusal,
+    PaperDesk,
+)
 from xau_edge.trading.risk_calc import DEFAULT_RISK_PCT, RISK_CHOICES, calculate
 from xau_edge.trading.schema import TradeDecision, TradingSignal
 from xau_edge.trading.setup_alerts import SetupAlerts
@@ -114,6 +133,18 @@ class TradeEngine:
         self._last_telemetry_m1: datetime | None = None
         self._errors: list[str] = []
         self._memo = SnapshotMemo()
+        self.source_mode: str = getattr(source, "SOURCE_MODE", "LIVE")
+        """LIVE or ACCEPTANCE_REPLAY: the namespace this engine, its desk and its logs belong to."""
+        if desk.source_mode != self.source_mode:
+            msg = f"the desk is {desk.source_mode} but the market source is {self.source_mode}"
+            raise ValueError(msg)
+        claim_root(config.root, self.source_mode)
+        self.writer_error: str | None = None
+        self.writer_lock: Any = None
+        """Set by the builder when another process owns the desk (single writer)."""
+        self._closure_cache: dict[tuple[str, int], tuple[datetime, str] | None] = {}
+        self.desk.closure_probe = self.closure_probe
+        self._forward_cache: tuple[tuple[Any, ...], dict[str, Any]] | None = None
 
     # ---- the cadence -------------------------------------------------------------------------
 
@@ -131,8 +162,6 @@ class TradeEngine:
         with self._lock:
             stamp = now or self._clock()
             try:
-                from xau_edge.market_data.session import market_status  # noqa: PLC0415
-
                 latest = self.source.latest_m1_open()
                 live = self._live_quote(stamp)
                 status = market_status(stamp, self.source.calendar)
@@ -149,6 +178,28 @@ class TradeEngine:
                 self._key = None
                 return False
             return True
+
+    def now(self) -> datetime:
+        """The engine's clock (the wall clock live, the replay clock in an acceptance replay)."""
+        return self._clock()
+
+    def closure_probe(self, now: datetime, horizon_minutes: int) -> tuple[datetime, str] | None:
+        """(start, kind) of the first market closure within ``horizon_minutes`` of ``now``."""
+        key = (f"{now:%Y%m%d%H%M}", horizon_minutes)
+        if key in self._closure_cache:
+            return self._closure_cache[key]
+        found: tuple[datetime, str] | None = None
+        for minutes in range(0, horizon_minutes + 1, 5):
+            at = now + timedelta(minutes=minutes)
+            status = market_status(at, self.source.calendar)
+            if status not in (MarketStatus.OPEN, MarketStatus.UNKNOWN):
+                kind = "DAILY_BREAK" if status is MarketStatus.ROLLOVER else "WEEKEND_OR_HOLIDAY"
+                found = (at, kind)
+                break
+        if len(self._closure_cache) > 256:
+            self._closure_cache.clear()
+        self._closure_cache[key] = found
+        return found
 
     @property
     def lock(self) -> threading.RLock:
@@ -197,14 +248,16 @@ class TradeEngine:
         newest = (
             None if latest_m1 is None or latest_m1.height == 0 else latest_m1["timestamp"].max()
         )
-        if newest is not None and newest != self._last_telemetry_m1:
+        if newest is not None and newest != self._last_telemetry_m1 and not self.writer_error:
             self._last_telemetry_m1 = newest  # type: ignore[assignment]
             self.telemetry.append(signal, at=now)
-        if signal.decision is not TradeDecision.WAIT:
+        if signal.decision is not TradeDecision.WAIT and not self.writer_error:
             m5_bar = state.snapshots.get("M5")
             self.telemetry.append_signal(
                 signal, at=now, bar_time=None if m5_bar is None else m5_bar.bar_open
             )
+        if self.writer_error:
+            return  # a read-only process computes the decision but changes nothing on disk
         self._drive_desk(snap, state, now)
         if self.config.auto_paper:
             self._auto_open(now)
@@ -253,6 +306,23 @@ class TradeEngine:
         if self.alerts is not None:
             for trade in closed:
                 self.alerts.on_paper_close(trade, now)
+        self._close_for_closure(now)
+
+    def _close_for_closure(self, now: datetime) -> None:
+        """CLOSE_BEFORE_CLOSURE policy: leave the market before a closure (paper only)."""
+        position = self.desk.open_trade()
+        quote = self._live_quote(now)
+        if position is None or quote is None or quote.stale or not self.desk.closure_due(now):
+            return
+        try:
+            record = self.desk.manual_close(
+                position["trade_id"], quote, now, reason=DeskExit.CLOSURE_CLOSE.value
+            )
+        except DeskRefusal as exc:
+            _LOG.info("closure close refused: %s", exc.code)
+            return
+        if self.alerts is not None:
+            self.alerts.on_paper_close(record, now)
 
     # ---- the view the API serves -------------------------------------------------------------
 
@@ -312,32 +382,232 @@ class TradeEngine:
             )
         return rows
 
+    def _conditions(  # noqa: PLR0912 - one rule per infrastructure condition
+        self, snap: LiveSnapshot | None, state: MarketState | None, stamp: datetime
+    ) -> list[dict[str, str]]:
+        """Infrastructure and safety conditions, each with a severity (ERROR / WARN / INFO)."""
+        out: list[dict[str, str]] = []
+        if self.writer_error:
+            out.append(condition("WRITER_LOCK", "ERROR", self.writer_error))
+        fault = self.desk.fault
+        if fault is not None and fault[0] == "PAPER_STATE_ERROR":
+            out.append(condition("PAPER_STATE_ERROR", "ERROR", fault[1]))
+        if self._errors and self._signal is None:
+            out.append(condition("ENGINE_ERROR", "ERROR", self._errors[-1]))
+        if snap is None or state is None:
+            out.append(
+                condition("NO_DECISION", "ERROR", "the engine has not produced a decision yet")
+            )
+            return out
+        collector = self._read_collector() if self.source_mode == "LIVE" else {"connected": True}
+        if snap.market_open:
+            if not snap.collector_alive:
+                out.append(
+                    condition("COLLECTOR_STALE", "ERROR", "the market collector is not publishing")
+                )
+            if collector is not None and collector.get("connected") is False:
+                out.append(
+                    condition("MT5_DISCONNECTED", "ERROR", "the MT5 terminal is disconnected")
+                )
+            if snap.stale_timeframes:
+                out.append(
+                    condition(
+                        "DATA_STALE", "ERROR", "stale bars: " + ", ".join(snap.stale_timeframes)
+                    )
+                )
+            if snap.quote is None or snap.quote.stale:
+                out.append(condition("QUOTE_STALE", "ERROR", "the live quote is missing or old"))
+        else:
+            out.append(
+                condition("MARKET_CLOSED", "INFO", f"the market is {snap.status.value.lower()}")
+            )
+        if snap.spec is None:
+            out.append(
+                condition("SPEC_MISSING", "ERROR", "the broker symbol specification is unknown")
+            )
+        if state.news_state == "UNKNOWN":
+            out.append(condition("NEWS_UNKNOWN", "WARN", "NEWS NOT VERIFIED: no economic calendar"))
+        if self._errors:
+            out.append(
+                condition("ENGINE_ERROR", "WARN", "recent engine error: " + self._errors[-1])
+            )
+        return out
+
+    def _entry_blockers(  # noqa: PLR0917 - everything the server needs to judge an entry
+        self,
+        signal: TradingSignal,
+        snap: LiveSnapshot,
+        state: MarketState,
+        plan: dict[str, Any] | None,
+        expired: bool,
+        quote: Any,
+        stamp: datetime,
+    ) -> list[dict[str, str]]:
+        """Why a PAPER entry is not allowed right now (the server enforces the same list)."""
+        if signal.decision is TradeDecision.WAIT:
+            return []
+        out: list[dict[str, str]] = []
+        if expired:
+            out.append(blocker("EXPIRED"))
+        if plan is None or not plan["complete"]:
+            out.append(
+                blocker(
+                    "NOT_ACTIONABLE",
+                    "the plan is incomplete: " + ", ".join(plan["missing"] if plan else ["plan"]),
+                )
+            )
+        if not snap.usable:
+            out.append(blocker("STALE_DATA"))
+        if snap.spec is None:
+            out.append(blocker("NO_SYMBOL_SPEC"))
+        if any(
+            r.get("setup_id") == signal.setup_id and r["status"] != "CANCELLED"
+            for r in self.desk.trades.values()
+        ):
+            out.append(blocker("DUPLICATE_SETUP"))
+        for code in self.desk.can_open(stamp, state.session, self.config.default_risk_pct, quote):
+            if code == "PAPER_STATE_ERROR" and self.desk.fault:
+                out.append(blocker(code, "PAPER STATE ERROR: " + self.desk.fault[1]))
+            elif code == CLOSURE_NEAR:
+                hit = self.desk.closure_blocks(stamp)
+                kind = (
+                    "daily market break"
+                    if hit and hit[1] == "DAILY_BREAK"
+                    else "weekly market close"
+                )
+                when = "" if hit is None else f" at {hit[0]:%Y-%m-%d %H:%M} UTC"
+                out.append(blocker(code, f"PAPER ENTRY BLOCKED: the {kind} is approaching{when}"))
+            else:
+                out.append(blocker(code))
+        return out
+
+    def _forward(self, stamp: datetime) -> dict[str, Any]:
+        signals_dir = self.config.root
+        files = sorted(signals_dir.glob("signals-*.jsonl"))
+        key = (
+            tuple((f.name, f.stat().st_mtime_ns) for f in files),
+            len(self.desk.trades),
+            sum(1 for t in self.desk.trades.values() if t["status"] == "CLOSED"),
+            self.source_mode,
+        )
+        if self._forward_cache is not None and self._forward_cache[0] == key:
+            return self._forward_cache[1]
+        result = forward_acceptance(
+            read_all_signals(signals_dir), self.desk.trades.values(), source_mode=self.source_mode
+        )
+        self._forward_cache = (key, result)
+        return result
+
+    def _last_exit(self) -> dict[str, Any] | None:
+        done = [
+            t for t in self.desk.trades.values() if t["status"] == "CLOSED" and t.get("closed_at")
+        ]
+        if not done:
+            return None
+        last = max(done, key=lambda t: t["closed_at"])
+        return {
+            "trade_id": last["trade_id"],
+            "closed_at": last["closed_at"],
+            "exit_reason": last.get("exit_reason"),
+            "net_pnl": last.get("net_pnl"),
+            "r_multiple": last.get("r_multiple"),
+        }
+
+    def _status_strip(
+        self,
+        conditions: list[dict[str, str]],
+        hero: dict[str, Any],
+        forward: dict[str, Any],
+        demo: dict[str, Any],
+    ) -> dict[str, Any]:
+        codes = {c["code"]: c for c in conditions}
+        if "COLLECTOR_STALE" in codes or "DATA_STALE" in codes or "QUOTE_STALE" in codes:
+            data = {
+                "state": "STALE",
+                "detail": (
+                    codes.get("DATA_STALE") or codes.get("QUOTE_STALE") or codes["COLLECTOR_STALE"]
+                )["message"],
+            }
+        elif "MARKET_CLOSED" in codes:
+            data = {"state": "CLOSED", "detail": codes["MARKET_CLOSED"]["message"]}
+        elif "NO_DECISION" in codes or "MT5_DISCONNECTED" in codes:
+            data = {
+                "state": "UNAVAILABLE",
+                "detail": (codes.get("MT5_DISCONNECTED") or codes["NO_DECISION"])["message"],
+            }
+        else:
+            data = {"state": "GOOD", "detail": "bars and quote are fresh"}
+        core_error = codes.get("ENGINE_ERROR")
+        core = (
+            {"state": "ERROR", "detail": core_error["message"]}
+            if core_error and core_error["severity"] == "ERROR"
+            else {"state": "RUNNING", "detail": "decisions are being computed"}
+        )
+        fault = self.desk.fault
+        if fault is None:
+            desk = {"state": "READY", "detail": "paper state verified against its journal"}
+        elif fault[0] == "WRITER_LOCK":
+            desk = {"state": "READ_ONLY", "detail": fault[1]}
+        else:
+            desk = {"state": "ERROR", "detail": fault[1]}
+        version = self.config.baseline.version
+        return {
+            "data": data,
+            "trading_core": core,
+            "strategy": {
+                "state": "ACTIVE",
+                "label": f"v{version}",
+                "detail": f"{self.config.baseline.version}",
+            },
+            "paper_desk": desk,
+            "forward": {"state": forward["level"], "detail": forward["text"]},
+            "demo": {
+                "state": demo["status"],
+                "detail": "paper only; the desk never sends an order",
+            },
+            "edge": {"state": "UNVALIDATED", "detail": OPERATIONAL_LABEL},
+            "hero_state": hero["state"],
+        }
+
     def view(self, now: datetime | None = None) -> dict[str, Any]:
         """The current decision with everything the /trade screen shows (JSON-safe)."""
         with self._lock:
             stamp = now or self._clock()
             signal, state, snap = self._signal, self._state, self._snap
-            collector = self._read_collector()
+            collector = self._read_collector() if self.source_mode == "LIVE" else None
             demo = demo_lock_status(collector)
+            version = self.config.baseline.version
+            conditions = self._conditions(snap, state, stamp)
+            forward = self._forward(stamp)
+            base: dict[str, Any] = {
+                "source_mode": self.source_mode,
+                "strategy": strategy_info(version),
+                "conditions": conditions,
+                "forward_acceptance": forward,
+                "demo": demo,
+                "evidence": self._evidence(),
+                "generated_at": stamp.isoformat(),
+                "paper_account_label": "PAPER ACCOUNT (simulated equity, not the FTMO account)",
+            }
             if signal is None or state is None or snap is None:
+                hero = hero_state(
+                    signal=None, conditions=conditions, expired=False, plan=None, position=None,
+                    last_exit=None, market_open=True, now=stamp,
+                )  # fmt: skip
                 return {
+                    **base,
                     "available": False,
-                    "generated_at": stamp.isoformat(),
+                    "hero": hero,
+                    "decision_trusted": False,
+                    "status_strip": self._status_strip(conditions, hero, forward, demo),
                     "problems": [*self._errors[-3:], "the engine has not produced a decision yet"],
-                    "demo": demo,
-                    "evidence": self._evidence(),
                 }
             quote = self._live_quote(stamp)
             expired = signal.signal_expiry is not None and stamp >= signal.signal_expiry
             actionable_side = signal.decision is not TradeDecision.WAIT and not expired
-            blockers = (
-                self.desk.can_open(stamp, state.session, self.config.default_risk_pct, quote)
-                if actionable_side
-                else []
-            )
             plans = None
             if (
-                actionable_side
+                signal.decision is not TradeDecision.WAIT
                 and snap.spec is not None
                 and signal.entry_price
                 and signal.stop_loss
@@ -354,21 +624,43 @@ class TradeEngine:
                     ).as_dict()
                     for r in RISK_CHOICES
                 ]
-            decision = signal.model_dump(mode="json")
-            decision["decision_id"] = signal.decision_id
-            decision["expired"] = expired
-            decision["seconds_to_expiry"] = (
+            seconds_left = (
                 None
                 if signal.signal_expiry is None
                 else max(0.0, (signal.signal_expiry - stamp).total_seconds())
             )
+            plan = trade_plan(
+                signal,
+                plans=plans,
+                default_risk_pct=self.config.default_risk_pct,
+                expired=expired,
+                seconds_to_expiry=seconds_left,
+            )
+            entry_blockers = self._entry_blockers(signal, snap, state, plan, expired, quote, stamp)
+            position = self.desk.position_view(quote, stamp)
+            hero = hero_state(
+                signal=signal, conditions=conditions, expired=expired, plan=plan, position=position,
+                last_exit=self._last_exit(), market_open=snap.market_open, now=stamp,
+            )  # fmt: skip
+            decision = signal.model_dump(mode="json")
+            decision["decision_id"] = signal.decision_id
+            decision["expired"] = expired
+            decision["seconds_to_expiry"] = seconds_left
+            decision["source_mode"] = self.source_mode
             problems = list(snap.problems)
             if self.desk.load_error:
                 problems.append(self.desk.load_error)
             if not snap.market_open:
                 problems = [p for p in problems if "collector" not in p and "quote" not in p]
+            trusted = hero["state"] not in ("UNAVAILABLE", "STALE")
+            records = self.telemetry.read_day(stamp)
+            todays_signals = self.telemetry.read_signals(stamp)
             return {
+                **base,
                 "available": True,
+                "hero": hero,
+                "decision_trusted": trusted,
+                "status_strip": self._status_strip(conditions, hero, forward, demo),
                 "generated_at": signal.generated_at.isoformat()
                 if signal.generated_at
                 else stamp.isoformat(),
@@ -377,7 +669,9 @@ class TradeEngine:
                 if snap.latest_m1_close is None
                 else snap.latest_m1_close.isoformat(),
                 "data_age_seconds": snap.data_age_seconds,
-                "source": "FTMO MT5 via data/market (closed canonical bars + live quote)",
+                "source": "FTMO MT5 via data/market (closed canonical bars + live quote)"
+                if self.source_mode == "LIVE"
+                else "ACCEPTANCE REPLAY of burned FTMO bars (NOT LIVE)",
                 "market": {"status": snap.status.value, "open": snap.market_open},
                 "quote": None
                 if quote is None
@@ -389,7 +683,9 @@ class TradeEngine:
                     "stale": quote.stale,
                 },
                 "decision": decision,
-                "actionable": bool(actionable_side and not blockers and snap.usable),
+                "trade_plan": plan,
+                "entry_blockers": entry_blockers,
+                "actionable": bool(actionable_side and trusted and not entry_blockers),
                 "explanation": explain(signal),
                 "why_wait": {
                     "stages": stages_from_signal(signal),
@@ -436,18 +732,23 @@ class TradeEngine:
                     if state.news_state == "UNKNOWN"
                     else state.news_state,
                 },
-                "evidence": self._evidence(),
                 "desk": {
-                    "can_open": bool(actionable_side and not blockers),
-                    "blockers": blockers,
+                    "can_open": bool(actionable_side and trusted and not entry_blockers),
+                    "blockers": entry_blockers,
                     "account": self.desk.account(quote, stamp),
-                    "position": self.desk.position_view(quote, stamp),
+                    "position": position,
                     "today": self.desk.day_summary(stamp),
+                    "closure_policy": self.desk.config.closure_policy.value,
                 },
+                "funnel": funnel(records, todays_signals, self.desk.trades.values(), stamp),
                 "telemetry": self.telemetry.summary(stamp),
-                "alerts": None if self.alerts is None else self.alerts.summary(stamp),
+                "alerts": None
+                if self.alerts is None
+                else {
+                    **self.alerts.summary(stamp),
+                    "this_setup": self.alerts.status_of(signal.setup_id),
+                },
                 "auto_paper": self.config.auto_paper,
-                "demo": demo,
                 "problems": problems,
                 "engine_errors": self._errors[-3:],
             }

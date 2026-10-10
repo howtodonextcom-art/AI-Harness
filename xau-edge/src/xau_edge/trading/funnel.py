@@ -186,6 +186,19 @@ _STAGE_OF = {
 }
 
 
+STAGE_TIMEFRAME = {
+    "Market & data": "M5",
+    "Spread & regime": "H4",
+    "H1 direction": "H1",
+    "H4 / M15 alignment": "M15",
+    "M15 setup": "M15",
+    "M5 trigger": "M5",
+    "M1 execution": "M1",
+    "Trade plan": "M5",
+}
+"""The chart timeframe that best shows each stage (a clicked row switches the chart to it)."""
+
+
 def stages_from_signal(signal: TradingSignal) -> list[dict[str, str]]:
     """Ordered PASS / FAIL / NOT_REACHED per stage, derived from the REAL decision.
 
@@ -203,7 +216,7 @@ def stages_from_signal(signal: TradingSignal) -> list[dict[str, str]]:
             status = "FAIL"
         else:
             status = "NOT_REACHED"
-        out.append({"stage": name, "status": status})
+        out.append({"stage": name, "status": status, "timeframe": STAGE_TIMEFRAME[name]})
     return out
 
 

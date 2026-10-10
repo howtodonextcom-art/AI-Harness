@@ -48,7 +48,15 @@ def setup_message(signal: TradingSignal) -> str:
 
 
 class SetupAlerts:
-    def __init__(self, dispatcher: Dispatcher | None, state_path: Path | str) -> None:
+    def __init__(
+        self,
+        dispatcher: Dispatcher | None,
+        state_path: Path | str,
+        *,
+        delivery: str = "FILE_FALLBACK",
+    ) -> None:
+        self.delivery = delivery
+        """TELEGRAM when a bot is configured, otherwise FILE_FALLBACK (``alerts.jsonl``)."""
         self._dispatcher = dispatcher
         self._path = Path(state_path)
         self._announced: dict[str, dict[str, Any]] = {}
@@ -96,6 +104,7 @@ class SetupAlerts:
             )
             if gone and live:
                 info["closed"] = "INVALIDATED"
+                info["invalidated_at"] = now.isoformat()
                 self._send(
                     f"SETUP_INVALIDATED:{setup_id[:8]}",
                     "info",
@@ -125,6 +134,13 @@ class SetupAlerts:
             )
         self._save(now)
 
+    def status_of(self, setup_id: str) -> dict[str, Any] | None:
+        """Was this setup announced, when and over which channel (None: not announced)."""
+        info = self._announced.get(setup_id)
+        if info is None:
+            return None
+        return {"announced": True, "at": info.get("announced_at"), "channel": self.delivery}
+
     def summary(self, now: datetime) -> dict[str, Any]:
         """What the UI shows about alerts: how many setups were announced today and the last one."""
         today = [
@@ -135,8 +151,19 @@ class SetupAlerts:
         return {
             "announced_today": len(today),
             "last": None if last is None else {"setup_id": last[0], **last[1]},
-            "channel": "telegram-or-file",
+            "delivery": self.delivery,
+            "telegram_configured": self.delivery == "TELEGRAM",
+            "file_fallback_active": self.delivery != "TELEGRAM",
+            "last_invalidation": self._last_invalidation(),
         }
+
+    def _last_invalidation(self) -> dict[str, Any] | None:
+        hits = [
+            {"setup_id": k, "side": v["side"], "at": v.get("invalidated_at")}
+            for k, v in self._announced.items()
+            if v.get("closed") == "INVALIDATED"
+        ]
+        return max(hits, key=lambda h: h["at"] or "", default=None)
 
     def on_paper_close(self, trade: dict[str, Any], now: datetime) -> None:
         """PAPER_SL / PAPER_TP (and the other exit reasons) once per trade."""

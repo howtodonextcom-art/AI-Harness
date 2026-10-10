@@ -140,6 +140,8 @@ def spec_from_broker(raw: dict[str, Any] | None) -> SymbolSpec | None:
 class LiveTradingMarketSource:
     """Loads a ``LiveSnapshot`` from the collector's files (read-only, no MT5 connection)."""
 
+    SOURCE_MODE = "LIVE"
+
     def __init__(
         self,
         root: Path | str,

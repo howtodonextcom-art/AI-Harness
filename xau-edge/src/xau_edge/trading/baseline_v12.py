@@ -85,6 +85,7 @@ def decide_v12(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the
             **signal.metadata,
             "setup_phase": lc.phase.value,
             "setup_bars_since_armed": lc.bars_since_armed,
+            "setup_armed_at": None if lc.armed_at is None else lc.armed_at.isoformat(),
         }
         return signal.model_copy(update={"metadata": meta})
 
@@ -245,6 +246,9 @@ def decide_v12(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the
             "capped_by_structure": str(targets.capped_by_structure),
             "setup_phase": "SAME_BAR" if lc is None else lc.phase.value,
             "setup_bars_since_armed": None if lc is None else lc.bars_since_armed,
+            "setup_armed_at": None
+            if lc is None or lc.armed_at is None
+            else lc.armed_at.isoformat(),
             "m15_structure": state.m15_structure,
             "variant_flags": _flags(cfg),
         },
