@@ -159,7 +159,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     bands: SessionPrimitive;
     lines: IPriceLine[];
   } | null>(null);
-  const applied = useRef<{ last: number } | null>(null);
+  const applied = useRef<{ last: number; zone: DisplayZone } | null>(null);
   const fitted = useRef<string | null>(null);
   const followRef = useRef(follow);
   const toolRef = useRef(tool);
@@ -415,7 +415,8 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     // drops off, a new one arrives) therefore only appends, and the trader's zoom and pan stay put.
     const prev = applied.current;
     const at = prev ? barIndexAt(times, prev.last) : -1;
-    if (prev && at >= 0 && times[at] === prev.last) {
+    // a different display zone re-times EVERY bar, so it is never an incremental update
+    if (prev && prev.zone === zone && at >= 0 && times[at] === prev.last) {
       for (let i = at; i < series.length; i++) {
         h.candles.update(candlePoint(series[i]));
         h.volume.update(volumePoint(series[i]));
@@ -424,7 +425,8 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       h.candles.setData(series.map(candlePoint));
       h.volume.setData(series.map(volumePoint));
     }
-    applied.current = { last: times[times.length - 1] };
+    applied.current = { last: times[times.length - 1], zone };
+    container.current?.setAttribute("data-bars", String(h.candles.data().length)); // observable (tests, support)
     const last = series[series.length - 1].bar;
     h.candles.applyOptions({ priceLineColor: last.close >= last.open ? GREEN : RED });
     if (fitted.current !== timeframe) {
@@ -432,7 +434,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       h.chart.timeScale().scrollToRealTime();
       fitted.current = timeframe;
     }
-  }, [series, times, timeframe]);
+  }, [series, times, timeframe, zone]);
 
   useEffect(() => {
     handles.current?.plugin.setMarkers(chartMarkers);
@@ -474,7 +476,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     return out;
   }, [view, plan, overlays.plan, overlays.paper, overlays.structure, planLive, levels, alerts]);
 
-  const lineKey = useMemo(() => lineSpecs.map((l) => `${l.id}|${l.price}|${l.color}|${l.style}|${l.width}`).join(";"), [lineSpecs]);
+  const lineKey = useMemo(() => lineSpecs.map((l) => `${l.id}|${l.title}|${l.price}|${l.color}|${l.style}|${l.width}`).join(";"), [lineSpecs]);
   const lineSpecsRef = useRef(lineSpecs);
   useEffect(() => {
     lineSpecsRef.current = lineSpecs;

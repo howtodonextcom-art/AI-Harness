@@ -32,6 +32,10 @@ interface Props {
   onRemoveLevel: (id: string) => void;
   alerts: PriceAlert[];
   onRemoveAlert: (id: string) => void;
+  notify: boolean;
+  sound: boolean;
+  onNotify: (v: boolean) => void;
+  onSound: (v: boolean) => void;
 }
 
 type Kind = "signal" | "trade" | "alert";
@@ -56,7 +60,7 @@ function Meter({ k, v, tone }: { k: string; v: string; tone: string }) {
 
 const meterTone = (v: string) => (v === "HIGH" || v === "SHOCK" || v === "WIDE" ? "text-red-700 dark:text-red-400" : v === "ELEVATED" ? "text-amber-600" : "text-emerald-700 dark:text-emerald-300");
 
-function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert }: Pick<Props, "view" | "levels" | "onRemoveLevel" | "alerts" | "onRemoveAlert">) {
+function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert, notify, sound, onNotify, onSound }: Pick<Props, "view" | "levels" | "onRemoveLevel" | "alerts" | "onRemoveAlert" | "notify" | "sound" | "onNotify" | "onSound">) {
   const d = view?.decision;
   const vol = (view?.structure?.volatility as string | undefined) ?? "UNKNOWN";
   const st = view?.structure;
@@ -85,6 +89,17 @@ function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert }: Pick<P
       </Card>
       <Card title="Công cụ của tôi" testId="tools-card">
         <p className="text-xs text-slate-600 dark:text-slate-400">Đường ngang và cảnh báo giá chỉ là ghi chú của bạn: không ảnh hưởng quyết định hay giao dịch.</p>
+        <div data-testid="setup-notify" className="mt-2 space-y-1 rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" data-testid="notify-setup" checked={notify} onChange={(e) => onNotify(e.target.checked)} />
+            Báo khi có setup SẴN SÀNG (tiêu đề tab + thông báo trình duyệt)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" data-testid="notify-sound" checked={sound} disabled={!notify} onChange={(e) => onSound(e.target.checked)} />
+            Kèm âm báo ngắn
+          </label>
+          <p className="text-xs text-slate-600 dark:text-slate-400">Chỉ hoạt động khi trang này đang mở, chỉ với dữ liệu LIVE, mỗi setup một lần. Telegram/file vẫn là kênh cảnh báo chính (xem tab Hệ thống).</p>
+        </div>
         <ul data-testid="my-alerts" className="mt-1 space-y-0.5 text-sm">
           {alerts.length === 0 && <li className="text-slate-600 dark:text-slate-400">Chưa có cảnh báo giá.</li>}
           {alerts.map((a) => (
@@ -303,7 +318,7 @@ export function Workspace(props: Props) {
         ))}
       </div>
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="p-3">
-        {tab === "overview" && <Overview view={props.view} levels={props.levels} onRemoveLevel={props.onRemoveLevel} alerts={props.alerts} onRemoveAlert={props.onRemoveAlert} />}
+        {tab === "overview" && <Overview view={props.view} levels={props.levels} onRemoveLevel={props.onRemoveLevel} alerts={props.alerts} onRemoveAlert={props.onRemoveAlert} notify={props.notify} sound={props.sound} onNotify={props.onNotify} onSound={props.onSound} />}
         {tab === "why" && <Why view={props.view} onFocusTf={props.onFocusTf} />}
         {tab === "position" && <PositionTab view={props.view} journal={props.journal} zone={props.zone} onFocusPaper={props.onFocusPaper} />}
         {tab === "activity" && <Activity view={props.view} journal={props.journal} signals={props.signals} zone={props.zone} mode={props.mode} onFocusPaper={props.onFocusPaper} onFocusSignal={props.onFocusSignal} alerts={props.alerts} />}

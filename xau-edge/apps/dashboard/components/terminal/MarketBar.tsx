@@ -77,7 +77,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
           </div>
           <div className="mt-1 flex flex-wrap items-end gap-x-5 gap-y-1" data-testid="quote">
             <div className={stalePrice ? "grayscale" : ""} aria-label="Giá bid">
-              <div className={`text-xs font-semibold uppercase ${MUTED}`}>Bid (giá bán ra)</div>
+              <div className={`hidden text-xs font-semibold uppercase sm:block ${MUTED}`}>Bid (giá bán ra)</div>
               <div className="flex items-baseline gap-1.5">
                 {quote ? <BigPrice value={quote.bid} /> : <span className="text-4xl font-black">—</span>}
                 <span data-testid="price-dir" aria-hidden="true" className={dir === "up" ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}>{arrow}</span>
@@ -113,7 +113,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
             <dt className={MUTED}>Cao / Thấp</dt>
             <dd className="font-mono tabular-nums"><span data-testid="day-high">{fmt(daily?.high)}</span> / <span data-testid="day-low">{fmt(daily?.low)}</span></dd>
           </div>
-          <div className="flex gap-1.5 lg:contents">
+          <div className="hidden gap-1.5 sm:flex lg:contents">
             <dt className={MUTED}>Biên ngày</dt>
             <dd className="flex items-center gap-2 font-mono tabular-nums">
               <span data-testid="day-range">{fmt(daily?.range)}</span>
@@ -143,7 +143,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale }: Prop
           <div data-testid="countdown" className={`font-mono text-xs ${MUTED}`}>
             {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
           </div>
-          <span data-testid="data-age" className={`text-xs ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds)}</span>
+          <span data-testid="data-age" className={`hidden text-xs sm:inline ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds)}</span>
         </div>
       </div>
     </section>

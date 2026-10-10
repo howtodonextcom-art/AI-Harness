@@ -100,7 +100,7 @@ test.describe("decision", () => {
     await expect(page.getByTestId("decision")).toHaveText("CHỜ");
     await expect(page.getByTestId("waiting-for")).toContainText("Đang chờ:");
     await expect(page.getByTestId("waiting-for")).toContainText("không phải dự báo");
-    await expect(page.getByTestId("blocked-by")).toContainText("Đang bị chặn bởi");
+    await expect(page.getByTestId("blocked-by")).toContainText("Mã chặn");
     await expect(page.getByTestId("wait-context")).toContainText("Xu hướng");
     await expect(page.getByTestId("market-activity")).toContainText("biến động");
     await expect(page.getByTestId("news-warning")).toContainText("NEWS NOT VERIFIED");

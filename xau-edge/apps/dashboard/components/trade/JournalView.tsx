@@ -53,7 +53,7 @@ export function JournalView() {
   }, []);
 
   const matches = useCallback(
-    (t: PaperTrade) => filter === "all" || (filter === "win" ? (t.net_pnl ?? 0) > 0 : filter === "loss" ? (t.net_pnl ?? 0) <= 0 : t.side === filter),
+    (t: PaperTrade) => filter === "all" || (filter === "win" ? (t.net_pnl ?? 0) > 0 : filter === "loss" ? t.status === "CLOSED" && (t.net_pnl ?? 0) <= 0 : t.side === filter),
     [filter],
   );
   const closedAll = useMemo(() => (data?.trades ?? []).filter((t) => t.status === "CLOSED" && matches(t)), [data, matches]);
@@ -72,12 +72,40 @@ export function JournalView() {
     return out;
   }, [closedAll]);
 
+  const byReason = useMemo(() => {
+    const m = new Map<string, { n: number; r: number; pnl: number }>();
+    for (const t of closedAll) {
+      const k = t.exit_reason ?? "—";
+      const cur = m.get(k) ?? { n: 0, r: 0, pnl: 0 };
+      m.set(k, { n: cur.n + 1, r: cur.r + (t.r_multiple ?? 0), pnl: cur.pnl + (t.net_pnl ?? 0) });
+    }
+    return [...m.entries()].sort((a, b) => b[1].n - a[1].n);
+  }, [closedAll]);
+  const byWeek = useMemo(() => {
+    const m = new Map<string, { n: number; wins: number; r: number; pnl: number }>();
+    for (const t of closedAll) {
+      const d = new Date(Date.parse(t.closed_at ?? ""));
+      if (Number.isNaN(d.getTime())) continue;
+      const monday = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((d.getUTCDay() + 6) % 7)));
+      const k = monday.toISOString().slice(0, 10);
+      const cur = m.get(k) ?? { n: 0, wins: 0, r: 0, pnl: 0 };
+      m.set(k, { n: cur.n + 1, wins: cur.wins + ((t.net_pnl ?? 0) > 0 ? 1 : 0), r: cur.r + (t.r_multiple ?? 0), pnl: cur.pnl + (t.net_pnl ?? 0) });
+    }
+    return [...m.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [closedAll]);
+
   const rows: PaperTrade[] = [...(data?.open && filter === "all" ? [data.open] : []), ...(data?.trades ?? []).filter(matches)];
 
   const exportCsv = () => {
     const head = ["trade_id", "setup_id", "side", "opened_at", "closed_at", "fill_price", "exit_price", "sl", "tp", "lots", "exit_reason", "r_multiple", "net_pnl", "mfe_r", "mae_r", "duration_minutes", "strategy_version", "code_version", "source_mode"];
-    const lines = rows.map((t) => head.map((k) => JSON.stringify((t as unknown as Record<string, unknown>)[k === "sl" ? "initial_sl" : k] ?? "")).join(","));
-    const blob = new Blob([[head.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
+    // RFC 4180 quoting, a BOM so Excel reads Vietnamese, and a leading ' on text a spreadsheet would run as a formula
+    const cell = (v: unknown) => {
+      let text = v === null || v === undefined ? "" : String(v);
+      if (typeof v === "string" && /^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+      return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+    };
+    const lines = rows.map((t) => head.map((k) => cell((t as unknown as Record<string, unknown>)[k === "sl" ? "initial_sl" : k])).join(","));
+    const blob = new Blob(["\ufeff" + [head.join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -141,6 +169,38 @@ export function JournalView() {
         ))}
         <button type="button" data-testid="export-csv" onClick={exportCsv} disabled={rows.length === 0} className="ml-auto rounded-md border border-slate-400 px-2 py-1 font-semibold disabled:opacity-40">Xuất CSV</button>
       </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <section data-testid="by-reason" className="rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700">
+          <h2 className="mb-1 text-xs font-semibold uppercase text-slate-600 dark:text-slate-400">Theo lý do thoát</h2>
+          {byReason.length === 0 ? (
+            <p className="text-slate-600 dark:text-slate-400">Chưa có lệnh đã đóng.</p>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead className="text-slate-600 dark:text-slate-400"><tr><th>Lý do</th><th className="text-right">Lệnh</th><th className="text-right">R</th><th className="text-right">P&L</th></tr></thead>
+              <tbody>
+                {byReason.map(([k, v]) => (
+                  <tr key={k} className="border-t border-slate-200 dark:border-slate-800"><td>{REASON_TEXT[k] ?? k}</td><td className="text-right font-mono">{v.n}</td><td className="text-right font-mono">{fmt(v.r)}</td><td className="text-right font-mono">{money(v.pnl)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+        <section data-testid="by-week" className="rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700">
+          <h2 className="mb-1 text-xs font-semibold uppercase text-slate-600 dark:text-slate-400">Theo tuần (thứ Hai, UTC)</h2>
+          {byWeek.length === 0 ? (
+            <p className="text-slate-600 dark:text-slate-400">Chưa có lệnh đã đóng.</p>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead className="text-slate-600 dark:text-slate-400"><tr><th>Tuần</th><th className="text-right">Lệnh</th><th className="text-right">Thắng</th><th className="text-right">R</th><th className="text-right">P&L</th></tr></thead>
+              <tbody>
+                {byWeek.map(([k, v]) => (
+                  <tr key={k} className="border-t border-slate-200 dark:border-slate-800"><td className="font-mono">{k}</td><td className="text-right font-mono">{v.n}</td><td className="text-right font-mono">{v.wins}</td><td className="text-right font-mono">{fmt(v.r)}</td><td className="text-right font-mono">{money(v.pnl)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
       <div className="overflow-x-auto">
         <table data-testid="journal-table" className="w-full text-left text-sm">
           <thead className="text-xs text-slate-600 dark:text-slate-400">
@@ -197,13 +257,19 @@ export function JournalView() {
                 {open === t.trade_id && (
                   <tr>
                     <td colSpan={14} className="pb-2">
-                      <pre data-testid="journal-detail" className="max-h-64 overflow-auto rounded-md bg-slate-500/10 p-2 text-xs">
-                        {JSON.stringify(
-                          { source_mode: t.source_mode, strategy_version: t.strategy_version, code_version: t.code_version, market: t.market, decision: t.decision, setup_id: t.setup_id, cancel_reason: t.cancel_reason },
-                          null,
-                          2,
-                        )}
-                      </pre>
+                      <dl data-testid="journal-detail" className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 rounded-md bg-slate-500/10 p-2 text-xs sm:grid-cols-[auto_1fr_auto_1fr]">
+                        <dt className="text-slate-600 dark:text-slate-400">Nguồn dữ liệu</dt><dd>{t.source_mode === "LIVE" ? "LIVE" : `${t.source_mode} (không phải live)`}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Chiến lược</dt><dd>v{t.strategy_version ?? "?"}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Phiên bản mã</dt><dd className="font-mono">{t.code_version ?? "—"}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Setup</dt><dd className="font-mono">{t.setup_id}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Phiên giao dịch</dt><dd>{String(t.market?.session ?? "—")}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">H4 / H1 / M15 / M5</dt><dd>{[t.market?.h4, t.market?.h1, t.market?.m15, t.market?.m5].map((x) => String(x ?? "—")).join(" · ")}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Spread lúc vào</dt><dd>{String(t.market?.spread_points ?? "—")} điểm ({String(t.market?.spread_state ?? "—")})</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Biến động / tick volume</dt><dd>{String(t.market?.volatility ?? "—")} / {String(t.market?.volume_state ?? "—")}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Tin tức</dt><dd>{String(t.market?.news_state ?? "—")}</dd>
+                        <dt className="text-slate-600 dark:text-slate-400">Tuổi dữ liệu</dt><dd>{String(t.market?.data_age_seconds ?? "—")} s</dd>
+                        {t.cancel_reason && (<><dt className="text-slate-600 dark:text-slate-400">Lý do hủy</dt><dd>{t.cancel_reason}</dd></>)}
+                      </dl>
                     </td>
                   </tr>
                 )}

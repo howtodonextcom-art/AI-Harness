@@ -26,6 +26,8 @@ export interface Prefs {
   history: boolean;
   risk: number;
   shortcuts: boolean;
+  notify: boolean;
+  sound: boolean;
 }
 
 export const DEFAULT_PREFS: Prefs = {
@@ -37,6 +39,8 @@ export const DEFAULT_PREFS: Prefs = {
   history: false,
   risk: 0.25,
   shortcuts: true,
+  notify: true,
+  sound: false,
 };
 
 const PREFS_KEY = "xau-edge.trade.prefs.v1";
@@ -86,6 +90,8 @@ export function loadPrefs(): Prefs {
     history: bool(raw.history, DEFAULT_PREFS.history),
     risk: typeof raw.risk === "number" && RISKS.includes(raw.risk) ? raw.risk : DEFAULT_PREFS.risk,
     shortcuts: bool(raw.shortcuts, DEFAULT_PREFS.shortcuts),
+    notify: bool(raw.notify, DEFAULT_PREFS.notify),
+    sound: bool(raw.sound, DEFAULT_PREFS.sound),
   };
 }
 

@@ -63,6 +63,9 @@ function Pipeline({ view, tf, onFocusTf }: { view: TradeView; tf: string; onFocu
   const stages = view.why_wait?.stages ?? [];
   return (
     <div data-testid="why-wait">
+      <p data-testid="stages-progress" className="mb-1 text-sm font-semibold">
+        Đã đạt {stages.filter((s) => s.status === "PASS").length}/{stages.length} điều kiện
+      </p>
       <ol data-testid="stages" className="space-y-0.5 text-sm" aria-label="Tiến trình setup">
         {stages.map((s) => (
           <li key={s.stage}>
@@ -107,8 +110,8 @@ function WaitContext({ view }: { view: TradeView }) {
         </p>
       )}
       {blocked.length > 0 && (
-        <p data-testid="blocked-by" className="text-sm">
-          Đang bị chặn bởi: <b>{blocked.join(" · ")}</b>
+        <p data-testid="blocked-by" className="text-xs text-slate-600 dark:text-slate-400">
+          Mã chặn: {blocked.join(" · ")}
         </p>
       )}
       <ul data-testid="wait-context" className="space-y-0.5 text-sm">
@@ -189,7 +192,7 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
         </div>
         {plan.rr_net !== null && <RrRuler rr={plan.rr_net} />}
       </div>
-      {plan.invalidation && <p className="text-xs text-slate-600 dark:text-slate-400">Vô hiệu khi: {invalidationText(plan.invalidation)}</p>}
+      {plan.invalidation && <p data-testid="plan-invalidation" className="rounded-md bg-slate-500/10 px-2 py-1 text-sm">Vô hiệu khi: <b>{invalidationText(plan.invalidation)}</b></p>}
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Mức rủi ro mỗi lệnh">
         <span className="text-xs text-slate-600 dark:text-slate-400">Rủi ro:</span>
         {(view.risk_choices ?? [0.1, 0.25, 0.5]).map((r) => (
@@ -243,6 +246,10 @@ function PositionPanel({ trade, onCloseRequest, busy }: { trade: PaperTrade; onC
         {slipped && (<><dt className="text-slate-600 dark:text-slate-400">Giá kế hoạch</dt><dd data-testid="position-planned" className="text-right font-mono">{fmt(trade.planned_entry)}</dd></>)}
         <dt className="text-slate-600 dark:text-slate-400">Giá hiện tại</dt><dd data-testid="position-current" className="text-right font-mono">{fmt(trade.current_price)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">SL / TP</dt><dd data-testid="position-levels" className="text-right font-mono">{fmt(trade.sl)} / {fmt(trade.tp)}</dd>
+        <dt className="text-slate-600 dark:text-slate-400">Cách SL / TP</dt>
+        <dd data-testid="position-distance" className="text-right font-mono">
+          {trade.current_price != null ? `${Math.abs(trade.current_price - trade.sl).toFixed(2)} / ${Math.abs(trade.tp - trade.current_price).toFixed(2)} (${risk > 0 ? `${(Math.abs(trade.current_price - trade.sl) / risk).toFixed(2)}R` : "—"} / ${risk > 0 ? `${(Math.abs(trade.tp - trade.current_price) / risk).toFixed(2)}R` : "—"})` : "—"}
+        </dd>
         <dt className="text-slate-600 dark:text-slate-400">Lot · rủi ro</dt><dd className="text-right font-mono">{fmt(trade.lots, 2)} · {money(trade.risk_amount)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Đã giữ</dt><dd data-testid="position-duration" className="text-right font-mono">{fmt(trade.duration_minutes, 0)} phút</dd>
         <dt className="text-xs text-slate-600 dark:text-slate-400">MFE / MAE (R)</dt><dd data-testid="position-excursion" className="text-right font-mono text-xs text-slate-600 dark:text-slate-400">{fmt(mfeR)} / {fmt(maeR)}</dd>
@@ -386,7 +393,7 @@ function AccountStrip({ view }: { view: TradeView }) {
   const l = view.desk?.limits;
   if (!a) return null;
   const floating = a.equity - a.balance;
-  const used = l ? Math.min(100, (Math.max(0, l.daily_loss_pct) / l.daily_loss_stop_pct) * 100) : 0;
+  const used = l && l.daily_loss_stop_pct > 0 ? Math.min(100, (Math.max(0, l.daily_loss_pct) / l.daily_loss_stop_pct) * 100) : 0;
   return (
     <section data-testid="account-strip" aria-label="Tài khoản PAPER" className="rounded-lg border border-slate-300 p-2 text-sm dark:border-slate-700">
       <div className="mb-1 flex items-center justify-between">

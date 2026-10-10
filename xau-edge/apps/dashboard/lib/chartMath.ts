@@ -31,6 +31,7 @@ export function signalBarIndex(times: number[], atSeconds: number, tfSeconds: nu
 export function parseDecimal(text: string): number {
   const t = text.trim().replace(/\s/g, "");
   if (t === "") return Number.NaN;
+  if (/^\d{1,3}(,\d{3})+$/.test(t)) return Number(t.replaceAll(",", "")); // "4,050" is a thousands separator
   return Number(t.includes(",") && !t.includes(".") ? t.replace(",", ".") : t);
 }
 

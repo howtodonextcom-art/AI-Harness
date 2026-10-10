@@ -27,10 +27,11 @@ import {
   type SignalMarker,
   type TradeView as TradeViewData,
 } from "@/lib/trade";
+import { BASE_TITLE, beep, isNewSetup, readyTitle, systemNotify } from "@/lib/notify";
 import { EXIT_REASON_VI, HERO_ICON, HERO_VI, humanCondition } from "@/lib/vi";
 
 const POLL_MS = 3000;
-const STALE_UI_SECONDS = 12;
+const STALE_UI_SECONDS = 15; // longer than one aborted poll (8 s) plus the interval, so one slow answer does not flicker the ticket
 
 const SHORTCUTS: [string, string][] = [
   ["1", "Biểu đồ M1"],
@@ -305,6 +306,26 @@ export function TerminalView() {
     setPrefs({ zone });
   };
 
+  // ---- a setup became ready: tab title, notification, optional beep (LIVE only, once per setup) -------
+  const seenSetups = useRef<Set<string>>(new Set());
+  const readySide = view?.source_mode === "LIVE" && !uiStale && !error && !expiredNow && (hero?.state === "BUY_READY" || hero?.state === "SELL_READY") ? plan?.side ?? null : null;
+  const readyId = readySide ? plan?.setup_id ?? null : null;
+  const readyEntry = plan?.planned_entry ?? null;
+  useEffect(() => {
+    if (!prefs.notify || !readySide || !readyId) {
+      document.title = BASE_TITLE;
+      return;
+    }
+    document.title = readyTitle(readySide, readyEntry);
+    if (isNewSetup(seenSetups.current, readyId)) {
+      systemNotify("XAU EDGE — setup sẵn sàng", readyTitle(readySide, readyEntry));
+      if (prefs.sound) beep();
+    }
+    return () => {
+      document.title = BASE_TITLE;
+    };
+  }, [prefs.notify, prefs.sound, readySide, readyId, readyEntry]);
+
   // ---- keyboard: safe shortcuts only (never an order) ------------------------------------------
   const modalOpen = openFrozen !== null || closing || help;
   useEffect(() => {
@@ -488,6 +509,17 @@ export function TerminalView() {
         onRemoveLevel={(id) => setLevels((l) => l.filter((x) => x.id !== id))}
         alerts={alerts}
         onRemoveAlert={removeAlert}
+        notify={prefs.notify}
+        sound={prefs.sound}
+        onNotify={(v) => {
+          setPrefs({ notify: v });
+          try {
+            if (v && "Notification" in window && Notification.permission === "default") void Notification.requestPermission();
+          } catch {
+            /* optional */
+          }
+        }}
+        onSound={(v) => setPrefs({ sound: v })}
       />
 
       </div>

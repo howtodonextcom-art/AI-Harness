@@ -407,18 +407,23 @@ export interface ActionError {
 }
 
 async function post<T>(path: string, body: unknown): Promise<{ ok: true; data: T } | { ok: false; error: ActionError }> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 12_000); // a hung request must not leave the page busy forever
   try {
     const res = await fetch(`/api/trade/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: ctl.signal,
     });
     const json = await res.json();
     if (res.ok) return { ok: true, data: json as T };
     const detail = json?.detail ?? {};
     return { ok: false, error: { code: String(detail.code ?? res.status), message: String(detail.message ?? detail.code ?? "bị từ chối") } };
   } catch {
-    return { ok: false, error: { code: "NETWORK", message: "không kết nối được dashboard/API" } };
+    return { ok: false, error: { code: "NETWORK", message: "mất kết nối khi gửi yêu cầu: hãy kiểm tra vị thế hiện tại trước khi thử lại" } };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
