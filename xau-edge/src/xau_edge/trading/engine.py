@@ -41,6 +41,7 @@ from xau_edge.trading.cockpit import (
     trade_plan,
 )
 from xau_edge.trading.coverage import apply_to_forward, decision_coverage
+from xau_edge.trading.data_health import data_ages, decision_age, system_health
 from xau_edge.trading.decision_core import ROLES, SnapshotInputs, evaluate, explain
 from xau_edge.trading.demo_lock import demo_lock_status
 from xau_edge.trading.funnel import stages_from_signal, waiting_for
@@ -110,6 +111,18 @@ def _bias_of(raw: str) -> int:
     if upper in {"BEARISH", "DOWN", "REVERSAL_DOWN", "TREND_DOWN", "ACTIVE_DOWN"}:
         return -1
     return 0
+
+
+def _collector_age(collector: dict[str, Any] | None, now: datetime) -> float | None:
+    """Seconds since the collector last wrote its status file (None when unreadable)."""
+    if not collector:
+        return None
+    try:
+        return max(
+            0.0, (now - datetime.fromisoformat(str(collector["updated_at"]))).total_seconds()
+        )
+    except (KeyError, ValueError, TypeError):
+        return None
 
 
 class TradeEngine:
@@ -648,7 +661,30 @@ class TradeEngine:
             conditions = self._conditions(snap, state, stamp)
             coverage = self._coverage(stamp)
             forward = apply_to_forward(self._forward(stamp), coverage)
+            live = self.source_mode == "LIVE"
+            collector_age = _collector_age(collector, stamp)
+            quote_age = None if snap is None or snap.quote is None else snap.quote.age_seconds
+            generated = None if signal is None else signal.generated_at
             base: dict[str, Any] = {
+                "data_ages": data_ages(
+                    live=live,
+                    market_open=snap is not None and snap.market_open,
+                    quote_age=quote_age,
+                    bar_age=None if snap is None else snap.data_age_seconds,
+                    bars_stale=snap is not None and bool(snap.stale_timeframes),
+                    collector_age=collector_age,
+                    decision_age=decision_age(stamp, generated),
+                ),
+                "system_health": system_health(
+                    collector=collector,
+                    collector_age=collector_age,
+                    live=live,
+                    writer_error=self.writer_error,
+                    coverage=coverage,
+                    news=self._news,
+                    strategy_version=version,
+                    source_mode=self.source_mode,
+                ),
                 "source_mode": self.source_mode,
                 "strategy": strategy_info(version),
                 "conditions": conditions,

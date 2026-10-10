@@ -375,6 +375,8 @@ export interface TradeView {
   conditions: Condition[];
   forward_acceptance: ForwardAcceptance;
   decision_coverage?: DecisionCoverage | null;
+  data_ages: DataAges;
+  system_health: SystemHealthRow[];
   paper_account_label: string;
   data_as_of?: string | null;
   data_age_seconds?: number | null;
@@ -509,4 +511,26 @@ export interface NewsView {
   next_events: NewsEventItem[];
   blocked_by: NewsEventItem | null;
   last_update: { ok: boolean; error: string | null; last_attempt_at: string; last_success_at: string | null } | null;
+}
+
+/** The four ages the SERVER measures (the page only shows them): a closed market is MARKET_CLOSED, never STALE. */
+export type AgeState = "FRESH" | "STALE" | "MARKET_CLOSED" | "UNAVAILABLE" | "REPLAY";
+export interface AgeRow {
+  age_seconds: number | null;
+  state: AgeState;
+}
+export interface DataAges {
+  live: boolean;
+  market_open: boolean;
+  quote: AgeRow;
+  last_bar: AgeRow;
+  collector_heartbeat: AgeRow;
+  last_decision: AgeRow;
+}
+
+export interface SystemHealthRow {
+  id: string;
+  label: string;
+  state: "OK" | "WARN" | "ERROR" | "UNKNOWN";
+  detail: string;
 }

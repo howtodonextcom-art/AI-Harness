@@ -36,6 +36,11 @@ const within = (ms: number, z: (typeof ZONES)[keyof typeof ZONES]) => {
   return t >= z.from && t < z.to;
 };
 
+/** Is the instant inside the local trading hours of one session (Asia overlapping London still counts as Asia)? */
+export function inSessionZone(ms: number, session: "ASIA" | "LONDON" | "NEW_YORK"): boolean {
+  return within(ms, session === "ASIA" ? ZONES.tokyo : session === "LONDON" ? ZONES.london : ZONES.newYork);
+}
+
 const memo = new Map<number, Session>();
 
 export function sessionAt(ms: number): Session {

@@ -18,19 +18,34 @@ import {
   type ISeriesPrimitive,
   type SeriesAttachedParameter,
   type SeriesMarker,
+  type Logical,
   type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { TF_SECONDS, barIndexAt, signalBarIndex } from "@/lib/chartMath";
+import { DrawingLayer, type DrawingApi } from "@/components/terminal/DrawingLayer";
+import { NewsMarkers } from "@/components/terminal/NewsMarkers";
+import { DEFAULT_RR, DRAWING_COLORS, fromLogical, toLogical, type Drawing, type DrawingKind, type Pt } from "@/lib/drawings";
 import type { MarketBar } from "@/lib/market";
 import type { ManualLevel, Overlays, PriceAlert } from "@/lib/prefs";
 import { SESSION_COLORS, SESSION_NAMES, sessionRuns } from "@/lib/sessions";
-import { ZONE_LABEL, shiftedSeconds, formatInZone, type DisplayZone } from "@/lib/time";
+import { ZONE_LABEL, offsetSeconds, shiftedSeconds, formatInZone, type DisplayZone } from "@/lib/time";
 import type { MarkersResponse, PaperMarker, SetupHistoryRow, SignalMarker, TradePlan, TradeView } from "@/lib/trade";
 import { EXIT_REASON_VI, SIDE_VI } from "@/lib/vi";
 
-export type Tool = "none" | "line" | "measure";
+export type Tool = "none" | "line" | "measure" | DrawingKind;
+
+const DRAW_TOOLS: Tool[] = ["trend", "ray", "vline", "rect", "fib", "rr"];
+const isDrawTool = (t: Tool): t is DrawingKind => DRAW_TOOLS.includes(t);
+
+const toShifted = (t: number, zone: DisplayZone) => t + offsetSeconds(zone, t * 1000);
+/** Inverse of ``toShifted``: the real instant whose shifted reading is ``s`` (two passes settle a DST edge). */
+const fromShifted = (s: number, zone: DisplayZone) => {
+  let t = s - offsetSeconds(zone, s * 1000);
+  t = s - offsetSeconds(zone, t * 1000);
+  return t;
+};
 
 export interface ChartHandle {
   fit: () => void;
@@ -69,6 +84,15 @@ interface Props {
   tool: Tool;
   onAddLevel: (price: number) => void;
   onToolDone: () => void;
+  /** the trader's drawings (annotations only) */
+  drawings: Drawing[];
+  selectedDrawing: string | null;
+  onSelectDrawing: (id: string | null) => void;
+  onAddDrawing: (d: Drawing) => void;
+  onChangeDrawing: (id: string, patch: Partial<Drawing>) => void;
+  onDeleteDrawing: (id: string) => void;
+  /** read-only lines computed from bars (previous week, sessions) */
+  extraLines?: { id: string; title: string; price: number; color: string }[];
 }
 
 const GREEN = "#16a34a";
@@ -153,7 +177,7 @@ interface Measure {
  * the ruler). Nothing here derives a signal.
  */
 export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalChart(
-  { bars, timeframe, zone, overlays, view, markers, history, planLive, plan, focus, follow, onFollowChange, levels, alerts, setups, tool, onAddLevel, onToolDone },
+  { bars, timeframe, zone, overlays, view, markers, history, planLive, plan, focus, follow, onFollowChange, levels, alerts, setups, tool, onAddLevel, onToolDone, drawings, selectedDrawing, onSelectDrawing, onAddDrawing, onChangeDrawing, onDeleteDrawing, extraLines },
   ref,
 ) {
   const container = useRef<HTMLDivElement>(null);
@@ -187,17 +211,28 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   const [atLatest, setAtLatest] = useState(true);
   const [measure, setMeasure] = useState<Measure>({ a: null, b: null, fixed: false });
   const [, setTick] = useState(0);
+  const [draft, setDraft] = useState<Drawing | null>(null);
+  const draftRef = useRef<Drawing | null>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const lastRange = useRef<{ from: number; to: number } | null>(null);
+  const lastWidth = useRef(0);
 
   useEffect(() => {
     followRef.current = follow;
     handles.current?.chart.timeScale().applyOptions({ shiftVisibleRangeOnNewBar: follow });
   }, [follow]);
   useEffect(() => {
-    hasOverlay.current = measure.a !== null; // the ruler is the only thing positioned from the visible range
-  }, [measure.a]);
+    // the ruler and the drawings are positioned from the visible range and the price scale
+    const news = overlays.news && (view?.news?.next_events.length ?? 0) > 0;
+    hasOverlay.current = measure.a !== null || drawings.length > 0 || draft !== null || news;
+  }, [measure.a, drawings.length, draft, overlays.news, view?.news?.next_events.length]);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
   useEffect(() => {
     toolRef.current = tool;
     if (tool !== "measure") setMeasure({ a: null, b: null, fixed: false });
+    setDraft(null); // switching tool (or Esc) abandons a half-drawn object
   }, [tool]);
 
   useImperativeHandle(ref, () => ({
@@ -225,6 +260,26 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   }, [bars, zone]);
   const times = useMemo(() => series.map((s) => s.time), [series]);
   const tfSeconds = TF_SECONDS[timeframe] ?? 300;
+
+  // chart <-> data conversions for the drawing layer; always reads the latest bars, zone and chart
+  const drawApiRef = useRef<DrawingApi | null>(null);
+  drawApiRef.current =
+    times.length === 0
+      ? null
+      : {
+          toX: (t) => {
+            const h = handles.current;
+            return h ? (h.chart.timeScale().logicalToCoordinate(toLogical(toShifted(t, zone), times, tfSeconds) as Logical) as number | null) : null;
+          },
+          toY: (p) => handles.current?.candles.priceToCoordinate(p) ?? null,
+          toT: (x) => {
+            const l = handles.current?.chart.timeScale().coordinateToLogical(x);
+            return l === null || l === undefined ? null : fromShifted(fromLogical(l, times, tfSeconds), zone);
+          },
+          toP: (y) => handles.current?.candles.coordinateToPrice(y) ?? null,
+        };
+  const drawCb = useRef({ onAddDrawing, onSelectDrawing, onToolDone });
+  drawCb.current = { onAddDrawing, onSelectDrawing, onToolDone };
 
   // ---- markers: placed from the signal's own timestamp (see signalBarIndex) --------------------
   const { chartMarkers, markerPrio, details } = useMemo(() => {
@@ -347,13 +402,20 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     applied.current = null;
 
     chart.subscribeCrosshairMove((param) => {
+      if (hasOverlay.current) setTick((n) => n + 1);
       setReadout(typeof param.time === "number" ? param.time : null);
+      const dr = draftRef.current;
+      if (dr && param.point) {
+        const t = drawApiRef.current?.toT(param.point.x);
+        const p = candles.coordinateToPrice(param.point.y);
+        if (t !== null && t !== undefined && p !== null) setDraft((d) => (d ? { ...d, b: { t: Math.round(t), p: Math.round(p * 100) / 100 } } : d));
+      }
       if (toolRef.current === "measure" && param.point && typeof param.time === "number") {
         const price = candles.coordinateToPrice(param.point.y);
         if (price !== null) setMeasure((m) => (m.a && !m.fixed ? { ...m, b: { time: param.time as number, price } } : m));
       }
     });
-    chart.subscribeClick((param) => {
+    const onChartClick = (param: Parameters<Parameters<typeof chart.subscribeClick>[0]>[0]) => {
       const time = typeof param.time === "number" ? param.time : null;
       if (toolRef.current === "line" && param.point) {
         const price = candles.coordinateToPrice(param.point.y);
@@ -363,6 +425,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         }
         return;
       }
+      if (toolRef.current === "none") drawCb.current.onSelectDrawing(null);
       if (toolRef.current === "measure" && param.point && time !== null) {
         const price = candles.coordinateToPrice(param.point.y);
         if (price === null) return;
@@ -383,10 +446,66 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         }
       }
       setSelected(hit ? hit.detail.key : null);
-    });
+    };
+    chart.subscribeClick(onChartClick);
+    // Drawing points use the NATIVE click, not the library's: lightweight-charts swallows a second click made within
+    // 500 ms at another position (it is only reported as a double click when the two are near), so a quick
+    // second point of a line would be lost.
+    const drawPoint = (x: number, y: number) => {
+      const kind = toolRef.current;
+      if (!isDrawTool(kind)) return;
+      const api = drawApiRef.current;
+      const t = api?.toT(x);
+      const p = candles.coordinateToPrice(y);
+      if (t === null || t === undefined || p === null) return;
+      const pt: Pt = { t: Math.round(t), p: Math.round(p * 100) / 100 };
+      const make = (a: Pt, b: Pt): Drawing => ({
+        id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
+        kind,
+        a,
+        b: kind === "vline" ? a : b,
+        label: "",
+        color: DRAWING_COLORS[kind === "rr" ? 0 : kind === "fib" ? 2 : kind === "rect" ? 1 : 0],
+        locked: false,
+        createdAt: Date.now(),
+        ...(kind === "rr" ? { rr: DEFAULT_RR } : {}),
+      });
+      const cur = draftRef.current;
+      if (kind === "vline") {
+        drawCb.current.onAddDrawing(make(pt, pt));
+        drawCb.current.onToolDone();
+      } else if (!cur) {
+        draftRef.current = make(pt, pt);
+        setDraft(draftRef.current);
+      } else if (Math.hypot((api?.toX(pt.t) ?? 0) - (api?.toX(cur.a.t) ?? 0), (api?.toY(pt.p) ?? 0) - (api?.toY(cur.a.p) ?? 0)) >= 4) {
+        drawCb.current.onAddDrawing({ ...cur, b: pt });
+        draftRef.current = null;
+        setDraft(null);
+        drawCb.current.onToolDone();
+      }
+    };
+    let down: { x: number; y: number } | null = null;
+    const onDownNative = (e: PointerEvent) => {
+      down = { x: e.clientX, y: e.clientY };
+    };
+    const onClickNative = (e: MouseEvent) => {
+      if (!isDrawTool(toolRef.current)) return;
+      if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4) return; // a pan, not a point
+      const r = element.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      if (x > r.width - chart.priceScale("right").width() || y > r.height - chart.timeScale().height()) return; // an axis
+      drawPoint(x, y);
+    };
+    element.addEventListener("pointerdown", onDownNative);
+    element.addEventListener("click", onClickNative);
+
     const onRange = () => {
       const logical = chart.timeScale().getVisibleLogicalRange();
-      if (logical) element.dataset.range = `${logical.from.toFixed(1)}:${logical.to.toFixed(1)}`; // observable, no re-render
+      if (logical) {
+        element.dataset.range = `${logical.from.toFixed(1)}:${logical.to.toFixed(1)}`; // observable, no re-render
+        if (element.clientWidth === lastWidth.current) lastRange.current = { from: logical.from, to: logical.to };
+      }
       const pos = chart.timeScale().scrollPosition();
       const latest = pos > -1.5;
       setAtLatest(latest);
@@ -416,12 +535,53 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       scheme.removeEventListener("change", onScheme);
       clearTimeout(quiet);
       element.removeEventListener("pointerdown", onDown);
+      element.removeEventListener("pointerdown", onDownNative);
+      element.removeEventListener("click", onClickNative);
       element.removeEventListener("wheel", onWheel);
       element.removeEventListener("pointermove", onMove);
       chart.remove();
       handles.current = null;
     };
   }, [timeframe]);
+
+  // Resize / maximize ROOT FIX. The chart keeps its bar spacing when its box grows, so a bigger box used to reveal an
+  // empty stretch on the left (and a smaller one hid history): the candles looked squeezed against one edge. The
+  // visible range the trader had is the thing to keep: after a resize it is restored, so the same bars fill the new width.
+  useEffect(() => {
+    const el = container.current;
+    if (!el) return;
+    lastWidth.current = el.clientWidth;
+    setSize({ w: el.clientWidth, h: el.clientHeight });
+    const ro = new ResizeObserver(() => {
+      setSize({ w: el.clientWidth, h: el.clientHeight });
+      if (el.clientWidth === lastWidth.current) {
+        setTick((n) => n + 1);
+        return;
+      }
+      const want = lastRange.current;
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          lastWidth.current = el.clientWidth;
+          const h = handles.current;
+          if (want && h && !interacting.current) {
+            try {
+              h.chart.timeScale().setVisibleLogicalRange({ from: want.from as Logical, to: want.to as Logical });
+            } catch {
+              /* the chart has no data yet: nothing to restore */
+            }
+          }
+          setTick((n) => n + 1);
+        }),
+      );
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [timeframe]);
+  // the price scale autoscales with every new bar and every drag: keep the drawings glued to it
+  useEffect(() => {
+    const id = setInterval(() => hasOverlay.current && setTick((n) => n + 1), 300);
+    return () => clearInterval(id);
+  }, []);
 
   // the handlers above are created once per chart; they always call the latest props
   const onAddLevelRef = useRef(onAddLevel);
@@ -593,9 +753,10 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       add(st.pdl as number | null, "PDL", PURPLE, LineStyle.SparseDotted);
     }
     for (const l of levels) add(l.price, l.label || "ĐƯỜNG", "#0891b2", LineStyle.LargeDashed, 1, `level-${l.id}`);
+    for (const l of extraLines ?? []) add(l.price, l.title, l.color, LineStyle.SparseDotted, 1, l.id);
     for (const a of alerts) if (a.firedAt === null) add(a.price, `CẢNH BÁO ${a.direction === "UP" ? "↑" : "↓"}`, AMBER, LineStyle.LargeDashed, 1, `alert-${a.id}`);
     return out;
-  }, [view, plan, overlays.plan, overlays.paper, overlays.structure, planLive, levels, alerts]);
+  }, [view, plan, overlays.plan, overlays.paper, overlays.structure, planLive, levels, alerts, extraLines]);
 
   const lineKey = useMemo(() => lineSpecs.map((l) => `${l.id}|${l.title}|${l.price}|${l.color}|${l.style}|${l.width}`).join(";"), [lineSpecs]);
   const lineSpecsRef = useRef(lineSpecs);
@@ -607,7 +768,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     if (!h) return;
     const lineSpecs = lineSpecsRef.current;
     for (const line of h.lines) h.candles.removePriceLine(line);
-    extraPrices.current = lineSpecs.filter((l) => !l.id.startsWith("level-") && !l.id.startsWith("alert-")).map((l) => l.price);
+    extraPrices.current = lineSpecs.filter((l) => !l.id.startsWith("level-") && !l.id.startsWith("alert-") && !l.id.startsWith("key-")).map((l) => l.price);
     h.candles.priceScale().applyOptions({ autoScale: true });
     h.lines = lineSpecs.map((l) => h.candles.createPriceLine({ price: l.price, color: l.color, lineWidth: l.width, lineStyle: l.style, axisLabelVisible: true, title: `${l.title} ${l.price.toFixed(2)}` }));
     lineStateRef.current = [];
@@ -689,6 +850,9 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         data-tool={tool}
         className={`min-h-[16rem] w-full flex-1 ${tool === "none" ? "" : "cursor-crosshair"}`}
       />
+
+      {overlays.news && <NewsMarkers news={view?.news} api={drawApiRef.current} zone={zone} width={size.w} height={size.h} />}
+      <DrawingLayer drawings={drawings} draft={draft} selectedId={selectedDrawing} api={drawApiRef.current} width={size.w} height={size.h} onSelect={onSelectDrawing} onChange={onChangeDrawing} onDelete={onDeleteDrawing} passive={tool !== "none"} />
 
       {shown && (
         <div data-testid="ohlc-readout" aria-live="off" className="pointer-events-none absolute left-2 top-1 z-10 flex flex-wrap items-center gap-x-3 rounded bg-white/80 px-2 py-0.5 font-mono text-[11px] tabular-nums dark:bg-slate-900/80">

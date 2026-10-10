@@ -47,11 +47,11 @@ export function formatInZone(iso: string | null | undefined, zone: DisplayZone):
   return new Date(ms + offsetSeconds(zone, ms) * 1000).toISOString().slice(0, 19).replace("T", " ");
 }
 
-const KEY = "xau-edge.market.zone";
+export const ZONE_KEY = "xau-edge.market.zone";
 
 export function loadZone(fallback: DisplayZone = "UTC"): DisplayZone {
   try {
-    const value = window.localStorage.getItem(KEY);
+    const value = window.localStorage.getItem(ZONE_KEY);
     if (value === "VN" || value === "UTC" || value === "BROKER" || value === "LOCAL") return value;
   } catch {
     /* storage unavailable: fall back */
@@ -66,7 +66,7 @@ export function clockInZone(ms: number, zone: DisplayZone): string {
 
 export function saveZone(zone: DisplayZone): void {
   try {
-    window.localStorage.setItem(KEY, zone);
+    window.localStorage.setItem(ZONE_KEY, zone);
   } catch {
     /* storage unavailable: the choice just is not remembered */
   }

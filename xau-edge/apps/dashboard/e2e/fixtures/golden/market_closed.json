@@ -24,6 +24,26 @@
   }
  ],
  "data_age_seconds": 51000.0,
+ "data_ages": {
+  "collector_heartbeat": {
+   "age_seconds": null,
+   "state": "REPLAY"
+  },
+  "last_bar": {
+   "age_seconds": null,
+   "state": "REPLAY"
+  },
+  "last_decision": {
+   "age_seconds": null,
+   "state": "REPLAY"
+  },
+  "live": false,
+  "market_open": false,
+  "quote": {
+   "age_seconds": null,
+   "state": "REPLAY"
+  }
+ },
  "data_as_of": "2025-12-05T21:50:00+00:00",
  "decision": {
   "active_timeframe": "M5",
@@ -355,6 +375,74 @@
   "session": "LONDON",
   "volatility": "NORMAL"
  },
+ "system_health": [
+  {
+   "detail": "replay: no live collector",
+   "id": "mt5",
+   "label": "MT5 terminal",
+   "state": "UNKNOWN"
+  },
+  {
+   "detail": "replay: no live collector",
+   "id": "collector",
+   "label": "Collector",
+   "state": "UNKNOWN"
+  },
+  {
+   "detail": "replay: no live collector",
+   "id": "bar_parity",
+   "label": "N\u1ebfn kh\u1edbp terminal",
+   "state": "UNKNOWN"
+  },
+  {
+   "detail": "replay: no live collector",
+   "id": "tick_storage",
+   "label": "L\u01b0u tick",
+   "state": "UNKNOWN"
+  },
+  {
+   "detail": "replay: no live collector",
+   "id": "disk",
+   "label": "\u1ed4 \u0111\u0129a",
+   "state": "UNKNOWN"
+  },
+  {
+   "detail": "\u0111ang tr\u1ea3 l\u1eddi (b\u1ea1n \u0111ang \u0111\u1ecdc d\u1eef li\u1ec7u t\u1eeb n\u00f3)",
+   "id": "api",
+   "label": "API",
+   "state": "OK"
+  },
+  {
+   "detail": "ch\u01b0a c\u00f3 d\u1eef li\u1ec7u (ho\u1eb7c replay)",
+   "id": "decision_coverage",
+   "label": "\u0110\u1ed9 ph\u1ee7 quy\u1ebft \u0111\u1ecbnh",
+   "state": "UNKNOWN"
+  },
+  {
+   "detail": "NOT_CONFIGURED: no economic calendar is configured",
+   "id": "news",
+   "label": "L\u1ecbch tin t\u1ee9c",
+   "state": "WARN"
+  },
+  {
+   "detail": "ti\u1ebfn tr\u00ecnh n\u00e0y gi\u1eef quy\u1ec1n ghi duy nh\u1ea5t",
+   "id": "writer_lock",
+   "label": "Quy\u1ec1n ghi b\u00e0n PAPER",
+   "state": "OK"
+  },
+  {
+   "detail": "v1.2.1",
+   "id": "strategy",
+   "label": "Phi\u00ean b\u1ea3n chi\u1ebfn l\u01b0\u1ee3c",
+   "state": "OK"
+  },
+  {
+   "detail": "ACCEPTANCE_REPLAY: KH\u00d4NG PH\u1ea2I LIVE",
+   "id": "source_mode",
+   "label": "Ngu\u1ed3n d\u1eef li\u1ec7u",
+   "state": "WARN"
+  }
+ ],
  "telemetry": {
   "buy": 0,
   "day": "2025-12-06",

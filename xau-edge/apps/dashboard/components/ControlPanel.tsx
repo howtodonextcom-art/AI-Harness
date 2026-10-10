@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { formatInZone, type DisplayZone } from "@/lib/time";
+import { ZoneSelect, useDisplayZone } from "@/lib/useZone";
 import {
   type ActionName,
   type ActionState,
@@ -16,6 +18,10 @@ import {
   newIdempotencyKey,
   postControl,
 } from "@/lib/control";
+
+/** the proxy answers these when the API runs without web control: nothing to poll, nothing to show */
+const DISABLED_CODES = new Set(["CONTROL_UNAVAILABLE", "HTTP_404"]);
+const isDisabled = (e: unknown) => e instanceof ControlRequestError && DISABLED_CODES.has(e.info.code);
 
 const STATUS_POLL_MS = 3000;
 const JOURNAL_POLL_MS = 5000;
@@ -102,7 +108,7 @@ function ResultRows({ result }: { result: Record<string, unknown> }) {
   );
 }
 
-function JobView({ job }: { job: Job }) {
+function JobView({ job, zone }: { job: Job; zone: DisplayZone }) {
   const color =
     job.status === "SUCCEEDED" ? "text-green-700 dark:text-green-300" : job.status === "RUNNING" ? "text-sky-700 dark:text-sky-300" : "text-red-700 dark:text-red-300";
   const positions = Array.isArray(job.result.positions) ? (job.result.positions as Record<string, unknown>[]) : [];
@@ -120,7 +126,7 @@ function JobView({ job }: { job: Job }) {
       <ol className="mt-1 space-y-0.5 text-xs text-slate-500">
         {job.steps.map((s, i) => (
           <li key={`${s.at}-${i}`}>
-            <span className="tabular-nums">{s.at.slice(11, 19)}</span> {s.message}
+            <span className="tabular-nums">{formatInZone(s.at, zone).slice(11, 19)}</span> {s.message}
           </li>
         ))}
       </ol>
@@ -167,6 +173,9 @@ export function ControlPanel() {
   const [preflightBusy, setPreflightBusy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pending, setPending] = useState<Pending>(null);
+  const [disabled, setDisabled] = useState(false);
+  const [zone, changeZone] = useDisplayZone("VN");
+  const [recheck, setRecheck] = useState(0);
 
   const loadStatus = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -174,6 +183,10 @@ export function ControlPanel() {
       setError(null);
     } catch (e) {
       if (signal?.aborted) return;
+      if (isDisabled(e)) {
+        setDisabled(true);
+        return;
+      }
       setError(e instanceof ControlRequestError ? `${e.info.code}: ${e.info.message}` : "không kết nối được dashboard server");
     }
   }, []);
@@ -190,6 +203,7 @@ export function ControlPanel() {
   }, []);
 
   useEffect(() => {
+    if (disabled) return; // CONTROL DISABLED: no polling at all until the trader asks to re-check
     const controller = new AbortController();
     const tick = () => void loadStatus(controller.signal);
     tick();
@@ -198,27 +212,33 @@ export function ControlPanel() {
       controller.abort();
       clearInterval(id);
     };
-  }, [loadStatus]);
+  }, [loadStatus, disabled, recheck]);
 
   useEffect(() => {
+    if (disabled) return;
     const controller = new AbortController();
     getControl<PreflightReport>("preflight?probe=true", controller.signal)
       .then(setReport)
       .catch((e: unknown) => {
-        if (!controller.signal.aborted && e instanceof ControlRequestError) setError(`${e.info.code}: ${e.info.message}`);
+        if (controller.signal.aborted) return;
+        if (isDisabled(e)) setDisabled(true);
+        else if (e instanceof ControlRequestError) setError(`${e.info.code}: ${e.info.message}`);
       });
     return () => controller.abort();
-  }, []);
+  }, [disabled, recheck]);
 
   useEffect(() => {
+    if (disabled) return;
     const load = () =>
       getControl<{ events: JournalEvent[] }>("journal")
         .then((r) => setJournal(r.events))
-        .catch(() => undefined);
+        .catch((e: unknown) => {
+          if (isDisabled(e)) setDisabled(true);
+        });
     load();
     const id = setInterval(load, JOURNAL_POLL_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [disabled, recheck]);
 
   const submit = useCallback(
     async (path: string, body: Record<string, string>) => {
@@ -242,6 +262,29 @@ export function ControlPanel() {
   const busy = submitting || Boolean(status?.active_job);
   const ks = status?.kill_switch;
 
+  if (disabled) {
+    return (
+      <main className="mx-auto w-full max-w-[1200px] space-y-4 p-4 lg:p-6">
+        <header className="flex flex-wrap items-baseline justify-between gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Điều khiển bot</h1>
+          <Link href="/" className="text-sm underline">
+            ← Về dashboard
+          </Link>
+        </header>
+        <section data-testid="control-disabled" role="status" className="rounded-lg border-2 border-slate-500 p-4">
+          <p className="text-lg font-bold">CONTROL DISABLED · điều khiển web đang tắt</p>
+          <p className="mt-1 text-sm">
+            API đang chạy không có điều khiển web (<code>XAU_EDGE_WEB_CONTROL</code> chưa bật), nên trang này không có gì để điều khiển và đã dừng
+            hỏi máy chủ. Đây không phải lỗi: bàn PAPER và /trade vẫn hoạt động bình thường.
+          </p>
+          <button type="button" data-testid="control-recheck" onClick={() => { setDisabled(false); setRecheck((n) => n + 1); }} className="mt-3 rounded-md border border-slate-500 px-3 py-1 text-sm font-semibold">
+            Kiểm tra lại
+          </button>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto w-full max-w-[1200px] space-y-4 p-4 lg:p-6">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
@@ -249,6 +292,7 @@ export function ControlPanel() {
           <h1 className="text-2xl font-semibold tracking-tight">Điều khiển bot</h1>
           <p className="text-sm text-slate-500">Chỉ chạy cục bộ (127.0.0.1). Chỉ DRY-RUN và DEMO; không có FUNDED/LIVE ở đây.</p>
         </div>
+        <ZoneSelect zone={zone} onChange={changeZone} testId="control-zone" />
         <Link href="/" className="text-sm underline">
           ← Về dashboard
         </Link>
@@ -334,7 +378,7 @@ export function ControlPanel() {
               <dt className="text-slate-500">Chu kỳ cuối</dt>
               <dd>
                 {status?.bot.last_cycle
-                  ? `${status.bot.last_cycle.direction} ${status.bot.last_cycle.decision_time?.slice(5, 16).replace("T", " ") ?? ""}`
+                  ? `${status.bot.last_cycle.direction} ${formatInZone(status.bot.last_cycle.decision_time, zone).slice(5, 16)}`
                   : "chưa có"}
               </dd>
             </dl>
@@ -370,7 +414,7 @@ export function ControlPanel() {
             <Reasons action={act("smoke")} />
             {lastJob(status, "smoke") && (
               <div className="mt-2">
-                <JobView job={lastJob(status, "smoke") as Job} />
+                <JobView job={lastJob(status, "smoke") as Job} zone={zone} />
               </div>
             )}
           </section>
@@ -389,7 +433,7 @@ export function ControlPanel() {
         <Reasons action={act("flatten")} />
         {lastJob(status, "flatten") && (
           <div className="mt-2">
-            <JobView job={lastJob(status, "flatten") as Job} />
+            <JobView job={lastJob(status, "flatten") as Job} zone={zone} />
           </div>
         )}
       </section>
@@ -397,12 +441,12 @@ export function ControlPanel() {
       <div className="grid gap-4 lg:grid-cols-2">
         <section className={card} aria-label="Thao tác gần đây">
           <h2 className={heading}>Thao tác gần đây</h2>
-          {status?.active_job && <JobView job={status.active_job} />}
+          {status?.active_job && <JobView job={status.active_job} zone={zone} />}
           <div className="mt-2 space-y-2">
             {(status?.recent_jobs ?? [])
               .filter((j) => j.id !== status?.active_job?.id)
               .map((j) => (
-                <JobView key={j.id} job={j} />
+                <JobView key={j.id} job={j} zone={zone} />
               ))}
             {status && status.recent_jobs.length === 0 && <p className="text-sm text-slate-500">Chưa có thao tác nào.</p>}
           </div>
@@ -413,7 +457,7 @@ export function ControlPanel() {
             {journal.length === 0 && <li className="text-slate-500">Chưa có sự kiện.</li>}
             {journal.map((e, i) => (
               <li key={`${e.at}-${i}`} className="flex flex-wrap gap-x-2">
-                <span className="tabular-nums text-slate-500">{e.at?.slice(5, 19).replace("T", " ")}</span>
+                <span className="tabular-nums text-slate-500">{formatInZone(e.at, zone).slice(5, 19)}</span>
                 <span>{e.event}</span>
                 {e.source && <span className="text-slate-500">[{e.source}]</span>}
                 {e.result && <span>{e.result}</span>}

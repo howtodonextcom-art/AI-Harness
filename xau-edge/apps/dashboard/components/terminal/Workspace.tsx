@@ -2,6 +2,7 @@
 
 import { Term } from "@/components/terminal/Term";
 import { useMemo, useState, type ReactNode } from "react";
+import { DataAgesCard, SystemHealthCard } from "@/components/terminal/HealthCards";
 import { NewsCard } from "@/components/terminal/News";
 import { AccountCard, AlertCard, CoverageCard, DemoLockCard, ForwardCard, FunnelCard, StrategyCard, SystemStatus } from "@/components/terminal/SystemCards";
 import { Card, NEUTRAL, Pill, Row, fmt, money } from "@/components/trade/ui";
@@ -285,6 +286,10 @@ function System({ view, mode, zone }: { view: TradeView | null; mode: string; zo
   return (
     <div className="space-y-3">
       <SystemStatus strip={view.status_strip} />
+      <div className="grid gap-3 lg:grid-cols-2">
+        <SystemHealthCard rows={view.system_health} />
+        <DataAgesCard ages={view.data_ages} />
+      </div>
       <div className="grid gap-3 lg:grid-cols-3">
         <StrategyCard strategy={view.strategy} />
         <ForwardCard view={view} />

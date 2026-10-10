@@ -17,7 +17,8 @@ import {
   type QualityResponse,
   type QuoteResponse,
 } from "@/lib/market";
-import { ZONE_LABEL, formatInZone, loadZone, saveZone, type DisplayZone } from "@/lib/time";
+import { formatInZone, ZONE_LABEL, type DisplayZone } from "@/lib/time";
+import { useDisplayZone } from "@/lib/useZone";
 
 const GOOD = "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200";
 const WARN = "border-amber-600 bg-amber-500/15 text-amber-800 dark:text-amber-200";
@@ -64,7 +65,7 @@ function Pill({ label, state, testId }: { label: string; state: string; testId?:
 export function MarketView() {
   const [tf, setTf] = useState<MarketTimeframe>("M15");
   const [forming, setForming] = useState(true);
-  const [zone, setZone] = useState<DisplayZone>("UTC");
+  const [zone, changeZone] = useDisplayZone("UTC");
   const [bars, setBars] = useState<BarsResponse | null>(null);
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [status, setStatus] = useState<MarketStatusResponse | null>(null);
@@ -73,15 +74,6 @@ export function MarketView() {
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    const t = setTimeout(() => setZone(loadZone()), 0);
-    return () => clearTimeout(t);
-  }, []);
-
-  const changeZone = (value: DisplayZone) => {
-    setZone(value);
-    saveZone(value);
-  };
 
   const loadQuote = useCallback(async () => {
     try {

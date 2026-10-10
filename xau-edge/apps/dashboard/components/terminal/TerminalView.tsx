@@ -12,8 +12,10 @@ import { TerminalChart, type ChartHandle, type Tool } from "@/components/termina
 import { Workspace } from "@/components/terminal/Workspace";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
 import { fetchBars, type BarsResponse, type MarketTimeframe } from "@/lib/market";
-import { DEFAULT_PREFS, crossed, loadAlerts, loadLevels, loadPrefs, migrateLegacy, newId, saveAlerts, saveLevels, savePrefs, scopeId, scopeLabel, scopeOf, type ManualLevel, type Prefs, type PriceAlert, type Scope, type Tab } from "@/lib/prefs";
-import { loadZone, saveZone, type DisplayZone } from "@/lib/time";
+import { MAX_DRAWINGS, sessionRanges, weekLevels, type Drawing } from "@/lib/drawings";
+import { inSessionZone } from "@/lib/sessions";
+import { DEFAULT_PREFS, crossed, loadAlerts, loadDrawings, loadLevels, loadPrefs, migrateLegacy, newId, saveAlerts, saveDrawings, saveLevels, savePrefs, scopeId, scopeLabel, scopeOf, type ManualLevel, type Prefs, type PriceAlert, type Scope, type Tab } from "@/lib/prefs";
+import { ZONE_KEY, loadZone, saveZone, type DisplayZone } from "@/lib/time";
 import {
   closePaperTrade,
   fetchDecision,
@@ -76,6 +78,9 @@ export function TerminalView() {
   const [tool, setTool] = useState<Tool>("none");
   const [levels, setLevels] = useState<ManualLevel[]>([]);
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [selectedDrawing, setSelectedDrawing] = useState<string | null>(null);
+  const [keyBars, setKeyBars] = useState<BarsResponse | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [openFrozen, setOpenFrozen] = useState<FrozenPlan | null>(null);
   const [closing, setClosing] = useState(false);
@@ -117,6 +122,8 @@ export function TerminalView() {
     const t = setTimeout(() => {
       migrateLegacy(scope);
       setLevels(loadLevels(scope));
+      setDrawings(loadDrawings(scope));
+      setSelectedDrawing(null);
       const stored = loadAlerts(scope);
       alertsRef.current = stored;
       setAlerts(stored);
@@ -137,6 +144,7 @@ export function TerminalView() {
       alertsRef.current = stored;
       setAlerts(stored);
       setLevels(loadLevels(sc));
+      setDrawings(loadDrawings(sc));
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -144,6 +152,59 @@ export function TerminalView() {
   useEffect(() => {
     if (hydrated && scope && toolsScope === scopeKey) saveLevels(scope, levels);
   }, [levels, hydrated, scope, scopeKey, toolsScope]);
+  useEffect(() => {
+    if (hydrated && scope && toolsScope === scopeKey) saveDrawings(scope, drawings);
+  }, [drawings, hydrated, scope, scopeKey, toolsScope]);
+  const addDrawing = useCallback((d: Drawing) => {
+    setDrawings((list) => [...list, d].slice(-MAX_DRAWINGS));
+    setSelectedDrawing(d.id);
+  }, []);
+  const changeDrawing = useCallback((id: string, patch: Partial<Drawing>) => setDrawings((list) => list.map((d) => (d.id === id && !d.locked ? { ...d, ...patch } : d))), []);
+  const patchDrawing = useCallback((id: string, patch: Partial<Drawing>) => setDrawings((list) => list.map((d) => (d.id === id ? { ...d, ...patch } : d))), []); // label / lock: allowed on a locked object
+  const deleteDrawing = useCallback((id: string) => {
+    setDrawings((list) => list.filter((d) => d.id !== id || d.locked));
+    setSelectedDrawing((cur) => (cur === id ? null : cur));
+  }, []);
+  const clearDrawings = useCallback(() => {
+    setDrawings((list) => list.filter((d) => d.locked));
+    setSelectedDrawing(null);
+  }, []);
+
+  // key levels (previous week high/low, session highs/lows) come from H1 bars: read-only lines, nothing is stored
+  useEffect(() => {
+    if (!prefs.overlays.keyLevels) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const b = await fetchBars("H1", 500, true);
+        if (!cancelled) setKeyBars(b);
+      } catch {
+        if (!cancelled) setKeyBars(null);
+      }
+    };
+    void load();
+    const id = setInterval(load, 300_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [prefs.overlays.keyLevels]);
+  const extraLines = useMemo(() => {
+    if (!prefs.overlays.keyLevels || !keyBars || keyBars.bars.length === 0) return [];
+    const closed = keyBars.bars;
+    const out: { id: string; title: string; price: number; color: string }[] = [];
+    const week = weekLevels(closed.filter((b) => b.is_closed), now, 3_600_000);
+    if (week) {
+      out.push({ id: "key-pwh", title: "PWH", price: week.pwh, color: "#7c3aed" });
+      out.push({ id: "key-pwl", title: "PWL", price: week.pwl, color: "#7c3aed" });
+    }
+    const names = { ASIA: "Á", LONDON: "ÂU", NEW_YORK: "MỸ" } as const;
+    for (const r of sessionRanges(closed, inSessionZone)) {
+      out.push({ id: `key-${r.session}-h`, title: `${names[r.session]} H${r.live ? "*" : ""}`, price: r.high, color: "#0d9488" });
+      out.push({ id: `key-${r.session}-l`, title: `${names[r.session]} L${r.live ? "*" : ""}`, price: r.low, color: "#0d9488" });
+    }
+    return out;
+  }, [prefs.overlays.keyLevels, keyBars, now]);
 
   // ---- the decision (every 3 s) -----------------------------------------------------------------
   const fireAlerts = useCallback((bid: number) => {
@@ -354,6 +415,14 @@ export function TerminalView() {
     if (scopeRef.current) saveAlerts(scopeRef.current, next);
   }, []);
 
+  // the display zone is ONE preference for every page: follow a change made on another tab or page
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === ZONE_KEY) setPrefs({ zone: loadZone(DEFAULT_PREFS.zone) });
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [setPrefs]);
   const changeZone = (zone: DisplayZone) => {
     saveZone(zone);
     setPrefs({ zone });
@@ -389,6 +458,7 @@ export function TerminalView() {
       if (e.key === "Escape") {
         if (modalOpen || typing) return;
         if (tool !== "none") setTool("none");
+        else if (selectedDrawing) setSelectedDrawing(null);
         else if (fullscreen) setFullscreen(false);
         return;
       }
@@ -406,7 +476,7 @@ export function TerminalView() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modalOpen, tool, fullscreen, prefs.follow, prefs.shortcuts, setPrefs]);
+  }, [modalOpen, tool, fullscreen, selectedDrawing, prefs.follow, prefs.shortcuts, setPrefs]);
 
   // ---- conditions that need attention are banners with a human sentence first -------------------
   const heroLists = hero?.state === "UNAVAILABLE" || hero?.state === "STALE"; // the hero card already says each of these errors, once
@@ -462,6 +532,13 @@ export function TerminalView() {
         bid={view?.quote?.bid ?? null}
         alertCount={alerts.filter((a) => !a.firedAt).length}
         onHelp={() => setHelp(true)}
+        drawings={drawings}
+        selectedDrawing={selectedDrawing}
+        onSelectDrawing={setSelectedDrawing}
+        onPatchDrawing={patchDrawing}
+        onDeleteDrawing={deleteDrawing}
+        onClearDrawings={clearDrawings}
+        scopeLabel={scope ? scopeLabel(scope) : null}
       />
       <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[min(28rem,62vh)] sm:h-[28rem] short:h-[calc(100dvh-11rem)] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
         {dim && <div data-testid="chart-veil" aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] bg-white/60 dark:bg-slate-950/60" />}
@@ -485,6 +562,13 @@ export function TerminalView() {
           tool={tool}
           onAddLevel={addLevel}
           onToolDone={() => setTool("none")}
+          drawings={drawings}
+          selectedDrawing={selectedDrawing}
+          onSelectDrawing={setSelectedDrawing}
+          onAddDrawing={addDrawing}
+          onChangeDrawing={changeDrawing}
+          onDeleteDrawing={deleteDrawing}
+          extraLines={extraLines}
         />}
       </div>
       {fullscreen && view && (

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { fetchJournal, type JournalResponse, type PaperTrade } from "@/lib/trade";
-import { ZONE_SHORT, formatInZone, loadZone, type DisplayZone } from "@/lib/time";
+import { ZONE_SHORT, formatInZone } from "@/lib/time";
+import { ZoneSelect, useDisplayZone } from "@/lib/useZone";
 import { fmt, money } from "@/components/trade/ui";
 import { sourceText, viState } from "@/lib/vi";
 
@@ -29,12 +30,11 @@ const REASON_TEXT: Record<string, string> = {
 export function JournalView() {
   const [data, setData] = useState<JournalResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [zone, setZone] = useState<DisplayZone>("UTC");
+  const [zone, changeZone] = useDisplayZone("UTC");
   const [open, setOpen] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "win" | "loss" | "BUY" | "SELL">("all");
 
   useEffect(() => {
-    const t = setTimeout(() => setZone(loadZone()), 0);
     const ctl = new AbortController();
     const run = () =>
       fetchJournal(ctl.signal)
@@ -46,7 +46,6 @@ export function JournalView() {
     const first = setTimeout(run, 0);
     const poll = setInterval(run, 5000);
     return () => {
-      clearTimeout(t);
       clearTimeout(first);
       clearInterval(poll);
       ctl.abort();
@@ -119,7 +118,10 @@ export function JournalView() {
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-3 px-4 py-4">
-      <h1 className="text-xl font-bold">Journal · lệnh PAPER (giả lập)</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-bold">Journal · lệnh PAPER (giả lập)</h1>
+        <ZoneSelect zone={zone} onChange={changeZone} testId="journal-zone" />
+      </div>
       {replay && (
         <div data-testid="journal-replay-banner" role="status" className="rounded-md border-2 border-amber-600 bg-amber-500/15 px-3 py-2 text-sm font-bold">
           REPLAY NGHIỆM THU ({data.source_mode.replace("_", " ")}) — KHÔNG PHẢI LIVE. Các lệnh dưới đây chạy trên dữ liệu lịch sử đã đốt, không tính vào bằng chứng forward.

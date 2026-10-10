@@ -4,6 +4,7 @@
  * Every read/write is guarded: with storage blocked the terminal still works, it just forgets.
  */
 
+import { MAX_DRAWINGS, validDrawings, type Drawing } from "@/lib/drawings";
 import type { DisplayZone } from "@/lib/time";
 
 export type Tab = "overview" | "why" | "position" | "activity" | "system";
@@ -15,6 +16,10 @@ export interface Overlays {
   structure: boolean;
   volume: boolean;
   sessions: boolean;
+  /** previous week high/low and the session highs/lows, computed from H1 bars */
+  keyLevels: boolean;
+  /** upcoming news events as vertical lines (server calendar) */
+  news: boolean;
 }
 
 export interface Prefs {
@@ -32,7 +37,7 @@ export interface Prefs {
 
 export const DEFAULT_PREFS: Prefs = {
   tf: "M5",
-  overlays: { signals: true, plan: true, paper: true, structure: false, volume: true, sessions: false },
+  overlays: { signals: true, plan: true, paper: true, structure: false, volume: true, sessions: false, keyLevels: false, news: true },
   follow: true,
   zone: "VN",
   tab: "overview",
@@ -84,6 +89,8 @@ export function loadPrefs(): Prefs {
       structure: bool(o.structure, DEFAULT_PREFS.overlays.structure),
       volume: bool(o.volume, DEFAULT_PREFS.overlays.volume),
       sessions: bool(o.sessions, DEFAULT_PREFS.overlays.sessions),
+      keyLevels: bool(o.keyLevels, DEFAULT_PREFS.overlays.keyLevels),
+      news: bool(o.news, DEFAULT_PREFS.overlays.news),
     },
     follow: bool(raw.follow, DEFAULT_PREFS.follow),
     zone: ZONES.includes(raw.zone as DisplayZone) ? (raw.zone as DisplayZone) : DEFAULT_PREFS.zone,
@@ -118,7 +125,7 @@ export const scopeOf = (sourceMode: string | null | undefined, symbol: string | 
 
 export const scopeId = (s: Scope) => `${s.mode}:${s.symbol}`;
 export const scopeLabel = (s: Scope) => `${s.mode === "LIVE" ? "LIVE" : "REPLAY (không phải live)"} ${s.symbol}`;
-export const storageKey = (s: Scope, kind: "alerts" | "levels") => `xau-edge:v3:${s.mode}:${s.symbol}:${kind}`;
+export const storageKey = (s: Scope, kind: "alerts" | "levels" | "drawings") => `xau-edge:v3:${s.mode}:${s.symbol}:${kind}`;
 
 // ---- the trader's own horizontal lines (no effect on any decision) ------------------------------
 
@@ -138,6 +145,16 @@ export function loadLevels(scope: Scope): ManualLevel[] {
 
 export function saveLevels(scope: Scope, levels: ManualLevel[]): void {
   write(storageKey(scope, "levels"), levels.slice(0, 20));
+}
+
+// ---- drawings: trendlines, zones, Fibonacci, manual risk-reward (annotations; no effect on any decision) ----
+
+export function loadDrawings(scope: Scope): Drawing[] {
+  return validDrawings(read<Drawing[]>(storageKey(scope, "drawings")));
+}
+
+export function saveDrawings(scope: Scope, drawings: Drawing[]): void {
+  write(storageKey(scope, "drawings"), drawings.slice(0, MAX_DRAWINGS));
 }
 
 // ---- price alerts: evaluated in the open page only, they never trade ----------------------------

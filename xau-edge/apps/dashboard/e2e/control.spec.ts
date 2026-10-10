@@ -127,5 +127,6 @@ test("the page has no field for an order parameter", async ({ page }) => {
   await mockControl(page);
   await page.goto("/control");
   await expect(page.locator('[data-check="env.file"]')).toBeVisible();
-  await expect(page.locator("input, select, textarea")).toHaveCount(0);
+  // the only control is the display-time-zone selector (no order parameter of any kind)
+  await expect(page.locator('input, textarea, select:not([data-testid="control-zone"])')).toHaveCount(0);
 });

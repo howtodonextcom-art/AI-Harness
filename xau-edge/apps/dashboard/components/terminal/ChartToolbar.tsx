@@ -4,6 +4,8 @@ import { useState } from "react";
 import { parseDecimal } from "@/lib/chartMath";
 import type { Overlays } from "@/lib/prefs";
 import type { Tool } from "@/components/terminal/TerminalChart";
+import { DrawingMenu } from "@/components/terminal/DrawingMenu";
+import type { Drawing } from "@/lib/drawings";
 
 const TFS = ["M1", "M5", "M15", "M30", "H1", "H4"];
 
@@ -26,6 +28,13 @@ interface Props {
   bid: number | null;
   alertCount: number;
   onHelp: () => void;
+  drawings: Drawing[];
+  selectedDrawing: string | null;
+  onSelectDrawing: (id: string | null) => void;
+  onPatchDrawing: (id: string, patch: Partial<Drawing>) => void;
+  onDeleteDrawing: (id: string) => void;
+  onClearDrawings: () => void;
+  scopeLabel: string | null;
 }
 
 const btn = "h-8 short:h-7 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-semibold";
@@ -40,6 +49,8 @@ const OVERLAY_LABELS: [keyof Overlays, string][] = [
   ["structure", "Hỗ trợ/kháng cự, PDH/PDL"],
   ["volume", "Tick volume"],
   ["sessions", "Phiên Á/Âu/Mỹ (nền màu)"],
+  ["keyLevels", "Tuần trước cao/thấp, phiên cao/thấp"],
+  ["news", "Tin tức sắp tới (đường dọc)"],
 ];
 
 /** Compact, stable chart toolbar: icons with accessible names and tooltips (nothing shifts on hover). */
@@ -80,6 +91,7 @@ export function ChartToolbar(p: Props) {
       <span className="mx-1 hidden h-5 w-px bg-slate-400/50 sm:block" aria-hidden="true" />
       <button type="button" data-testid="tool-measure" title="Đo giá/thời gian (M)" aria-pressed={p.tool === "measure"} onClick={() => p.onTool(p.tool === "measure" ? "none" : "measure")} aria-label="Đo giá và thời gian" className={`${btn} ${p.tool === "measure" ? on : off} ${sec}`}>📏&nbsp;Đo</button>
       <button type="button" data-testid="tool-line" title="Vẽ đường ngang (T)" aria-pressed={p.tool === "line"} onClick={() => p.onTool(p.tool === "line" ? "none" : "line")} aria-label="Vẽ đường ngang" className={`${btn} ${p.tool === "line" ? on : off} ${sec}`}>—&nbsp;Đường</button>
+      <DrawingMenu tool={p.tool} onTool={p.onTool} drawings={p.drawings} selectedId={p.selectedDrawing} onSelect={p.onSelectDrawing} onPatch={p.onPatchDrawing} onDelete={p.onDeleteDrawing} onClear={p.onClearDrawings} scopeLabel={p.scopeLabel} btn={btn} on={on} off={off} roomy={`${more ? "block" : "hidden"} roomy:block`} />
       <div className={`relative ${more ? "block" : "hidden"} roomy:block`}>
         <button type="button" data-testid="tool-alert" title="Cảnh báo giá" aria-expanded={alertOpen} onClick={() => { setAlertOpen(!alertOpen); setOverlayOpen(false); }} className={`${shown} ${btn} ${alertOpen ? on : off}`}>
           🔔&nbsp;Báo giá{p.alertCount > 0 ? ` (${p.alertCount})` : ""}
