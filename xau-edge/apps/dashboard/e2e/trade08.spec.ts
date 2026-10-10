@@ -259,7 +259,7 @@ const NEWS_BASE = {
 };
 
 for (const [state, shown, green] of [
-  ["CLEAR", "Không trong cửa sổ tin mạnh", true],
+  ["CLEAR", "Chưa vào cửa sổ tin mạnh", true],
   ["BLOCKED", "ĐANG trong cửa sổ tin mạnh", false],
   ["UNKNOWN", "Tin tức chưa xác minh", false],
   ["NOT_CONFIGURED", "Chưa cấu hình lịch tin", false],
@@ -300,4 +300,17 @@ test("System shows the calendar's source, coverage, freshness, a failed update a
   await expect(page.getByTestId("news-update-failed")).toContainText("THẤT BẠI");
   await expect(page.getByTestId("news-update-failed")).toContainText("HTTP 429");
   await expect(page.getByTestId("news-events")).toContainText("CPI m/m USD · MẠNH");
+});
+
+test("a high-impact event within the hour turns the CLEAR strip amber and says when the blocking window opens", async ({ page }) => {
+  const v = view("wait");
+  v.news = { ...NEWS_BASE, state: "CLEAR", warning: false, next_events: [{ time: "2026-10-08T12:30:00Z", title: "CPI m/m", currency: "USD", impact: "high" as const, minutes_to: 40 }] };
+  await mock(page, v);
+  await page.goto("/trade");
+  const strip = page.getByTestId("news-strip");
+  await expect(strip).toHaveAttribute("data-state", "CLEAR"); // the data state is unchanged...
+  await expect(strip).toHaveAttribute("data-soon", "true"); // ...but it no longer reads as plainly safe
+  await expect(page.getByTestId("news-state")).toContainText("Tin mạnh sắp tới");
+  await expect(page.getByTestId("news-opens")).toContainText("cửa sổ chặn lệnh mở sau 10 phút");
+  expect(/emerald|green/.test((await strip.getAttribute("class")) ?? "")).toBe(false);
 });

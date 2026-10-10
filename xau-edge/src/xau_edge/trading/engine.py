@@ -663,14 +663,17 @@ class TradeEngine:
             forward = apply_to_forward(self._forward(stamp), coverage)
             live = self.source_mode == "LIVE"
             collector_age = _collector_age(collector, stamp)
-            quote_age = None if snap is None or snap.quote is None else snap.quote.age_seconds
+            lag = 0.0 if snap is None else max(0.0, (stamp - snap.now).total_seconds())
+            quote_age = None if snap is None or snap.quote is None else snap.quote.age_seconds + lag
             generated = None if signal is None else signal.generated_at
             base: dict[str, Any] = {
                 "data_ages": data_ages(
                     live=live,
                     market_open=snap is not None and snap.market_open,
                     quote_age=quote_age,
-                    bar_age=None if snap is None else snap.data_age_seconds,
+                    bar_age=None
+                    if snap is None or snap.data_age_seconds is None
+                    else snap.data_age_seconds + lag,
                     bars_stale=snap is not None and bool(snap.stale_timeframes),
                     collector_age=collector_age,
                     decision_age=decision_age(stamp, generated),

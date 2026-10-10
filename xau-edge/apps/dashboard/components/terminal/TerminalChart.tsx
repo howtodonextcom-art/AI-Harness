@@ -579,7 +579,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   }, [timeframe]);
   // the price scale autoscales with every new bar and every drag: keep the drawings glued to it
   useEffect(() => {
-    const id = setInterval(() => hasOverlay.current && setTick((n) => n + 1), 300);
+    const id = setInterval(() => hasOverlay.current && !document.hidden && setTick((n) => n + 1), 300); // not in a hidden tab
     return () => clearInterval(id);
   }, []);
 
@@ -717,7 +717,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     schedule.current();
   }, [chartMarkers, markerPrio]);
   useEffect(() => {
-    const id = setInterval(() => schedule.current(), 1500); // the price scale autoscales with every new bar
+    const id = setInterval(() => !document.hidden && schedule.current(), 1500); // the price scale autoscales with every new bar; not in a hidden tab
     return () => clearInterval(id);
   }, []);
 

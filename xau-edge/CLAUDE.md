@@ -63,7 +63,7 @@ Không có đường nào từ quyết định trên `/trade` tới lệnh MT5.
 | Kho nghiên cứu `data/raw` | **Đứng yên** từ 2026-10-08 13:15 UTC | trang `/legacy` |
 
 Quy mô: `trading` 31 file / 6,7k dòng; `market_data` 39 / 5,0k; `execution` 17 / 2,9k; `control`
-11 / 2,5k; 160 file test, 2566 test (`-m "not mt5"`).
+11 / 2,5k; 2601 test Python (`-m "not mt5"`), 291 test Playwright mock + 31 acceptance trên backend thật.
 
 ## 5. Edge: kết luận hiện hành
 

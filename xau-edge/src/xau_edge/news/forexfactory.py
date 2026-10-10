@@ -34,6 +34,7 @@ from xau_edge.news.providers import (
 SOURCE_NAME = "forexfactory-weekly"
 BASE_URL = "https://nfs.faireconomy.media/ff_calendar_{week}.json"
 WEEKS = ("thisweek", "nextweek")
+MIN_DAYS = 3  # a real week lists events on at least this many days; fewer means a cut-off feed
 DEFAULT_CURRENCIES = ("USD", "All")
 IMPACTS = {"high": "high", "medium": "medium", "low": "low"}  # "Holiday" has no market impact
 _NY = ZoneInfo("America/New_York")
@@ -63,7 +64,11 @@ def convert(events: list[dict[str, Any]], currencies: tuple[str, ...]) -> tuple[
     first: datetime | None = None
     for event in events:
         try:
-            when = datetime.fromisoformat(str(event["date"])).astimezone(UTC)
+            parsed = datetime.fromisoformat(str(event["date"]))
+            if parsed.tzinfo is None:
+                msg = "a feed date has no UTC offset: refused (it would be read as local time)"
+                raise CalendarProviderError(msg)
+            when = parsed.astimezone(UTC)
             title, currency = str(event["title"]).strip(), str(event["country"]).strip()
             impact = IMPACTS.get(str(event["impact"]).strip().lower())
         except (KeyError, ValueError) as exc:
@@ -73,6 +78,10 @@ def convert(events: list[dict[str, Any]], currencies: tuple[str, ...]) -> tuple[
         if impact is not None and currency in currencies and title:
             rows.append((when, title, impact, currency))
     assert first is not None  # noqa: S101 - events is not empty
+    days = {datetime.fromisoformat(str(e["date"])).astimezone(UTC).date() for e in events}
+    if len(days) < MIN_DAYS:
+        msg = f"the feed spans only {len(days)} day(s): it looks truncated, refused"
+        raise CalendarProviderError(msg)
     start, end = week_bounds(first)
     lines = [f"{COVERAGE_PREFIX} {format_utc(start)}..{format_utc(end)}", ",".join(_COLUMNS)]
     for when, title, impact, currency in sorted(rows):
@@ -86,10 +95,15 @@ def merge_weeks(texts: list[str]) -> str:
     """Several weekly documents into one (contiguous weeks: coverage is first start..last end)."""
     if len(texts) == 1:
         return texts[0]
-    starts, ends, body = [], [], []
+    starts: list[str] = []
+    ends: list[str] = []
+    body: list[str] = []
     for text in texts:
         head, _, rest = text.partition("\n")
         a, b = head[len(COVERAGE_PREFIX) :].strip().split("..")
+        if ends and a != ends[-1]:
+            msg = "next week does not follow this week: refusing to declare the gap covered"
+            raise CalendarProviderError(msg)
         starts.append(a)
         ends.append(b)
         body.extend(rest.splitlines()[1:])

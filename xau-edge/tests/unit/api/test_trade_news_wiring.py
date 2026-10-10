@@ -64,14 +64,17 @@ def test_a_high_impact_event_inside_the_window_blocks_the_decision(tmp_path: Pat
 
 
 def test_a_covering_calendar_without_events_is_clear(tmp_path: Path) -> None:
-    cal = _calendar(tmp_path / "cal.csv", NOW - timedelta(days=7), NOW + timedelta(days=7), [])
+    # a covering calendar with an old low-impact row (a calendar with NO rows proves nothing)
+    row = f"{_z(NOW - timedelta(days=2))},ISM,low,{_z(NOW - timedelta(days=3))}"
+    cal = _calendar(tmp_path / "cal.csv", NOW - timedelta(days=7), NOW + timedelta(days=7), [row])
     view = _engine(tmp_path, cal).view()
     assert view["news"]["state"] == "CLEAR"
     assert "NEWS_UNKNOWN" not in _codes(view)
 
 
 def test_a_calendar_that_no_longer_covers_now_is_stale_and_says_why(tmp_path: Path) -> None:
-    cal = _calendar(tmp_path / "cal.csv", NOW - timedelta(days=14), NOW - timedelta(days=1), [])
+    row = f"{_z(NOW - timedelta(days=10))},ISM,low,{_z(NOW - timedelta(days=12))}"
+    cal = _calendar(tmp_path / "cal.csv", NOW - timedelta(days=14), NOW - timedelta(days=1), [row])
     view = _engine(tmp_path, cal).view()
     assert (
         view["news"]["state"] == "STALE"
@@ -118,3 +121,19 @@ def test_serve_api_passes_the_configured_calendar_to_the_trade_engine() -> None:
     assert (
         ast.unparse(keyword.value) == "news_path"
     )  # settings.news_calendar_path, or data/news/calendar.csv when it exists
+
+
+def test_quote_and_bar_ages_keep_growing_while_the_engine_is_not_recomputing(
+    tmp_path: Path,
+) -> None:
+    engine = _engine(tmp_path, None)
+    first = engine.view()
+    served = datetime.fromisoformat(str(first["served_at"]))
+    later = engine.view(now=served + timedelta(minutes=10))
+    for name in ("quote", "last_bar"):
+        before = first["data_ages"][name]["age_seconds"]
+        after = later["data_ages"][name]["age_seconds"]
+        assert before is not None and after is not None
+        assert (
+            after >= before + 590
+        )  # measured against the serve time, not frozen at the last recompute

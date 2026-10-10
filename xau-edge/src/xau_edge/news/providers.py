@@ -8,6 +8,7 @@ a URL you choose and trust; nothing is fetched unless you configure it.
 
 from __future__ import annotations
 
+import urllib.error
 import urllib.request
 from collections.abc import Callable
 from pathlib import Path
@@ -47,9 +48,19 @@ class LocalFileProvider:
             raise CalendarProviderError(msg) from exc
 
 
+class _HttpsOnlyRedirects(urllib.request.HTTPRedirectHandler):
+    """A redirect may never downgrade an https source to http."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]  # noqa: PLR0917
+        if not newurl.lower().startswith("https://"):
+            raise urllib.error.URLError("redirect to a non-https address refused")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def _urlopen_read(url: str, timeout: float) -> bytes:
     request = urllib.request.Request(url, headers={"Accept": "text/csv", "User-Agent": USER_AGENT})  # noqa: S310 - https only
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+    opener = urllib.request.build_opener(_HttpsOnlyRedirects())
+    with opener.open(request, timeout=timeout) as response:
         data: bytes = response.read(MAX_BYTES + 1)
     return data
 

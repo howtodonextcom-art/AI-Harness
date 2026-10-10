@@ -27,7 +27,10 @@ from typing import Any
 from xau_edge.news.calendar import EventImpact
 from xau_edge.news.pit import CalendarDocument, CalendarRow, format_utc, parse_calendar_text
 
-STALE_AFTER = timedelta(hours=48)
+STALE_AFTER = timedelta(
+    hours=12
+)  # the refresher runs every 4 h: a day-half of failures is already stale
+CLOCK_SLACK = timedelta(minutes=5)
 UPDATE_STATUS_FILE = "update_status.json"
 BEFORE_MINUTES = 30
 AFTER_MINUTES = 15
@@ -50,6 +53,15 @@ def _event(row: CalendarRow, now: datetime) -> dict[str, Any]:
         "impact": row.event.impact.name.lower(),
         "minutes_to": round((row.event.time - now).total_seconds() / 60),
     }
+
+
+def _last_success(update: dict[str, Any] | None) -> datetime | None:
+    """``last_success_at`` of the updater record as a UTC time (None when absent/unreadable)."""
+    try:
+        value = datetime.fromisoformat(str((update or {})["last_success_at"]))
+    except (KeyError, ValueError):
+        return None
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
 
 
 def read_update_status(path: Path) -> dict[str, Any] | None:
@@ -116,11 +128,16 @@ def news_status(
         for t in ((r.meta.updated_at or r.meta.ingested_at) if r.meta else None,)
         if t is not None
     ]
-    if not stamps:
-        # a legacy file (no provenance columns) cannot say when it was refreshed: its own time is
-        # the honest answer, never the publication time of its oldest row
+    refreshed = _last_success(update)
+    if refreshed is not None:
+        stamps = [refreshed]  # the updater's own record of its last good run beats any row stamp
+    elif not stamps:
+        # a legacy file (no provenance columns, no updater record) cannot say when it was refreshed:
+        # its own time is the honest answer, never the publication time of its oldest row
         try:
-            stamps = [datetime.fromtimestamp(path.stat().st_mtime, UTC)]
+            stamps = [
+                min(datetime.fromtimestamp(path.stat().st_mtime, UTC), now)
+            ]  # never the future
         except OSError:
             stamps = []
     last = max(stamps) if stamps else None
@@ -129,7 +146,22 @@ def news_status(
         "last_updated_at": format_utc(last) if last else None,
         "source": ", ".join(sources) or None,
     }
-    return _judge(doc, base, last, now, (before_minutes, after_minutes))
+    return _unsound(doc, base, last, now) or _judge(
+        doc, base, last, now, (before_minutes, after_minutes)
+    )
+
+
+def _unsound(
+    doc: CalendarDocument, base: dict[str, Any], last: datetime | None, now: datetime
+) -> dict[str, Any] | None:
+    """A calendar that cannot be trusted at all, whatever its coverage says."""
+    if last is not None and last > now + CLOCK_SLACK:
+        return _result(
+            "ERROR", "refreshed in the future: a clock problem, not a fresh file", **base
+        )
+    if not doc.rows:
+        return _result("UNKNOWN", "the calendar lists no events, so it proves nothing", **base)
+    return None
 
 
 def _judge(

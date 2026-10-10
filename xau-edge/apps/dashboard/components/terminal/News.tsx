@@ -6,7 +6,7 @@ import { ZONE_SHORT, formatInZone, type DisplayZone } from "@/lib/time";
 
 /** What each canonical server state means to a trader, in plain Vietnamese. Only CLEAR is ever green. */
 export const NEWS_VI: Record<string, { label: string; tone: string }> = {
-  CLEAR: { label: "Không trong cửa sổ tin mạnh", tone: GOOD },
+  CLEAR: { label: "Chưa vào cửa sổ tin mạnh", tone: GOOD },
   BLOCKED: { label: "ĐANG trong cửa sổ tin mạnh", tone: BAD },
   UNKNOWN: { label: "Tin tức chưa xác minh", tone: WARN },
   NOT_CONFIGURED: { label: "Chưa cấu hình lịch tin", tone: WARN },
@@ -28,15 +28,22 @@ function eventLine(e: NewsEventItem): string {
   return `${e.title}${where} · ${IMPACT_VI[e.impact] ?? e.impact} · ${untilText(e.minutes_to)}`;
 }
 
+const WINDOW_BEFORE_MIN = 30; // the news guard blocks from this many minutes before a high-impact event
+
 /** One compact line under the decision: the state, and the next event that matters. */
 export function NewsStrip({ news }: { news: NewsView }) {
   const meta = NEWS_VI[news.state] ?? { label: news.state, tone: WARN };
   const next = news.blocked_by ?? news.next_events.find((e) => e.impact === "high") ?? news.next_events[0];
+  // CLEAR only says "not inside the window NOW": a high-impact event within two hours turns the strip amber and says when the window opens
+  const opensIn = news.state === "CLEAR" && next && next.impact === "high" ? next.minutes_to - WINDOW_BEFORE_MIN : null;
+  const soon = opensIn !== null && opensIn <= 90;
+  const tone = soon ? WARN : meta.tone;
   return (
-    <p data-testid="news-strip" data-state={news.state} role="status" className={`rounded-md border px-2 py-1 text-xs ${meta.tone}`}>
-      <b data-testid="news-state">TIN: {meta.label}</b>
+    <p data-testid="news-strip" data-state={news.state} data-soon={soon ? "true" : "false"} role="status" className={`rounded-md border px-2 py-1 text-xs ${tone}`}>
+      <b data-testid="news-state">TIN: {soon ? "Tin mạnh sắp tới" : meta.label}</b>
       {news.state !== "CLEAR" && news.state !== "BLOCKED" && news.detail ? <span data-testid="news-detail"> — {news.detail}. Hãy tự kiểm tra tin.</span> : null}
       {next ? <span data-testid="news-next"> · {news.blocked_by ? "Tin: " : "Tiếp theo: "}{eventLine(next)}</span> : null}
+      {soon && opensIn !== null ? <span data-testid="news-opens"> · {opensIn > 0 ? `cửa sổ chặn lệnh mở sau ${untilText(opensIn).replace("sau ", "")}` : "đang sát cửa sổ chặn lệnh"}</span> : null}
     </p>
   );
 }

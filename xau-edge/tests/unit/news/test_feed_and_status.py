@@ -102,7 +102,7 @@ def test_forexfactory_is_a_named_source() -> None:
 
 
 def test_two_weeks_join_into_one_contiguous_coverage() -> None:
-    nxt = [row("Next CPI", "USD", "2026-10-15T08:30:00-04:00", "High")]
+    nxt = [row("Next CPI", "USD", f"2026-10-{d}T08:30:00-04:00", "High") for d in (12, 13, 15)]
     doc = parse_calendar_text(provider(FEED, nxt).fetch_text(), default_available_at=FETCH)
     assert doc.coverage[1] - doc.coverage[0] == timedelta(days=14)
     assert "Next CPI" in {r.event.category for r in doc.rows}
@@ -120,7 +120,11 @@ def test_an_update_keeps_first_seen_and_drops_a_cancelled_future_event(tmp_path:
     assert minutes.meta is not None
     assert minutes.meta.ingested_at == FETCH and minutes.meta.updated_at == later
     # a row already in the past is history and stays even when the feed forgets it
-    update_calendar(provider([FEED[4]]), out, now=datetime(2026, 10, 9, 6, 0, tzinfo=UTC))
+    update_calendar(
+        provider([e for e in FEED if e["title"] != "CPI m/m"]),
+        out,
+        now=datetime(2026, 10, 9, 6, 0, tzinfo=UTC),
+    )
     kept = {r.event.category for r in parse_calendar_text(out.read_text(encoding="utf-8")).rows}
     assert "FOMC Meeting Minutes" in kept
 
@@ -186,3 +190,39 @@ def test_a_failed_update_is_recorded_without_losing_the_last_success(tmp_path: P
     last = news_status(FETCH + timedelta(hours=2), out)["last_update"]
     assert last["ok"] is False and last["error"] == "HTTP 429"
     assert last["last_success_at"] == FETCH.isoformat()
+
+
+def test_a_calendar_refreshed_in_the_future_or_with_no_events_is_never_trusted(
+    tmp_path: Path,
+) -> None:
+    out = calendar(tmp_path)
+    # the updater's own record says it last succeeded tomorrow: a clock problem, not a fresh file
+    record_update(out, now=FETCH + timedelta(days=1), ok=True, source="forexfactory")
+    assert news_status(FETCH + timedelta(hours=2), out)["state"] == "ERROR"
+    empty = tmp_path / "empty.csv"
+    empty.write_text(
+        "# coverage: 2026-10-04T04:00:00Z..2026-10-11T04:00:00Z\n"
+        "time_utc,category,impact,available_at\n",
+        encoding="utf-8",
+    )
+    verdict = news_status(datetime(2026, 10, 6, 12, 0, tzinfo=UTC), empty)
+    assert verdict["state"] == "UNKNOWN" and "no events" in verdict["detail"]
+
+
+def test_the_updater_record_is_the_freshness_source_when_it_exists(tmp_path: Path) -> None:
+    out = calendar(tmp_path, FETCH)
+    later = FETCH + timedelta(hours=30)
+    assert news_status(later, out)["state"] == "STALE"  # rows were last confirmed 30 h ago
+    record_update(out, now=later - timedelta(hours=1), ok=True, source="forexfactory")
+    assert news_status(later, out)["state"] == "CLEAR"  # the updater says it refreshed an hour ago
+
+
+def test_a_feed_row_without_an_offset_a_truncated_week_and_a_gap_are_refused() -> None:
+    naive = [{**FEED[1], "date": "2026-10-08T08:30:00"}, *FEED]
+    with pytest.raises(CalendarProviderError, match="no UTC offset"):
+        convert(naive, ("USD",))
+    with pytest.raises(CalendarProviderError, match="truncated"):
+        convert(FEED[:2], ("USD",))  # two events on two days: a cut-off feed
+    far = [row("Later CPI", "USD", f"2026-10-{d}T08:30:00-04:00", "High") for d in (20, 21, 22)]
+    with pytest.raises(CalendarProviderError, match="does not follow"):
+        provider(FEED, far).fetch_text()  # next week's URL returned the week after next
