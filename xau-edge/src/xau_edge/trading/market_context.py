@@ -14,6 +14,8 @@ import polars as pl
 
 from xau_edge.domain.timeframe import Timeframe
 from xau_edge.market_data.broker_clock import BrokerClock
+from xau_edge.market_data.session import market_status
+from xau_edge.market_data.validators.market_calendar import MarketCalendar
 
 SESSION_LABELS = {
     "ASIA": "Phiên Á (Tokyo)",
@@ -94,6 +96,40 @@ def bar_closes(
     return out
 
 
+_OPEN_CACHE: dict[tuple[int, int], datetime | None] = {}
+
+
+def next_open(now: datetime, calendar: MarketCalendar, *, horizon_days: int = 9) -> datetime | None:
+    """The first minute the market is open again (None beyond ``horizon_days``).
+
+    Computed on the same calendar the engine uses for MARKET_CLOSED, in one vectorised pass over
+    5-minute steps and then refined to the minute. Cached per 5-minute bucket.
+    """
+    bucket = int(now.timestamp() // 300)
+    key = (id(calendar), bucket)
+    if key in _OPEN_CACHE:
+        return _OPEN_CACHE[key]
+    start = datetime.fromtimestamp(bucket * 300, tz=now.tzinfo)
+    steps = [start + timedelta(minutes=5 * i) for i in range(1, 12 * 24 * horizon_days)]
+    frame = pl.DataFrame({"t": pl.Series(steps, dtype=pl.Datetime("us", "UTC"))})
+    closed = frame.select(calendar.closed_expr(pl.col("t")).alias("c"))["c"].to_list()
+    found: datetime | None = None
+    for stamp, is_closed in zip(steps, closed, strict=True):
+        if not is_closed:
+            found = stamp
+            break
+    if found is not None:
+        for back in range(4, 0, -1):  # refine to the minute inside the 5-minute step
+            earlier = found - timedelta(minutes=back)
+            if earlier > now and market_status(earlier, calendar).value == "OPEN":
+                found = earlier
+                break
+    if len(_OPEN_CACHE) > 64:
+        _OPEN_CACHE.clear()
+    _OPEN_CACHE[key] = found
+    return found
+
+
 def market_context(
     frames: dict[Timeframe, pl.DataFrame],
     clock: BrokerClock | None,
@@ -102,10 +138,13 @@ def market_context(
     price: float | None,
     session: str,
     market_open: bool,
+    calendar: MarketCalendar | None = None,
 ) -> dict[str, Any]:
+    reopens = None if market_open or calendar is None else next_open(now, calendar)
     return {
         "server_time": now.isoformat(),
         "session": {"code": session, "label": SESSION_LABELS.get(session, session)},
         "daily": day_stats(frames.get(Timeframe.M5), clock, now, price),
         "bar_close": bar_closes(frames, now, market_open=market_open),
+        "next_open": None if reopens is None else reopens.isoformat(),
     }

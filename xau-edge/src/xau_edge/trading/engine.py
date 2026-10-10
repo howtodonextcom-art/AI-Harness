@@ -675,6 +675,7 @@ class TradeEngine:
                     price=None if quote is None else quote.bid,
                     session=state.session,
                     market_open=snap.market_open,
+                    calendar=self.source.calendar,
                 ),
                 "generated_at": signal.generated_at.isoformat()
                 if signal.generated_at
@@ -757,6 +758,7 @@ class TradeEngine:
                     "position": position,
                     "today": self.desk.day_summary(stamp),
                     "closure_policy": self.desk.config.closure_policy.value,
+                    "limits": self._limits(quote, stamp),
                 },
                 "funnel": funnel(records, todays_signals, self.desk.trades.values(), stamp),
                 "telemetry": self.telemetry.summary(stamp),
@@ -770,6 +772,18 @@ class TradeEngine:
                 "problems": problems,
                 "engine_errors": self._errors[-3:],
             }
+
+    def _limits(self, quote: Any, stamp: datetime) -> dict[str, Any]:
+        """The governor daily limits next to where today stands."""
+        cfg = self.desk.config.governor
+        equity = self.desk.equity(quote, stamp)
+        start = self.desk.day_start_equity(stamp)
+        return {
+            "daily_loss_stop_pct": cfg.daily_loss_stop_pct,
+            "daily_loss_pct": round(self.desk.governor.daily_loss_pct(start, equity), 3),
+            "max_trades_per_day": cfg.max_trades_per_day,
+            "day_start_equity": round(start, 2),
+        }
 
     def _evidence(self) -> dict[str, Any]:
         return {

@@ -7,8 +7,10 @@ from datetime import UTC, datetime, timedelta
 import polars as pl
 
 from xau_edge.domain.timeframe import Timeframe
+from xau_edge.market_data.calendars import ftmo_calendar
+from xau_edge.market_data.session import market_status
 from xau_edge.strategies.edge_program import SERVER_CLOCK
-from xau_edge.trading.market_context import bar_closes, day_stats, market_context
+from xau_edge.trading.market_context import bar_closes, day_stats, market_context, next_open
 
 
 def m5_frame(start: datetime, closes: list[float], *, spread: float = 1.0) -> pl.DataFrame:
@@ -90,3 +92,29 @@ def test_market_context_has_a_session_label_in_vietnamese() -> None:
     assert ctx["session"]["label"] == "Âu-Mỹ chồng phiên"
     assert ctx["daily"]["day"]
     assert ctx["server_time"].startswith("2026-03-02T22:22")
+
+
+def test_next_open_is_the_first_open_minute_after_a_weekend() -> None:
+    calendar = ftmo_calendar()
+    saturday = datetime(2026, 3, 7, 12, 0, tzinfo=UTC)
+    reopens = next_open(saturday, calendar)
+    assert reopens is not None
+    assert reopens > saturday
+    assert market_status(reopens, calendar).value == "OPEN"
+    assert market_status(reopens - timedelta(minutes=1), calendar).value != "OPEN"
+    assert reopens - saturday < timedelta(days=2)
+
+
+def test_the_context_names_the_reopening_only_while_closed() -> None:
+    calendar = ftmo_calendar()
+    frame = m5_frame(DAY_START, [2000.0] * 4)
+    closed = market_context(
+        {Timeframe.M5: frame}, SERVER_CLOCK, datetime(2026, 3, 7, 12, 0, tzinfo=UTC),
+        price=None, session="OFF_HOURS", market_open=False, calendar=calendar,
+    )  # fmt: skip
+    assert closed["next_open"] is not None
+    open_ = market_context(
+        {Timeframe.M5: frame}, SERVER_CLOCK, DAY_START + timedelta(minutes=22),
+        price=2000.0, session="ASIA", market_open=True, calendar=calendar,
+    )  # fmt: skip
+    assert open_["next_open"] is None
