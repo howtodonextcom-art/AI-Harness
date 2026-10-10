@@ -319,6 +319,23 @@ test.describe("chart", () => {
     await expect(pop).toHaveCount(0);
   });
 
+  test("Esc closes the marker popover even when focus is elsewhere; a second Esc leaves fullscreen (found in the real browser)", async ({ page }) => {
+    const markers = markersClosedGolden();
+    await mock(page, view("closedPaper"), { markers });
+    await page.goto("/trade");
+    await page.getByTestId("chart-markers").locator('li[data-kind="BUY"]').getByRole("button", { name: "Xem chi tiết" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("marker-popover")).toBeVisible();
+    await page.keyboard.press("x"); // focus stays on the (still existing) list button; fullscreen on
+    await expect(page.getByTestId("fullscreen-summary")).toBeVisible();
+    await page.mouse.click(5, 450); // focus leaves the popover
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("marker-popover")).toHaveCount(0);
+    await expect(page.getByTestId("fullscreen-summary")).toBeVisible(); // first Esc only closed the popover
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("fullscreen-summary")).toHaveCount(0);
+  });
+
   test("a click on the bar that carries a marker opens its details", async ({ page }) => {
     await mock(page, view("closedPaper"), { markers: markersClosedGolden() });
     await page.goto("/trade");
@@ -356,6 +373,22 @@ test.describe("chart", () => {
     await expect.poll(async () => readout.innerText()).not.toBe(latest);
     await expect(readout).toContainText("biên");
     await expect(readout).toContainText("vol");
+  });
+
+  test("Go to latest right after a pan (inside the kinetic window) keeps follow ON (found in the real browser)", async ({ page }) => {
+    await mock(page, view("buy"));
+    await page.goto("/trade");
+    const follow = page.getByTestId("chart-follow");
+    const box = await chartBox(page);
+    await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.4);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.4, { steps: 8 });
+    await page.mouse.up();
+    await expect(follow).toHaveAttribute("aria-pressed", "false");
+    await page.getByTestId("go-latest").click(); // immediately: no waiting out the 2.5 s window
+    await page.waitForTimeout(1500);
+    await expect(follow).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByTestId("go-latest")).toHaveCount(0);
   });
 
   test("fit, latest and follow: panning away turns follow off without snapping back, Go to latest restores it", async ({ page }) => {

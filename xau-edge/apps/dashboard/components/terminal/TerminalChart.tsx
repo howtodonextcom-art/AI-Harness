@@ -168,6 +168,17 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   const hasOverlay = useRef(false);
   const [readout, setReadout] = useState<number | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  // Esc closes the marker popover from anywhere (it does not take focus), and only that: a second Esc leaves fullscreen
+  useEffect(() => {
+    if (selected === null) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopImmediatePropagation();
+      setSelected(null);
+    };
+    window.addEventListener("keydown", onEsc, true);
+    return () => window.removeEventListener("keydown", onEsc, true);
+  }, [selected]);
   const [atLatest, setAtLatest] = useState(true);
   const [measure, setMeasure] = useState<Measure>({ a: null, b: null, fixed: false });
   const [, setTick] = useState(0);
@@ -187,6 +198,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   useImperativeHandle(ref, () => ({
     fit: () => handles.current?.chart.timeScale().fitContent(),
     latest: () => {
+      interacting.current = false; // a jump to now is not the trader's scroll: follow must stay ON
       handles.current?.chart.timeScale().scrollToRealTime();
       onFollowChange(true);
     },
@@ -574,16 +586,16 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
           <span>H <b>{fmt(shown.bar.high)}</b></span>
           <span>L <b>{fmt(shown.bar.low)}</b></span>
           <span>C <b>{fmt(shown.bar.close)}</b></span>
-          <span className={shown.change >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}>
+          <span className={`hidden sm:inline ${shown.change >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}`}>
             {shown.change >= 0 ? "+" : ""}{fmt(shown.change)} ({shown.pct === null ? "—" : `${shown.pct >= 0 ? "+" : ""}${shown.pct.toFixed(2)}%`})
           </span>
-          <span className="text-slate-600 dark:text-slate-400">biên {fmt(shown.range)}</span>
-          <span className="text-slate-600 dark:text-slate-400">vol {shown.bar.tick_volume}</span>
+          <span className="hidden text-slate-600 sm:inline dark:text-slate-400">biên {fmt(shown.range)}</span>
+          <span className="hidden text-slate-600 sm:inline dark:text-slate-400">vol {shown.bar.tick_volume}</span>
         </div>
       )}
 
       {!atLatest && (
-        <button type="button" data-testid="go-latest" onClick={() => { handles.current?.chart.timeScale().scrollToRealTime(); onFollowChange(true); }} className="absolute bottom-9 right-16 z-10 rounded-md border border-sky-600 bg-sky-500/90 px-2 py-1 text-xs font-semibold text-white shadow">
+        <button type="button" data-testid="go-latest" onClick={() => { interacting.current = false; /* a jump to now is not the trader's scroll: follow must stay ON */ handles.current?.chart.timeScale().scrollToRealTime(); onFollowChange(true); }} className="absolute bottom-9 right-16 z-10 rounded-md border border-sky-600 bg-sky-500/90 px-2 py-1 text-xs font-semibold text-white shadow">
           ⇥ Về hiện tại
         </button>
       )}
@@ -643,7 +655,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         </div>
       )}
 
-      <ul data-testid="chart-legend" aria-label="Các đường trên biểu đồ" className="pointer-events-none absolute left-2 top-6 z-10 flex max-w-[70%] flex-wrap gap-x-3 gap-y-0 text-[11px] font-semibold">
+      <ul data-testid="chart-legend" aria-label="Các đường trên biểu đồ" className="pointer-events-none absolute left-2 top-12 z-10 flex max-w-[70%] sm:top-6 flex-wrap gap-x-3 gap-y-0 text-[11px] font-semibold">
         {lineSpecs.map((l) => (
           <li key={l.id} data-testid={`line-${l.title.replace(/ /g, "-")}`} style={{ color: l.color }} className="rounded bg-white/70 px-1 dark:bg-slate-900/70">
             {l.title} {l.price.toFixed(2)}
