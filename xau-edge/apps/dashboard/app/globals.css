@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* A phone held sideways (or a 200%-zoomed window) is wide but SHORT: it needs the compact controls of a phone and the
+   two-column layout of a desktop. `short` = wide enough for two columns, too short for stacked blocks; `roomy` = neither. */
+@custom-variant short (@media (min-width: 640px) and (max-height: 500px));
+@custom-variant roomy (@media (min-width: 640px) and (min-height: 501px));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

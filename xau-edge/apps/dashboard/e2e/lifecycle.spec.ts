@@ -228,3 +228,35 @@ test("offline for more than a minute: the hero is UNAVAILABLE, the old plan is f
   await expect(page.getByTestId("stale-plan")).toHaveCount(0);
   await expect(page.getByTestId("take-paper")).toBeEnabled();
 });
+
+// Pre-registered landscape/zoom gate: a wide but SHORT viewport gets two columns (chart | decision) and folded market details.
+for (const [w, h, label] of [[844, 390, "phone landscape"], [720, 450, "200% zoom"]] as const) {
+  for (const name of ["wait", "buyWatch", "buy", "openPaper"] as const) {
+    test(`${label} ${w}x${h} (${name}): price, action and at least 160 px of chart on the first screen, nothing overflows`, async ({ page }) => {
+      await mock(page, view(name));
+      await page.setViewportSize({ width: w, height: h });
+      await page.goto("/trade");
+      await expect(page.getByTestId("action-word")).toBeVisible();
+      await page.waitForTimeout(500);
+      const m = await page.evaluate(() => {
+        const q = (id: string) => document.querySelector(`[data-testid=${id}]`)!;
+        const c = q("trade-chart").getBoundingClientRect();
+        const bar = document.querySelector("[data-testid=mobile-action-bar]");
+        const floor = bar && getComputedStyle(bar).display !== "none" ? bar.getBoundingClientRect().top : innerHeight; // a short viewport has no sticky bar: the ticket is in the side column
+        return {
+          priceBottom: q("price-bid").getBoundingClientRect().bottom,
+          wordBottom: q("action-word").getBoundingClientRect().bottom,
+          chartVisible: Math.max(0, Math.min(floor, c.bottom, innerHeight) - Math.max(0, c.top)),
+          sideBySide: q("action-word").getBoundingClientRect().left > c.right - 4,
+          scrollW: document.documentElement.scrollWidth,
+          vw: innerWidth,
+        };
+      });
+      expect(m.priceBottom).toBeLessThan(h);
+      expect(m.wordBottom).toBeLessThan(h);
+      expect(m.chartVisible).toBeGreaterThanOrEqual(160);
+      expect(m.sideBySide).toBe(true);
+      expect(m.scrollW).toBeLessThanOrEqual(m.vw);
+    });
+  }
+}

@@ -68,7 +68,7 @@ export function HeroCard(c: Common) {
       </div>
       {/* a phone drops the sub line only where it repeats the "KHÔNG VÀO LỆNH" badge (a lean with no setup yet); every other state keeps it */}
       <p data-testid="action-sub" className={`mt-1 text-sm font-semibold ${waiting && t.bias.side && t.setup === "Chưa có" ? "hidden sm:block" : ""}`}>{c.sub}</p>
-      {waiting && (
+      {waiting && t.showBias && (
         <dl data-testid="bias" data-bias={t.bias.side ?? "NONE"} className="mt-1 grid grid-cols-[6rem_1fr] gap-x-2 gap-y-0.5 text-[13px]">
           <dt className="font-bold uppercase tracking-wide opacity-75"><Term id="bias">Thiên hướng</Term></dt>
           <dd data-testid="bias-value">{arrow(t.bias.side)} {t.bias.word}<span className="text-slate-800 dark:text-slate-200"> — {t.bias.side ? "chỉ là hướng thị trường nghiêng về, không phải lệnh" : "chưa có hướng ưu tiên rõ"}</span></dd>

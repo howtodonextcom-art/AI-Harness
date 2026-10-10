@@ -36,6 +36,8 @@ export interface ActionText {
   bias: BiasText;
   /** Chưa có / Đang hình thành (nến 2/6) / Đã kích hoạt */
   setup: string;
+  /** the bias and setup rows only mean something while the engine is evaluating (not closed, expired, blocked, ...) */
+  showBias: boolean;
 }
 
 const money = (v: number | null | undefined) => (v === null || v === undefined ? "—" : `${v >= 0 ? "+" : "-"}$${Math.abs(v).toFixed(2)}`);
@@ -79,6 +81,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
     when: `${whenLabel} ${whenBody}`.trim(),
     bias,
     setup,
+    showBias: a.code === "WAIT" && ["WAITING", "WATCHING", "ARMED"].includes(a.stage),
   });
 
   if (a.code === "UNAVAILABLE") {

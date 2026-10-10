@@ -455,7 +455,7 @@ export function TerminalView() {
         alertCount={alerts.filter((a) => !a.firedAt).length}
         onHelp={() => setHelp(true)}
       />
-      <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[min(28rem,62vh)] sm:h-[28rem] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
+      <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[min(28rem,62vh)] sm:h-[28rem] short:h-[calc(100dvh-11rem)] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
         {dim && <div data-testid="chart-veil" aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] bg-white/60 dark:bg-slate-950/60" />}
         {hydrated && <TerminalChart
           ref={chart}
@@ -494,12 +494,12 @@ export function TerminalView() {
   );
 
   return (
-    <main className={`mx-auto w-full max-w-[1800px] space-y-2 px-2 py-2 sm:px-3 ${showActionBar ? "pb-20 lg:pb-2" : ""}`}>
+    <main className={`mx-auto w-full max-w-[1800px] space-y-2 px-2 py-2 short:space-y-1 short:py-1 sm:px-3 ${showActionBar ? "pb-20 short:pb-2 lg:pb-2" : ""}`}>
       <div inert={modalOpen} className="space-y-2">
       <MarketBar view={view} tf={prefs.tf} zone={prefs.zone} onZone={changeZone} serverNowMs={serverNow} uiStale={uiStale} />
 
       {mode !== "LIVE" && (
-        <div role="alert" data-testid="replay-banner" className={`rounded-md border-2 px-3 py-1 text-xs font-semibold ${BAD}`}>
+        <div role="alert" data-testid="replay-banner" className={`rounded-md border-2 px-3 py-1 short:py-0 text-xs font-semibold ${BAD}`}>
           {mode.replace("_", " ")} — KHÔNG PHẢI LIVE<span className="hidden sm:inline">: dữ liệu lịch sử đã đốt phát lại qua đúng đường quyết định, không phải thị trường sống.</span>
         </div>
       )}
@@ -542,14 +542,14 @@ export function TerminalView() {
 
       {/* phone: one column in the order price -> decision -> chart -> plan; desktop: chart column | decision column,
           independent of each other so a tall decision never pushes the multi-timeframe strip down */}
-      <div data-testid="terminal-grid" className="grid items-start gap-2 [grid-template-areas:'hero'_'chart'_'mtf'_'body'] lg:grid-cols-[minmax(0,1fr)_23rem] lg:[grid-template-areas:'left_side']">
-        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:left]">
+      <div data-testid="terminal-grid" className="grid items-start gap-2 [grid-template-areas:'hero'_'chart'_'mtf'_'body'] short:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] short:[grid-template-areas:'left_side'] lg:grid-cols-[minmax(0,1fr)_23rem] lg:[grid-template-areas:'left_side']">
+        <div className="contents short:flex short:min-w-0 short:flex-col short:gap-2 short:[grid-area:left] lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:left]">
           {chartBlock}
           <div style={{ gridArea: "mtf" }} className="min-w-0">
             <MtfStrip rows={view?.timeframes ?? []} tf={prefs.tf} onFocus={focusTf} />
           </div>
         </div>
-        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:side]">
+        <div className="contents short:flex short:max-h-[calc(100dvh-4.5rem)] short:min-w-0 short:flex-col short:gap-2 short:overflow-y-auto short:[grid-area:side] lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:side]">
           <div style={{ gridArea: "hero" }} className="min-w-0">{heroNode}</div>
           <div style={{ gridArea: "body" }} className="min-w-0">{bodyNode}</div>
         </div>
@@ -588,7 +588,7 @@ export function TerminalView() {
 
       </div>
       {showActionBar && view && (
-        <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="fixed inset-x-0 bottom-0 z-[45] flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
+        <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="short:hidden fixed inset-x-0 bottom-0 z-[45] flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
           {hero?.state === "POSITION_OPEN" && position ? (
             <>
               <div className="min-w-0 flex-1 text-sm">

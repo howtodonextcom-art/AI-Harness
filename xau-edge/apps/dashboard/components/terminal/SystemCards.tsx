@@ -19,6 +19,20 @@ const NAMES: [keyof StatusStripData, string][] = [
   ["edge", "Edge (lợi thế)"],
 ];
 
+/** The state words and fixed sentences the server sends (English), in plain Vietnamese; the raw word stays as a suffix. */
+const STATE_VI: Record<string, string> = {
+  GOOD: "TỐT", RUNNING: "ĐANG CHẠY", READY: "SẴN SÀNG", ACTIVE: "ĐANG DÙNG", LOCKED: "ĐÃ KHÓA", READ_ONLY: "CHỈ ĐỌC",
+  CLOSED: "ĐÓNG", STALE: "CŨ", ERROR: "LỖI", UNAVAILABLE: "KHÔNG KHẢ DỤNG", DEGRADED: "SUY GIẢM", UNVALIDATED: "CHƯA KIỂM CHỨNG",
+};
+const DETAIL_VI: Record<string, string> = {
+  "the market is closed": "Thị trường đang đóng cửa",
+  "bars and quote are fresh": "Nến và báo giá còn mới",
+  "decisions are being computed": "Bộ máy đang tính quyết định",
+  "paper state verified against its journal": "Trạng thái bàn PAPER đã khớp nhật ký",
+  "paper only; the desk never sends an order": "Chỉ PAPER: bàn không bao giờ gửi lệnh thật",
+  UNVALIDATED_OPERATIONAL_BASELINE: "Baseline vận hành, chưa phải lợi thế đã kiểm chứng",
+};
+
 const FORWARD_VI: Record<string, string> = {
   F0: "chưa thấy setup LIVE nào",
   F1: "đã thấy setup LIVE",
@@ -35,12 +49,14 @@ export function SystemStatus({ strip }: { strip: StatusStripData | undefined }) 
       <ul className="space-y-1 text-sm">
         {NAMES.map(([key, name]) => {
           const item = strip[key] as { state: string; detail: string; label?: string };
-          const state = key === "strategy" && item.label ? item.label : item.state;
+          const raw = key === "strategy" && item.label ? item.label : item.state;
+          const state = STATE_VI[raw] ? `${STATE_VI[raw]} · ${raw}` : raw;
+          const detail = key === "forward" ? (FORWARD_VI[item.state] ?? item.detail) : key === "strategy" ? "" : (DETAIL_VI[item.detail] ?? item.detail);
           return (
             <li key={key} data-testid={`status-${key}`} className="flex flex-wrap items-center gap-2">
               <span className="w-full text-slate-600 sm:w-40 dark:text-slate-400">{name}</span>
               <span className="min-w-0 max-w-full [&>*]:max-w-full [&>*]:whitespace-normal [&>*]:break-words"><Pill value={state} tone={CHIP_TONE[item.state] ?? NEUTRAL} /></span>
-              <span className="min-w-0 flex-1 text-xs text-slate-600 dark:text-slate-400">{item.detail}</span>
+              <span title={item.detail} className="min-w-0 flex-1 text-xs text-slate-600 dark:text-slate-400">{detail}</span>
             </li>
           );
         })}

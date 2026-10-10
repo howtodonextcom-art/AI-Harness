@@ -131,7 +131,7 @@ test.describe("the real chart", () => {
     await page.getByTestId("chart-tf-M1").click();
     await expect(buy).toHaveAttribute("data-bar-time", "2025-12-05T14:44:00.000Z");
     await page.getByTestId("chart-tf-M5").click();
-    await expect(page.getByTestId("chart-markers").locator('li[data-kind="EXIT"]')).toContainText("TAKE_PROFIT");
+    await expect(page.getByTestId("chart-markers").locator('li[data-kind="EXIT"]')).toContainText("Chạm TP");
     await buy.getByRole("button", { name: "Xem chi tiết" }).focus();
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("marker-popover")).toContainText("Tín hiệu MUA");
@@ -156,7 +156,7 @@ test.describe("paper lifecycle through the real API", () => {
     await expect(page.getByTestId("paper-history")).toContainText("TAKE_PROFIT");
     await page.getByTestId("tab-activity").click();
     await expect(page.getByTestId("activity-feed")).toContainText("Chạm TP");
-    await expect(page.getByTestId("chart-markers")).toContainText(/TAKE_PROFIT/);
+    await expect(page.getByTestId("chart-markers")).toContainText(/Chạm TP/);
     await shot(page, "08-replay-exit-take-profit");
     await page.goto("/journal");
     const row = page.getByTestId("journal-row").first();
@@ -164,7 +164,7 @@ test.describe("paper lifecycle through the real API", () => {
     await expect(row).toContainText("Chạm TP");
     await expect(page.getByTestId("journal-replay-banner")).toContainText("KHÔNG PHẢI LIVE");
     await page.getByTestId("journal-detail-toggle").first().click();
-    await expect(page.getByTestId("journal-detail")).toContainText("ACCEPTANCE_REPLAY");
+    await expect(page.getByTestId("journal-detail")).toContainText("ACCEPTANCE REPLAY");
     await shot(page, "12-replay-journal", true);
     // journal -> chart: the link lands on the trade, on the right timeframe, with its markers
     await page.getByTestId("journal-view-on-chart").first().click();
@@ -235,7 +235,11 @@ test.describe("paper lifecycle through the real API", () => {
   test("TIME_EXIT", async ({ page, request }) => {
     await load(page, request, "buy_time");
     await openPaper(page);
-    await advance(request, 180);
+    // The EXITED banner lasts 30 replay-minutes after the close and the replay steps one M5 close at a time. A single
+    // 180-minute jump would put the exit (at +120) 60 minutes in the past, so the banner could only be seen by luck
+    // (a poll landing mid catch-up): that was the TRADE-07 flake. Stay inside the window instead.
+    await advance(request, 110);
+    await advance(request, 15);
     await expect(hero(page)).toHaveAttribute("data-hero-state", "EXITED", { timeout: 20_000 });
     await page.getByTestId("tab-position").click();
     await expect(page.getByTestId("paper-history")).toContainText("TIME_EXIT");
@@ -263,7 +267,8 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
   test("corrupt paper state fails closed and says so", async ({ page, request }) => {
     await load(page, request, "paper_corrupt");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "UNAVAILABLE");
-    await expect(page.getByTestId("hero-problems")).toContainText("PAPER_STATE_ERROR");
+    await expect(page.getByTestId("hero-problems")).toContainText("Trạng thái bàn PAPER không khớp nhật ký");
+    await expect(page.getByTestId("conditions").locator("details").first()).toContainText("PAPER_STATE_ERROR"); // the code is in the technical details
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await shot(page, "16-replay-paper-state-error");
   });

@@ -28,7 +28,7 @@ interface Props {
   onHelp: () => void;
 }
 
-const btn = "h-8 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-semibold";
+const btn = "h-8 short:h-7 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-semibold";
 const shown = "inline-flex";
 const on = "border-sky-600 bg-sky-500/15 text-sky-800 dark:text-sky-200";
 const off = "border-slate-400 hover:bg-slate-500/10";
@@ -48,7 +48,7 @@ export function ChartToolbar(p: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [price, setPrice] = useState("");
   const [more, setMore] = useState(false); // phone only: the secondary tools
-  const sec = `${more ? "inline-flex" : "hidden"} sm:inline-flex`; // a phone shows only the timeframes, fullscreen and ⋯
+  const sec = `${more ? "inline-flex" : "hidden"} roomy:inline-flex`; // a phone shows only the timeframes, fullscreen and ⋯
 
   const submitAlert = () => {
     const v = parseDecimal(price);
@@ -80,7 +80,7 @@ export function ChartToolbar(p: Props) {
       <span className="mx-1 hidden h-5 w-px bg-slate-400/50 sm:block" aria-hidden="true" />
       <button type="button" data-testid="tool-measure" title="Đo giá/thời gian (M)" aria-pressed={p.tool === "measure"} onClick={() => p.onTool(p.tool === "measure" ? "none" : "measure")} aria-label="Đo giá và thời gian" className={`${btn} ${p.tool === "measure" ? on : off} ${sec}`}>📏&nbsp;Đo</button>
       <button type="button" data-testid="tool-line" title="Vẽ đường ngang (T)" aria-pressed={p.tool === "line"} onClick={() => p.onTool(p.tool === "line" ? "none" : "line")} aria-label="Vẽ đường ngang" className={`${btn} ${p.tool === "line" ? on : off} ${sec}`}>—&nbsp;Đường</button>
-      <div className={`relative ${more ? "block" : "hidden"} sm:block`}>
+      <div className={`relative ${more ? "block" : "hidden"} roomy:block`}>
         <button type="button" data-testid="tool-alert" title="Cảnh báo giá" aria-expanded={alertOpen} onClick={() => { setAlertOpen(!alertOpen); setOverlayOpen(false); }} className={`${shown} ${btn} ${alertOpen ? on : off}`}>
           🔔&nbsp;Báo giá{p.alertCount > 0 ? ` (${p.alertCount})` : ""}
         </button>
@@ -95,7 +95,7 @@ export function ChartToolbar(p: Props) {
           </div>
         )}
       </div>
-      <div className={`relative ${more ? "block" : "hidden"} sm:block`}>
+      <div className={`relative ${more ? "block" : "hidden"} roomy:block`}>
         <button type="button" data-testid="overlay-menu" title="Lớp phủ" aria-expanded={overlayOpen} aria-haspopup="true" onClick={() => { setOverlayOpen(!overlayOpen); setAlertOpen(false); }} aria-label="Lớp phủ trên biểu đồ" className={`${shown} ${btn} ${overlayOpen ? on : off}`}>☰&nbsp;Lớp phủ</button>
         {overlayOpen && (
           <div role="group" aria-label="Lớp phủ trên biểu đồ" className="absolute right-0 top-9 z-30 w-56 space-y-1 rounded-lg border border-slate-400 bg-white p-2 text-xs shadow-lg sm:left-0 sm:right-auto dark:bg-slate-900" onKeyDown={(e) => e.key === "Escape" && setOverlayOpen(false)}>
@@ -113,7 +113,7 @@ export function ChartToolbar(p: Props) {
         )}
       </div>
       <button type="button" data-testid="shortcut-help" title="Phím tắt (?)" aria-label="Xem phím tắt" onClick={p.onHelp} className={`${btn} ${off} ${sec}`}>⌨</button>
-      <button type="button" data-testid="toolbar-more" aria-expanded={more} aria-label={more ? "Ẩn công cụ" : "Thêm công cụ"} onClick={() => setMore(!more)} className={`${shown} ${btn} ${more ? on : off} sm:hidden`}>⋯</button>
+      <button type="button" data-testid="toolbar-more" aria-expanded={more} aria-label={more ? "Ẩn công cụ" : "Thêm công cụ"} onClick={() => setMore(!more)} className={`${shown} ${btn} ${more ? on : off} roomy:hidden`}>⋯</button>
     </div>
   );
 }

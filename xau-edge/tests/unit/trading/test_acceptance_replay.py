@@ -190,3 +190,29 @@ def test_open_position_is_hold_and_the_exit_is_exit(tmp_path: Path) -> None:
     world.advance_minutes(50)
     assert world.engine.view()["hero"]["action"]["code"] == "EXIT"
     world.close()
+
+
+def test_the_time_exit_banner_lasts_thirty_replay_minutes_so_a_long_jump_cannot_show_it(
+    tmp_path: Path,
+) -> None:
+    """TRADE-07 flake root cause: EXIT is a 30-minute banner, replay steps one M5 close at a time.
+
+    Jumping past ``max_hold + 30 min`` in one go leaves the exit already in the past (WAIT); a
+    browser test could only have seen EXITED by a poll landing mid catch-up. The product is right;
+    the test must stay inside the window.
+    """
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["buy_time"])
+    world.engine.paper_open(setup_id=world.engine.view()["decision"]["setup_id"], risk_pct=0.25)
+    world.advance_minutes(110)
+    assert world.engine.view()["hero"]["action"]["code"] == "HOLD"  # 10 minutes of hold left
+    world.advance_minutes(15)  # past the 120-minute hold, 5 minutes after the exit
+    exited = world.engine.view()
+    assert exited["hero"]["action"]["code"] == "EXIT"
+    assert exited["desk"]["last_exit"]["exit_reason"] == "TIME_EXIT"
+    world.advance_minutes(
+        60
+    )  # 60 minutes later the banner is gone, the exit stays in the journal and last_exit
+    later = world.engine.view()
+    assert later["hero"]["action"]["code"] != "EXIT"
+    assert later["desk"]["last_exit"]["exit_reason"] == "TIME_EXIT"
+    world.close()
