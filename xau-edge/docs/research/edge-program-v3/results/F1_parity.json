@@ -1,0 +1,21 @@
+{
+ "family": "F1-USDRES-z2.0",
+ "kind": "oracle parity (vectorized vs reference); outcome statistics deliberately not computed",
+ "window": [
+  "2012-01-01T00:00:00+00:00",
+  "2012-07-01T00:00:00+00:00"
+ ],
+ "events_compared": 132,
+ "trades_compared": 123,
+ "differences": {
+  "event_set": 0,
+  "direction": 0,
+  "exit_time": 0,
+  "reason": 0,
+  "gross_r": 0,
+  "base_net_before_swap_r": 0
+ },
+ "verdict": "PASS",
+ "code_head": "9fe7fce679a991c528405262768e324fa5ca0f59",
+ "generated_at": "2026-10-11T06:22:48.184809+00:00"
+}
