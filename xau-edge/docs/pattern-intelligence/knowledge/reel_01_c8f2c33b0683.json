@@ -1,0 +1,216 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "c8f2c33b0683",
+    "source_url": "https://www.facebook.com/share/r/1K62RxdSWq/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1083920181246563",
+    "resolved_url": "https://m.facebook.com/watch/?v=1083920181246563&_rdr",
+    "title": "152 reactions · 16 comments | 🔥 Bearish Adam & Eve Pattern Explained | 90% Traders Miss This Powerful Reversal Signal! 📉 #BearishAdamAndEve #PriceAction #TradingStrategy #TechnicalAnalysis #ChartPattern | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 14.89,
+    "width": 1080,
+    "height": 1906,
+    "has_audio": true,
+    "file_sha256": "2661d01ea2e424753eef0a605b65087c7d7629934cf4a86cf8a0435028cd15e5",
+    "keyframe_count": 10,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:36:08+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "c8f2c33b0683",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Adam and Eve double top/bottom pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r1-pattern",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Adam and Eve double top/bottom (SHORT) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r1-entry",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [
+        "frame@12000ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY SHORT where price breaks the support line (neckline), circled",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r1-stop",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [],
+      "assertion": "No stop-loss is drawn in the viewed frames.",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "LOW"
+    },
+    {
+      "claim_id": "r1-outcome",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [
+        "frame@14500ms"
+      ],
+      "assertion": "The final frames show: price falls after the break.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r1-repeatable",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [
+        "frame@14500ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r1-asr",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r1-caption",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 🔥 Bearish Adam & Eve Pattern Explained | 90% Traders Miss This Powerful Reversal Signal! 📉 #BearishAdamAndEve #PriceAction #TradingStrategy #TechnicalAnalysis #ChartPatte",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r1-external",
+      "video_id": "c8f2c33b0683",
+      "evidence_refs": [],
+      "assertion": "Independent evidence on the Adam and Eve double top/bottom family.",
+      "status": "SUPPORTED_EXTERNALLY",
+      "verification": "Bulkowski describes the Adam/Eve double bottom with explicit shapes and a close-above-the-centre-peak confirmation; his Adam & Adam variant: 16% break-even failure, rank 26 of 39; trading before confirmation fails 48% of the time.",
+      "citations": [
+        "bk-adam"
+      ],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t1-entry",
+      "source_url": "https://www.facebook.com/share/r/1K62RxdSWq/?mibextid=wwXIfr",
+      "asset_sha256": "2661d01ea2e424753eef0a605b65087c7d7629934cf4a86cf8a0435028cd15e5",
+      "locator": "frame@12000ms",
+      "observation": "ENTRY SHORT where price breaks the support line (neckline), circled",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "adam_and_eve",
+      "rule": "entry",
+      "code_ref": "src/xau_edge/structure/reversal.py",
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t1-stop",
+      "source_url": "https://www.facebook.com/share/r/1K62RxdSWq/?mibextid=wwXIfr",
+      "asset_sha256": "2661d01ea2e424753eef0a605b65087c7d7629934cf4a86cf8a0435028cd15e5",
+      "locator": "n/a",
+      "observation": "no stop-loss label in the viewed frames",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "adam_and_eve",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "LOW"
+    }
+  ],
+  "external_sources": [
+    {
+      "source_id": "bk-adam",
+      "url": "https://www.thepatternsite.com/aadb.html",
+      "title": "Bulkowski, Adam and Adam double bottom",
+      "quality": "MEDIUM",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Narrow Adam bottoms and rounded Eve bottoms; confirmed when price closes above the centre peak; Adam & Adam: 16% break-even failure rate, rank 26 of 39, 1,154 perfect trades; buying before confirmation: price continues lower 48% of the time."
+    }
+  ],
+  "concepts": [
+    {
+      "concept_id": "adam_and_eve",
+      "name": "Adam and Eve double top/bottom",
+      "alt_names": [
+        "Adam And Eve"
+      ],
+      "video_id": "c8f2c33b0683",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@14500ms"
+      ],
+      "plain_language": "Adam and Eve double top/bottom as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY SHORT where price breaks the support line (neckline), circled",
+        "stop_as_drawn": "none drawn",
+        "target_as_drawn": "support line level below; no TP label"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY SHORT where price breaks the support line (neckline), circled",
+      "stop_loss": "none drawn",
+      "target": "support line level below; no TP label",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "adam_and_eve",
+      "requirement_id": "PI-ADAM_AND_EVE",
+      "source_file": "src/xau_edge/structure/reversal.py",
+      "test_file": "tests/unit/structure",
+      "implementation_status": "PARTIAL: double top/bottom geometry only; the narrow-versus-rounded Adam/Eve distinction is not implemented"
+    }
+  ]
+}

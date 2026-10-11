@@ -1,0 +1,69 @@
+{
+  "rater": "single rater (the research agent); judgement scores with a one-line rationale; +-1 on any cell is plausible",
+  "candidates": {
+    "Double Top / Bottom (incl. Adam and Eve)": {
+      "scores": {"formal_definability": 4, "causal_detectability": 5, "low_repaint_risk": 4, "low_degrees_of_freedom": 3, "sufficient_frequency": 4, "plausible_mechanism": 2, "source_quality": 3, "novelty_vs_closed_research_and_baseline": 4, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 2},
+      "rationale": "Bulkowski gives explicit shapes and a close-above-centre-peak confirmation; the neckline break comes after the move has started, so it is not earlier than M5; textbook gross R:R about 0.72."
+    },
+    "Head and Shoulders / Inverse": {
+      "scores": {"formal_definability": 4, "causal_detectability": 5, "low_repaint_risk": 4, "low_degrees_of_freedom": 3, "sufficient_frequency": 2, "plausible_mechanism": 2, "source_quality": 3, "novelty_vs_closed_research_and_baseline": 4, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 1},
+      "rationale": "Clear geometry, closed-bar trigger, but 7 events in 8 years of H1."
+    },
+    "Wolfe Wave": {
+      "scores": {"formal_definability": 2, "causal_detectability": 4, "low_repaint_risk": 3, "low_degrees_of_freedom": 2, "sufficient_frequency": 3, "plausible_mechanism": 2, "source_quality": 2, "novelty_vs_closed_research_and_baseline": 4, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 1},
+      "rationale": "Rules disputed; the five reels draw the entry at P5, which cannot be known at P5; the causal versions are 3 bars later or later."
+    },
+    "Falling Wedge": {
+      "scores": {"formal_definability": 4, "causal_detectability": 3, "low_repaint_risk": 3, "low_degrees_of_freedom": 2, "sufficient_frequency": 3, "plausible_mechanism": 2, "source_quality": 4, "novelty_vs_closed_research_and_baseline": 3, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 2},
+      "rationale": "Bulkowski: five trendline touches, 3 weeks minimum, close outside a trendline; but he calls it a poor performer (26% break-even failure, rank 31 of 39); line fitting adds freedom."
+    },
+    "Rising Wedge": {
+      "scores": {"formal_definability": 4, "causal_detectability": 3, "low_repaint_risk": 3, "low_degrees_of_freedom": 2, "sufficient_frequency": 3, "plausible_mechanism": 1, "source_quality": 4, "novelty_vs_closed_research_and_baseline": 3, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 1},
+      "rationale": "Same geometry rules; Bulkowski ranks down breakouts last (36 of 36, 51% break-even failure), so the mechanism score is the lowest."
+    },
+    "Triangle (ascending, descending, symmetrical)": {
+      "scores": {"formal_definability": 3, "causal_detectability": 3, "low_repaint_risk": 3, "low_degrees_of_freedom": 2, "sufficient_frequency": 3, "plausible_mechanism": 2, "source_quality": 4, "novelty_vs_closed_research_and_baseline": 3, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 2},
+      "rationale": "Trendline choice changes the pattern; breakout close is causal."
+    },
+    "Flag / Pennant": {
+      "scores": {"formal_definability": 2, "causal_detectability": 4, "low_repaint_risk": 3, "low_degrees_of_freedom": 2, "sufficient_frequency": 4, "plausible_mechanism": 2, "source_quality": 2, "novelty_vs_closed_research_and_baseline": 2, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 3},
+      "rationale": "Pole and consolidation definitions vary; continuation after a pullback overlaps V1 H04."
+    },
+    "Cup and Handle": {
+      "scores": {"formal_definability": 2, "causal_detectability": 3, "low_repaint_risk": 3, "low_degrees_of_freedom": 2, "sufficient_frequency": 1, "plausible_mechanism": 2, "source_quality": 4, "novelty_vs_closed_research_and_baseline": 3, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 1},
+      "rationale": "Bulkowski's rank 3 of 39 is idealised and his rules allow discretion; 7-65 week cups are rare on intraday gold."
+    },
+    "Diamond": {
+      "scores": {"formal_definability": 1, "causal_detectability": 2, "low_repaint_risk": 2, "low_degrees_of_freedom": 1, "sufficient_frequency": 1, "plausible_mechanism": 1, "source_quality": 1, "novelty_vs_closed_research_and_baseline": 4, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 1},
+      "rationale": "No shared geometry; rare; four of the 29 reels."
+    },
+    "Butterfly / Dragon / harmonics": {
+      "scores": {"formal_definability": 3, "causal_detectability": 3, "low_repaint_risk": 1, "low_degrees_of_freedom": 2, "sufficient_frequency": 2, "plausible_mechanism": 1, "source_quality": 2, "novelty_vs_closed_research_and_baseline": 4, "earlier_actionable_timing": 2, "relevance_to_prior_xau_failure": 1},
+      "rationale": "Ratios are explicit (Fibonacci ranges) but are chosen with tolerance by eye; entry at the unconfirmed completion point D is 'earlier' only by acting before the pattern is knowable."
+    },
+    "BOS / CHoCH (structure shift)": {
+      "scores": {"formal_definability": 4, "causal_detectability": 5, "low_repaint_risk": 5, "low_degrees_of_freedom": 4, "sufficient_frequency": 5, "plausible_mechanism": 2, "source_quality": 3, "novelty_vs_closed_research_and_baseline": 1, "earlier_actionable_timing": 2, "relevance_to_prior_xau_failure": 3},
+      "rationale": "Already implemented in structure/swings.py and used by the baseline (ADR-0012): adds no new information."
+    },
+    "Break-and-Retest": {
+      "scores": {"formal_definability": 3, "causal_detectability": 4, "low_repaint_risk": 4, "low_degrees_of_freedom": 3, "sufficient_frequency": 4, "plausible_mechanism": 2, "source_quality": 1, "novelty_vs_closed_research_and_baseline": 1, "earlier_actionable_timing": 2, "relevance_to_prior_xau_failure": 4},
+      "rationale": "Overlaps V2 H08; X sources are educational posts and signals."
+    },
+    "Liquidity Sweep + Reclaim": {
+      "scores": {"formal_definability": 3, "causal_detectability": 4, "low_repaint_risk": 4, "low_degrees_of_freedom": 3, "sufficient_frequency": 4, "plausible_mechanism": 2, "source_quality": 1, "novelty_vs_closed_research_and_baseline": 0, "earlier_actionable_timing": 2, "relevance_to_prior_xau_failure": 3},
+      "rationale": "This is V2 H07 (12 variants, Stage 1 failed)."
+    },
+    "Equal Highs / Lows (liquidity pools)": {
+      "scores": {"formal_definability": 3, "causal_detectability": 4, "low_repaint_risk": 4, "low_degrees_of_freedom": 4, "sufficient_frequency": 4, "plausible_mechanism": 1, "source_quality": 1, "novelty_vs_closed_research_and_baseline": 3, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 1},
+      "rationale": "A level concept; the reaction to it is the swept level of H07."
+    },
+    "Quasimodo / Over-and-Under": {
+      "scores": {"formal_definability": 2, "causal_detectability": 4, "low_repaint_risk": 3, "low_degrees_of_freedom": 2, "sufficient_frequency": 3, "plausible_mechanism": 1, "source_quality": 1, "novelty_vs_closed_research_and_baseline": 3, "earlier_actionable_timing": 2, "relevance_to_prior_xau_failure": 2},
+      "rationale": "Vendor-specific; a head-and-shoulders variant with a structure break."
+    },
+    "Supply / Demand zones": {
+      "scores": {"formal_definability": 1, "causal_detectability": 2, "low_repaint_risk": 2, "low_degrees_of_freedom": 1, "sufficient_frequency": 3, "plausible_mechanism": 1, "source_quality": 1, "novelty_vs_closed_research_and_baseline": 3, "earlier_actionable_timing": 1, "relevance_to_prior_xau_failure": 1},
+      "rationale": "No shared construction of a zone."
+    }
+  }
+}

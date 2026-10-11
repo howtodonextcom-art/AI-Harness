@@ -1,0 +1,194 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "a3b3d8a92e93",
+    "source_url": "https://www.facebook.com/share/r/1EvyEX4iab/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1235734626292573",
+    "resolved_url": "https://m.facebook.com/watch/?v=1235734626292573&_rdr",
+    "title": "294 reactions · 20 comments | 🦋 Bearish Butterfly Pattern Explained | Powerful Reversal Signal Every Trader Should Know! 📉💥 #BearishButterfly #TradingPattern #PriceAction #TechnicalAnalysis #ChartPattern | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 12.15,
+    "width": 1088,
+    "height": 1936,
+    "has_audio": true,
+    "file_sha256": "4d33cc7d8dd5888c7f01cc09f12529086e0d6aed98f4ecf0e8213fc37a23229c",
+    "keyframe_count": 14,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:36:46+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "a3b3d8a92e93",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Butterfly pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r4-pattern",
+      "video_id": "a3b3d8a92e93",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Butterfly (SHORT) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r4-entry",
+      "video_id": "a3b3d8a92e93",
+      "evidence_refs": [
+        "frame@7500ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY SHORT drawn at point D, the completion of X-A-B-C-D, before any reversal bar",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r4-stop",
+      "video_id": "a3b3d8a92e93",
+      "evidence_refs": [],
+      "assertion": "No stop-loss is drawn in the viewed frames.",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "LOW"
+    },
+    {
+      "claim_id": "r4-outcome",
+      "video_id": "a3b3d8a92e93",
+      "evidence_refs": [
+        "frame@11500ms"
+      ],
+      "assertion": "The final frames show: price falls.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r4-repeatable",
+      "video_id": "a3b3d8a92e93",
+      "evidence_refs": [
+        "frame@11500ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r4-asr",
+      "video_id": "a3b3d8a92e93",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r4-caption",
+      "video_id": "a3b3d8a92e93",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 🦋 Bearish Butterfly Pattern Explained | Powerful Reversal Signal Every Trader Should Know! 📉💥 #BearishButterfly #TradingPattern #PriceAction #TechnicalAnalysis #ChartPatt",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t4-entry",
+      "source_url": "https://www.facebook.com/share/r/1EvyEX4iab/?mibextid=wwXIfr",
+      "asset_sha256": "4d33cc7d8dd5888c7f01cc09f12529086e0d6aed98f4ecf0e8213fc37a23229c",
+      "locator": "frame@7500ms",
+      "observation": "ENTRY SHORT drawn at point D, the completion of X-A-B-C-D, before any reversal bar",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "butterfly",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t4-stop",
+      "source_url": "https://www.facebook.com/share/r/1EvyEX4iab/?mibextid=wwXIfr",
+      "asset_sha256": "4d33cc7d8dd5888c7f01cc09f12529086e0d6aed98f4ecf0e8213fc37a23229c",
+      "locator": "n/a",
+      "observation": "no stop-loss label in the viewed frames",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "butterfly",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "LOW"
+    }
+  ],
+  "external_sources": [],
+  "concepts": [
+    {
+      "concept_id": "butterfly",
+      "name": "Butterfly",
+      "alt_names": [
+        "Butterfly"
+      ],
+      "video_id": "a3b3d8a92e93",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@11500ms"
+      ],
+      "plain_language": "Butterfly as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY SHORT drawn at point D, the completion of X-A-B-C-D, before any reversal bar",
+        "stop_as_drawn": "none drawn",
+        "target_as_drawn": "yellow arrow down; Fibonacci ratios printed on the diagram (78.6%, 127-141%, 161.8-224%, 38.2-88.6%)"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY SHORT drawn at point D, the completion of X-A-B-C-D, before any reversal bar",
+      "stop_loss": "none drawn",
+      "target": "yellow arrow down; Fibonacci ratios printed on the diagram (78.6%, 127-141%, 161.8-224%, 38.2-88.6%)",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "butterfly",
+      "requirement_id": "PI-BUTTERFLY",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

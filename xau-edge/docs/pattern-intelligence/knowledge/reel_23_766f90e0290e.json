@@ -1,0 +1,220 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "766f90e0290e",
+    "source_url": "https://www.facebook.com/share/r/1CtcdxrwGs/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1046195271637740",
+    "resolved_url": "https://m.facebook.com/watch/?v=1046195271637740&_rdr",
+    "title": "16K views · 194 reactions | Bullish Diamond 💎🚀 👀 This Pattern Can Explode After Breakout! Bullish Diamond forming… 🔥 Will buyers take control? 📈 #DiamondPattern #TradingPatterns #PriceAction #TechnicalAnalysis #TradingSetup #chartpatterns | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 19.07,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "42306e8a0aba3d4f0a0a0e943b9e64d66b5e2895ae4ec645553890687e977a68",
+    "keyframe_count": 38,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:40:24+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "766f90e0290e",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Diamond pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r23-pattern",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Diamond (LONG) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r23-entry",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "frame@15000ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY at the diamond's upper right break",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r23-stop",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "frame@15000ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS (pick 5)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r23-outcome",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "frame@18500ms"
+      ],
+      "assertion": "The final frames show: price rises to the target.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r23-repeatable",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "frame@18500ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r23-asr",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r23-caption",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): Bullish Diamond 💎🚀 👀 This Pattern Can Explode After Breakout! Bullish Diamond forming… 🔥 Will buyers take control? 📈 #DiamondPattern #TradingPatterns #PriceAction #Techni",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r23-third0",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "frame@18500ms"
+      ],
+      "assertion": "Third-party content appears: watermark 'EASY TRADING' (another channel's mark)",
+      "status": "OBSERVED",
+      "verification": "seen in the viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r23-third1",
+      "video_id": "766f90e0290e",
+      "evidence_refs": [
+        "frame@18500ms"
+      ],
+      "assertion": "Third-party content appears: film clip of an actor in the last frames",
+      "status": "OBSERVED",
+      "verification": "seen in the viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t23-entry",
+      "source_url": "https://www.facebook.com/share/r/1CtcdxrwGs/?mibextid=wwXIfr",
+      "asset_sha256": "42306e8a0aba3d4f0a0a0e943b9e64d66b5e2895ae4ec645553890687e977a68",
+      "locator": "frame@15000ms",
+      "observation": "ENTRY at the diamond's upper right break",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "diamond",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t23-stop",
+      "source_url": "https://www.facebook.com/share/r/1CtcdxrwGs/?mibextid=wwXIfr",
+      "asset_sha256": "42306e8a0aba3d4f0a0a0e943b9e64d66b5e2895ae4ec645553890687e977a68",
+      "locator": "frame@15000ms",
+      "observation": "STOP-LOSS (pick 5)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "diamond",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [],
+  "concepts": [
+    {
+      "concept_id": "diamond",
+      "name": "Diamond",
+      "alt_names": [
+        "Diamond"
+      ],
+      "video_id": "766f90e0290e",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@18500ms"
+      ],
+      "plain_language": "Diamond as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY at the diamond's upper right break",
+        "stop_as_drawn": "STOP-LOSS (pick 5)",
+        "target_as_drawn": "TARGET line (pick 4)"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY at the diamond's upper right break",
+      "stop_loss": "STOP-LOSS (pick 5)",
+      "target": "TARGET line (pick 4)",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "diamond",
+      "requirement_id": "PI-DIAMOND",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

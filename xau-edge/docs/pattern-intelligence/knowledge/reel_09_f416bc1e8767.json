@@ -1,0 +1,196 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "f416bc1e8767",
+    "source_url": "https://www.facebook.com/share/r/1JdC1QtNWh/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1616550050029104",
+    "resolved_url": "https://m.facebook.com/watch/?v=1616550050029104&_rdr",
+    "title": "11K views · 89 reactions | 🚀 Bullish Flag Pattern Spotted! Is the Next Breakout About to Explode? 📈 Don't Miss This Trading Opportunity! #BullishFlag #PriceAction #TechnicalAnalysis #LearnTrading #TradingStrategy #ChartPattern | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 10.29,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "18e74aca88d377d2aa5a01f05289e6a00b3e78d7d3ad2adee46cbd132160bd30",
+    "keyframe_count": 6,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:37:46+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "f416bc1e8767",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Flag pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r9-pattern",
+      "video_id": "f416bc1e8767",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Flag (LONG) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r9-entry",
+      "video_id": "f416bc1e8767",
+      "evidence_refs": [
+        "frame@5500ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY LONG at the flag breakout",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r9-stop",
+      "video_id": "f416bc1e8767",
+      "evidence_refs": [
+        "frame@5500ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS under the flag (pick 2)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r9-outcome",
+      "video_id": "f416bc1e8767",
+      "evidence_refs": [
+        "frame@10000ms"
+      ],
+      "assertion": "The final frames show: price rises.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r9-repeatable",
+      "video_id": "f416bc1e8767",
+      "evidence_refs": [
+        "frame@10000ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r9-asr",
+      "video_id": "f416bc1e8767",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r9-caption",
+      "video_id": "f416bc1e8767",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 🚀 Bullish Flag Pattern Spotted! Is the Next Breakout About to Explode? 📈 Don't Miss This Trading Opportunity! #BullishFlag #PriceAction #TechnicalAnalysis #LearnTrading #",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t9-entry",
+      "source_url": "https://www.facebook.com/share/r/1JdC1QtNWh/?mibextid=wwXIfr",
+      "asset_sha256": "18e74aca88d377d2aa5a01f05289e6a00b3e78d7d3ad2adee46cbd132160bd30",
+      "locator": "frame@5500ms",
+      "observation": "ENTRY LONG at the flag breakout",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "flag",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t9-stop",
+      "source_url": "https://www.facebook.com/share/r/1JdC1QtNWh/?mibextid=wwXIfr",
+      "asset_sha256": "18e74aca88d377d2aa5a01f05289e6a00b3e78d7d3ad2adee46cbd132160bd30",
+      "locator": "frame@5500ms",
+      "observation": "STOP-LOSS under the flag (pick 2)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "flag",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [],
+  "concepts": [
+    {
+      "concept_id": "flag",
+      "name": "Flag",
+      "alt_names": [
+        "Flag"
+      ],
+      "video_id": "f416bc1e8767",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@10000ms"
+      ],
+      "plain_language": "Flag as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY LONG at the flag breakout",
+        "stop_as_drawn": "STOP-LOSS under the flag (pick 2)",
+        "target_as_drawn": "arrow; height of the flagpole stated in the diagram"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY LONG at the flag breakout",
+      "stop_loss": "STOP-LOSS under the flag (pick 2)",
+      "target": "arrow; height of the flagpole stated in the diagram",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "flag",
+      "requirement_id": "PI-FLAG",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

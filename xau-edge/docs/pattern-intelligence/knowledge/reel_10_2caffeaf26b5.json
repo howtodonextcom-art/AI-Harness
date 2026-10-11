@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "2caffeaf26b5",
+    "source_url": "https://www.facebook.com/share/r/1GcwUuYh7T/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1034847086187646",
+    "resolved_url": "https://m.facebook.com/watch/?v=1034847086187646&_rdr",
+    "title": "12K views · 85 reactions | 🔥 Don't Ignore This Falling Wedge Pattern! The Next Breakout Could Surprise Everyone! 📈💥 #FallingWedge #PriceAction #ChartPattern #TradingSetup #TechnicalAnalysis #tradingstrategy | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 19.44,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "8baf72b017f8a40c69d6de2b2ad6f1893c791a23e5e0bf02be6daff5b2cd2dae",
+    "keyframe_count": 12,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:37:58+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "ASR returned music lyrics, no speech or a hallucinated phrase; not committed (third-party content).",
+  "visual": [
+    {
+      "video_id": "2caffeaf26b5",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Falling Wedge pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r10-pattern",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Falling Wedge (LONG) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r10-entry",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [
+        "frame@8000ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY LONG at the breakout",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r10-stop",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [
+        "frame@11500ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS (pick 3)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r10-outcome",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [
+        "frame@19000ms"
+      ],
+      "assertion": "The final frames show: price rises toward the first take-profit.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r10-repeatable",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [
+        "frame@19000ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r10-asr",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned background song lyrics: Portuguese song lyrics",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r10-caption",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 🔥 Don't Ignore This Falling Wedge Pattern! The Next Breakout Could Surprise Everyone! 📈💥 #FallingWedge #PriceAction #ChartPattern #TradingSetup #TechnicalAnalysis #tradin",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r10-external",
+      "video_id": "2caffeaf26b5",
+      "evidence_refs": [],
+      "assertion": "Independent evidence on the Falling Wedge family.",
+      "status": "CONTRADICTED_EXTERNALLY",
+      "verification": "The captions call it a powerful bullish reversal; Bulkowski (stocks, idealised) calls the falling wedge a poor performer: 26% break-even failure up, rank 31 of 39.",
+      "citations": [
+        "bk-fallwedge"
+      ],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t10-entry",
+      "source_url": "https://www.facebook.com/share/r/1GcwUuYh7T/?mibextid=wwXIfr",
+      "asset_sha256": "8baf72b017f8a40c69d6de2b2ad6f1893c791a23e5e0bf02be6daff5b2cd2dae",
+      "locator": "frame@8000ms",
+      "observation": "ENTRY LONG at the breakout",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "falling_wedge",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t10-stop",
+      "source_url": "https://www.facebook.com/share/r/1GcwUuYh7T/?mibextid=wwXIfr",
+      "asset_sha256": "8baf72b017f8a40c69d6de2b2ad6f1893c791a23e5e0bf02be6daff5b2cd2dae",
+      "locator": "frame@11500ms",
+      "observation": "STOP-LOSS (pick 3)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "falling_wedge",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [
+    {
+      "source_id": "bk-fallwedge",
+      "url": "https://thepatternsite.com/fallwedge.html",
+      "title": "Bulkowski, Falling wedge",
+      "quality": "MEDIUM",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Five trendline touches, minimum 3 weeks; confirmed by a close outside a trendline; break-even failure 26% up / 29% down, rank 31 of 39; 'a poor performer as far as bullish chart patterns go'."
+    }
+  ],
+  "concepts": [
+    {
+      "concept_id": "falling_wedge",
+      "name": "Falling Wedge",
+      "alt_names": [
+        "Falling Wedge"
+      ],
+      "video_id": "2caffeaf26b5",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@19000ms"
+      ],
+      "plain_language": "Falling Wedge as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY LONG at the breakout",
+        "stop_as_drawn": "STOP-LOSS (pick 3)",
+        "target_as_drawn": "TAKE PROFIT 1, 2 and 3 levels (picks 4-5)"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY LONG at the breakout",
+      "stop_loss": "STOP-LOSS (pick 3)",
+      "target": "TAKE PROFIT 1, 2 and 3 levels (picks 4-5)",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "falling_wedge",
+      "requirement_id": "PI-FALLING_WEDGE",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

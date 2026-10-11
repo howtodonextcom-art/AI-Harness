@@ -1,0 +1,230 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "d6d6ed91e6be",
+    "source_url": "https://www.facebook.com/share/r/1Lq6tLQHM5/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "884938891366744",
+    "resolved_url": "https://m.facebook.com/watch/?v=884938891366744&_rdr",
+    "title": "75K views · 430 reactions | “Bearish Wolf Wave Pattern 🐺📉 — The Market’s Next BIG Drop Could Be Here! 🚨🔥” #WolfWavePattern #TechnicalAnalysis #PriceAction #ChartPattern #LearnTrading #MarketAnalysis | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 20.93,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "b84c6ce6ababe6c84d1538a0b0ce6898830dd6f7bc1686d1fc20b452a4e46b48",
+    "keyframe_count": 20,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:41:09+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "d6d6ed91e6be",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Wolfe Wave pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r27-pattern",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Wolfe Wave (SHORT) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r27-entry",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "frame@14000ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY THIS ZONE near point 5",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r27-stop",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "frame@16500ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS box (pick 4)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r27-outcome",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "frame@20500ms"
+      ],
+      "assertion": "The final frames show: price falls into the target box, then partly rebounds.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r27-repeatable",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "frame@20500ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r27-asr",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r27-caption",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): “Bearish Wolf Wave Pattern 🐺📉 — The Market’s Next BIG Drop Could Be Here! 🚨🔥” #WolfWavePattern #TechnicalAnalysis #PriceAction #ChartPattern #LearnTrading #MarketAnalysis",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r27-external",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [],
+      "assertion": "Independent evidence on the Wolfe Wave family.",
+      "status": "SUPPORTED_EXTERNALLY",
+      "verification": "The five-point geometry matches published rules; the only independent statistic (47% to the EPA) assumes an entry at the exact P5 extreme.",
+      "citations": [
+        "bk-wolfe"
+      ],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r27-third0",
+      "video_id": "d6d6ed91e6be",
+      "evidence_refs": [
+        "frame@20500ms"
+      ],
+      "assertion": "Third-party content appears: film clips of actors in the lower band",
+      "status": "OBSERVED",
+      "verification": "seen in the viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t27-entry",
+      "source_url": "https://www.facebook.com/share/r/1Lq6tLQHM5/?mibextid=wwXIfr",
+      "asset_sha256": "b84c6ce6ababe6c84d1538a0b0ce6898830dd6f7bc1686d1fc20b452a4e46b48",
+      "locator": "frame@14000ms",
+      "observation": "ENTRY THIS ZONE near point 5",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "wolfe_wave",
+      "rule": "entry",
+      "code_ref": "src/xau_edge/structure/wolfe.py",
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t27-stop",
+      "source_url": "https://www.facebook.com/share/r/1Lq6tLQHM5/?mibextid=wwXIfr",
+      "asset_sha256": "b84c6ce6ababe6c84d1538a0b0ce6898830dd6f7bc1686d1fc20b452a4e46b48",
+      "locator": "frame@16500ms",
+      "observation": "STOP-LOSS box (pick 4)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "wolfe_wave",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [
+    {
+      "source_id": "bk-wolfe",
+      "url": "https://thepatternsite.com/WolfeWaveBull.html",
+      "title": "Bulkowski, Wolfe wave",
+      "quality": "MEDIUM",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "47% meet the EPA under perfect entries at the P5 low (cannot be duplicated), rank 34 of 39."
+    }
+  ],
+  "concepts": [
+    {
+      "concept_id": "wolfe_wave",
+      "name": "Wolfe Wave",
+      "alt_names": [
+        "Wolfe Wave"
+      ],
+      "video_id": "d6d6ed91e6be",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@20500ms"
+      ],
+      "plain_language": "Wolfe Wave as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY THIS ZONE near point 5",
+        "stop_as_drawn": "STOP-LOSS box (pick 4)",
+        "target_as_drawn": "TARGET point 6 (pick 3)"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY THIS ZONE near point 5",
+      "stop_loss": "STOP-LOSS box (pick 4)",
+      "target": "TARGET point 6 (pick 3)",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "wolfe_wave",
+      "requirement_id": "PI-WOLFE_WAVE",
+      "source_file": "src/xau_edge/structure/wolfe.py",
+      "test_file": "tests/unit/structure",
+      "implementation_status": "IMPLEMENTED"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "written_before_scoring": true,
+  "scale": "0..5 per criterion; 5 is always the better end (low repaint risk = 5, few parameters = 5)",
+  "criteria": {
+    "formal_definability": {"weight": 3, "meaning": "Do independent sources give one formal geometry? 5 = shared rules with numbers; 1 = drawn by eye"},
+    "causal_detectability": {"weight": 3, "meaning": "Can it be detected with data up to the detection bar only? 5 = closed-bar trigger on confirmed pivots"},
+    "low_repaint_risk": {"weight": 2, "meaning": "5 = nothing drawn can change; 1 = points move, or the completion point is anticipated"},
+    "low_degrees_of_freedom": {"weight": 2, "meaning": "5 = 3 or fewer free parameters; 3 = about 6; 1 = more than 9 or discretionary"},
+    "sufficient_frequency": {"weight": 1, "meaning": "5 = enough events to study; 1 = too rare, or fires on nearly every bar"},
+    "plausible_mechanism": {"weight": 2, "meaning": "Is there a reason, beyond folklore, that the event could carry information? 1 = folklore only"},
+    "source_quality": {"weight": 1, "meaning": "5 = reproducible independent statistics or code; 1 = reels and marketing"},
+    "novelty_vs_closed_research_and_baseline": {"weight": 2, "meaning": "5 = not covered by V1-V3 or the current baseline; 0 = already tested and closed"},
+    "earlier_actionable_timing": {"weight": 2, "meaning": "Is the information actionable EARLIER than the current M5 trigger, without acting before it is knowable? 5 = clearly earlier and causal; 1 = same or later; acting before confirmation does not count"},
+    "relevance_to_prior_xau_failure": {"weight": 1, "meaning": "Mechanism-level relevance to scarcity, late entry or R:R collapse"}
+  },
+  "selection_rule": {
+    "disqualify_if": ["already tested and closed in V1-V3 (novelty 0)", "formal_definability <= 1"],
+    "rank": "by weighted score; no profitability enters any score",
+    "robustness": "weights x U(0.5, 1.5), 2000 draws, seed 11, and +-1 noise on 30% of cells"
+  }
+}

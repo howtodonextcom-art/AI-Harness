@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "dd713456fa90",
+    "source_url": "https://www.facebook.com/share/r/19jWC2kHGi/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1768771387800183",
+    "resolved_url": "https://m.facebook.com/watch/?v=1768771387800183&_rdr",
+    "title": "24K views · 200 reactions | 🔥 Rising Wedge Pattern: Breakdown Se Pehle Market Ka Hidden Warning! 📉⚠️ #RisingWedgePattern #TradingPattern #PriceAction #TechnicalAnalysis #tradingtips #LearnTrading | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 13.12,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "e6ef48f7988bf355919fe12222a1df24ace0de628c11324f3f1ecb878d4427d3",
+    "keyframe_count": 5,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:38:32+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "dd713456fa90",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Rising Wedge pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r13-pattern",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Rising Wedge (SHORT) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r13-entry",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [
+        "frame@9000ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY SHORT at the break of the lower trendline",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r13-stop",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [
+        "frame@9000ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS above (pick 2)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r13-outcome",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [
+        "frame@12500ms"
+      ],
+      "assertion": "The final frames show: price falls.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r13-repeatable",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [
+        "frame@12500ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r13-asr",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r13-caption",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 🔥 Rising Wedge Pattern: Breakdown Se Pehle Market Ka Hidden Warning! 📉⚠️ #RisingWedgePattern #TradingPattern #PriceAction #TechnicalAnalysis #tradingtips #LearnTrading | ",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r13-external",
+      "video_id": "dd713456fa90",
+      "evidence_refs": [],
+      "assertion": "Independent evidence on the Rising Wedge family.",
+      "status": "CONTRADICTED_EXTERNALLY",
+      "verification": "The Reel presents the bearish breakdown as a powerful signal; Bulkowski ranks rising-wedge down breakouts last (36 of 36) with a 51% break-even failure rate.",
+      "citations": [
+        "bk-risewedge"
+      ],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t13-entry",
+      "source_url": "https://www.facebook.com/share/r/19jWC2kHGi/?mibextid=wwXIfr",
+      "asset_sha256": "e6ef48f7988bf355919fe12222a1df24ace0de628c11324f3f1ecb878d4427d3",
+      "locator": "frame@9000ms",
+      "observation": "ENTRY SHORT at the break of the lower trendline",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "rising_wedge",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t13-stop",
+      "source_url": "https://www.facebook.com/share/r/19jWC2kHGi/?mibextid=wwXIfr",
+      "asset_sha256": "e6ef48f7988bf355919fe12222a1df24ace0de628c11324f3f1ecb878d4427d3",
+      "locator": "frame@9000ms",
+      "observation": "STOP-LOSS above (pick 2)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "rising_wedge",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [
+    {
+      "source_id": "bk-risewedge",
+      "url": "https://thepatternsite.com/risewedge.html",
+      "title": "Bulkowski, Rising wedge",
+      "quality": "MEDIUM",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Down breakouts: 51% break-even failure rate, rank 36 of 36 (last), average decline 9%; 'some of the worst performing chart patterns'; 1,400+ perfect trades."
+    }
+  ],
+  "concepts": [
+    {
+      "concept_id": "rising_wedge",
+      "name": "Rising Wedge",
+      "alt_names": [
+        "Rising Wedge"
+      ],
+      "video_id": "dd713456fa90",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@12500ms"
+      ],
+      "plain_language": "Rising Wedge as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY SHORT at the break of the lower trendline",
+        "stop_as_drawn": "STOP-LOSS above (pick 2)",
+        "target_as_drawn": "arrow down"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY SHORT at the break of the lower trendline",
+      "stop_loss": "STOP-LOSS above (pick 2)",
+      "target": "arrow down",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "rising_wedge",
+      "requirement_id": "PI-RISING_WEDGE",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

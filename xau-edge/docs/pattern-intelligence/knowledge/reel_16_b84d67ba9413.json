@@ -1,0 +1,196 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "b84d67ba9413",
+    "source_url": "https://www.facebook.com/share/r/1WPHHUXiHD/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1081732681020899",
+    "resolved_url": "https://m.facebook.com/watch/?v=1081732681020899&_rdr",
+    "title": "1.4K views · 13 reactions | 📉 The Market Is Trapping Buyers… Then This Happens! 🔻🔥 #DescendingTriangle #TradingPattern #PriceAction #TechnicalAnalysis #LearnTrading #ChartPattern | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 17.03,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "5ff9ab281c90766a4c5892dfd2c7f22e8efcfef3c59387021f451ae5f71e7f23",
+    "keyframe_count": 12,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:39:05+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "b84d67ba9413",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Triangle pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r16-pattern",
+      "video_id": "b84d67ba9413",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Triangle (SHORT) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r16-entry",
+      "video_id": "b84d67ba9413",
+      "evidence_refs": [
+        "frame@10500ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY SHORT at the break of the descending triangle's support",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r16-stop",
+      "video_id": "b84d67ba9413",
+      "evidence_refs": [
+        "frame@10500ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS above (pick 2)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r16-outcome",
+      "video_id": "b84d67ba9413",
+      "evidence_refs": [
+        "frame@16500ms"
+      ],
+      "assertion": "The final frames show: price falls.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r16-repeatable",
+      "video_id": "b84d67ba9413",
+      "evidence_refs": [
+        "frame@16500ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r16-asr",
+      "video_id": "b84d67ba9413",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r16-caption",
+      "video_id": "b84d67ba9413",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 📉 The Market Is Trapping Buyers… Then This Happens! 🔻🔥 #DescendingTriangle #TradingPattern #PriceAction #TechnicalAnalysis #LearnTrading #ChartPattern | Zenix Arixon",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t16-entry",
+      "source_url": "https://www.facebook.com/share/r/1WPHHUXiHD/?mibextid=wwXIfr",
+      "asset_sha256": "5ff9ab281c90766a4c5892dfd2c7f22e8efcfef3c59387021f451ae5f71e7f23",
+      "locator": "frame@10500ms",
+      "observation": "ENTRY SHORT at the break of the descending triangle's support",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "triangle",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t16-stop",
+      "source_url": "https://www.facebook.com/share/r/1WPHHUXiHD/?mibextid=wwXIfr",
+      "asset_sha256": "5ff9ab281c90766a4c5892dfd2c7f22e8efcfef3c59387021f451ae5f71e7f23",
+      "locator": "frame@10500ms",
+      "observation": "STOP-LOSS above (pick 2)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "triangle",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [],
+  "concepts": [
+    {
+      "concept_id": "triangle",
+      "name": "Triangle",
+      "alt_names": [
+        "Triangle"
+      ],
+      "video_id": "b84d67ba9413",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@16500ms"
+      ],
+      "plain_language": "Triangle as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY SHORT at the break of the descending triangle's support",
+        "stop_as_drawn": "STOP-LOSS above (pick 2)",
+        "target_as_drawn": "arrow down"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY SHORT at the break of the descending triangle's support",
+      "stop_loss": "STOP-LOSS above (pick 2)",
+      "target": "arrow down",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "triangle",
+      "requirement_id": "PI-TRIANGLE",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

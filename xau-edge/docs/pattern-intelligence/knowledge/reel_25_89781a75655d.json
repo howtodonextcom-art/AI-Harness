@@ -1,0 +1,208 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "89781a75655d",
+    "source_url": "https://www.facebook.com/share/r/1CWHrE4A4B/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1476248654311041",
+    "resolved_url": "https://m.facebook.com/watch/?v=1476248654311041&_rdr",
+    "title": "1.1K views | 📈🔥 Ascending Triangle Pattern — The Breakout Setup Every Trader Should Watch! 🚀 #AscendingTrianglePattern #TradingPatterns #LearnTrading #chartpatterns #TechnicalAnalysis #PriceAction | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 18.79,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "996d5ce7d020bbb27be4b8d3efbf70abcbc363b2f4962fd097cc1e88e9255d7b",
+    "keyframe_count": 28,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:40:47+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "89781a75655d",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Triangle pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r25-pattern",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Triangle (LONG) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r25-entry",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "frame@12500ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY at the breakout (zoomed)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r25-stop",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "frame@15500ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS box (pick 5)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r25-outcome",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "frame@18000ms"
+      ],
+      "assertion": "The final frames show: price rises into the target.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r25-repeatable",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "frame@18000ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r25-asr",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r25-caption",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 📈🔥 Ascending Triangle Pattern — The Breakout Setup Every Trader Should Watch! 🚀 #AscendingTrianglePattern #TradingPatterns #LearnTrading #chartpatterns #TechnicalAnalysis",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r25-third0",
+      "video_id": "89781a75655d",
+      "evidence_refs": [
+        "frame@18000ms"
+      ],
+      "assertion": "Third-party content appears: TV/film reaction clips overlaid (several actors)",
+      "status": "OBSERVED",
+      "verification": "seen in the viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t25-entry",
+      "source_url": "https://www.facebook.com/share/r/1CWHrE4A4B/?mibextid=wwXIfr",
+      "asset_sha256": "996d5ce7d020bbb27be4b8d3efbf70abcbc363b2f4962fd097cc1e88e9255d7b",
+      "locator": "frame@12500ms",
+      "observation": "ENTRY at the breakout (zoomed)",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "triangle",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t25-stop",
+      "source_url": "https://www.facebook.com/share/r/1CWHrE4A4B/?mibextid=wwXIfr",
+      "asset_sha256": "996d5ce7d020bbb27be4b8d3efbf70abcbc363b2f4962fd097cc1e88e9255d7b",
+      "locator": "frame@15500ms",
+      "observation": "STOP-LOSS box (pick 5)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "triangle",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [],
+  "concepts": [
+    {
+      "concept_id": "triangle",
+      "name": "Triangle",
+      "alt_names": [
+        "Triangle"
+      ],
+      "video_id": "89781a75655d",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@18000ms"
+      ],
+      "plain_language": "Triangle as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY at the breakout (zoomed)",
+        "stop_as_drawn": "STOP-LOSS box (pick 5)",
+        "target_as_drawn": "TARGET and a 100% height box (pick 4)"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY at the breakout (zoomed)",
+      "stop_loss": "STOP-LOSS box (pick 5)",
+      "target": "TARGET and a 100% height box (pick 4)",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "triangle",
+      "requirement_id": "PI-TRIANGLE",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

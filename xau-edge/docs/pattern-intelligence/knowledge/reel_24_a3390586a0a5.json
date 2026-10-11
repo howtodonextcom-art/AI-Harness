@@ -1,0 +1,192 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "a3390586a0a5",
+    "source_url": "https://www.facebook.com/share/r/1VXNnrmGUg/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1413810280641222",
+    "resolved_url": "https://m.facebook.com/watch/?v=1413810280641222&_rdr",
+    "title": "71K views · 2.2K reactions | 🔥 5 POWERFUL CHART PATTERNS EVERY TRADER SHOULD KNOW! 📈👀 Which one would you trade? 🤔 Save this Reel for later! 🚀 #TradingPatterns #LearnTrading #ChartPatterns #PriceAction #TechnicalAnalysis #TradingStrategy | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 11.68,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "0851a3c066dc8a5d3b5fea9799772b184119fc59b7449b406d45212875c51305",
+    "keyframe_count": 21,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:40:35+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "a3390586a0a5",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Compilation pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r24-pattern",
+      "video_id": "a3390586a0a5",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Compilation (MIXED) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r24-entry",
+      "video_id": "a3390586a0a5",
+      "evidence_refs": [],
+      "assertion": "Entry as drawn: five different charts with wedge-like and flag-like structures",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r24-stop",
+      "video_id": "a3390586a0a5",
+      "evidence_refs": [],
+      "assertion": "Stop as drawn: some boxes labelled",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r24-outcome",
+      "video_id": "a3390586a0a5",
+      "evidence_refs": [
+        "frame@11000ms"
+      ],
+      "assertion": "The final frames show: not analysed per chart.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r24-repeatable",
+      "video_id": "a3390586a0a5",
+      "evidence_refs": [
+        "frame@11000ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r24-asr",
+      "video_id": "a3390586a0a5",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r24-caption",
+      "video_id": "a3390586a0a5",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 🔥 5 POWERFUL CHART PATTERNS EVERY TRADER SHOULD KNOW! 📈👀 Which one would you trade? 🤔 Save this Reel for later! 🚀 #TradingPatterns #LearnTrading #ChartPatterns #PriceActi",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t24-entry",
+      "source_url": "https://www.facebook.com/share/r/1VXNnrmGUg/?mibextid=wwXIfr",
+      "asset_sha256": "0851a3c066dc8a5d3b5fea9799772b184119fc59b7449b406d45212875c51305",
+      "locator": "n/a",
+      "observation": "five different charts with wedge-like and flag-like structures",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "compilation",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t24-stop",
+      "source_url": "https://www.facebook.com/share/r/1VXNnrmGUg/?mibextid=wwXIfr",
+      "asset_sha256": "0851a3c066dc8a5d3b5fea9799772b184119fc59b7449b406d45212875c51305",
+      "locator": "n/a",
+      "observation": "some boxes labelled",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "compilation",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [],
+  "concepts": [
+    {
+      "concept_id": "compilation",
+      "name": "Compilation",
+      "alt_names": [
+        "Compilation"
+      ],
+      "video_id": "a3390586a0a5",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@11000ms"
+      ],
+      "plain_language": "Compilation as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "five different charts with wedge-like and flag-like structures",
+        "stop_as_drawn": "some boxes labelled",
+        "target_as_drawn": "arrows"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "five different charts with wedge-like and flag-like structures",
+      "stop_loss": "some boxes labelled",
+      "target": "arrows",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "compilation",
+      "requirement_id": "PI-COMPILATION",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

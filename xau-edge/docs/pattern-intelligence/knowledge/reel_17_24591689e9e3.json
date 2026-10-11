@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "24591689e9e3",
+    "source_url": "https://www.facebook.com/share/r/1C49FrqqYU/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "4340421489603069",
+    "resolved_url": "https://m.facebook.com/watch/?v=4340421489603069&_rdr",
+    "title": "9.4K views · 58 reactions | “This Bullish Cup & Handle Pattern Could Be the Calm Before a BIG Move 🚀📈” #BullishCupAndHandle #TradingPattern #TechnicalAnalysis #PriceAction #TradingSetup #LearnTrading | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 11.4,
+    "width": 1080,
+    "height": 1920,
+    "has_audio": true,
+    "file_sha256": "42ffd2ac53031d6cd36dee9d823c5eceaea46fac7ed6e1119c0453d84ed6a191",
+    "keyframe_count": 10,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:39:16+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "24591689e9e3",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Cup And Handle pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r17-pattern",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Cup And Handle (LONG) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r17-entry",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [
+        "frame@7000ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY LONG at the handle breakout",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r17-stop",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [
+        "frame@7000ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS (pick 2)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r17-outcome",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [
+        "frame@11000ms"
+      ],
+      "assertion": "The final frames show: price rises.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r17-repeatable",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [
+        "frame@11000ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r17-asr",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r17-caption",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): “This Bullish Cup & Handle Pattern Could Be the Calm Before a BIG Move 🚀📈” #BullishCupAndHandle #TradingPattern #TechnicalAnalysis #PriceAction #TradingSetup #LearnTradin",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r17-external",
+      "video_id": "24591689e9e3",
+      "evidence_refs": [],
+      "assertion": "Independent evidence on the Cup And Handle family.",
+      "status": "SUPPORTED_EXTERNALLY",
+      "verification": "Bulkowski ranks the cup with handle 3 of 39 in idealised stock tests, but allows discretion in identification and found 47% of recent patterns dropped substantially within two months.",
+      "citations": [
+        "bk-cup"
+      ],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t17-entry",
+      "source_url": "https://www.facebook.com/share/r/1C49FrqqYU/?mibextid=wwXIfr",
+      "asset_sha256": "42ffd2ac53031d6cd36dee9d823c5eceaea46fac7ed6e1119c0453d84ed6a191",
+      "locator": "frame@7000ms",
+      "observation": "ENTRY LONG at the handle breakout",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "cup_and_handle",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t17-stop",
+      "source_url": "https://www.facebook.com/share/r/1C49FrqqYU/?mibextid=wwXIfr",
+      "asset_sha256": "42ffd2ac53031d6cd36dee9d823c5eceaea46fac7ed6e1119c0453d84ed6a191",
+      "locator": "frame@7000ms",
+      "observation": "STOP-LOSS (pick 2)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "cup_and_handle",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [
+    {
+      "source_id": "bk-cup",
+      "url": "https://thepatternsite.com/cup.html",
+      "title": "Bulkowski, Cup with handle",
+      "quality": "MEDIUM",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "U-shaped cup, handle in the upper half; rank 3 of 39, 5% break-even failure, +54% average rise on 913 perfect trades; identification allows discretion; 47% of 300 patterns (1990-2024) dropped substantially within two months of the breakout."
+    }
+  ],
+  "concepts": [
+    {
+      "concept_id": "cup_and_handle",
+      "name": "Cup And Handle",
+      "alt_names": [
+        "Cup And Handle"
+      ],
+      "video_id": "24591689e9e3",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@11000ms"
+      ],
+      "plain_language": "Cup And Handle as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY LONG at the handle breakout",
+        "stop_as_drawn": "STOP-LOSS (pick 2)",
+        "target_as_drawn": "arrow up"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY LONG at the handle breakout",
+      "stop_loss": "STOP-LOSS (pick 2)",
+      "target": "arrow up",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "cup_and_handle",
+      "requirement_id": "PI-CUP_AND_HANDLE",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}

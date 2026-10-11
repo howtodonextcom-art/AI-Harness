@@ -1,0 +1,196 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "73c3adefb329",
+    "source_url": "https://www.facebook.com/share/r/16JHvDs4rmL/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "source_aliases": [],
+    "platform_id": "1591504785657149",
+    "resolved_url": "https://m.facebook.com/watch/?v=1591504785657149&_rdr",
+    "title": "780 reactions · 44 shares | 🚀 Bullish Diamond Pattern: Trend Reversal Ka Powerful Buy Signal! 📈 Kya Ab Market Upar Jayega? #DiamondPattern #PriceAction #TechnicalAnalysis #ChartAnalysis #TradingStrategy | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 14.38,
+    "width": 1088,
+    "height": 1936,
+    "has_audio": true,
+    "file_sha256": "a3a7a5a684e348a1025883c144a9f40bb988ba200313a90763dfcf7e9d625637",
+    "keyframe_count": 9,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:41:33+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "73c3adefb329",
+      "timestamp_ms": 0,
+      "frame_reference": "keyframe 1 of 6",
+      "ocr_text": null,
+      "observations": [
+        "Top panel: a textbook diagram of the Diamond pattern; bottom panel: a chart that is annotated progressively."
+      ],
+      "status": "OBSERVED",
+      "confidence": "HIGH",
+      "uncertain": false
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "r29-pattern",
+      "video_id": "73c3adefb329",
+      "evidence_refs": [
+        "frame@0ms"
+      ],
+      "assertion": "The Reel presents a Diamond (LONG) example.",
+      "status": "OBSERVED",
+      "verification": "read from the diagram title",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r29-entry",
+      "video_id": "73c3adefb329",
+      "evidence_refs": [
+        "frame@7500ms"
+      ],
+      "assertion": "Entry as drawn: ENTRY LONG at the upper right break of the diamond",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker; the price level is not legible",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r29-stop",
+      "video_id": "73c3adefb329",
+      "evidence_refs": [
+        "frame@11500ms"
+      ],
+      "assertion": "Stop as drawn: STOP-LOSS under (pick 4)",
+      "status": "OBSERVED",
+      "verification": "read from the labelled marker or its absence in 6 viewed frames",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r29-outcome",
+      "video_id": "73c3adefb329",
+      "evidence_refs": [
+        "frame@14000ms"
+      ],
+      "assertion": "The final frames show: price rises.",
+      "status": "OBSERVED",
+      "verification": "read from the last viewed frame of a replayed, annotated chart",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r29-repeatable",
+      "video_id": "73c3adefb329",
+      "evidence_refs": [
+        "frame@14000ms"
+      ],
+      "assertion": "This outcome is typical or repeatable for the pattern.",
+      "status": "UNKNOWN",
+      "verification": "a single curated example drawn with hindsight; no sample, no failures, no costs, no instrument or timeframe",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "r29-asr",
+      "video_id": "73c3adefb329",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The audio carries no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "ASR returned no speech or only a hallucinated phrase on music; low-confidence segments are flagged",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "r29-caption",
+      "video_id": "73c3adefb329",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "Caption (untrusted): 🚀 Bullish Diamond Pattern: Trend Reversal Ka Powerful Buy Signal! 📈 Kya Ab Market Upar Jayega? #DiamondPattern #PriceAction #TechnicalAnalysis #ChartAnalysis #TradingStra",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "author caption; promotional wording, no measured result",
+      "citations": [],
+      "confidence": "HIGH"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t29-entry",
+      "source_url": "https://www.facebook.com/share/r/16JHvDs4rmL/?mibextid=wwXIfr",
+      "asset_sha256": "a3a7a5a684e348a1025883c144a9f40bb988ba200313a90763dfcf7e9d625637",
+      "locator": "frame@7500ms",
+      "observation": "ENTRY LONG at the upper right break of the diamond",
+      "interpretation": "Where the author draws the entry relative to the pattern geometry (a drawing, not a rule); whether it was marked live or after the move is not knowable.",
+      "concept_id": "diamond",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t29-stop",
+      "source_url": "https://www.facebook.com/share/r/16JHvDs4rmL/?mibextid=wwXIfr",
+      "asset_sha256": "a3a7a5a684e348a1025883c144a9f40bb988ba200313a90763dfcf7e9d625637",
+      "locator": "frame@11500ms",
+      "observation": "STOP-LOSS under (pick 4)",
+      "interpretation": "Stop placement as drawn; no distance, ATR or pip rule is given.",
+      "concept_id": "diamond",
+      "rule": "stop_loss",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [],
+  "concepts": [
+    {
+      "concept_id": "diamond",
+      "name": "Diamond",
+      "alt_names": [
+        "Diamond"
+      ],
+      "video_id": "73c3adefb329",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@14000ms"
+      ],
+      "plain_language": "Diamond as drawn by the author; entry, stop and target are illustrations without stated rules.",
+      "rules": {
+        "entry_as_drawn": "ENTRY LONG at the upper right break of the diamond",
+        "stop_as_drawn": "STOP-LOSS under (pick 4)",
+        "target_as_drawn": "arrow up"
+      },
+      "configurable_disagreements": [],
+      "invalidation": [
+        "not stated"
+      ],
+      "entry": "ENTRY LONG at the upper right break of the diamond",
+      "stop_loss": "STOP-LOSS under (pick 4)",
+      "target": "arrow up",
+      "repaint_risk": "unknown: a replayed chart annotated progressively; points drawn at the live edge cannot be known in real time",
+      "failure_modes": [
+        "no failed example is shown in any Reel of the series"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "diamond",
+      "requirement_id": "PI-DIAMOND",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "NOT IMPLEMENTED"
+    }
+  ]
+}
