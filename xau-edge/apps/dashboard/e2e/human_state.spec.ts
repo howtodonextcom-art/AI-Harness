@@ -258,3 +258,13 @@ test("independent review finding: the phone bar carries the entry price, and the
   await expect(page.getByTestId("system-plan-overlay")).toContainText("GMT+7");
   await expect(page.getByTestId("system-plan-overlay")).not.toContainText(" UTC");
 });
+
+test("independent review, second pass: with a stale quote the candle countdown stops ticking", async ({ page }) => {
+  await mock(page, view("stale"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("price-stale")).toContainText("GIÁ CŨ");
+  await expect(page.getByTestId("countdown")).not.toContainText("đóng sau");
+  await mock(page, view("wait"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("countdown")).toContainText("đóng sau"); // a fresh quote keeps its countdown
+});
