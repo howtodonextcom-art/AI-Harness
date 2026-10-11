@@ -1,0 +1,172 @@
+{
+ "family": "F1-USDRES-z2.0",
+ "stage": "Stage 1 (Development-2)",
+ "window": [
+  "2011-01-01T00:00:00+00:00",
+  "2019-01-01T00:00:00+00:00"
+ ],
+ "counts": {
+  "rows_in_window": 47477,
+  "events_raw": 2213,
+  "dropped_missing_bar": 3,
+  "skipped_position_open": 609
+ },
+ "n": 1601,
+ "events_per_year": 200.125,
+ "gross": {
+  "n": 1601,
+  "mean_r": -0.14410979671700722,
+  "median_r": -0.9999999999999906,
+  "win_rate": 0.297314178638351,
+  "avg_win_r": 1.9008431030511272,
+  "avg_loss_r": -1.009352090307791,
+  "profit_factor": 0.7968159427248046,
+  "max_drawdown_r": 251.8660685722992,
+  "sum_r": -230.71978454392857
+ },
+ "net_base": {
+  "n": 1601,
+  "mean_r": -0.2826251629082131,
+  "median_r": -1.0114236926696862,
+  "win_rate": 0.2585883822610868,
+  "avg_win_r": 1.8689087167905716,
+  "avg_loss_r": -1.0330337780685306,
+  "profit_factor": 0.6309910358658902,
+  "max_drawdown_r": 461.5661183609444,
+  "sum_r": -452.48288581604913
+ },
+ "net_pessimistic": {
+  "n": 1601,
+  "mean_r": -0.35357240439903526,
+  "median_r": -1.0233371313708135,
+  "win_rate": 0.24047470331043097,
+  "avg_win_r": 1.8656546630392092,
+  "avg_loss_r": -1.056205974270519,
+  "profit_factor": 0.5592548934454606,
+  "max_drawdown_r": 574.2869690390919,
+  "sum_r": -566.0694194428554
+ },
+ "net_base_triple_wednesday_sensitivity": -0.2880707463864513,
+ "net_base_zero_swap_sensitivity": -0.2688311728864276,
+ "frequency_label": "FREQUENCY OK",
+ "bootstrap": {
+  "p_one_sided": 1.0,
+  "ci95_mean_base": [
+   -0.3461328825880087,
+   -0.2196153734088851
+  ],
+  "resamples": 10000,
+  "block_days": 5,
+  "seed": 20261011
+ },
+ "placebo": {
+  "draws": 1000,
+  "median": -0.08034323908829649,
+  "p95": -0.030696713577026673,
+  "percentile_of_real": 0.0
+ },
+ "by_year": {
+  "2011": {
+   "n": 283,
+   "mean_base_r": -0.2360046536965903
+  },
+  "2012": {
+   "n": 218,
+   "mean_base_r": -0.3955177541812772
+  },
+  "2013": {
+   "n": 209,
+   "mean_base_r": -0.27350359793229695
+  },
+  "2014": {
+   "n": 205,
+   "mean_base_r": -0.2074735735122981
+  },
+  "2015": {
+   "n": 188,
+   "mean_base_r": -0.2510514392019366
+  },
+  "2016": {
+   "n": 154,
+   "mean_base_r": -0.3696388712446536
+  },
+  "2017": {
+   "n": 175,
+   "mean_base_r": -0.24995670667988654
+  },
+  "2018": {
+   "n": 169,
+   "mean_base_r": -0.30717090804676656
+  }
+ },
+ "pre_post_2015": {
+  "2011_2014": -0.2761819911972947,
+  "2015_2018": -0.2912191893156333
+ },
+ "by_session_utc": {
+  "ASIA_00_07": {
+   "n": 86,
+   "mean_base_r": -0.3712233198102258
+  },
+  "LONDON_07_12": {
+   "n": 111,
+   "mean_base_r": -0.3193085254844012
+  },
+  "OVERLAP_12_16": {
+   "n": 439,
+   "mean_base_r": -0.24667448262205227
+  },
+  "NY_LATE_16_21": {
+   "n": 170,
+   "mean_base_r": -0.3892412440615963
+  },
+  "ROLLOVER_21_24": {
+   "n": 795,
+   "mean_base_r": -0.2649727353736463
+  }
+ },
+ "exit_reasons": {
+  "STOP_LOSS": 1180,
+  "TAKE_PROFIT": 384,
+  "TIME_EXIT": 37
+ },
+ "cost_attribution_mean_r": {
+  "gross": -0.14410979671700722,
+  "slippage": -0.012682367848762638,
+  "swap": -0.013793990021785444,
+  "spread_and_path": -0.1120390083206578,
+  "net_base": -0.2826251629082131
+ },
+ "break_even_commission_usd_per_lot_per_side": -66.85466774308733,
+ "expected_contribution_per_year_pct_at_0_25_risk": -14.140090181751537,
+ "mean_without_top_1pct": -0.30707119708957337,
+ "years_positive": 0,
+ "gate": {
+  "checks": {
+   "n_at_least_minimum": true,
+   "p_below_alpha": false,
+   "mean_base_at_least_floor": false,
+   "mean_pessimistic_positive": false,
+   "artefact_years_positive": false,
+   "artefact_without_top1pct_positive": false,
+   "artefact_placebo_percentile": false
+  },
+  "verdict": "FAIL",
+  "alpha": 0.0333,
+  "n_min": 1000
+ },
+ "verdict": "FAIL",
+ "provenance": {
+  "code_head": "d949b201c5da1dfee04433f0d4a4f726ce571021",
+  "preregistration_commit": "4a03273e9bcc0c982aefc640ace8e357221c2de1",
+  "prereg_sha256": "c0cc8de93799968154c4df47d2543ebe417face60588d43bfc5893b5af3eb01b",
+  "protocol_sha256": "a724ab99aac62da0690c7d91eccc75b754b0a35d0738a9fbbe52480008f1a251",
+  "cross_asset_manifest_sha256": "11cc1d2aac2d7b4a9476c571e1e18ac7ea32cb1ba07955ea5109df82fcbfb842",
+  "swap_points": {
+   "long": -69.25,
+   "short": -4.2,
+   "read_at": "2026-10-11T06:16Z"
+  },
+  "generated_at": "2026-10-11T06:26:18.972985+00:00"
+ }
+}
