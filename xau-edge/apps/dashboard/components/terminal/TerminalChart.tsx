@@ -99,6 +99,7 @@ interface Props {
 
 const GREEN = "#16a34a";
 const RIGHT_OFFSET = 10;
+const COMPACT_LEGEND_PX = 520; // below this chart width the legend lists only the plan and position lines
 /** Lines the trader acts on: the price scale always contains them. Everything else is context. */
 const ALWAYS_IN_SCALE = new Set(["ENTRY", "SL", "TP1", "PAPER ENTRY", "PAPER SL", "PAPER TP", "NOW"]);
 const RED = "#dc2626";
@@ -970,11 +971,20 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       )}
 
       <ul ref={legendRef} data-testid="chart-legend" aria-label="Các đường trên biểu đồ" className="pointer-events-none absolute left-2 top-12 z-10 flex max-w-[70%] sm:top-6 short:top-12 flex-wrap gap-x-3 gap-y-0 text-[11px] font-semibold">
-        {lineSpecs.map((l) => (
-          <li key={l.id} data-testid={`line-${l.title.replace(/ /g, "-")}`} style={{ color: l.color }} className={`rounded bg-white/70 px-1 dark:bg-slate-900/70 ${ALWAYS_IN_SCALE.has(l.id) ? "" : "text-[10px] font-medium opacity-80"}`}>
-            {l.title} {l.price.toFixed(2)}
+        {lineSpecs.map((l) => {
+          const context = !ALWAYS_IN_SCALE.has(l.id);
+          const folded = context && size.w > 0 && size.w < COMPACT_LEGEND_PX; // a phone: context levels stay listed for screen readers, off the candles
+          return (
+            <li key={l.id} data-testid={`line-${l.title.replace(/ /g, "-")}`} style={{ color: l.color }} className={folded ? "sr-only" : `rounded bg-white/70 px-1 dark:bg-slate-900/70 ${context ? "text-[10px] font-medium opacity-80" : ""}`}>
+              {l.title} {l.price.toFixed(2)}
+            </li>
+          );
+        })}
+        {size.w > 0 && size.w < COMPACT_LEGEND_PX && lineSpecs.some((l) => !ALWAYS_IN_SCALE.has(l.id)) && (
+          <li aria-hidden="true" data-testid="legend-folded" className="rounded bg-white/70 px-1 text-[10px] font-medium text-slate-600 dark:bg-slate-900/70 dark:text-slate-300">
+            +{lineSpecs.filter((l) => !ALWAYS_IN_SCALE.has(l.id)).length} mức ngữ cảnh
           </li>
-        ))}
+        )}
       </ul>
       {overlays.sessions && (
         <ul data-testid="session-legend" aria-label="Chú giải phiên giao dịch" className="pointer-events-none absolute bottom-9 left-2 z-10 flex gap-2 text-[11px]">
