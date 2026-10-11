@@ -164,7 +164,8 @@ test("server-expired plan says the plan is gone; a plan that expires in the brow
   await mock(page, v);
   await page.reload();
   await expect(page.getByTestId("action-word")).toHaveText("BỎ QUA");
-  await expect(page.getByTestId("take-paper")).toBeDisabled();
+  await expect(page.getByTestId("take-paper")).toHaveCount(0); // an expired plan offers nothing (QA round 3 human-state contract)
+  await expect(page.getByTestId("system-plan-overlay")).toHaveCount(0);
 });
 
 test("replay: countdowns run on the replay clock only, they never tick up and down on the wall clock (TRADE-07 jitter)", async ({ page }) => {

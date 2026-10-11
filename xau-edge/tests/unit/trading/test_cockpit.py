@@ -17,6 +17,7 @@ from xau_edge.market_data.calendars import ftmo_calendar
 from xau_edge.market_data.session import market_status
 from xau_edge.trading.baseline import BaselineConfig, DecisionContext, decide
 from xau_edge.trading.cockpit import (
+    EXIT_BANNER_MINUTES,
     F4_MIN_TRADES,
     action_for,
     condition,
@@ -440,6 +441,33 @@ def test_wait_names_the_one_missing_thing_setup_for_no_setup_trigger_for_no_trig
         out = action_for(_hero("WAIT"), waiting, None)
         assert (out["code"], out["stage"], out["missing"]) == ("WAIT", "WATCHING", missing)
         assert out["side"] is not None
+
+
+def test_a_recent_exit_outranks_a_setup_nothing_can_act_on_but_not_a_fresh_valid_one() -> None:
+    """M-02: after a manual close the taken setup must not hide the EXIT for the banner window."""
+    buy = signal()
+    recent = {
+        "trade_id": "T1",
+        "closed_at": (NOW - timedelta(minutes=2)).isoformat(),
+        "exit_reason": "MANUAL_CLOSE",
+    }
+    old = {**recent, "closed_at": (NOW - timedelta(minutes=EXIT_BANNER_MINUTES + 1)).isoformat()}
+    assert (
+        hero(buy, last_exit=recent, blocked=True)["state"] == "EXITED"
+    )  # consumed setup, trade just closed
+    assert hero(buy, last_exit=recent, expired=True)["state"] == "EXITED"
+    assert hero(buy, last_exit=recent, plan=plan_of(buy, ok=False))["state"] == "EXITED"
+    assert (
+        hero(buy, last_exit=recent)["state"] == "BUY_READY"
+    )  # a fresh valid setup is still offered
+    blocked_old = hero(buy, last_exit=old, blocked=True)
+    assert blocked_old["state"] == "BUY_READY"  # the window is over: block logic resumes
+    dup = {"code": "DUPLICATE_SETUP", "message": "taken"}
+    assert action_for(blocked_old, buy, None, [dup])["stage"] == "BLOCKED"
+    exited = hero(buy, last_exit=recent, blocked=True)
+    assert action_for(exited, buy, None, [dup])["code"] == "EXIT"
+    position = {"status": "OPEN", "side": "BUY"}
+    assert hero(buy, last_exit=recent, blocked=True, position=position)["state"] == "POSITION_OPEN"
 
 
 def test_a_ready_setup_the_desk_would_refuse_is_never_a_buy_or_sell() -> None:

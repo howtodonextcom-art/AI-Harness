@@ -195,15 +195,29 @@ test.describe("paper lifecycle through the real API", () => {
     expect(journal.trades.filter((t: { exit_reason: string }) => t.exit_reason === "MANUAL_CLOSE")).toHaveLength(1);
   });
 
-  test("a setup that was already taken and closed is WAIT (blocked), never a green BUY (red team)", async ({ page, request }) => {
+  test("a setup that was already taken and manually closed shows ĐÃ THOÁT (M-02), never a green BUY or a bare WAIT (red team)", async ({ page, request }) => {
     await load(page, request, "buy_tp");
     await openPaper(page);
     await page.getByTestId("close-paper").click();
     await page.getByTestId("confirm-close").click();
     await expect(page.getByTestId("paper-position")).toHaveCount(0, { timeout: 20_000 });
+    await expect(hero(page)).toHaveAttribute("data-action", "EXIT", { timeout: 20_000 });
+    await expect(page.getByTestId("action-word")).toHaveText("ĐÃ THOÁT");
+    await expect(page.getByTestId("action-sub")).toContainText("Đóng tay");
+    await expect(page.getByTestId("action-sub")).toContainText("R");
+    await expect(page.getByTestId("take-paper")).toHaveCount(0);
+    await expect(page.getByTestId("system-plan-overlay")).toHaveCount(0);
+  });
+
+  test("a READY setup blocked by the closure policy is CHỜ everywhere, with the reason visible (H-01, M-01)", async ({ page, request }) => {
+    await load(page, request, "buy_closure_near");
     await expect(hero(page)).toHaveAttribute("data-action", "WAIT", { timeout: 20_000 });
-    await expect(page.getByTestId("action-sub")).toContainText("không mở được");
-    await expect(page.getByTestId("take-paper")).toBeDisabled();
+    await expect(page.getByTestId("action-sub")).toContainText("Gần giờ thị trường đóng cửa");
+    await expect(page.getByTestId("system-plan-overlay")).toHaveCount(0);
+    await expect(page.getByTestId("system-action-badge")).toHaveCount(0);
+    await expect(page.getByTestId("take-paper")).toHaveCount(0);
+    await expect(page.getByTestId("mobile-action-bar")).toHaveCount(0);
+    await expect(page.getByTestId("blocked-reference")).toContainText("SETUP BỊ CHẶN");
   });
 
   test("API down: the hero stops saying BUY and says UNAVAILABLE (red team)", async ({ page, request }) => {
@@ -230,8 +244,8 @@ test.describe("paper lifecycle through the real API", () => {
     expect(journal.trades.filter((t: { status: string }) => t.status === "CLOSED")).toHaveLength(0);
     await page.getByTestId("close-paper").click();
     await page.getByTestId("confirm-close").dblclick();
-    // the setup is still READY but already taken: the card says CHỜ (blocked), never a second BUY
-    await expect(hero(page)).toHaveAttribute("data-action", "WAIT", { timeout: 20_000 });
+    // the setup is still READY but already taken: the trade that just closed is what the Human sees (ĐÃ THOÁT), never a second BUY
+    await expect(hero(page)).toHaveAttribute("data-action", "EXIT", { timeout: 20_000 });
     journal = await (await request.get(`${API}/trade/journal`)).json();
     expect(journal.trades.filter((t: { exit_reason: string }) => t.exit_reason === "MANUAL_CLOSE")).toHaveLength(1);
     expect(journal.trades.filter((t: { status: string }) => t.status === "CLOSED")).toHaveLength(1);
@@ -332,9 +346,10 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
 
   test("closure policy blocks a new entry with its exact reason", async ({ page, request }) => {
     await load(page, request, "buy_closure_near");
-    await expect(hero(page)).toHaveAttribute("data-hero-state", "BUY_READY");
-    await expect(page.getByTestId("blockers").locator("[data-code='CLOSURE_NEAR']")).toContainText("Gần giờ thị trường đóng cửa");
-    await expect(page.getByTestId("take-paper")).toBeDisabled();
+    await expect(hero(page)).toHaveAttribute("data-hero-state", "SETUP_BLOCKED"); // the engine's state is BUY_READY, the Human state is a blocked setup (H-01)
+    await expect(hero(page)).toHaveAttribute("data-action", "WAIT");
+    await expect(page.getByTestId("blocked-reference")).toContainText("Gần giờ thị trường đóng cửa");
+    await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await shot(page, "20-replay-closure-near");
   });
 
