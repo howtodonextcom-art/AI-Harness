@@ -262,8 +262,13 @@ def _to_detection(
             "invalidation_reference": sign * pat.peak,
             "measured_move_reference": sign * (neck - pat.height),
             "trigger_close": float(close[trigger_bar]),
+            "entry_reference": float(close[detected_at]),
         },
-        metadata={"height": pat.height, "height_atr": pat.height / pat.atr if pat.atr else 0.0},
+        metadata={
+            "height": pat.height,
+            "height_atr": pat.height / pat.atr if pat.atr else 0.0,
+            "entry_reference_kind": "ACTIONABLE_CLOSE_NOT_FILL",
+        },
     )
 
 

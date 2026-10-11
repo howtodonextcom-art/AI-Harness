@@ -37,13 +37,14 @@ def _quantiles(values: Sequence[float]) -> dict[str, float] | None:
 def reference_reward_risk(detection: PatternDetection) -> float | None:
     """Gross reward-to-risk of the textbook geometry, from the detection's own reference levels.
 
-    Entry is the trigger close (neckline break) or the entry reference (Wolfe); risk runs to the
-    invalidation reference (the peak, or P5); reward runs to the measured-move or EPA reference.
+    Entry is the actionable-close reference (or Wolfe entry reference); the earlier trigger close
+    is retained as event context and must not be used as a fill. Risk runs to the invalidation
+    reference (the peak, or P5); reward runs to the measured-move or EPA reference.
     This is where the picture itself puts the levels, before costs. It is a property of the shape at
     the moment of detection and says nothing about what price does afterwards.
     """
     ref = detection.reference_levels
-    entry = ref.get("trigger_close", ref.get("entry_reference"))
+    entry = ref.get("entry_reference", ref.get("trigger_close"))
     stop = ref.get("invalidation_reference", ref.get("stop_reference"))
     target = ref.get("measured_move_reference", ref.get("target_reference"))
     if entry is None or stop is None or target is None:
@@ -59,11 +60,12 @@ def distance_to_invalidation_atr(detection: PatternDetection) -> float | None:
     ref = detection.reference_levels
     height = detection.metadata.get("height")
     height_atr = detection.metadata.get("height_atr")
-    if "trigger_close" not in ref or "invalidation_reference" not in ref:
+    entry = ref.get("entry_reference", ref.get("trigger_close"))
+    if entry is None or "invalidation_reference" not in ref:
         return None
     if not isinstance(height, float) or not isinstance(height_atr, float) or height_atr <= 0:
         return None
-    return abs(ref["invalidation_reference"] - ref["trigger_close"]) / (height / height_atr)
+    return abs(ref["invalidation_reference"] - entry) / (height / height_atr)
 
 
 def describe_formations(tracks: Sequence[FormationTrack], n_bars: int) -> dict[str, object]:

@@ -11,6 +11,8 @@ the payoff as ``net_rr = (reward - costs) / (risk + costs)``.
 
 from __future__ import annotations
 
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from math import isfinite
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -21,10 +23,12 @@ class CostModel(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    spread: float = Field(ge=0.0)
-    slippage: float = Field(default=0.0, ge=0.0)
-    commission: float = Field(default=0.0, ge=0.0)
-    swap: float = Field(default=0.0, ge=0.0)
+    spread: float = Field(ge=0.0, allow_inf_nan=False)
+    slippage: float = Field(ge=0.0, allow_inf_nan=False)
+    commission: float = Field(ge=0.0, allow_inf_nan=False)
+    swap: float = Field(ge=0.0, allow_inf_nan=False)
+    source: str = Field(min_length=1)
+    verified: bool
 
     @property
     def total(self) -> float:
@@ -55,6 +59,8 @@ def net_payoff(
     side: Literal["BUY", "SELL"], entry: float, stop: float, target: float, costs: CostModel
 ) -> NetPayoff | None:
     """The payoff after costs, or ``None`` when the levels are on the wrong side of the entry."""
+    if not all(isfinite(value) for value in (entry, stop, target)):
+        return None
     sign = 1.0 if side == "BUY" else -1.0
     risk = sign * (entry - stop)
     reward = sign * (target - entry)
@@ -73,6 +79,30 @@ def net_payoff(
         net_rr=net_rr,
         break_even_probability=break_even_probability(gross_rr),
         net_break_even_probability=break_even_probability(net_rr) if net_rr > 0 else 1.0,
+    )
+
+
+def round_levels_to_tick(
+    side: Literal["BUY", "SELL"], entry: float, stop: float, target: float, tick_size: float
+) -> tuple[float, float, float]:
+    """Round all levels adversely to a broker tick before any authorization calculation."""
+    if not all(isfinite(value) for value in (entry, stop, target, tick_size)) or tick_size <= 0:
+        raise ValueError("tick_size must be positive")
+    tick = Decimal(str(tick_size))
+    rounding = {
+        "entry": ROUND_CEILING if side == "BUY" else ROUND_FLOOR,
+        "stop": ROUND_FLOOR if side == "BUY" else ROUND_CEILING,
+        "target": ROUND_FLOOR if side == "BUY" else ROUND_CEILING,
+    }
+
+    def quantize(value: float, mode: str) -> float:
+        units = (Decimal(str(value)) / tick).to_integral_value(rounding=mode)
+        return float(units * tick)
+
+    return (
+        quantize(entry, rounding["entry"]),
+        quantize(stop, rounding["stop"]),
+        quantize(target, rounding["target"]),
     )
 
 

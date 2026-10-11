@@ -7,6 +7,8 @@ import inspect
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from xau_edge.decision_research import authorization, probability, rr
@@ -32,7 +34,14 @@ from xau_edge.decision_research.rr import (
 
 pytestmark = pytest.mark.unit
 
-COSTS = CostModel(spread=0.4)
+COSTS = CostModel(
+    spread=0.4,
+    slippage=0.0,
+    commission=0.0,
+    swap=0.0,
+    source="explicit test assumptions",
+    verified=True,
+)
 FULL = Thresholds(
     min_sample=500,
     max_ci_width=0.12,
@@ -66,6 +75,11 @@ def buy(stage: PatternStage = PatternStage.CONFIRMED, **kw: object) -> Proposal:
         "side": "BUY",
         "stage": stage,
         "entry": 100.0,
+        "tick_size": 0.01,
+        "entry_causal": True,
+        "stop_structurally_valid": True,
+        "target_structurally_valid": True,
+        "risk_ok": True,
         "stop": 98.0,
         "target": 105.0,
         "room_to_target": 9.0,
@@ -78,6 +92,11 @@ def sell(stage: PatternStage = PatternStage.CONFIRMED, **kw: object) -> Proposal
         "side": "SELL",
         "stage": stage,
         "entry": 100.0,
+        "tick_size": 0.01,
+        "entry_causal": True,
+        "stop_structurally_valid": True,
+        "target_structurally_valid": True,
+        "risk_ok": True,
         "stop": 102.0,
         "target": 95.0,
         "room_to_target": 9.0,
@@ -98,7 +117,20 @@ def test_break_even_probability_follows_the_payoff_not_the_other_way_round() -> 
 
 
 def test_costs_raise_the_probability_needed() -> None:
-    free = net_payoff("BUY", 100.0, 98.0, 104.0, CostModel(spread=0.0))
+    free = net_payoff(
+        "BUY",
+        100.0,
+        98.0,
+        104.0,
+        CostModel(
+            spread=0.0,
+            slippage=0.0,
+            commission=0.0,
+            swap=0.0,
+            source="explicit zero costs",
+            verified=True,
+        ),
+    )
     costly = net_payoff("BUY", 100.0, 98.0, 104.0, COSTS)
     assert free is not None and costly is not None
     assert free.net_rr == pytest.approx(2.0) == free.gross_rr
@@ -110,7 +142,18 @@ def test_costs_raise_the_probability_needed() -> None:
 
 def test_a_gross_2r_can_be_a_net_failure() -> None:
     payoff = net_payoff(
-        "BUY", 100.0, 99.0, 102.0, CostModel(spread=0.5, slippage=0.2, commission=0.1)
+        "BUY",
+        100.0,
+        99.0,
+        102.0,
+        CostModel(
+            spread=0.5,
+            slippage=0.2,
+            commission=0.1,
+            swap=0.0,
+            source="test cost stress",
+            verified=True,
+        ),
     )
     assert payoff is not None and payoff.gross_rr == pytest.approx(2.0)
     assert payoff.net_rr < 2.0  # the rule uses the net figure
@@ -119,6 +162,8 @@ def test_a_gross_2r_can_be_a_net_failure() -> None:
 def test_levels_on_the_wrong_side_and_costs_larger_than_reward() -> None:
     assert net_payoff("BUY", 100.0, 101.0, 105.0, COSTS) is None  # stop above a long entry
     assert net_payoff("SELL", 100.0, 99.0, 95.0, COSTS) is None
+    assert net_payoff("BUY", 100.0, 99.0, 95.0, COSTS) is None  # target below a long entry
+    assert net_payoff("SELL", 100.0, 101.0, 105.0, COSTS) is None
     eaten = net_payoff("BUY", 100.0, 99.0, 100.3, COSTS)
     assert eaten is not None and eaten.net_rr == 0.0 and eaten.net_break_even_probability == 1.0
 
@@ -212,14 +257,149 @@ def test_a_pattern_that_is_not_confirmed_is_always_wait(stage: PatternStage, cod
     assert result.action == "WAIT" and codes(result) == [code]
 
 
-def test_net_rr_below_two_is_wait_and_says_the_number() -> None:
+def test_net_rr_below_floor_is_wait_and_says_the_number() -> None:
     result = authorize([buy(target=103.0)], COSTS, DecisionProbability(), FULL)
     assert result.action == "WAIT" and codes(result) == ["NET_RR_BELOW_MIN"]
     assert (
         "Net R:R hiện" in result.reasons[0].message
-        and "dưới ngưỡng 2R" in result.reasons[0].message
+        and "dưới ngưỡng 1.5R" in result.reasons[0].message
     )
     assert result.net_rr["BUY"] < 2.0
+
+
+def test_gross_160_after_costs_below_150_is_rejected() -> None:
+    result = authorize(
+        [buy(target=103.2)],
+        CostModel(
+            spread=0.05,
+            slippage=0.05,
+            commission=0.05,
+            swap=0.05,
+            source="predeclared synthetic cost-drop case",
+            verified=True,
+        ),
+        DecisionProbability(),
+        FULL,
+    )
+    assert result.action == "WAIT"
+    assert codes(result) == ["NET_RR_BELOW_MIN"]
+    assert result.net_rr["BUY"] < 1.5
+
+
+def test_authorization_rounds_levels_adversely_before_net_rr() -> None:
+    result = authorize(
+        [buy(entry=100.001, stop=99.001, target=101.501, room_to_target=2.0)],
+        CostModel(
+            spread=0.0,
+            slippage=0.0,
+            commission=0.0,
+            swap=0.0,
+            source="explicit zero-cost rounding test",
+            verified=True,
+        ),
+        DecisionProbability(),
+        FULL,
+    )
+    assert result.net_rr["BUY"] == pytest.approx(1.4752475247524752)
+    assert result.action == "WAIT" and codes(result) == ["NET_RR_BELOW_MIN"]
+
+
+@pytest.mark.parametrize("spread", [0.01, 0.10, 0.25])
+def test_spread_stress_is_applied_to_geometry(spread: float) -> None:
+    result = authorize(
+        [buy(target=103.2)],
+        CostModel(
+            spread=spread,
+            slippage=0.0,
+            commission=0.0,
+            swap=0.0,
+            source=f"predeclared spread stress {spread}",
+            verified=True,
+        ),
+        DecisionProbability(),
+        FULL,
+    )
+    if spread == 0.01:
+        assert result.net_rr["BUY"] >= 1.5
+    else:
+        assert result.action == "WAIT" and result.net_rr["BUY"] < 1.5
+
+
+def test_cost_values_and_cost_source_cannot_be_omitted() -> None:
+    with pytest.raises(ValidationError):
+        CostModel(spread=0.4)  # type: ignore[call-arg]
+    with pytest.raises(ValidationError):
+        CostModel(
+            spread=0.4,
+            slippage=0.0,
+            commission=0.0,
+            swap=0.0,
+            source="missing verification flag",
+        )  # type: ignore[call-arg]
+
+
+def test_unverified_cost_model_never_authorizes() -> None:
+    costs = CostModel(
+        spread=0.0,
+        slippage=0.0,
+        commission=0.0,
+        swap=0.0,
+        source="unverified placeholder",
+        verified=False,
+    )
+    result = authorize([buy(target=106.0)], costs, DecisionProbability(), FULL)
+    assert result.action == "WAIT" and codes(result) == ["COST_MODEL_UNVERIFIED"]
+
+
+@given(
+    spread=st.integers(min_value=0, max_value=100),
+    slippage=st.integers(min_value=0, max_value=50),
+    commission=st.integers(min_value=0, max_value=50),
+    swap=st.integers(min_value=0, max_value=50),
+    extra_ticks=st.integers(min_value=0, max_value=500),
+)
+def test_property_no_authorized_candidate_below_net_rr_floor(
+    spread: int, slippage: int, commission: int, swap: int, extra_ticks: int
+) -> None:
+    costs = CostModel(
+        spread=spread / 100,
+        slippage=slippage / 100,
+        commission=commission / 100,
+        swap=swap / 100,
+        source="generated complete verified property-test model",
+        verified=True,
+    )
+    reward = costs.total + 1.5 * (2.0 + costs.total) + extra_ticks / 100
+    target = 100.0 + round(reward, 2)
+    proposal = buy(target=target, room_to_target=target - 100.0)
+    result = authorize(
+        [proposal],
+        costs,
+        DecisionProbability(buy_success=prob(est=0.95)),
+        FULL,
+    )
+    if result.action == "BUY_CANDIDATE":
+        assert result.net_rr["BUY"] >= 1.5
+
+
+def test_policy_floor_cannot_be_lowered_below_one_point_five() -> None:
+    with pytest.raises(ValidationError):
+        Thresholds(min_net_rr=1.49)
+
+
+@pytest.mark.parametrize(
+    ("field", "expected"),
+    [
+        ("entry_causal", "ENTRY_NOT_CAUSAL"),
+        ("stop_structurally_valid", "INVALID_STOP"),
+        ("target_structurally_valid", "INVALID_TARGET"),
+        ("risk_ok", "RISK_GUARD"),
+    ],
+)
+def test_missing_geometry_or_risk_gate_never_authorizes(field: str, expected: str) -> None:
+    proposal = buy(target=106.0).model_copy(update={field: False})
+    result = authorize([proposal], COSTS, DecisionProbability(), FULL)
+    assert result.action == "WAIT" and codes(result) == [expected]
 
 
 def test_structure_room_gate_rejects_an_unrealistic_target() -> None:
@@ -228,6 +408,8 @@ def test_structure_room_gate_rejects_an_unrealistic_target() -> None:
     assert codes(blocked) == ["NO_ROOM_TO_TARGET"]
     unknown = authorize([buy(target=106.0, room_to_target=None)], COSTS, probs, FULL)
     assert codes(unknown) == ["NO_ROOM_TO_TARGET"]  # unknown room is not free room
+    at_barrier = authorize([buy(target=106.0, room_to_target=6.0)], COSTS, probs, FULL)
+    assert codes(at_barrier) == ["NO_ROOM_TO_TARGET"]  # target must remain one tick before it
 
 
 def test_all_gates_pass_only_with_a_calibrated_probability_above_the_requirement() -> None:
@@ -290,7 +472,7 @@ def test_incomplete_or_unreferenced_thresholds_never_authorize() -> None:
     assert codes(authorize([buy(target=106.0)], COSTS, probs, no_ref)) == [
         "THRESHOLDS_NOT_PREREGISTERED"
     ]
-    assert Thresholds().min_net_rr == 2.0  # the default policy is 2R
+    assert Thresholds().min_net_rr == 1.5
 
 
 def test_no_function_turns_a_shape_or_a_ratio_into_a_probability() -> None:

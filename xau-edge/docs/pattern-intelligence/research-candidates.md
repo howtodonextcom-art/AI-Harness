@@ -1,12 +1,12 @@
 # Pattern Research V4: candidate shortlist (proposal only)
 
-**NOT AUTHORIZED. NOT RUN.** Edge Program V3 is closed (NO VIABLE EDGE FOUND). This file is what a future charter could start from, nothing more. No outcome is read here.
+**NOT AUTHORIZED.** Edge Program V3 is closed (NO VIABLE EDGE FOUND). The current proposed V4 entry-geometry floor is **1.5 net R:R**, not 2.0; it is necessary and not sufficient. No edge, probability, or profitability is claimed.
 
 ## Verdict on the candidates
 
 | Candidate | Class | Reason |
 |---|---|---|
-| Double Top / Bottom (incl. Adam and Eve), neckline close | FUTURE RESEARCH CANDIDATE, **low prior, conditional** | best new rubric score; enough events (287 in Development-2 H1); but the textbook exit gives gross R:R about 0.72, so under the 2.0 policy it has **no entry-eligible exit today**; a candidate must preregister a different exit that can reach 2R with credible room |
+| Double Top / Bottom (incl. Adam and Eve), neckline close | FUTURE RESEARCH CANDIDATE, **low prior, conditional** | best new rubric score; enough events (287 in Development-2 H1); the textbook exit gives gross R:R about 0.72 and cannot meet the 1.5 net floor; do not stretch its target or tighten its invalidation stop to rescue it |
 | Wolfe Wave (P5 or reclaim entry) | DETECTOR ONLY | disputed rules; the displayed R:R exists only with an extreme entry; the causal entries are at least 3 bars after P5 |
 | Head and Shoulders | DETECTOR ONLY | 7 events in 8 years of H1: untestable |
 | Falling / rising wedge, triangle, flag, cup and handle, diamond, harmonics | DOCUMENT ONLY | no detector; Bulkowski's statistics for wedges are weak or the worst; line fitting adds freedom |
@@ -30,8 +30,8 @@ Applied to the only conditional candidate. Items marked **TO FIX** must be prere
 | Actionable timestamp | the close of the neckline-break bar (`actionable_at`); first executable price is the next open |
 | Entry | next-bar open after the neckline close, plus the measured spread and slippage |
 | Stop | **TO FIX**: the invalidation reference (the peak) gives risk about one pattern height plus the break distance |
-| Target | **TO FIX**: the textbook measured move gives gross 0.72R (median); an exit that can reach net 2.0R with room must be defined **before** outcomes |
-| Minimum net R:R | 2.0 after spread, slippage, commission, swap |
+| Target | Textbook measured move only; if it cannot reach 1.5 net R with credible room, WAIT / REJECT |
+| Minimum net R:R | 1.5 after spread, slippage, commission, swap; current proposed geometry floor, not a profitability claim |
 | Time exit | **TO FIX**: a horizon, also the horizon of any probability |
 | Cost model | the project's measured cost model (`foundation/cost_model_v2.json`) |
 | Probability target | P(TP before SL within T), calibrated out of sample; none exists today |
@@ -47,4 +47,4 @@ Applied to the only conditional candidate. Items marked **TO FIX** must be prere
 
 ## What must hold before any of this is authorised
 
-A mechanism with support beyond folklore; an exit that can reach net 2.0R with credible room under the structure-room gate; a sample large enough for the preregistered power; a cost model in which the expected edge exceeds costs; untouched evaluation data (see `contamination-map.md`); and the decision of the owner.
+A mechanism with support beyond folklore; a causal entry, valid structural stop and realistic target that reach at least 1.5 net R with credible room; a sample large enough for preregistered power; a cost model that is verified and complete; untouched evaluation data (see `contamination-map.md`); and the decision of the owner. The floor alone is not edge or probability.

@@ -6,30 +6,31 @@ Status: **design only**. Implemented in `src/xau_edge/decision_research/` with t
 
 * A 1:1 payoff does **not** mean 50%. A 2:1 payoff does **not** mean 66%. R:R says what win probability is *required* to break even; it never says what the probability *is*.
 * Break-even win rate = 1 / (1 + R). Before costs: 1:1 needs 50%, 2:1 needs 33.3%, 3:1 needs 25%.
-* Costs raise the requirement. The framework always uses **net** R:R: `net_rr = (reward - costs) / (risk + costs)` with costs = spread + slippage + commission + swap, in price units, the same convention as `trading/levels.py`. Example from the tests: a gross 2.0R with 0.5 spread, 0.2 slippage and 0.1 commission on a 1.0 risk is below 2.0 net; the gate uses the net figure.
+* Costs raise the requirement. The research framework uses **net** R:R: `net_rr = (reward - costs) / (risk + costs)` with costs = spread + slippage + commission + swap, in price units. All four inputs, their source, and verification status are explicit; an unverified model is a hard WAIT. This convention is research-only and does not imply the baseline prices those same costs.
 * 1:1 is not "gambling" by itself: it needs a higher win probability to overcome costs. It is refused by default because no validated probability exists, not because of the ratio.
 
-## Rule 2: minimum net R:R = 2.0, as a gate and not a promise
+## Rule 2: current minimum entry-geometry policy = 1.5 net R:R
 
-A candidate is entry-eligible only if net R:R is at least 2.0 (`Thresholds.min_net_rr` default). Below it the answer is WAIT with the reason "Net R:R hiện 1.4R, dưới ngưỡng 2R". **2R is necessary, not sufficient**: the other gates (data trusted, no blocker, pattern confirmed, room to target, preregistered thresholds, a publishable probability, probability above break-even plus margins, positive expected value) must all pass.
+A research proposal cannot pass geometry below 1.50 net (`Thresholds.min_net_rr` default and minimum allowed). Below it the answer is WAIT, for example: "CHỜ: Net R:R hiện 1.40R, dưới ngưỡng 1.5R." This is an entry-geometry floor, not edge, win probability, profitability, or a sufficient reason to enter. Data trust, blockers, confirmed pattern, causal entry, structural stop and target, verified costs, structure room, risk guard, preregistered thresholds, publishable probability, probability above break-even plus margins, and positive expected value remain separate gates.
 
 ## What the shapes themselves offer (descriptive, at the moment of detection)
 
-Gross R:R of the textbook levels on Development-2 H1 (entry at the trigger close, stop at the invalidation level, target at the measured move or EPA): double top/bottom median **0.72** (0 of 287 reach 1.5); head and shoulders median 1.46 (29% reach 1.5); Wolfe median 3.6 (90% reach 1.5, because the stop sits at the extreme). So the textbook double top fails the 2.0 gate by construction, and the Wolfe picture passes only by assuming an entry near an extreme that is unknowable in advance. This says nothing about what price does afterwards.
+Updated descriptive geometry on Development-2 H1 (48,470 bars; fixed defaults; actionable-close reference, adversely tick-rounded; no outcomes): 143 double tops had median gross R:R 0.74 (2/143 at least 1.5); 144 double bottoms 0.77 (4/144); 3 head-and-shoulders 1.94 (3/3); 4 inverse H&S 1.23 (1/4); 71 Wolfe 3.64 (64/71). Across all types, opposing confirmed structure blocked 344/365 targets with a one-tick buffer. These are gross reference geometries, not executable fills. No NET R:R distribution or eligible count is claimed: the historical H1 extract has no next-open fill and complete verified all-in cost model.
 
-## Rule 3: 1R / 2R / 3R, educationally
+## Rule 3: payoff geometry and theoretical break-even
 
-| Net payoff | Break-even win rate (before costs) | Reading |
+| Net payoff geometry | Theoretical break-even before costs | Reading |
 |---|---|---|
 | 1R | 50% | needs the highest hit rate; costs matter most |
+| 1.5R | 40% | current minimum geometry floor; not an optimal threshold |
 | 2R | 33.3% | lower hit rate needed, target is twice as far |
 | 3R | 25% | lower still, but the target is harder to reach and may not fit the available room |
 
-None is optimal without evidence. A lower win rate with a larger payoff can have the same or better expected value; that is why the UI must show net R:R, the break-even rate, an evidence-based probability and expected value together, never a single "confidence" number.
+These theoretical break-even rates are not predicted win probabilities; after costs the break-even rate is higher. None is optimal without evidence. The 1.5 floor controls payoff geometry only and implies neither edge nor profitability.
 
 ## Rule 4: structure-room gate
 
-Even with a theoretical 2R, the setup is refused if the opposing structure leaves less free distance than the reward needs (`room_to_target < gross_reward`), or if the room is unknown. Unknown room is not free room.
+Even with theoretical 1.5R, the setup is refused unless opposing structure leaves at least one tick beyond the rounded reward distance, or if room is unknown. Unknown room is not free room.
 
 ## Rule 5: entry authorization state machine (`authorization.authorize`)
 
@@ -37,7 +38,8 @@ Even with a theoretical 2R, the setup is refused if the opposing structure leave
 no pattern / possible / developing / near confirmation / invalidated  -> WAIT (the stage is the reason)
 confirmed or actionable
   -> levels coherent?              no -> WAIT
-  -> net R:R >= 2.0 ?              no -> WAIT "Net R:R hiện x, dưới ngưỡng 2R"
+  -> verified costs and tick rounding? no -> WAIT
+  -> net R:R >= 1.5 ?              no -> WAIT "Net R:R hiện x, dưới ngưỡng 1.5R"
   -> room to target >= reward ?    no -> WAIT
   -> thresholds preregistered ?    no -> WAIT
   -> publishable probability ?     no -> WAIT (unavailable / insufficient sample / not calibrated / interval too wide)
@@ -59,7 +61,7 @@ External practice catalogued (not adopted): fixed R multiple; structure target (
 
 | Item | Status |
 |---|---|
-| Planned TP: defined before entry; a mechanical planning target | allowed as a plan only; a TP that cannot reach 2R with credible room means WAIT |
+| Planned TP: defined before entry; a mechanical planning target | allowed as a plan only; a TP that cannot reach 1.5 net R with credible room means WAIT |
 | Dynamic exit | UNVALIDATED, disabled |
 | Emergency exit (risk/ops rule) | existing guards; unchanged |
 | Partial take profit | **DISABLED** (changes the payoff distribution; needs separate outcome research) |

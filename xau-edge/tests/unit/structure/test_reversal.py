@@ -163,6 +163,8 @@ def test_neckline_already_broken_at_confirmation_is_reported_late_not_hidden() -
     assert top.detected_at == top.geometry_known_at  # known only at confirmation
     assert top.trigger_delay_bars >= 1  # and the break was earlier: say so
     assert top.trigger_bar is not None and top.trigger_bar < top.detected_at
+    assert top.reference_levels["trigger_close"] == pytest.approx(95.0)
+    assert top.reference_levels["entry_reference"] == pytest.approx(path(fast)[2][top.detected_at])
 
 
 def test_a_superseded_peak_retires_the_pattern_built_on_it() -> None:

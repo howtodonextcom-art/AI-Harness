@@ -11,7 +11,7 @@ Gates, in order (the first failure of a side is its reason; both sides are alway
 1. data trustworthy, no blocker;
 2. pattern CONFIRMED or ACTIONABLE (a developing pattern is never enough);
 3. levels coherent;
-4. net R:R after costs at least ``min_net_rr`` (2.0 by default);
+4. net R:R after costs at least ``min_net_rr`` (1.5 by default);
 5. credible room to the target (opposing structure leaves the reward distance free);
 6. thresholds preregistered;
 7. a publishable probability (sample, interval, calibration, horizon);
@@ -35,6 +35,7 @@ from xau_edge.decision_research.rr import (
     expected_value_r,
     net_payoff,
     required_probability,
+    round_levels_to_tick,
 )
 
 
@@ -61,7 +62,7 @@ class Thresholds(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    min_net_rr: float = Field(default=2.0, gt=0.0)
+    min_net_rr: float = Field(default=1.5, ge=1.5, allow_inf_nan=False)
     min_sample: int | None = None
     max_ci_width: float | None = None
     calibration_margin: float | None = None
@@ -100,10 +101,16 @@ class Proposal(BaseModel):
 
     side: Literal["BUY", "SELL"]
     stage: PatternStage
-    entry: float
-    stop: float
-    target: float
-    room_to_target: float | None = None  # free distance to the nearest opposing structure
+    entry: float = Field(allow_inf_nan=False)
+    stop: float = Field(allow_inf_nan=False)
+    target: float = Field(allow_inf_nan=False)
+    tick_size: float = Field(gt=0.0, allow_inf_nan=False)
+    entry_causal: bool = False
+    stop_structurally_valid: bool = False
+    target_structurally_valid: bool = False
+    risk_ok: bool = False
+    room_to_target: float | None = Field(default=None, ge=0.0, allow_inf_nan=False)
+    # Free distance to the nearest opposing structure.
     data_ok: bool = True
     blockers: tuple[str, ...] = ()
 
@@ -151,7 +158,7 @@ def _reason(side: Literal["BUY", "SELL"], code: str, message: str) -> Reason:
     return Reason(side=side, code=code, message=message)
 
 
-def _side_verdict(p: Proposal, ctx: _Context) -> Reason | None:  # noqa: PLR0911 - one return per gate
+def _side_verdict(p: Proposal, ctx: _Context) -> Reason | None:  # noqa: PLR0911, PLR0912
     side = p.side
     th = ctx.thresholds
     if not p.data_ok:
@@ -161,7 +168,18 @@ def _side_verdict(p: Proposal, ctx: _Context) -> Reason | None:  # noqa: PLR0911
     if p.stage in _NOT_READY:
         code, text = _NOT_READY[p.stage]
         return _reason(side, code, f"CHỜ: {text}.")
-    payoff = net_payoff(side, p.entry, p.stop, p.target, ctx.costs)
+    if not p.entry_causal:
+        return _reason(side, "ENTRY_NOT_CAUSAL", "CHỜ: entry chưa có quy tắc nhân quả.")
+    if not p.stop_structurally_valid:
+        return _reason(side, "INVALID_STOP", "CHỜ: stop chưa được xác nhận theo cấu trúc.")
+    if not p.target_structurally_valid:
+        return _reason(side, "INVALID_TARGET", "CHỜ: target chưa được xác nhận theo cấu trúc.")
+    if not p.risk_ok:
+        return _reason(side, "RISK_GUARD", "CHỜ: risk guard chưa xác nhận.")
+    if not ctx.costs.verified:
+        return _reason(side, "COST_MODEL_UNVERIFIED", "CHỜ: mô hình chi phí chưa được xác minh.")
+    entry, stop, target = round_levels_to_tick(side, p.entry, p.stop, p.target, p.tick_size)
+    payoff = net_payoff(side, entry, stop, target, ctx.costs)
     if payoff is None:
         return _reason(side, "LEVELS_INVALID", "CHỜ: mức vào, cắt lỗ, chốt lời không hợp lệ.")
     ctx.net_rr[side] = payoff.net_rr
@@ -169,7 +187,8 @@ def _side_verdict(p: Proposal, ctx: _Context) -> Reason | None:  # noqa: PLR0911
     if payoff.net_rr < th.min_net_rr:
         message = f"CHỜ: Net R:R hiện {payoff.net_rr:.2f}R, dưới ngưỡng {th.min_net_rr:g}R."
         return _reason(side, "NET_RR_BELOW_MIN", message)
-    if p.room_to_target is None or p.room_to_target < payoff.gross_reward:
+    room = None if p.room_to_target is None else int(p.room_to_target / p.tick_size) * p.tick_size
+    if room is None or room < payoff.gross_reward + p.tick_size:
         return _reason(
             side, "NO_ROOM_TO_TARGET", "CHỜ: cấu trúc đối diện không chừa đủ chỗ tới mục tiêu."
         )
