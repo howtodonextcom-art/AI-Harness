@@ -152,7 +152,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
             </select>
           </div>
           <div data-testid="countdown" className={`font-mono text-xs ${MUTED}`}>
-            {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> <span title={ZONE_LABEL[zone]}>({ZONE_SHORT[zone]})</span> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
+            {countdown && !stalePrice ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> <span title={ZONE_LABEL[zone]}>({ZONE_SHORT[zone]})</span> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
           </div>
           <span data-testid="data-age" className={`hidden text-xs sm:inline ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds === null || view?.data_age_seconds === undefined ? view?.data_age_seconds : Math.max(view.data_age_seconds, view.quote?.age_seconds ?? 0) + extra)}</span>
           <button type="button" data-testid="market-more" aria-expanded={more} onClick={() => setMore(!more)} className="text-xs font-semibold underline roomy:hidden">{more ? "Ẩn chi tiết thị trường ▴" : "Chi tiết thị trường ▾"}</button>
