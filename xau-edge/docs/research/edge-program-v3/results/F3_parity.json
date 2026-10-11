@@ -1,0 +1,67 @@
+{
+ "family": "F3-USMOM-0930-1400-1500-1645",
+ "kind": "oracle parity (array runner vs New-York-clock reference); outcome statistics not computed",
+ "windows": [
+  {
+   "window": [
+    "2012-01-01",
+    "2012-07-01"
+   ],
+   "weekdays": 130,
+   "masked_or_closed_days": 13,
+   "trades_compared": 106,
+   "runner_counts": {
+    "weekdays": 130,
+    "excluded_clock_mask": 10,
+    "excluded_holiday_or_early_close": 3,
+    "excluded_missing_anchor": 9,
+    "excluded_low_coverage": 2,
+    "excluded_no_atr": 0,
+    "no_signal_zero_move": 0
+   },
+   "differences": {
+    "clock_mask_vs_v2": 0,
+    "event_set": 0,
+    "direction": 0,
+    "exit_time": 0,
+    "reason": 0,
+    "atr": 0,
+    "gross_r": 0,
+    "base_r": 0,
+    "pess_r": 0
+   }
+  },
+  {
+   "window": [
+    "2012-10-01",
+    "2012-12-01"
+   ],
+   "weekdays": 45,
+   "masked_or_closed_days": 7,
+   "trades_compared": 38,
+   "runner_counts": {
+    "weekdays": 45,
+    "excluded_clock_mask": 5,
+    "excluded_holiday_or_early_close": 2,
+    "excluded_missing_anchor": 0,
+    "excluded_low_coverage": 0,
+    "excluded_no_atr": 0,
+    "no_signal_zero_move": 0
+   },
+   "differences": {
+    "clock_mask_vs_v2": 0,
+    "event_set": 0,
+    "direction": 0,
+    "exit_time": 0,
+    "reason": 0,
+    "atr": 0,
+    "gross_r": 0,
+    "base_r": 0,
+    "pess_r": 0
+   }
+  }
+ ],
+ "verdict": "PASS",
+ "code_head": "6ca3342fb458154ee8e9311d9ef4d1167964fc2f",
+ "generated_at": "2026-10-11T06:31:48.575964+00:00"
+}
