@@ -76,6 +76,8 @@ interface Props {
   /** False when the decision must not be drawn as a live plan (stale data, expired, WAIT). */
   planLive: boolean;
   holdLive: boolean;
+  /** the setup whose BUY/SELL marker must not look like an offer (the desk refuses it right now) */
+  blockedSetupId: string | null;
   plan: TradePlan | null;
   focus: { from: string; to: string } | null;
   follow: boolean;
@@ -184,7 +186,7 @@ interface Measure {
  * the ruler). Nothing here derives a signal.
  */
 export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalChart(
-  { bars, timeframe, zone, overlays, view, markers, history, planLive, holdLive, plan, focus, follow, onFollowChange, levels, alerts, setups, tool, onAddLevel, onToolDone, drawings, selectedDrawing, onSelectDrawing, onAddDrawing, onChangeDrawing, onDeleteDrawing, extraLines },
+  { bars, timeframe, zone, overlays, view, markers, history, planLive, holdLive, blockedSetupId, plan, focus, follow, onFollowChange, levels, alerts, setups, tool, onAddLevel, onToolDone, drawings, selectedDrawing, onSelectDrawing, onAddDrawing, onChangeDrawing, onDeleteDrawing, extraLines },
   ref,
 ) {
   const container = useRef<HTMLDivElement>(null);
@@ -306,7 +308,8 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   drawCb.current = { onAddDrawing, onSelectDrawing, onToolDone };
 
   // ---- markers: placed from the signal's own timestamp (see signalBarIndex) --------------------
-  const { chartMarkers, markerPrio, details } = useMemo(() => {
+  const { chartMarkers, markerPrio, details, blockedMarkers } = useMemo(() => {
+    let blockedMarkers = 0;
     // prio: who keeps the label when two labelled markers of the same side sit closer than a label is wide (lower wins)
     const meta: { m: SeriesMarker<Time>; prio: number }[] = [];
     const list = { push: (m: SeriesMarker<Time>, prio = 5) => void meta.push({ m, prio }) };
@@ -325,7 +328,13 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         const at = byTime(s.at ?? s.bar_time, "signal");
         if (!at) continue;
         const buy = s.side === "BUY";
-        list.push({ time: at.time as UTCTimestamp, position: buy ? "belowBar" : "aboveBar", shape: buy ? "arrowUp" : "arrowDown", color: buy ? GREEN : RED, text: SIDE_VI[s.side] }, 2);
+        if (blockedSetupId !== null && s.setup_id === blockedSetupId && !s.taken) {
+          // the engine saw this setup but the desk refuses it: a grey "bị chặn" dot, never a green MUA arrow that reads as an offer
+          blockedMarkers += 1;
+          list.push({ time: at.time as UTCTimestamp, position: buy ? "belowBar" : "aboveBar", shape: "circle", color: GREY, text: "bị chặn" }, 2);
+        } else {
+          list.push({ time: at.time as UTCTimestamp, position: buy ? "belowBar" : "aboveBar", shape: buy ? "arrowUp" : "arrowDown", color: buy ? GREEN : RED, text: SIDE_VI[s.side] }, 2);
+        }
         out.push({
           key: `sig-${s.setup_id}`,
           kind: s.side,
@@ -370,9 +379,12 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       }
     }
     meta.sort((a, b) => (a.m.time as number) - (b.m.time as number));
-    return { chartMarkers: meta.map((x) => x.m), markerPrio: meta.map((x) => x.prio), details: out };
-  }, [markers, overlays.signals, overlays.paper, history, times, zone, tfSeconds, setups]);
+    return { chartMarkers: meta.map((x) => x.m), markerPrio: meta.map((x) => x.prio), details: out, blockedMarkers };
+  }, [markers, overlays.signals, overlays.paper, history, times, zone, tfSeconds, setups, blockedSetupId]);
 
+  useEffect(() => {
+    container.current?.setAttribute("data-blocked-markers", String(blockedMarkers)); // observable: signal markers drawn as "bị chặn" instead of an offer
+  }, [blockedMarkers]);
   const detailsRef = useRef<{ time: number; detail: MarkerDetail }[]>([]);
   useEffect(() => {
     detailsRef.current = details.map((d) => ({ time: shiftedSeconds(d.barTime, zone), detail: d }));
@@ -880,7 +892,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       />
 
       {overlays.news && <NewsMarkers news={view?.news} api={drawApiRef.current} zone={zone} width={size.w} height={size.h} />}
-      <SystemTradePlanOverlay api={drawApiRef.current} width={size.w} height={size.h} topInset={legendBottom} planLive={planLive} holdLive={holdLive} plan={plan} view={view} showPlan={overlays.plan} showPaper={overlays.paper} />
+      <SystemTradePlanOverlay api={drawApiRef.current} width={size.w} height={size.h} topInset={legendBottom} planLive={planLive} holdLive={holdLive} zone={zone} plan={plan} view={view} showPlan={overlays.plan} showPaper={overlays.paper} />
       <DrawingLayer drawings={drawings} draft={draft} selectedId={selectedDrawing} api={drawApiRef.current} width={size.w} height={size.h} onSelect={onSelectDrawing} onChange={onChangeDrawing} onDelete={onDeleteDrawing} passive={tool !== "none"} />
 
       {shown && (

@@ -2,6 +2,7 @@
 
 import type { DrawingApi } from "@/components/terminal/DrawingLayer";
 import { allocateLabelSlots } from "@/lib/labelSlots";
+import { ZONE_SHORT, formatInZone, type DisplayZone } from "@/lib/time";
 import type { TradePlan, TradeView } from "@/lib/trade";
 
 const GREEN = "#16a34a";
@@ -45,13 +46,15 @@ interface Props {
   planLive: boolean;
   /** the Human action authorizes the open position's facts on the chart (action HOLD) */
   holdLive: boolean;
+  /** the trader's display zone: the expiry label must read like the clock next to it */
+  zone: DisplayZone;
   plan: TradePlan | null;
   view: TradeView | null;
   showPlan: boolean;
   showPaper: boolean;
 }
 
-function modelFromProps({ planLive, holdLive, plan, view, showPlan, showPaper }: Omit<Props, "api" | "width" | "height" | "topInset">): OverlayModel | null {
+function modelFromProps({ planLive, holdLive, plan, view, showPlan, showPaper }: Omit<Props, "api" | "width" | "height" | "topInset" | "zone">): OverlayModel | null {
   const position = view?.desk?.position;
   if (showPaper && holdLive && position && position.status === "OPEN") {
     const side = position.side === "SELL" ? "SELL" : "BUY";
@@ -95,7 +98,7 @@ function modelFromProps({ planLive, holdLive, plan, view, showPlan, showPaper }:
 
 export function SystemTradePlanOverlay(props: Props) {
   const model = modelFromProps(props);
-  const { api, width, height, topInset = 0 } = props;
+  const { api, width, height, topInset = 0, zone } = props;
   if (!model || !api) return null;
   const w = Math.max(1, width);
   const h = Math.max(1, height);
@@ -178,7 +181,7 @@ export function SystemTradePlanOverlay(props: Props) {
       )}
       {model.expiresAt && (
         <text x={18} y={clamp(badgeTop + 58, 20, h - 8)} fill="#475569" fontSize={10} fontWeight={800} stroke="rgba(255,255,255,0.86)" strokeWidth={3} paintOrder="stroke">
-          {model.mode === "POSITION" ? "TIME EXIT" : "EXPIRES"} {model.expiresAt.slice(11, 16)} UTC
+          {model.mode === "POSITION" ? "TIME EXIT" : "EXPIRES"} {formatInZone(model.expiresAt, zone).slice(11, 16)} {ZONE_SHORT[zone]}
         </text>
       )}
     </svg>

@@ -572,6 +572,7 @@ export function TerminalView() {
           history={prefs.history}
           planLive={planLive}
           holdLive={holdLive}
+          blockedSetupId={surface?.id === "WAIT_BLOCKED" ? plan?.setup_id ?? null : null}
           plan={plan}
           focus={focus}
           follow={prefs.follow}
@@ -716,7 +717,7 @@ export function TerminalView() {
           ) : (
             <>
               <div className="min-w-0 flex-1 text-sm">
-                <b>{view ? heroLabel(view, surface) : ""}</b>
+                <b>{view ? heroLabel(view, surface) : ""}</b>{surface?.id === "BUY_READY" || surface?.id === "SELL_READY" ? <span data-testid="bar-entry" className="ml-1 font-mono text-xs">@ {fmt(plan?.planned_entry)}</span> : null}
                 <div className="font-mono text-xs leading-tight">SL {fmt(plan?.sl)} · TP {fmt(plan?.tp1)} · R/R {fmt(plan?.rr_net)}</div>
               </div>
               <button type="button" data-testid="action-bar-open" disabled={!canOpen || busy} onClick={requestOpen} className={`rounded-md border-2 px-4 py-2 text-sm font-black text-white disabled:opacity-40 ${surface?.id === "BUY_READY" ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>

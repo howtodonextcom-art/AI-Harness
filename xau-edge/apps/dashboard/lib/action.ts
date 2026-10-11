@@ -149,9 +149,9 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
       "wait",
       "CHỜ",
       `Setup ${SIDE ? `${SIDE.toLowerCase()} ` : ""}đã đủ điều kiện kỹ thuật nhưng đang bị chặn: ${reason}`,
-      "Vì sao chặn?",
-      `${reason}. Đừng mở lệnh cho setup này; bàn sẽ tự cập nhật khi lý do chặn hết hoặc có setup mới.`,
-      `${reason}. Chờ setup mới.`,
+      "Khi nào?",
+      "Đừng mở lệnh cho setup này. Bàn tự cập nhật khi lý do chặn hết hoặc có setup mới.",
+      "Chờ lý do chặn hết hoặc setup mới.",
     );
   }
   if (a.stage === "CLOSED") return make("WAIT", "wait", "CHỜ", "Thị trường đóng cửa", "Khi nào?", "Chưa làm gì. Bộ máy tự tính lại khi thị trường mở cửa.");

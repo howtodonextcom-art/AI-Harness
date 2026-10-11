@@ -409,7 +409,7 @@ function HeroLevels({ view, risk, blocked, reason = "blocked" }: { view: TradeVi
   );
   return (
     <>
-    {blocked && reason !== "exit" && <p data-testid="hero-levels-blocked" className="mt-1 hidden text-[11px] font-bold sm:block">{reason === "expired" ? "Kế hoạch đã hết hạn, không dùng." : reason === "setup" ? "Setup bị chặn: không được vào lệnh, không có kế hoạch để dùng." : "Kế hoạch bị chặn, không dùng."}</p>}
+    {blocked && reason !== "exit" && reason !== "setup" && <p data-testid="hero-levels-blocked" className="mt-1 hidden text-[11px] font-bold sm:block">{reason === "expired" ? "Kế hoạch đã hết hạn, không dùng." : "Kế hoạch bị chặn, không dùng."}</p>}
     <dl data-testid="hero-levels" data-blocked={blocked ? "true" : "false"} className={`mt-1 hidden gap-x-2 gap-y-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs ${sized ? "grid-cols-3" : "grid-cols-4"}`}>
       {row("hero-entry", "Entry", show(l.entry))}
       {row("hero-sl", "SL", show(l.sl))}
