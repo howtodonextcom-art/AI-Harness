@@ -148,7 +148,7 @@ test.describe("decision", () => {
     await page.goto("/trade");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "STALE");
     await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "STALE");
-    await expect(page.getByTestId("hero-problems")).toContainText("Dữ liệu giá đã quá cũ");
+    await expect(page.getByTestId("hero-problems")).toContainText("Dữ liệu giá và báo giá đã quá cũ");
     expect(await page.getByTestId("hero-problems").innerText()).not.toContain("DATA_STALE"); // the code is not in front of the trader (innerText leaves out the closed details)
     await expect(page.getByTestId("hero-problems").locator("details").first()).toContainText("DATA_STALE"); // ...it is in the technical details
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
@@ -227,6 +227,17 @@ test.describe("paper order workflow", () => {
     }
     await page.keyboard.press("Shift+Tab");
     expect(await dialog.evaluate((d) => d.contains(document.activeElement))).toBe(true);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByTestId("take-paper")).toBeFocused();
+  });
+
+  test("focus returns to the button the mouse opened the modal from (QA 2026-10-11 #2)", async ({ page }) => {
+    await mock(page, view("buy"));
+    await page.goto("/trade");
+    await page.getByTestId("take-paper").click();
+    const dialog = page.getByRole("dialog", { name: /Xác nhận mở lệnh PAPER/ });
+    await expect(dialog).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await expect(page.getByTestId("take-paper")).toBeFocused();

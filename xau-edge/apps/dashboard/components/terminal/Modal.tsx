@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -19,13 +19,15 @@ interface Props {
  */
 export function Modal({ title, onClose, children, testId, tone = "neutral" }: Props) {
   const box = useRef<HTMLDivElement>(null);
+  // read at the first render: by the time an effect runs, a re-run effect sees focus already inside the dialog
+  const [opener] = useState(() => (typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)));
   const closeRef = useRef(onClose);
   useEffect(() => {
     closeRef.current = onClose;
   }, [onClose]);
 
   useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
+    const previous = opener;
     const node = box.current;
     const first = node?.querySelector<HTMLElement>("[data-autofocus]") ?? node?.querySelector<HTMLElement>(FOCUSABLE);
     first?.focus();
@@ -54,7 +56,7 @@ export function Modal({ title, onClose, children, testId, tone = "neutral" }: Pr
       document.removeEventListener("keydown", onKey, true);
       previous?.focus?.();
     };
-  }, []);
+  }, [opener]);
 
   const border = tone === "buy" ? "border-emerald-600" : tone === "sell" ? "border-red-600" : "border-slate-500";
   return (
