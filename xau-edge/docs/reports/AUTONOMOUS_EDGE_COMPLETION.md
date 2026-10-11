@@ -51,3 +51,9 @@ Mỗi mục: DATE · SHA · STATE · WHAT CHANGED · TESTS · EVIDENCE · VERDIC
 ## M3 — Cost model
 
 - `foundation/cost_model_v2.json` không đổi từ `4a03273` (git log, working tree sạch). MEASURED: spread tick từ 2021-10, spread nến trước đó. ASSUMED: hệ số spread 1.6/2.4 (2011–2023), trượt giá 3/6 điểm mỗi lần khớp. UNKNOWN: commission (0, báo cáo break-even), swap lịch sử (chỉ có swap MT5 hiện tại −69.25/−4.2 điểm đọc 2026-10-11T06:16Z).
+
+## M4 — Red-team kết quả F1 (bổ sung)
+
+- DATE: 2026-10-11 · SHA kiểm: `d949b20` / `00fafe9` · Reviewer độc lập (chỉ đọc).
+- VERDICT: **FAIL CONFIRMED**. Dấu tín hiệu đúng prereg: direction = −sign(z) trên cả 1601 lệnh. Phân phối gross là khung 1:2: 1106 lệnh ở −1R, 440 lệnh ở +2R, 16 lệnh lỗ do gap. Spread trừ đúng một lần mỗi round trip (base − gross = −0.1385R: spread −0.112, trượt giá −0.013, swap −0.014). Swap = 0 thì base vẫn −0.269R. Không nhìn trước dữ liệu tương lai, không chạm dữ liệu ≥ 2022. Thứ tự commit đúng: prereg → code → chạy → kết quả.
+- Quan sát (không phải kết quả): kết quả thật thấp hơn mọi lần placebo. Hướng ngược lại ước tính ≈ +0.12R net base (gross ≈ −4σ, gợi ý residual tiếp diễn ngắn hạn). Theo protocol đây là **kiểm định post-hoc nên không chạy**. Muốn kiểm phải có prereg mới, cơ chế mới, dữ liệu chưa dùng và khe K mà chủ dự án ký bằng văn bản (trần V2 còn đúng 1 khe). Không được gọi đây là edge.
