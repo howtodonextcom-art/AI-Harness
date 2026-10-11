@@ -4,8 +4,12 @@
     "id": "d34e96f7f2e6",
     "source_url": "https://www.facebook.com/share/r/18kMRKXFsk/?mibextid=wwXIfr",
     "source_platform": "facebook",
-    "source_aliases": [],
-    "title": "1.9K reactions · 183 shares | 🐺 Bullish Wolf Wave Pattern Mila! 📈 Kya Market Ab Powerful Breakout Ke Liye Ready Hai? 💰 #BullishWolfWave #TechnicalAnalysis #trading #PriceAction #tradingstrategy | Zenix Arixon",
+    "source_aliases": [
+      "https://www.facebook.com/share/r/1AteztJsfX/?mibextid=wwXIfr"
+    ],
+    "platform_id": "1363296065794611",
+    "resolved_url": "https://m.facebook.com/watch/?v=1363296065794611&_rdr",
+    "title": "1.9K reactions · 184 shares | 🐺 Bullish Wolf Wave Pattern Mila! 📈 Kya Market Ab Powerful Breakout Ke Liye Ready Hai? 💰 #BullishWolfWave #TechnicalAnalysis #trading #PriceAction #tradingstrategy | Zenix Arixon",
     "author": "Zenix Arixon",
     "access_status": "MEDIA_READY",
     "access_code": "OK",
@@ -15,7 +19,9 @@
     "height": 1936,
     "has_audio": true,
     "file_sha256": "1348521a745adbef654a5a07799ed271b468352966bbfea79b30e74eb9de4e28",
-    "processed_at": "2026-10-11T09:51:19+00:00",
+    "keyframe_count": 15,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:08:07+00:00",
     "provenance": "yt-dlp, no cookies, no credentials"
   },
   "transcript": [],

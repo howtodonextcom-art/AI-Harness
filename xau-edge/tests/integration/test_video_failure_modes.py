@@ -213,3 +213,17 @@ def test_emoji_title_survives_a_legacy_windows_console(tmp_path: Path) -> None:
 def test_spoofed_hosts_and_schemes_are_refused(url: str) -> None:
     ref, check = classify_source(url)
     assert ref is None and check.status is SourceStatus.SOURCE_UNAVAILABLE
+
+
+def test_the_record_keeps_its_provenance_fields(
+    cli: ModuleType, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    clip = _clip(tmp_path / "prov.mp4", audio=False)
+    _, out = _run(cli, "ingest", str(clip), "--no-asr", capsys=capsys)
+    video = store.load(str(out["video_id"])).video
+    frames = out["steps"]["keyframes"]["frames"]  # type: ignore[index]
+    assert video.keyframe_count == len(frames) >= 1
+    assert video.file_sha256 and len(video.file_sha256) == 64
+    assert video.asr_model is None  # ASR did not run, so no model is claimed
+    assert video.platform_id is None and video.resolved_url is None  # a local file has neither
+    assert video.provenance == "local file"

@@ -5,6 +5,8 @@
     "source_url": "https://www.youtube.com/watch?v=HfsBmSDwhgE",
     "source_platform": "youtube",
     "source_aliases": [],
+    "platform_id": "HfsBmSDwhgE",
+    "resolved_url": "https://www.youtube.com/watch?v=HfsBmSDwhgE",
     "title": "Wolfe Wave Pattern Strategy Explained | How to Trade Reversals Like a Pro",
     "author": "Abioye Israel Pelumi ",
     "access_status": "MEDIA_READY",
@@ -15,11 +17,13 @@
     "height": 1080,
     "has_audio": true,
     "file_sha256": "82e361c5fdda06630748dfba760846c63b91d8b228bbb7be3b3c0eca6e54bbc4",
-    "processed_at": "2026-10-11T10:24:52+00:00",
+    "keyframe_count": 29,
+    "asr_model": "faster-whisper base (cpu int8)",
+    "processed_at": "2026-10-11T11:08:51+00:00",
     "provenance": "yt-dlp, no cookies, no credentials"
   },
   "transcript": [],
-  "transcript_note": "86 ASR segments are stored in data/video_knowledge (not committed: third-party content). Short quotes appear in traces. ASR text is untrusted and misheard numbers; see claim y-asr.",
+  "transcript_note": "86 ASR segments are stored in data/video_knowledge (not committed: third-party content). Short quotes appear in traces. ASR text is untrusted and mishears numbers; see claim y-asr.",
   "visual": [],
   "claims": [
     {

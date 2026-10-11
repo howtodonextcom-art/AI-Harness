@@ -135,3 +135,17 @@ def test_block_shuffled_null_keeps_the_bars_and_destroys_the_order() -> None:
     assert np.array_equal(again[2], c2)  # deterministic for a seed
     other = block_shuffled_null(high, low, close, seed=5, block=48)
     assert not np.array_equal(other[2], c2)
+
+
+def test_reference_reward_risk_of_a_textbook_double_top_is_about_one_to_one() -> None:
+    """The measured move equals the pattern height and the stop sits one height above the
+    neckline, so the shape alone offers about 1:1 before costs (a little less after the break)."""
+    xs = [(0, 100.0), (20, 110.0), (40, 100.0), (60, 109.8), (80, 90.0), (100, 88.0)]
+    pts = [p[0] for p in xs]
+    close = np.interp(np.arange(0, 101), pts, [p[1] for p in xs])
+    found = detect_reversals(close + 0.1, close - 0.1, close)
+    assert len(found) == 1
+    rr = pattern_stats.reference_reward_risk(found[0])
+    assert rr is not None and 0.7 < rr < 1.05  # not the 1.5 or 2 that a trader hopes for
+    stats = pattern_stats.describe(found, 101)
+    assert stats["share_reference_rr_at_least_1_5"] == 0.0

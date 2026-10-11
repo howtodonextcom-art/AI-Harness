@@ -33,6 +33,26 @@ def _quantiles(values: Sequence[float]) -> dict[str, float] | None:
     }
 
 
+def reference_reward_risk(detection: PatternDetection) -> float | None:
+    """Gross reward-to-risk of the textbook geometry, from the detection's own reference levels.
+
+    Entry is the trigger close (neckline break) or the entry reference (Wolfe); risk runs to the
+    invalidation reference (the peak, or P5); reward runs to the measured-move or EPA reference.
+    This is where the picture itself puts the levels, before costs. It is a property of the shape at
+    the moment of detection and says nothing about what price does afterwards.
+    """
+    ref = detection.reference_levels
+    entry = ref.get("trigger_close", ref.get("entry_reference"))
+    stop = ref.get("invalidation_reference", ref.get("stop_reference"))
+    target = ref.get("measured_move_reference", ref.get("target_reference"))
+    if entry is None or stop is None or target is None:
+        return None
+    risk, reward = abs(entry - stop), abs(target - entry)
+    if risk <= 0:
+        return None
+    return reward / risk
+
+
 def overlap_stats(detections: Sequence[PatternDetection]) -> dict[str, float | int]:
     """Intervals run from the first point's bar to ``actionable_at``. Counts are over all pairs of
     consecutive detections ordered by start: ``overlapping`` shares any bar, ``nested`` is fully
@@ -83,6 +103,11 @@ def describe(
     out["height_in_atr"] = _quantiles(heights)
     out["geometry_fit"] = _quantiles(
         [d.geometry_fit for d in detections if d.geometry_fit is not None]
+    )
+    rr = [r for d in detections if (r := reference_reward_risk(d)) is not None]
+    out["reference_reward_risk_gross"] = _quantiles(rr)
+    out["share_reference_rr_at_least_1_5"] = (
+        sum(1 for r in rr if r >= 1.5) / len(rr) if rr else None
     )
     out["distinct_pattern_ids"] = len({d.pattern_id for d in detections})
     out["overlap"] = overlap_stats(detections)

@@ -52,6 +52,10 @@ class WolfeConfig(BaseModel):
     entry_trigger: Literal["P5_CONFIRMED", "LINE13_RECLAIM"] = "P5_CONFIRMED"
     """Contested: enter when P5 is confirmed, or only after a close back inside line 1-3."""
     max_reclaim_bars: int = Field(default=20, ge=1)  # LINE13_RECLAIM only: how long to wait
+    target_time: Literal["P5_MINUS_P3", "LINES_INTERSECTION"] = "P5_MINUS_P3"
+    """Where on line 1-4 the target is read. ``P5_MINUS_P3`` is this project's own convention (no
+    source uses it); ``LINES_INTERSECTION`` is the sourced ETA: where lines 2-4 and 1-3 meet."""
+    max_eta_bars: int | None = Field(default=None, ge=1)  # drop an ETA further than this past P5
 
 
 class WolfeCandidate(NamedTuple):
@@ -78,6 +82,8 @@ class _Lines(NamedTuple):
     b13: float
     s14: float
     b14: float
+    s24: float = 0.0
+    b24: float = 0.0
 
 
 def _geometry(five: list[Pivot], cfg: WolfeConfig) -> _Lines | None:  # noqa: PLR0911
@@ -92,7 +98,7 @@ def _geometry(five: list[Pivot], cfg: WolfeConfig) -> _Lines | None:  # noqa: PL
     if cfg.require_p4_inside_p2_p3 and not (p3.price < p4.price < p2.price):
         return None
     s13, b13 = _line(p1, p3)
-    s24, _b24 = _line(p2, p4)
+    s24, b24 = _line(p2, p4)
     if cfg.require_converging and not (s24 < s13):  # upper line falls faster: gap narrows
         return None
     if cfg.require_p5_beyond_line13 and not (p5.price < s13 * p5.bar + b13):
@@ -100,7 +106,7 @@ def _geometry(five: list[Pivot], cfg: WolfeConfig) -> _Lines | None:  # noqa: PL
     if not p5.price < p3.price:
         return None
     s14, b14 = _line(p1, p4)
-    return _Lines(s13, b13, s14, b14)
+    return _Lines(s13, b13, s14, b14, s24, b24)
 
 
 def _plan(
@@ -113,8 +119,18 @@ def _plan(
 ) -> WolfeCandidate | None:
     """Entry, stop and target for a geometry that is actionable at ``entry_bar``."""
     p3, p5 = five[2], five[4]
-    horizon = cfg.target_horizon_bars if cfg.target_horizon_bars is not None else p5.bar - p3.bar
-    target = lines.s14 * (p5.bar + horizon) + lines.b14
+    if cfg.target_time == "LINES_INTERSECTION":
+        eta = (lines.b24 - lines.b13) / (lines.s13 - lines.s24) if lines.s13 != lines.s24 else None
+        if eta is None or eta <= entry_bar:
+            return None  # the lines never meet ahead of the entry: there is no sourced ETA
+        if cfg.max_eta_bars is not None and eta - p5.bar > cfg.max_eta_bars:
+            return None
+        target = lines.s14 * eta + lines.b14
+    else:
+        horizon = (
+            cfg.target_horizon_bars if cfg.target_horizon_bars is not None else p5.bar - p3.bar
+        )
+        target = lines.s14 * (p5.bar + horizon) + lines.b14
     entry = float(close[entry_bar]) + cfg.spread
     risk = entry - p5.price
     reward = target - entry

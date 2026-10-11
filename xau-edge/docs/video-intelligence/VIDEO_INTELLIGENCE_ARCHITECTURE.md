@@ -40,10 +40,26 @@ Frame interpretation is done by the agent reading the kept frames (the CLI does 
 
 ## Dependencies (extra `video`, optional)
 
-yt-dlp (Unlicense), faster-whisper (MIT, pulls ctranslate2, onnxruntime, av), imageio-ffmpeg (bundles an ffmpeg binary), Pillow. CI does not install the extra: integration tests skip, mypy ignores the missing stubs. Used from the brief's list: yt-dlp, faster-whisper (instead of whisper.cpp, which needs a native build on Windows), ffmpeg via imageio-ffmpeg. Not used: PySceneDetect (accumulated pixel change was enough and is tested), EasyOCR, browser-use and Playwright MCP (no logged-in browsing is needed, and logging in is out of scope). **Not evaluated in this session:** khou/watch-video and stevederico/video-understanding; their licences and code were not reviewed, nothing was copied from them, and no claim is made about them.
+yt-dlp (Unlicense), faster-whisper (MIT, pulls ctranslate2, onnxruntime, av), imageio-ffmpeg (bundles an ffmpeg binary), Pillow. CI does not install the extra: integration tests skip, mypy ignores the missing stubs. Used from the brief's list: yt-dlp, faster-whisper (instead of whisper.cpp, which needs a native build on Windows), ffmpeg via imageio-ffmpeg. Not used: PySceneDetect (accumulated pixel change is enough and is tested), EasyOCR, browser-use and Playwright MCP (no logged-in browsing is needed, and logging in is out of scope). `khou/watch-video`, `stevederico/video-understanding` and `microsoft/playwright-mcp` were reviewed at README level in phase 2 (see the phase 2 report): nothing was vendored.
 
 Host note: the prompt assumed a Mac M1; this machine is Windows 11 x64 (CPU int8 ASR, about 8 s for a 17 s clip including model load).
 
 ## Cost
 
 All local. No paid API. Model download (faster-whisper base, about 140 MB) happens once.
+
+## Phase 2 changes (2026-10-11)
+
+Found by running the pipeline on a real YouTube video and by auditing the knowledge store:
+
+* the frame sampler now has a budget (`--max-frames`, default 60) and a candidate cap for long videos; it kept 540 of 540 frames before and keeps 29 now;
+* ASR language is stored as `und` when the detector is below 0.7 confidence (English was labelled Yoruba); `--language` overrides;
+* re-ingesting a source refreshes the media-derived parts and keeps annotations; the same media under a second URL becomes an alias (same SHA-256); saves keep a history; `annotate` upserts by id;
+* schema version 2: six provenance classes (OBSERVED, INFERRED, CLAIMED_BY_AUTHOR, SUPPORTED_EXTERNALLY, CONTRADICTED_EXTERNALLY, UNKNOWN), confidence, `Trace` (source, asset hash, locator, observation, interpretation, concept, code), `ExternalSource` with quality and `opened`, platform id and resolved URL, keyframe count, ASR model; version 1 records still load;
+* `ask` is a deterministic router with answers split into VIDEO SAYS, EXTERNAL SOURCES SAY, CODE IMPLEMENTS and UNKNOWN, and a staleness warning after 30 days;
+* a duration cap (`--max-duration`, default 3,600 s) refuses over-long videos with `TOO_LONG`.
+
+## MCP decision
+
+CLI plus skill is sufficient; an MCP server is NOT NEEDED now (criteria and comparison are in the phase 2 report).
+

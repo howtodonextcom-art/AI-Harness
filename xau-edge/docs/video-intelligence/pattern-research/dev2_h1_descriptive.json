@@ -22,7 +22,11 @@
       "max_pattern_bars": 400,
       "target_horizon_bars": null,
       "min_reward_risk": 1.0,
-      "spread": 0.0
+      "spread": 0.0,
+      "entry_trigger": "P5_CONFIRMED",
+      "max_reclaim_bars": 20,
+      "target_time": "P5_MINUS_P3",
+      "max_eta_bars": null
     },
     "reversal": {
       "pivot_left": 3,
@@ -86,6 +90,14 @@
       },
       "height_in_atr": null,
       "geometry_fit": null,
+      "reference_reward_risk_gross": {
+        "min": 1.0503168664579425,
+        "p25": 2.0023486901535743,
+        "median": 3.642763157894833,
+        "p75": 5.700035714285675,
+        "max": 80.44144144146576
+      },
+      "share_reference_rr_at_least_1_5": 0.9014084507042254,
       "distinct_pattern_ids": 71,
       "overlap": {
         "detections": 71,
@@ -189,6 +201,14 @@
         "p75": 0.8271604938271595,
         "max": 1.0
       },
+      "reference_reward_risk_gross": {
+        "min": 0.008084074373486072,
+        "p25": 0.43133462282396945,
+        "median": 0.7220630372492766,
+        "p75": 0.8849887976101604,
+        "max": 0.9970326409495576
+      },
+      "share_reference_rr_at_least_1_5": 0.0,
       "distinct_pattern_ids": 287,
       "overlap": {
         "detections": 287,
@@ -293,6 +313,14 @@
         "p75": 0.7407838571983164,
         "max": 0.8486366165832309
       },
+      "reference_reward_risk_gross": {
+        "min": 0.5530705996131462,
+        "p25": 1.2539664343360266,
+        "median": 1.4576132683635286,
+        "p75": 1.483983786913728,
+        "max": 1.9426998172549839
+      },
+      "share_reference_rr_at_least_1_5": 0.2857142857142857,
       "distinct_pattern_ids": 7,
       "overlap": {
         "detections": 7,

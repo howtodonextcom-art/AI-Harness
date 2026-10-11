@@ -170,6 +170,14 @@ def cmd_ingest(args: argparse.Namespace) -> int:  # noqa: PLR0911
         height=info.height,
         has_audio=info.has_audio,
         file_sha256=sha,
+        platform_id=str((meta or {}).get("id")) if meta and meta.get("id") else None,
+        resolved_url=str((meta or {}).get("webpage_url"))
+        if meta and meta.get("webpage_url")
+        else None,
+        keyframe_count=len(frames),
+        asr_model="faster-whisper base (cpu int8)"
+        if segments or note.startswith("NO_SPEECH")
+        else None,
         processed_at=datetime.now(UTC).isoformat(timespec="seconds"),
         provenance=provenance,
     )

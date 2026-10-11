@@ -69,6 +69,10 @@ class VideoRecord(_Model):
     source_url: str
     source_platform: str
     source_aliases: list[str] = Field(default_factory=list)  # other URLs that gave the same file
+    platform_id: str | None = (
+        None  # the platform's own id for the media (stable across share links)
+    )
+    resolved_url: str | None = None  # the canonical page the extractor resolved the link to
     title: str | None = None
     author: str | None = None
     access_status: SourceStatus
@@ -79,6 +83,8 @@ class VideoRecord(_Model):
     height: int | None = None
     has_audio: bool | None = None
     file_sha256: str | None = None
+    keyframe_count: int | None = None
+    asr_model: str | None = None  # None when ASR did not run
     processed_at: str
     provenance: str  # how the bytes were obtained, e.g. "yt-dlp 2026.08.19, no cookies"
 

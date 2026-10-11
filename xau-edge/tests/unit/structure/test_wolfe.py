@@ -121,3 +121,51 @@ def test_flat_and_noise_series_produce_nothing() -> None:
     found = detect_wolfe(walk + 0.1, walk - 0.1, walk)
     # random data may match rarely; the detector must stay a small minority, never a flood
     assert len(found) < 10
+
+
+def test_sourced_eta_reads_the_target_where_lines_2_4_and_1_3_meet() -> None:
+    high, low, close = path(BULL)
+    default = detect_wolfe(high, low, close)[0]
+    sourced = detect_wolfe(high, low, close, WolfeConfig(target_time="LINES_INTERSECTION"))[0]
+    p1, p2, p3, p4, _p5 = default.pivots
+    s13 = (p3.price - p1.price) / (p3.bar - p1.bar)
+    b13 = p1.price - s13 * p1.bar
+    s24 = (p4.price - p2.price) / (p4.bar - p2.bar)
+    b24 = p2.price - s24 * p2.bar
+    eta = (b24 - b13) / (s13 - s24)  # independent calculation of the intersection
+    s14 = (p4.price - p1.price) / (p4.bar - p1.bar)
+    assert sourced.target == pytest.approx(p1.price + s14 * (eta - p1.bar))
+    assert sourced.target != pytest.approx(default.target)
+    assert (sourced.entry, sourced.stop) == (default.entry, default.stop)  # only the target moves
+
+
+def test_a_cap_on_the_eta_drops_a_projection_that_is_too_far() -> None:
+    high, low, close = path(BULL)
+    far = WolfeConfig(target_time="LINES_INTERSECTION", max_eta_bars=10)
+    assert detect_wolfe(high, low, close, far) == []
+    near = WolfeConfig(target_time="LINES_INTERSECTION", max_eta_bars=10_000)
+    assert len(detect_wolfe(high, low, close, near)) == 1
+
+
+def test_parallel_lines_have_no_eta() -> None:
+    parallel = [
+        (0, 105.0),
+        (10, 100.0),
+        (30, 110.0),
+        (50, 98.0),
+        (70, 108.0),
+        (90, 95.0),
+        (130, 108.0),
+    ]
+    high, low, close = path(parallel)
+    relaxed = WolfeConfig(require_converging=False)
+    assert detect_wolfe(high, low, close, relaxed) != []
+    assert (
+        detect_wolfe(
+            high,
+            low,
+            close,
+            WolfeConfig(require_converging=False, target_time="LINES_INTERSECTION"),
+        )
+        == []
+    )

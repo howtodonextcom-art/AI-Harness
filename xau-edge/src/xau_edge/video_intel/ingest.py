@@ -128,6 +128,7 @@ def inspect_url(
         "uploader": meta.get("uploader"),
         "duration": meta.get("duration"),
         "id": meta.get("id"),
+        "webpage_url": meta.get("webpage_url"),
         "extractor": meta.get("extractor_key"),
     }  # fmt: skip
 
