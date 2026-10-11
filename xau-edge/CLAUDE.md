@@ -13,6 +13,15 @@ MT5 nhưng đang khóa và không chạy. **Chưa có edge được kiểm đị
 `xau_mtf_baseline v1.1.0`, nhãn `UNVALIDATED_OPERATIONAL_BASELINE` (`src/xau_edge/trading/engine.py:63-67`).
 Không có đường nào từ quyết định trên `/trade` tới lệnh MT5.
 
+## 1b. Phạm vi giao diện (quyết định chủ dự án 2026-10-12)
+
+Chỉ hỗ trợ **máy tính để bàn**: cửa sổ rộng 1280 đến 2560 CSS px và zoom trình duyệt tới 200% (tức xuống tới 720x450).
+**Bố cục điện thoại bị đóng băng**: không thêm tính năng, không sửa thẩm mỹ cho điện thoại. Mã không bị xóa (một phần
+dùng chung với zoom 150-200% trên desktop: thanh hành động dính `lg:hidden`, legend gập dưới 520 px, biến thể `short:`).
+Test layout riêng cho điện thoại mang nhãn `@mobile` và KHÔNG chặn cổng; chạy chủ động bằng `XAU_E2E_MOBILE=1`.
+Các test an toàn fail-closed (không bao giờ có nút/nhãn mở lệnh khi hành động không phải MUA/BÁN) vẫn chặn ở mọi kích thước.
+Hợp đồng desktop: `e2e/desktop_contract.spec.ts`. Chi tiết: `docs/reports/DESKTOP_ONLY_SCOPE_2026-10-12.md`.
+
 ## 2. Quy tắc bắt buộc cho agent
 
 1. **Gate trước khi báo xong**: `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`,
