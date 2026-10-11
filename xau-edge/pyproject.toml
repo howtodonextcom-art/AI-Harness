@@ -28,6 +28,12 @@ ml = [
     "scikit-learn>=1.5",
     "xgboost>=2.1",
 ]
+video = [
+    "faster-whisper>=1.0",
+    "imageio-ffmpeg>=0.5",
+    "pillow>=10.0",
+    "yt-dlp>=2026.1.1",
+]
 api = [
     "fastapi>=0.115",
     "httpx2>=2.13.1",
@@ -115,6 +121,11 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 # optional "ml" extra: scikit-learn, xgboost and lightgbm ship no complete type information
 module = ["sklearn", "sklearn.*", "xgboost", "xgboost.*", "lightgbm", "lightgbm.*", "joblib"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# optional "video" extra: no complete type information
+module = ["faster_whisper", "faster_whisper.*", "imageio_ffmpeg", "PIL", "PIL.*", "yt_dlp", "yt_dlp.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
