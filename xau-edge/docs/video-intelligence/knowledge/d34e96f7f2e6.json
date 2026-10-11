@@ -1,0 +1,179 @@
+{
+  "video": {
+    "id": "d34e96f7f2e6",
+    "source_url": "https://www.facebook.com/share/r/18kMRKXFsk/?mibextid=wwXIfr",
+    "source_platform": "facebook",
+    "title": "1.9K reactions · 183 shares | 🐺 Bullish Wolf Wave Pattern Mila! 📈 Kya Market Ab Powerful Breakout Ke Liye Ready Hai? 💰 #BullishWolfWave #TechnicalAnalysis #trading #PriceAction #tradingstrategy | Zenix Arixon",
+    "author": "Zenix Arixon",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 16.7,
+    "width": 1088,
+    "height": 1936,
+    "has_audio": true,
+    "file_sha256": "1348521a745adbef654a5a07799ed271b468352966bbfea79b30e74eb9de4e28",
+    "processed_at": "2026-10-11T09:51:19+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "NO_SPEECH_DETECTED: ASR returned no speech segments (music or silence). Nothing was transcribed.",
+  "visual": [
+    {
+      "video_id": "d34e96f7f2e6",
+      "timestamp_ms": 0,
+      "frame_reference": "cand_0001.png",
+      "ocr_text": "Wolf Wave Pattern; Target; Entry in this area; points 1-5",
+      "observations": [
+        "Top panel: a static textbook diagram titled 'Wolf Wave Pattern' (bullish).",
+        "Five numbered points: 1 low, 2 high, 3 lower low, 4 lower high, 5 lowest low.",
+        "A line from point 1 through point 4 is extended to a labelled 'Target' (point 6).",
+        "A pink zone below the 1-3 line around point 5 is marked 'Entry in this area'.",
+        "Bottom panel: a price chart on a monitor with an early descending channel and no annotations yet."
+      ],
+      "status": "OBSERVED",
+      "uncertain": false
+    },
+    {
+      "video_id": "d34e96f7f2e6",
+      "timestamp_ms": 12000,
+      "frame_reference": "cand_0025.png",
+      "ocr_text": "STOP-LOSS; ENTRY LONG; numbered points 1-6",
+      "observations": [
+        "Chart annotated with points 1-5: P3 slightly below P1, P4 below P2, P5 lowest, below the line through 1 and 3.",
+        "Blue line from P1 through P4 extended up-right to point 6 (the target).",
+        "A red 'STOP-LOSS' line at the level of P5; an 'ENTRY LONG' label with an arrow just above P5.",
+        "A yellow arrow from P5 up to P6; price candles already recovering from P5 are visible.",
+        "Instrument, symbol and timeframe are not readable; time axis ticks run 04:00-09:00 in 30 minute steps."
+      ],
+      "status": "OBSERVED",
+      "uncertain": false
+    },
+    {
+      "video_id": "d34e96f7f2e6",
+      "timestamp_ms": 15500,
+      "frame_reference": "cand_0032.png",
+      "ocr_text": null,
+      "observations": [
+        "Price rises from P5 toward the extended P1-P4 line; the annotated setup is shown after the move occurred."
+      ],
+      "status": "OBSERVED",
+      "uncertain": true
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "c-geometry",
+      "video_id": "d34e96f7f2e6",
+      "evidence_refs": [
+        "frame@0ms",
+        "frame@12000ms"
+      ],
+      "assertion": "A bullish Wolfe Wave is a descending converging wedge of five points where P5 undercuts the 1-3 line, with the P1-P4 line extended as the target and the stop at P5.",
+      "status": "VALIDATED",
+      "verification": "Matches the geometry on several published education pages (LuxAlgo, ATAS, TheRightTrader, Bajaj). Those pages are not authoritative references and differ on the entry trigger; so VALIDATED means 'matches the common convention', not 'proven to work'.",
+      "citations": [
+        "https://www.luxalgo.com/library/concept/wolfe-waves/",
+        "https://atas.net/technical-analysis/wolfe-wave-pattern-how-to-profitably-trade-on-wolf-waves",
+        "https://therighttrader.com/learn/chart-patterns/wolfe-wave",
+        "https://www.bajajfinserv.in/wolfe-wave-pattern"
+      ]
+    },
+    {
+      "claim_id": "c-caption",
+      "video_id": "d34e96f7f2e6",
+      "evidence_refs": [
+        "metadata.title"
+      ],
+      "assertion": "The caption says a Bullish Wolf Wave was found and asks whether the market is ready for a powerful breakout (Hinglish).",
+      "status": "CLAIMED",
+      "verification": "Author caption, untrusted metadata. It is phrased as a question, not a measured result.",
+      "citations": []
+    },
+    {
+      "claim_id": "c-outcome",
+      "video_id": "d34e96f7f2e6",
+      "evidence_refs": [
+        "frame@12000ms",
+        "frame@15500ms"
+      ],
+      "assertion": "Price moves from P5 toward the target after the ENTRY LONG label.",
+      "status": "UNVERIFIED",
+      "verification": "One curated example drawn after the fact (hindsight). No sample size, no losing cases, no costs, no instrument or timeframe. It is evidence of nothing statistical.",
+      "citations": []
+    },
+    {
+      "claim_id": "c-no-speech",
+      "video_id": "d34e96f7f2e6",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The video contains no spoken explanation.",
+      "status": "OBSERVED",
+      "verification": "faster-whisper base with VAD returned 0 segments on 16.7 s of audio (rms 0.15). The audio is not speech; whether it is music was not classified.",
+      "citations": []
+    }
+  ],
+  "concepts": [
+    {
+      "concept_id": "wolfe_wave",
+      "name": "Wolfe Wave",
+      "alt_names": [
+        "Wolf Wave",
+        "Wolfe Wave Pattern"
+      ],
+      "video_id": "d34e96f7f2e6",
+      "source_evidence": [
+        "frame@0ms",
+        "frame@12000ms"
+      ],
+      "plain_language": "Five alternating swing points form a converging wedge. The fifth point overshoots the wedge's lower boundary; the idea is that price then returns toward the line drawn from point 1 through point 4.",
+      "rules": {
+        "pivots": "P1 low, P2 high, P3 low, P4 high, P5 low, all confirmed (bullish); bearish is the mirror",
+        "wedge": "P3 < P1, P4 < P2, P3 < P4 < P2; the 1-3 and 2-4 lines converge",
+        "overshoot": "P5 below the 1-3 line and below P3",
+        "entry": "close of the bar that confirms P5 (right bars after P5)",
+        "stop": "P5",
+        "target": "P1-P4 line extended, read target_horizon_bars after P5"
+      },
+      "configurable_disagreements": [
+        "Entry trigger: at P5 vs only after a break of the 1-3 line (sources differ). Implemented: P5 confirmation. PLANNED: break-of-line mode.",
+        "P5 exactly on the 1-3 line (require_p5_beyond_line13).",
+        "Target timing: sources give no single time rule (target_horizon_bars)."
+      ],
+      "invalidation": [
+        "P5 inside the wedge (no overshoot)",
+        "lines diverge",
+        "P4 above P2 (broadening)",
+        "price closes below the P5 stop"
+      ],
+      "entry": "Video: 'ENTRY LONG' just above P5. Code: close of the P5 confirmation bar plus spread.",
+      "stop_loss": "Video: red STOP-LOSS at the P5 level. Code: P5 price.",
+      "target": "Video: point 6 on the P1-P4 line. Code: that line evaluated target_horizon_bars after P5.",
+      "repaint_risk": "None after confirmation: pivots are only known right bars after they form; a candidate is emitted at P5 confirmation using no later data. Before confirmation P5 is unknowable.",
+      "failure_modes": [
+        "wedge continues lower after P5 (no reversal)",
+        "target line projection time is arbitrary",
+        "hindsight drawing bias in teaching examples",
+        "pivot window changes which points exist"
+      ],
+      "validation_status": "UNVERIFIED"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "wolfe_wave",
+      "requirement_id": "VI-REQ-01 geometric detector, non-repainting",
+      "source_file": "src/xau_edge/structure/wolfe.py",
+      "test_file": "tests/unit/structure/test_wolfe.py",
+      "implementation_status": "IMPLEMENTED"
+    },
+    {
+      "concept_id": "wolfe_wave",
+      "requirement_id": "VI-REQ-02 historical precision/recall and false-positive rate",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "BLOCKED"
+    }
+  ]
+}
