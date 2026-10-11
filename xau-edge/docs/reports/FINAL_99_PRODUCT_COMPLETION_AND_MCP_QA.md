@@ -81,7 +81,7 @@ Seven loops, each observe, options, criteria first, implement, browser and autom
 | FIX-03 | MEDIUM | HTML context legend overlapped the plan labels on a phone | chart measures the legend and passes `topInset`; labels and badge stay below it | collision test at 390, 720x450, 1440; MCP 390 screenshot |
 | FIX-04 | **MEDIUM correctness** | expired setup still printed Entry/SL/TP/R:R like a live plan | levels masked, "Kế hoạch đã hết hạn, không dùng." | e2e test; MCP before screenshot `mcp_expired.png` |
 | FIX-05 | MEDIUM | WAIT with `NO_TRIGGER` reported `missing = SETUP` | `missing = TRIGGER` when the first refusal is NO_TRIGGER | `test_wait_names_the_one_missing_thing...` |
-| FIX-06 | MEDIUM | hero levels preferred the plan over the open position's fill | an open position's fill and live levels win | HOLD test |
+| FIX-06 | MEDIUM | hero levels preferred the plan over the open position's fill | **NOT APPLIED** (see the erratum at the end); the intended change is that an open position's fill and live levels win | the HOLD test passed vacuously |
 | FIX-07 | MEDIUM | CLS 0.23 at load (market bar and "loading" line re-flowed) | nothing is painted until the first decision lands; placeholder matches the final size | `layout_stability.spec.ts` (fails before, passes after); MCP CLS 0 on live |
 | FIX-08 | LOW | 10 form fields without id or name (Chrome issue) | `name` on all `/trade` inputs | MCP evaluate: 0 left |
 | FIX-09 | MEDIUM (process) | a stale served build was undetectable | `data-build-sha` stamp and `build_stamp.spec.ts` | live HTML shows `86338bf` |
@@ -237,3 +237,7 @@ Product / engineering 96. Human decision UX 96. PAPER lifecycle 100. Research in
 ## 28. Product freeze
 
 NO. The score is below 99; `/trade` stays open to correctness fixes and to the items above. No speculative features were added.
+
+## Erratum (added after MCP QA round 3, same day)
+
+FIX-06 was reported as fixed and is not: the edit to `lib/honesty.ts` was a multi-line replace on a CRLF file and was silently skipped, and the HOLD test that "covers" it passes because the `openPaper` golden has no `trade_plan`. Chrome DevTools MCP round 3 reproduced the defect on the replay stack (hero ENTRY 4236.47, overlay and trade fill 4236.50) and logged it as M-03 in `MCP_TRADE_QA_ROUND3_2026-10-11.md`. The same round found a HIGH defect not caught here: a blocked READY setup (duplicate or near close) still draws the MUA overlay badge and, on a phone, a "SẴN SÀNG MUA" action bar while the hero says CHỜ (H-01). With H-01 open, the "0 HIGH" claims above (executive verdict, section 7 scoring, the verdict block) do not stand; the honest state is 1 HIGH and 4 MEDIUM correctness open, and the product score is lower than 96.
