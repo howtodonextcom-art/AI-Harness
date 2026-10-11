@@ -411,7 +411,7 @@ export interface TradeView {
   default_risk_pct?: number;
   risk_choices?: number[];
   news?: NewsView;
-  evidence: { operational: string; validated_edge: boolean; research: string; label: string };
+  evidence: { operational: string; validated_edge: boolean; level?: string; research: string; label: string };
   desk?: {
     can_open: boolean;
     blockers: Blocker[];

@@ -7,10 +7,24 @@ import type { TradeView } from "@/lib/trade";
 
 export const COVERAGE_GATE_PCT = 95;
 
+/** The human evidence ladder, lowest first. BUY/SELL may show at any level; the label always goes with it. */
+export const EVIDENCE_LADDER: Record<string, { label: string; gloss: string; copy: string }> = {
+  UNVALIDATED: { label: "UNVALIDATED", gloss: "CHƯA KIỂM CHỨNG", copy: "Baseline vận hành. Chưa có bằng chứng kỳ vọng dương." },
+  DEVELOPMENT_CANDIDATE: { label: "DEVELOPMENT CANDIDATE", gloss: "ỨNG VIÊN DEV", copy: "Mới qua Dev. Chưa qua Val, chưa phải bằng chứng." },
+  VALIDATED_CANDIDATE: { label: "VALIDATED CANDIDATE", gloss: "ĐÃ QUA DEV + VAL", copy: "Đã qua Dev + Val. Chưa qua Test-H." },
+  OOS_VALIDATED: { label: "OOS VALIDATED", gloss: "ĐÃ QUA TEST-H", copy: "Đã qua Test-H. Chưa qua holdout." },
+  HOLDOUT_VALIDATED: { label: "HOLDOUT VALIDATED", gloss: "ĐÃ QUA HOLDOUT", copy: "Đã qua Test-H + holdout. Chưa có forward paper đủ mẫu." },
+  FORWARD_PAPER_VALIDATED: { label: "FORWARD PAPER VALIDATED", gloss: "ĐÃ QUA FORWARD PAPER", copy: "Đã qua forward paper đủ mẫu. Chưa phải tiền thật." },
+  DEMO_CANDIDATE: { label: "DEMO CANDIDATE", gloss: "ỨNG VIÊN DEMO", copy: "Đủ điều kiện xem xét DEMO. Không phải khuyến nghị tiền thật." },
+};
+
 export interface HonestyLine {
-  /** VALIDATED / UNVALIDATED — English term kept next to the Vietnamese gloss */
-  label: "VALIDATED" | "UNVALIDATED";
+  /** a rung of EVIDENCE_LADDER (English term kept next to the Vietnamese gloss) */
+  label: string;
+  level: string;
   gloss: string;
+  /** what the level means, in one sentence */
+  copy: string;
   coverageText: string;
   gate: number;
   belowGate: boolean;
@@ -19,6 +33,9 @@ export interface HonestyLine {
 
 export function honestyLine(view: TradeView): HonestyLine {
   const validated = view.evidence.validated_edge === true;
+  // an unknown or missing level falls to the lowest rung: the browser never raises the evidence
+  const level = view.evidence.level && EVIDENCE_LADDER[view.evidence.level] ? view.evidence.level : "UNVALIDATED";
+  const rung = EVIDENCE_LADDER[level];
   const cov = view.decision_coverage;
   const pct = cov?.coverage_pct ?? view.forward_acceptance?.coverage_pct ?? null;
   const gate = cov?.threshold_pct ?? COVERAGE_GATE_PCT;
@@ -32,8 +49,10 @@ export function honestyLine(view: TradeView): HonestyLine {
         ? "chưa phải lợi thế đã kiểm chứng; độ phủ forward chưa đo"
         : "chưa phải lợi thế đã kiểm chứng";
   return {
-    label: validated ? "VALIDATED" : "UNVALIDATED",
-    gloss: validated ? "ĐÃ KIỂM CHỨNG" : "CHƯA KIỂM CHỨNG",
+    label: rung.label,
+    level,
+    gloss: rung.gloss,
+    copy: rung.copy,
     coverageText,
     gate,
     belowGate,

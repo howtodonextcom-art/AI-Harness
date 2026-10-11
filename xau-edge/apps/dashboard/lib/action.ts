@@ -8,7 +8,7 @@
  */
 
 import type { TradeView } from "@/lib/trade";
-import { BLOCKER_VI, EXIT_REASON_VI, invalidationText, waitingText } from "@/lib/vi";
+import { BLOCKER_VI, EXIT_REASON_VI, invalidationText, waitWhy, waitingText } from "@/lib/vi";
 
 export type ActionTone = "buy" | "sell" | "hold" | "exit" | "wait" | "error";
 
@@ -101,10 +101,10 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
     const latest = clock(pos?.max_hold_until);
     const sub = pos ? `${SIDE} từ ${px(pos.fill_price)} · ${money(pos.unrealized_pnl)} (${px(pos.unrealized_r)}R)` : `Đang có lệnh ${SIDE.toLowerCase()}`;
     const body = pos
-      ? `Bàn tự thoát khi chạm SL ${px(pos.sl)} (-1R) hoặc TP ${px(pos.tp)}${latest ? `, hoặc muộn nhất lúc ${latest} (hết thời gian giữ)` : ", hoặc khi hết thời gian giữ"}. Hiện ${thesis}.`
-      : "Bàn tự thoát khi chạm SL, TP hoặc hết thời gian giữ.";
-    const short = pos ? `Tự thoát khi chạm SL ${px(pos.sl)} hoặc TP ${px(pos.tp)}${latest ? `, muộn nhất lúc ${latest}` : ""}. ${a.thesis === "INTACT" ? "Luận điểm còn vững." : a.thesis === "WEAK" ? "Luận điểm đang YẾU." : ""}`.trim() : body;
-    return make("HOLD", "hold", "GIỮ VỊ THẾ", sub, "Chưa chạm điều kiện thoát nào.", body, short);
+      ? `Bàn tự thoát khi chạm SL ${px(pos.sl)} (-1R) hoặc TP ${px(pos.tp)}${latest ? `, hoặc muộn nhất lúc ${latest} (hết thời gian giữ)` : ", hoặc khi hết thời gian giữ"}, hoặc khi lỗ trong ngày chạm sàn khẩn cấp 3,5% (flatten). Hiện ${thesis}; luận điểm yếu đi KHÔNG tự đóng lệnh.`
+      : "Bàn tự thoát khi chạm SL, TP, hết thời gian giữ hoặc lỗ trong ngày chạm sàn khẩn cấp (flatten).";
+    const short = pos ? `Tự thoát khi chạm SL ${px(pos.sl)} hoặc TP ${px(pos.tp)}${latest ? `, muộn nhất lúc ${latest}` : ""}. ${a.thesis === "INTACT" ? "Luận điểm còn vững." : a.thesis === "WEAK" ? "Luận điểm đang YẾU (không tự đóng)." : ""}`.trim() : body;
+    return make("HOLD", "hold", "GIỮ VỊ THẾ", sub, "Vì sao GIỮ: Chưa chạm điều kiện thoát nào.", body, short);
   }
 
   if (a.code === "EXIT") {
@@ -122,7 +122,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
 
   if (a.code === "BUY" || a.code === "SELL") {
     const sub = secondsLeft !== null ? `Sẵn sàng · còn hiệu lực ${mmss(secondsLeft)}` : "Sẵn sàng";
-    const body = `${SIDE === "MUA" ? "Mua" : "Bán"} ngay ở khoảng ${px(plan?.planned_entry)} nếu bạn theo kế hoạch (SL ${px(plan?.sl)}, TP ${px(plan?.tp1)}). Hết hạn thì bỏ qua${plan?.invalidation ? `; kế hoạch vô hiệu khi ${invalidationText(plan.invalidation)}` : ""}.`;
+    const body = `${SIDE === "MUA" ? "Mua" : "Bán"} ngay ở khoảng ${px(plan?.planned_entry)} nếu bạn theo kế hoạch (SL ${px(plan?.sl)}, TP ${px(plan?.tp1)}). Hết hạn thì bỏ qua${plan?.invalidation ? `; điều kiện vô hiệu (chỉ tham khảo, bàn không tự đóng): ${invalidationText(plan.invalidation)}` : ""}.`;
     const short = `${SIDE === "MUA" ? "Mua" : "Bán"} ngay ở khoảng ${px(plan?.planned_entry)} (SL ${px(plan?.sl)}, TP ${px(plan?.tp1)}). Hết hạn thì bỏ qua.`;
     return make(a.code, side === "BUY" ? "buy" : "sell", `${SIDE} PAPER`, sub, `Tín hiệu ${SIDE} đã xác nhận.`, body, short);
   }
@@ -149,5 +149,10 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
   if (bias.side) {
     return make("WAIT", "wait", "CHỜ", "Chưa có tín hiệu vào lệnh", `Chỉ ${verb} khi:`, `M15 có nhịp pullback (đó mới là lúc có setup; hiện chưa có), rồi nến M5 đóng xác nhận trigger ${dir}; lúc đó hành động chuyển thành ${verb} PAPER.`);
   }
-  return make("WAIT", "wait", "CHỜ", next ? `Chưa có hướng ưu tiên · đang chờ: ${next}` : "Chưa có hướng ưu tiên", "Khi nào?", "Chưa làm gì. Chờ là trạng thái bình thường: bộ máy rất ít khi có kế hoạch.");
+  // the server sends no bias when the first refusal is not NO_SETUP/NO_TRIGGER, but H1 may still lean: say the real reason
+  const code = view.why_wait?.waiting_for_code ?? null;
+  const why = waitWhy(code, view.structure?.h1_trend as string | undefined);
+  return why
+    ? make("WAIT", "wait", "CHỜ", `Chưa được vào lệnh: ${why}`, "Cần xảy ra:", `${next ?? "các điều kiện vào lệnh đạt đủ"}. Chưa làm gì cho tới lúc đó; khi mọi điều kiện đạt, hành động mới chuyển thành MUA hoặc BÁN PAPER.`)
+    : make("WAIT", "wait", "CHỜ", "Chưa có hướng ưu tiên", "Khi nào?", "Chưa làm gì. Chờ là trạng thái bình thường: bộ máy rất ít khi có kế hoạch.");
 }

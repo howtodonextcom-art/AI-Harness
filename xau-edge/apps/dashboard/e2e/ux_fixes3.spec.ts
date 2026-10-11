@@ -46,7 +46,7 @@ test("the confirmation shows TP 2 as reference only and warns how far the price 
   await mock(page, v);
   await page.goto("/trade");
   await page.getByTestId("take-paper").click();
-  await expect(page.getByTestId("confirm-open-modal")).toContainText("TP 2 (chỉ tham khảo)");
+  await expect(page.getByTestId("confirm-open-modal")).toContainText("TP 2 (chỉ tham khảo, bàn không chốt ở đây)");
   await expect(page.getByTestId("confirm-open-modal")).toContainText("lệnh thoát tại đây");
   await expect(page.getByTestId("confirm-drift")).toHaveCount(0); // price has not moved
   await page.keyboard.press("Escape");

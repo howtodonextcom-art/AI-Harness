@@ -134,7 +134,7 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
     { k: <><Term id="entry">Entry</Term> (thị trường)</>, v: fmt(plan.planned_entry), id: "plan-entry", strong: true },
     { k: <Term id="sl">SL</Term>, v: fmt(plan.sl), id: "plan-sl" },
     { k: <Term id="tp">TP</Term>, v: fmt(plan.tp1), id: "plan-tp" },
-    ...(plan.tp2 !== null ? [{ k: "TP 2", v: fmt(plan.tp2), id: "plan-tp2" }] : []),
+    ...(plan.tp2 !== null ? [{ k: "TP 2 (tham khảo)", v: fmt(plan.tp2), id: "plan-tp2" }] : []),
     { k: <Term id="rr">R/R sau spread</Term>, v: fmt(plan.rr_net), id: "plan-rr" },
     { k: <Term id="risk">Rủi ro</Term>, v: `${fmt(risk, 2)}% · ${money(chosen ? -chosen.loss_at_sl : null)}`, id: "plan-risk" },
     { k: <Term id="lot">Lot</Term>, v: fmt(chosen?.lots, 2), id: "plan-lots", strong: true },
@@ -173,7 +173,13 @@ function Ticket({ view, risk, onRisk, onOpenRequest, busy, uiStale, expiredNow }
         </div>
         {plan.rr_net !== null && <RrRuler rr={plan.rr_net} />}
       </div>
-      {plan.invalidation && <p data-testid="plan-invalidation" className="rounded-md bg-slate-500/10 px-2 py-1 text-sm">Vô hiệu khi: <b>{invalidationText(plan.invalidation)}</b></p>}
+      {plan.tp2 !== null && <p data-testid="plan-tp2-note" className="text-xs text-slate-600 dark:text-slate-400">TP 2 chỉ để tham khảo: bàn PAPER chỉ tự chốt ở TP, không chốt ở TP 2.</p>}
+      {plan.invalidation && (
+        <p data-testid="plan-invalidation" className="rounded-md bg-slate-500/10 px-2 py-1 text-sm">
+          Vô hiệu khi: <b>{invalidationText(plan.invalidation)}</b>
+          <span data-testid="plan-invalidation-note" className="block text-xs text-slate-600 dark:text-slate-400">Điều kiện vô hiệu chỉ để tham khảo; bàn không tự đóng lệnh vì nó. Bàn chỉ tự đóng khi chạm SL, TP, hết thời gian giữ hoặc lỗ ngày chạm sàn khẩn cấp.</span>
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Mức rủi ro mỗi lệnh">
         <span className="text-xs text-slate-600 dark:text-slate-400">Rủi ro:</span>
         {(view.risk_choices ?? [0.1, 0.25, 0.5]).map((r) => (
@@ -314,7 +320,7 @@ export function expiryOf(view: TradeView, serverNowMs: number) {
 }
 
 /** Action-first: what the trader may do NOW in one word, why in one line, and exactly when to act. */
-function ActionHero({ view, expiredNow, secondsLeft, zone, setups }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null; zone: DisplayZone; setups: SetupHistoryRow[] | null }) {
+function ActionHero({ view, expiredNow, secondsLeft, zone, setups, risk }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null; zone: DisplayZone; setups: SetupHistoryRow[] | null; risk?: number }) {
   const clock = (iso: string | null | undefined) => (iso ? `${formatInZone(iso, zone).slice(11, 16)} ${ZONE_SHORT[zone]}` : null);
   const t = actionText(view, secondsLeft, expiredNow, clock);
   const state = expiredNow && (view.hero.state === "BUY_READY" || view.hero.state === "SELL_READY") ? "EXPIRED_SETUP" : view.hero.state;
@@ -351,7 +357,7 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups }: { view: Tra
         extra={extra}
         steps={lifecycleSteps(view, setups)}
         honesty={<HonestyBadge view={view} />}
-        levels={<HeroLevels view={view} />}
+        levels={<HeroLevels view={view} risk={risk} />}
       />
     </div>
   );
@@ -365,17 +371,20 @@ function HonestyBadge({ view }: { view: TradeView }) {
     <div
       data-testid="honesty"
       data-label={h.label}
+      data-level={h.level}
       data-below-gate={h.belowGate ? "true" : "false"}
-      className={`mt-1 hidden rounded border px-1.5 py-0.5 text-[11px] leading-snug sm:block ${h.label === "UNVALIDATED" || h.belowGate ? "border-amber-700 bg-amber-500/20" : "border-emerald-700 bg-emerald-500/20"}`}
+      className={`mt-1 rounded border px-1.5 py-0.5 text-[11px] leading-snug ${h.level === "UNVALIDATED" || h.belowGate ? "border-amber-700 bg-amber-500/20" : "border-emerald-700 bg-emerald-500/20"}`}
     >
       <div className="font-bold uppercase tracking-wide">{h.label} · {h.gloss} · phủ {h.coverageText} / {h.gate}%</div>
-      <p className="mt-0.5 hidden font-semibold normal-case tracking-normal sm:block">{h.consequence}</p>
+      <p data-testid="evidence-copy" className="mt-0.5 hidden font-semibold normal-case tracking-normal sm:block">{h.copy}</p>
+      <p className="mt-0.5 hidden normal-case tracking-normal sm:block">{h.consequence}</p>
     </div>
   );
 }
 
-function HeroLevels({ view }: { view: TradeView }) {
+function HeroLevels({ view, risk }: { view: TradeView; risk?: number }) {
   const l = heroLevels(view);
+  const chosen = view.trade_plan && risk !== undefined ? view.risk_plans?.find((p) => Math.abs(p.risk_pct - risk) < 1e-9) : undefined;
   const row = (id: string, k: string, v: string) => (
     <div>
       <dt className="text-[10px] font-bold uppercase opacity-70">{k}</dt>
@@ -383,19 +392,21 @@ function HeroLevels({ view }: { view: TradeView }) {
     </div>
   );
   return (
-    <dl data-testid="hero-levels" className="mt-1 hidden grid-cols-4 gap-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs">
+    <dl data-testid="hero-levels" className={`mt-1 hidden gap-x-2 gap-y-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs ${view.trade_plan && risk !== undefined ? "grid-cols-3" : "grid-cols-4"}`}>
       {row("hero-entry", "Entry", fmt(l.entry))}
       {row("hero-sl", "SL", fmt(l.sl))}
       {row("hero-tp", "TP", fmt(l.tp))}
       {row("hero-rr", "R:R", fmt(l.rr))}
+      {view.trade_plan && risk !== undefined && row("hero-risk", "Rủi ro", `${fmt(risk, 2)}%`)}
+      {view.trade_plan && risk !== undefined && row("hero-lot", "Lot", fmt(chosen?.lots, 2))}
     </dl>
   );
 }
 
 /** The state that dominates the decision area (always first, also on a phone). */
-export function DecisionHero({ view, serverNowMs, zone, setups }: { view: TradeView; serverNowMs: number; zone: DisplayZone; setups: SetupHistoryRow[] | null }) {
+export function DecisionHero({ view, serverNowMs, zone, setups, risk }: { view: TradeView; serverNowMs: number; zone: DisplayZone; setups: SetupHistoryRow[] | null; risk?: number }) {
   const { expiredNow, secondsLeft } = expiryOf(view, serverNowMs);
-  return <ActionHero view={view} expiredNow={expiredNow} secondsLeft={secondsLeft} zone={zone} setups={setups} />;
+  return <ActionHero view={view} expiredNow={expiredNow} secondsLeft={secondsLeft} zone={zone} setups={setups} risk={risk} />;
 }
 
 /** Ticket, position, or the wait context: what the trader can read or do about the state. */

@@ -116,13 +116,53 @@ export const TF_ROLE_VI: Record<string, string> = {
   M1: "thực thi",
 };
 
+/** Why WAIT, one sentence per server refusal code (Refusal in trading/schema.py). `{h1}` is the H1 direction in words. */
+export const WAIT_WHY_VI: Record<string, string> = {
+  NO_DIRECTION: "H1 chưa có hướng rõ",
+  TIMEFRAME_CONFLICT: "H1 {h1} nhưng H4 hoặc M15 đang đi ngược hướng",
+  NO_SETUP: "H1 {h1} nhưng M15 chưa có nhịp pullback (chưa có setup)",
+  NO_TRIGGER: "có setup nhưng M5 chưa kích hoạt",
+  RR_TOO_LOW: "R/R ròng dưới 1,5: không đủ khoảng trống tới mức giá kế tiếp",
+  TOO_CLOSE_TO_RESISTANCE: "giá quá sát kháng cự kế tiếp, không đủ chỗ cho TP",
+  TOO_CLOSE_TO_SUPPORT: "giá quá sát hỗ trợ kế tiếp, không đủ chỗ cho TP",
+  INVALID_STOP_DISTANCE: "khoảng cách SL không hợp lệ (quá gần hoặc quá xa)",
+  SPREAD_TOO_WIDE: "spread đang quá rộng",
+  VOLATILITY_TOO_HIGH: "biến động quá cao",
+  VOLATILITY_TOO_LOW: "biến động quá thấp",
+  VOLUME_TOO_LOW: "tick volume M1 quá thấp",
+  NEWS_WINDOW: "đang trong cửa sổ tin tức",
+  NEWS_UNKNOWN: "lịch tin chưa được xác minh",
+  STALE_DATA: "dữ liệu thị trường chưa đủ mới",
+  UNKNOWN_STATE: "thiếu dữ liệu một khung hoặc thông số broker",
+  BROKER_DISCONNECTED: "mất kết nối broker",
+  RISK_LIMIT: "lot không đạt mức tối thiểu trong giới hạn rủi ro",
+  DAILY_LIMIT: "đã chạm giới hạn lệnh hoặc mức lỗ trong ngày",
+  COOLDOWN: "đang nghỉ sau lệnh trước",
+  MARKET_CLOSED: "thị trường đóng cửa",
+};
+
+export function waitWhy(code: string | null, h1Trend: string | null | undefined): string | null {
+  if (!code || !WAIT_WHY_VI[code]) return null;
+  const h1 = h1Trend === "BULLISH" ? "đang tăng" : h1Trend === "BEARISH" ? "đang giảm" : "chưa rõ hướng";
+  return WAIT_WHY_VI[code].replace("{h1}", h1);
+}
+
+/** Every exit the desk or the position manager can record (DeskExit + ExitReason): never a bare code. */
 export const EXIT_REASON_VI: Record<string, string> = {
   STOP_LOSS: "Chạm SL",
   TAKE_PROFIT: "Chạm TP",
   TIME_EXIT: "Hết thời gian giữ",
+  TIME_EXPIRY: "Hết thời gian giữ",
   MANUAL_CLOSE: "Đóng tay",
   CLOSURE_CLOSE: "Đóng trước giờ thị trường nghỉ",
   INVALIDATED: "Setup bị vô hiệu",
+  INVALIDATION: "Setup bị vô hiệu",
+  DAILY_LOSS_GUARD: "Chạm giới hạn lỗ trong ngày",
+  FORCED_FLAT: "Buộc đóng (flatten)",
+  KILL_SWITCH: "Công tắc khẩn cấp (kill switch)",
+  EQUITY_FLOOR: "Chạm sàn vốn",
+  SPREAD_EMERGENCY: "Spread giãn khẩn cấp",
+  OPPOSITE_SIGNAL: "Có tín hiệu ngược chiều",
 };
 
 export const SIDE_VI: Record<string, string> = { BUY: "MUA", SELL: "BÁN" };

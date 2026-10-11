@@ -180,6 +180,7 @@
  "entry_blockers": [],
  "evidence": {
   "label": "Not a validated edge. This is a transparent operational baseline.",
+  "level": "UNVALIDATED",
   "operational": "UNVALIDATED_OPERATIONAL_BASELINE",
   "research": "No validated edge: Edge Program V1 = NO EDGE WITHIN BUDGET; V2 Batch A 0/20 passed Stage 1. This is an operational baseline for paper trading, not a forecast of profit.",
   "validated_edge": false

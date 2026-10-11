@@ -44,7 +44,7 @@ export function OpenConfirmModal({ frozen, liveEntry, maxDriftR, valid, busy, on
         <dt className="text-slate-600 dark:text-slate-400">Entry (giá thị trường hiện tại)</dt><dd data-testid="confirm-entry" className="text-right font-mono">{fmt(liveEntry ?? frozen.entry)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">SL</dt><dd data-testid="confirm-sl" className="text-right font-mono">{fmt(frozen.sl)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">TP (lệnh thoát tại đây)</dt><dd data-testid="confirm-tp" className="text-right font-mono">{fmt(frozen.tp1)}</dd>
-        {frozen.tp2 !== null && (<><dt className="text-slate-600 dark:text-slate-400">TP 2 (chỉ tham khảo)</dt><dd className="text-right font-mono">{fmt(frozen.tp2)}</dd></>)}
+        {frozen.tp2 !== null && (<><dt className="text-slate-600 dark:text-slate-400">TP 2 (chỉ tham khảo, bàn không chốt ở đây)</dt><dd className="text-right font-mono">{fmt(frozen.tp2)}</dd></>)}
         <dt className="text-slate-600 dark:text-slate-400">R/R</dt><dd className="text-right font-mono">{fmt(frozen.rr)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Rủi ro</dt><dd data-testid="confirm-risk" className="text-right font-mono">{fmt(frozen.risk, 2)}% · {money(frozen.riskAmount === null ? null : -frozen.riskAmount)}</dd>
         <dt className="text-slate-600 dark:text-slate-400">Lot</dt><dd data-testid="confirm-lots" className="text-right font-mono">{fmt(frozen.lots, 2)}</dd>

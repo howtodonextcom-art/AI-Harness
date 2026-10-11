@@ -6,7 +6,7 @@
  "conditions": [
   {
    "code": "WRITER_LOCK",
-   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-db4y_9sx\\writer_conflict\\writer.lock is owned by pid 22972 (another-api-process); only one process may write it",
+   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-tsip0xde\\writer_conflict\\writer.lock is owned by pid 18424 (another-api-process); only one process may write it",
    "severity": "ERROR"
   },
   {
@@ -191,6 +191,7 @@
  ],
  "evidence": {
   "label": "Not a validated edge. This is a transparent operational baseline.",
+  "level": "UNVALIDATED",
   "operational": "UNVALIDATED_OPERATIONAL_BASELINE",
   "research": "No validated edge: Edge Program V1 = NO EDGE WITHIN BUDGET; V2 Batch A 0/20 passed Stage 1. This is an operational baseline for paper trading, not a forecast of profit.",
   "validated_edge": false
@@ -484,7 +485,7 @@
    "state": "WARN"
   },
   {
-   "detail": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-db4y_9sx\\writer_conflict\\writer.lock is owned by pid 22972 (another-api-process); only one process may write it",
+   "detail": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-tsip0xde\\writer_conflict\\writer.lock is owned by pid 18424 (another-api-process); only one process may write it",
    "id": "writer_lock",
    "label": "Quy\u1ec1n ghi b\u00e0n PAPER",
    "state": "ERROR"

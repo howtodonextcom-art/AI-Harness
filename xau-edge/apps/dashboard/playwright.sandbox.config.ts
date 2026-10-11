@@ -8,7 +8,7 @@ const PORT = 3210;
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /honesty\.spec\.ts|lifecycle\.spec\.ts/,
+  testMatch: process.env.PW_MATCH ? new RegExp(process.env.PW_MATCH) : /honesty\.spec\.ts|lifecycle\.spec\.ts/,
   timeout: 45_000,
   retries: 0,
   reporter: "list",

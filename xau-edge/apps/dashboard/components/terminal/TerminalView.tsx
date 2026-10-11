@@ -484,7 +484,7 @@ export function TerminalView() {
 
   // no connection (or data that stopped arriving): never keep a green BUY on screen, whatever the last view said
   const heroView = view && (error || uiStale) ? { ...view, hero: { ...view.hero, action: { ...view.hero.action, code: "UNAVAILABLE" as const, stage: "API_DOWN" } } } : view;
-  const heroNode = heroView && <DecisionHero view={heroView} serverNowMs={serverNow} zone={prefs.zone} setups={setups && setups.source_mode === mode ? setups.setups : null} />;
+  const heroNode = heroView && <DecisionHero view={heroView} serverNowMs={serverNow} zone={prefs.zone} risk={prefs.risk} setups={setups && setups.source_mode === mode ? setups.setups : null} />;
   const bodyNode = view && (
     <DecisionBody
       view={view}

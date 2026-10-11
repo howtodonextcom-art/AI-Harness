@@ -72,6 +72,17 @@ RESEARCH_STATUS = (
     "No validated edge: Edge Program V1 = NO EDGE WITHIN BUDGET; V2 Batch A 0/20 passed Stage 1. "
     "This is an operational baseline for paper trading, not a forecast of profit."
 )
+EVIDENCE_LADDER = (
+    "UNVALIDATED",
+    "DEVELOPMENT_CANDIDATE",
+    "VALIDATED_CANDIDATE",
+    "OOS_VALIDATED",
+    "HOLDOUT_VALIDATED",
+    "FORWARD_PAPER_VALIDATED",
+    "DEMO_CANDIDATE",
+)
+"""The human evidence ladder (V3 report section 13). Only a signed research verdict may raise it."""
+EVIDENCE_LEVEL = EVIDENCE_LADDER[0]
 SPREAD_BUCKET_POINTS = 10.0
 
 
@@ -923,6 +934,7 @@ class TradeEngine:
         return {
             "operational": OPERATIONAL_LABEL,
             "validated_edge": False,
+            "level": EVIDENCE_LEVEL,
             "research": RESEARCH_STATUS,
             "label": "Not a validated edge. This is a transparent operational baseline.",
         }

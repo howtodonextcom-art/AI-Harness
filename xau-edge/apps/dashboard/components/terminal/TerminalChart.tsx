@@ -736,7 +736,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       add(plan.planned_entry, "ENTRY", BLUE, LineStyle.Solid, 2); // solid
       add(plan.sl, "SL", RED, LineStyle.Dashed, 2); // dashed
       add(plan.tp1, "TP1", GREEN, LineStyle.Dotted, 2); // dotted
-      add(plan.tp2, "TP2", GREEN, LineStyle.SparseDotted, 1);
+      add(plan.tp2, "TP2 tham khảo", GREEN, LineStyle.SparseDotted, 1, "TP2");
     }
     const position = view?.desk?.position;
     if (overlays.paper && position && position.status === "OPEN") {
