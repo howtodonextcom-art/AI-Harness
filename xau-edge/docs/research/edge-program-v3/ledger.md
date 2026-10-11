@@ -23,3 +23,4 @@ Ngày mở: 2026-10-11. K của V3 nằm **trong trần của sổ V2** (`docs/r
 | # | Thời gian | Biến thể | Giai đoạn | Kết quả | Registry id |
 |---|---|---|---|---|---|
 | 1 | 2026-10-11T06:26Z | F1-USDRES-z2.0 | Stage 1 (Development-2) | **FAIL** — n=1601 (200/năm), mean base −0.283R (CI95 −0.346..−0.220), mean pess −0.354R, gross −0.144R, p=1.0, 0/8 năm dương, placebo percentile 0. **Họ F1 ĐÓNG.** Không F1b, không đảo chiều. | `results/F1_stage1.json` sha256 563D79B83A556A81…, code `d949b20`, prereg `4a03273` |
+| — | 2026-10-11 | F3-USMOM-0930-1400-1500-1645 | Sửa đổi 1 (v1.1) trước khi chạy: mặt nạ đồng hồ cho năm chưa chứng nhận + cố định cách đọc. Không thêm biến thể, K_V3 = 3. | chưa chạy | `F3_amendment_1.md` |
