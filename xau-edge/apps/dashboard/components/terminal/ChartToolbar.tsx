@@ -48,7 +48,7 @@ const OVERLAY_LABELS: [keyof Overlays, string][] = [
   ["paper", "Lệnh paper"],
   ["structure", "Hỗ trợ/kháng cự, PDH/PDL"],
   ["volume", "Tick volume"],
-  ["sessions", "Phiên Á/Âu/Mỹ (nền màu)"],
+  ["sessions", "Phiên Tokyo / London / New York (nền màu)"],
   ["keyLevels", "Tuần trước cao/thấp, phiên cao/thấp"],
   ["news", "Tin tức sắp tới (đường dọc)"],
 ];

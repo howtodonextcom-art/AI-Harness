@@ -198,7 +198,7 @@ export function TerminalView() {
       out.push({ id: "key-pwh", title: "PWH", price: week.pwh, color: "#7c3aed" });
       out.push({ id: "key-pwl", title: "PWL", price: week.pwl, color: "#7c3aed" });
     }
-    const names = { ASIA: "Á", LONDON: "ÂU", NEW_YORK: "MỸ" } as const;
+    const names = { ASIA: "TOKYO", LONDON: "LONDON", NEW_YORK: "NY" } as const;
     for (const r of sessionRanges(closed, inSessionZone)) {
       out.push({ id: `key-${r.session}-h`, title: `${names[r.session]} H${r.live ? "*" : ""}`, price: r.high, color: "#0d9488" });
       out.push({ id: `key-${r.session}-l`, title: `${names[r.session]} L${r.live ? "*" : ""}`, price: r.low, color: "#0d9488" });

@@ -40,7 +40,7 @@ test.describe("market bar", () => {
     await expect(page.getByTestId("day-high")).toHaveText(fixed(d.high));
     await expect(page.getByTestId("day-low")).toHaveText(fixed(d.low));
     await expect(page.getByTestId("day-range")).toHaveText(fixed(d.range));
-    await expect(page.getByTestId("session")).toHaveText("Âu-Mỹ chồng phiên");
+    await expect(page.getByTestId("session")).toHaveText("London + New York");
     // 14:45 UTC is 21:45 in Vietnam (GMT+7, the default display zone)
     await expect(page.getByTestId("vn-clock")).toContainText(/^21:4[5-9]:\d\d/);
     await expect(page.getByTestId("countdown")).toContainText("Nến M5 đóng sau");
@@ -120,7 +120,7 @@ test.describe("decision", () => {
     await page.goto("/trade");
     await expect(page.getByTestId("hero")).toHaveAttribute("data-hero-state", "BUY_READY");
     await expect(page.getByTestId("hero")).toContainText("▲");
-    await expect(page.getByTestId("line-ENTRY")).toHaveText(`ENTRY ${fixed(plan.planned_entry)}`);
+    await expect(page.getByTestId("line-BUY-ENTRY")).toHaveText(`BUY ENTRY ${fixed(plan.planned_entry)}`);
     await expect(page.getByTestId("line-SL")).toHaveText(`SL ${fixed(plan.sl)}`);
     await expect(page.getByTestId("line-TP1")).toHaveText(`TP1 ${fixed(plan.tp1)}`);
     await expect(page.getByTestId("plan-entry")).toHaveText(fixed(plan.planned_entry));
@@ -152,7 +152,7 @@ test.describe("decision", () => {
     expect(await page.getByTestId("hero-problems").innerText()).not.toContain("DATA_STALE"); // the code is not in front of the trader (innerText leaves out the closed details)
     await expect(page.getByTestId("hero-problems").locator("details").first()).toContainText("DATA_STALE"); // ...it is in the technical details
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
-    await expect(page.getByTestId("line-ENTRY")).toHaveCount(0);
+    await expect(page.getByTestId("line-BUY-ENTRY")).toHaveCount(0);
     await expect(page.getByTestId("price-stale")).toBeVisible();
 
     await mock(page, view("writerConflict"));
@@ -487,7 +487,7 @@ test.describe("chart", () => {
     await expect(page.getByTestId("fullscreen-summary")).toContainText("SẴN SÀNG MUA");
     await expect(page.getByTestId("fullscreen-summary")).toContainText("Entry");
     await expect(page.getByTestId("chart-tf-M15")).toBeVisible();
-    await expect(page.getByTestId("line-ENTRY")).toBeVisible();
+    await expect(page.getByTestId("line-BUY-ENTRY")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("fullscreen-summary")).toHaveCount(0);
     expect(await page.getByTestId("trade-chart").evaluate((el) => (el as unknown as { __tag: number }).__tag)).toBe(7); // never re-created
@@ -533,18 +533,18 @@ test.describe("chart", () => {
     await expect(page.getByTestId("session-legend")).toHaveCount(0);
     await page.getByTestId("overlay-menu").click();
     await page.getByTestId("toggle-sessions").check();
-    await expect(page.getByTestId("session-legend")).toContainText("Âu (London)");
-    await expect(page.getByTestId("session-legend")).toContainText("Mỹ (New York)");
+    await expect(page.getByTestId("session-legend")).toContainText("London");
+    await expect(page.getByTestId("session-legend")).toContainText("New York");
   });
 
   test("overlays can be hidden; the structure overlay uses the server levels", async ({ page }) => {
     const v = view("buy");
     await mock(page, v);
     await page.goto("/trade");
-    await expect(page.getByTestId("line-ENTRY")).toBeVisible();
+    await expect(page.getByTestId("line-BUY-ENTRY")).toBeVisible();
     await page.getByTestId("overlay-menu").click();
     await page.getByTestId("toggle-plan").uncheck();
-    await expect(page.getByTestId("line-ENTRY")).toHaveCount(0);
+    await expect(page.getByTestId("line-BUY-ENTRY")).toHaveCount(0);
     await page.getByTestId("toggle-structure").check();
     await expect(page.getByTestId("line-PDH")).toHaveText(`PDH ${fixed(Number(v.structure?.pdh))}`);
   });
@@ -838,7 +838,7 @@ test.describe("chart label collisions (TRADE-08)", () => {
     await mock(page, v);
     await page.goto("/trade");
     const chart = page.getByTestId("trade-chart");
-    await expect(page.getByTestId("line-ENTRY")).toBeVisible(); // the legend always lists every line
+    await expect(page.getByTestId("line-BUY-ENTRY")).toBeVisible(); // the legend always lists every line
     await expect.poll(async () => Number(await chart.getAttribute("data-hidden-axis-labels"))).toBeGreaterThanOrEqual(4);
     // the five trader tools and the last price crowd the entry: at most the entry keeps one label in that band
     await expect.poll(async () => Number(await chart.getAttribute("data-hidden-axis-labels"))).toBeLessThanOrEqual(6);
@@ -856,7 +856,7 @@ test.describe("chart label collisions (TRADE-08)", () => {
     await mock(page, v);
     await page.goto("/trade");
     const chart = page.getByTestId("trade-chart");
-    await expect(page.getByTestId("line-ENTRY")).toBeVisible();
+    await expect(page.getByTestId("line-BUY-ENTRY")).toBeVisible();
     await page.waitForTimeout(1800);
     // entry/SL/TP1/TP2 are a few price units apart on a ~50-unit scale: at most the last-price tag yields next to the entry
     expect(Number(await chart.getAttribute("data-hidden-axis-labels"))).toBeLessThanOrEqual(1);

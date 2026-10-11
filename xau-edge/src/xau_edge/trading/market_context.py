@@ -18,10 +18,10 @@ from xau_edge.market_data.session import market_status
 from xau_edge.market_data.validators.market_calendar import MarketCalendar
 
 SESSION_LABELS = {
-    "ASIA": "Phiên Á (Tokyo)",
-    "LONDON": "Phiên Âu (London)",
-    "NEW_YORK": "Phiên Mỹ (New York)",
-    "LONDON_NY_OVERLAP": "Âu-Mỹ chồng phiên",
+    "ASIA": "Phiên Tokyo",
+    "LONDON": "Phiên London",
+    "NEW_YORK": "Phiên New York",
+    "LONDON_NY_OVERLAP": "London + New York",
     "OFF_HOURS": "Ngoài phiên chính",
 }
 

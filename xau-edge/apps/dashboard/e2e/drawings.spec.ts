@@ -198,8 +198,8 @@ test("previous week high/low and session high/low are drawn from H1 bars when sw
   const legend = page.getByTestId("chart-legend");
   await expect(legend).toContainText("PWH");
   await expect(legend).toContainText("PWL");
-  await expect(legend).toContainText("ÂU H");
-  await expect(legend).toContainText("MỸ L");
+  await expect(legend).toContainText("LONDON H");
+  await expect(legend).toContainText("NY L");
 });
 
 test("an existing drawing never steals the click of a new one: a point can be placed right on a Fibonacci line", async ({ page }) => {

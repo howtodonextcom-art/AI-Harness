@@ -89,7 +89,7 @@ def test_market_context_has_a_session_label_in_vietnamese() -> None:
         session="LONDON_NY_OVERLAP",
         market_open=True,
     )
-    assert ctx["session"]["label"] == "Âu-Mỹ chồng phiên"
+    assert ctx["session"]["label"] == "London + New York"
     assert ctx["daily"]["day"]
     assert ctx["server_time"].startswith("2026-03-02T22:22")
 

@@ -242,7 +242,7 @@ const STATE_VI: Record<string, string> = {
   UNKNOWN: "chưa rõ", NORMAL: "bình thường", LOW: "thấp", HIGH: "cao", SHOCK: "đột biến", QUIET: "yên ắng", GOOD: "tốt", ELEVATED: "nhỉnh", WIDE: "rộng",
   PULLBACK: "pullback", WAITING: "đang chờ", FLAT: "đi ngang", TRIGGERED: "đã kích hoạt", ARMED: "đã hình thành", NONE: "chưa có",
   VERIFIED: "đã xác minh", NOT_VERIFIED: "chưa xác minh", NEWS_UNKNOWN: "chưa xác minh",
-  ASIA: "phiên Á", LONDON: "phiên Âu", NEW_YORK: "phiên Mỹ", LONDON_NY_OVERLAP: "Âu-Mỹ chồng phiên",
+  ASIA: "phiên Tokyo", LONDON: "phiên London", NEW_YORK: "phiên New York", LONDON_NY_OVERLAP: "London + New York",
 };
 export const viState = (v: unknown): string => {
   const raw = v === null || v === undefined || v === "" ? "—" : String(v);

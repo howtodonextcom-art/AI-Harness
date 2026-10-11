@@ -6,7 +6,7 @@
  "conditions": [
   {
    "code": "WRITER_LOCK",
-   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-tsip0xde\\writer_conflict\\writer.lock is owned by pid 18424 (another-api-process); only one process may write it",
+   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-his11was\\writer_conflict\\writer.lock is owned by pid 25348 (another-api-process); only one process may write it",
    "severity": "ERROR"
   },
   {
@@ -287,7 +287,7 @@
   "server_time": "2025-12-05T14:45:00+00:00",
   "session": {
    "code": "LONDON_NY_OVERLAP",
-   "label": "\u00c2u-M\u1ef9 ch\u1ed3ng phi\u00ean"
+   "label": "London + New York"
   }
  },
  "news": {
@@ -485,7 +485,7 @@
    "state": "WARN"
   },
   {
-   "detail": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-tsip0xde\\writer_conflict\\writer.lock is owned by pid 18424 (another-api-process); only one process may write it",
+   "detail": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-his11was\\writer_conflict\\writer.lock is owned by pid 25348 (another-api-process); only one process may write it",
    "id": "writer_lock",
    "label": "Quy\u1ec1n ghi b\u00e0n PAPER",
    "state": "ERROR"

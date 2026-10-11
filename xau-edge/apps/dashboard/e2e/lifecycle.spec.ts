@@ -219,7 +219,7 @@ test("offline for more than a minute: the hero is UNAVAILABLE, the old plan is f
   await expect(page.getByTestId("stale-plan")).not.toHaveAttribute("open", ""); // folded: entry/SL/TP are not in front of the trader
   await expect(page.getByTestId("take-paper")).toBeDisabled();
   await expect(page.getByTestId("mobile-action-bar")).toHaveCount(0);
-  await expect(page.getByTestId("line-ENTRY")).toHaveCount(0); // the plan is not drawn on the chart either
+  await expect(page.getByTestId("line-BUY-ENTRY")).toHaveCount(0); // the plan is not drawn on the chart either
 
   online.on = true;
   await page.clock.fastForward(4_000); // the next poll succeeds

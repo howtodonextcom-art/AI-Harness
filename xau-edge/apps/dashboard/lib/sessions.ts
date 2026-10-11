@@ -72,10 +72,10 @@ export const SESSION_COLORS: Record<Session, string> = {
 };
 
 export const SESSION_NAMES: Record<Session, string> = {
-  ASIA: "Á (Tokyo)",
-  LONDON: "Âu (London)",
-  NEW_YORK: "Mỹ (New York)",
-  LONDON_NY_OVERLAP: "Âu-Mỹ chồng phiên",
+  ASIA: "Tokyo",
+  LONDON: "London",
+  NEW_YORK: "New York",
+  LONDON_NY_OVERLAP: "London + New York",
   OFF_HOURS: "Ngoài phiên",
 };
 
