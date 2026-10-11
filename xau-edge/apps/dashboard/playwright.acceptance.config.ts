@@ -9,12 +9,17 @@ import { defineConfig, devices } from "@playwright/test";
  * Run: `npm run build` then `npx playwright test -c playwright.acceptance.config.ts`.
  * Everything it shows is labelled ACCEPTANCE REPLAY - NOT LIVE.
  */
+/** Desktop-only scope (see playwright.config.ts): `@mobile` tests do not gate; `XAU_E2E_MOBILE=1` runs only them. */
+const MOBILE = process.env.XAU_E2E_MOBILE === "1";
+
 export default defineConfig({
   testDir: "./e2e-acceptance",
   timeout: 90_000,
   workers: 1, // one replay world at a time
   fullyParallel: false,
   retries: 0,
+  grep: MOBILE ? /@mobile/ : undefined,
+  grepInvert: MOBILE ? undefined : /@mobile/,
   reporter: "list",
   use: { baseURL: "http://127.0.0.1:3200" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } }],

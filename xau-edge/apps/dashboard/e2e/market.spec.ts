@@ -191,7 +191,7 @@ test("consistency warnings are listed", async ({ page }) => {
   await expect(page.getByTestId("warnings")).toContainText("quote is older");
 });
 
-test("mobile width has no horizontal page scroll", async ({ page }) => {
+test("mobile width has no horizontal page scroll @mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await mock(page, { ...HEALTHY });
   await page.goto("/market");

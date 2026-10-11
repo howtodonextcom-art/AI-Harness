@@ -725,7 +725,7 @@ test.describe("layouts", () => {
     { name: "200% zoom (720x450 CSS px)", width: 720, height: 450 },
   ];
   for (const vp of VIEWPORTS) {
-    test(`/trade at ${vp.name}: price, decision and chart are usable, no horizontal scroll`, async ({ page }) => {
+    test(`/trade at ${vp.name}${vp.width < 640 ? " @mobile" : ""}: price, decision and chart are usable, no horizontal scroll`, async ({ page }) => {
       await mock(page, view("buy"));
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto("/trade");
@@ -748,7 +748,7 @@ test.describe("layouts", () => {
     }
   });
 
-  test("phone: the order is price, decision, chart; the action bar is sticky and opens the confirmation", async ({ page }) => {
+  test("phone: the order is price, decision, chart; the action bar is sticky and opens the confirmation @mobile", async ({ page }) => {
     await mock(page, view("buy"));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/trade");
@@ -762,7 +762,7 @@ test.describe("layouts", () => {
     await expect(page.getByTestId("confirm-open-modal")).toBeVisible();
   });
 
-  test("phone in landscape: the confirmation's confirm and cancel buttons stay inside the screen (red team)", async ({ page }) => {
+  test("phone in landscape: the confirmation's confirm and cancel buttons stay inside the screen (red team) @mobile", async ({ page }) => {
     await mock(page, view("buy"));
     await page.setViewportSize({ width: 844, height: 390 });
     await page.goto("/trade");
@@ -775,7 +775,7 @@ test.describe("layouts", () => {
     }
   });
 
-  test("phone: no action bar while the desk only waits", async ({ page }) => {
+  test("phone: no action bar while the desk only waits @mobile", async ({ page }) => {
     await mock(page, view("wait"));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/trade");
@@ -783,7 +783,7 @@ test.describe("layouts", () => {
     await expect(page.getByTestId("mobile-action-bar")).toHaveCount(0);
   });
 
-  test("phone: an open position shows P&L and a close action in the bar", async ({ page }) => {
+  test("phone: an open position shows P&L and a close action in the bar @mobile", async ({ page }) => {
     await mock(page, view("openPaper"));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/trade");

@@ -41,7 +41,7 @@ for (const scheme of ["light", "dark"] as const) {
   });
 }
 
-test("the close modal and the phone layout are accessible", async ({ page }) => {
+test("the close modal and the phone layout are accessible @mobile", async ({ page }) => {
   await mock(page, view("openPaper"));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/trade");

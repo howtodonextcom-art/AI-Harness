@@ -50,11 +50,20 @@ for (const side of ["BUY", "SELL"] as const) {
     for (const id of ["hero-entry", "hero-sl", "hero-tp"]) await expect(page.getByTestId(id)).toHaveText("—");
   });
 
-  test(`H-01 ${side}: ...and on a phone, where M-01 requires the reason without opening details`, async ({ page }) => {
+  // SAFETY at any width stays gating: a narrow window must never show an offer for a blocked setup
+  test(`H-01 ${side}: a narrow window (390 px) still never shows an offer for a blocked setup`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await mock(page, blocked(side));
     await page.goto("/trade");
     await expectNoPermissionLook(page, side);
+    await expect(page.getByTestId("hero")).toContainText("CHỜ");
+  });
+
+  // phone layout is frozen (desktop-only scope, 2026-10-12): the readability of the reason on a phone is non-gating
+  test(`H-01 ${side} @mobile: on a phone the reason is visible without opening details (M-01)`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await mock(page, blocked(side));
+    await page.goto("/trade");
     const hero = page.getByTestId("hero");
     await expect(hero).toContainText("CHỜ");
     // M-01: the actual blocker, visible (not display:none, not inside a closed <details>)
@@ -250,13 +259,18 @@ test("independent review finding: the stale quote and the data age never contrad
   expect(age, `data age must not claim fresh data while the quote is stale: "${age}" vs "${stale}"`).not.toMatch(/: 0 giây/);
 });
 
-test("independent review finding: the phone bar carries the entry price, and the chart expiry label uses the trader's zone", async ({ page }) => {
+test("independent review finding: the chart expiry label uses the trader's zone", async ({ page }) => {
+  await mock(page, view("buy"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("system-plan-overlay")).toContainText("GMT+7");
+  await expect(page.getByTestId("system-plan-overlay")).not.toContainText(" UTC");
+});
+
+test("independent review finding: the phone bar carries the entry price @mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await mock(page, view("buy"));
   await page.goto("/trade");
   await expect(page.getByTestId("mobile-action-bar")).toContainText("@ 4236.47");
-  await expect(page.getByTestId("system-plan-overlay")).toContainText("GMT+7");
-  await expect(page.getByTestId("system-plan-overlay")).not.toContainText(" UTC");
 });
 
 test("independent review, second pass: with a stale quote the candle countdown stops ticking", async ({ page }) => {

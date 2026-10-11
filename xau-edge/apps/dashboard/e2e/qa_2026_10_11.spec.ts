@@ -49,7 +49,7 @@ const VIEWPORTS = [
 ];
 
 for (const vp of VIEWPORTS) {
-  test.describe(`${vp.width}x${vp.height}`, () => {
+  test.describe(`${vp.width}x${vp.height}${vp.width < 640 ? " @mobile" : ""}`, () => {
     test.use({ viewport: vp });
     for (const [name, action] of STATES) {
       test(`${name}: the action is the first thing on screen, nothing overflows, no console error`, async ({ page }) => {

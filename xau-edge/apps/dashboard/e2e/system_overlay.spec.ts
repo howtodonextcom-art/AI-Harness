@@ -93,7 +93,7 @@ test("system plan prices are invariant across timeframe and resize", async ({ pa
   await page.getByTestId("chart-tf-M15").click();
   await expect(page.getByTestId("system-plan-overlay")).toHaveAttribute("data-side", "BUY");
   expect(await prices(page)).toEqual(before);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 720, height: 450 }); // the narrowest supported desktop view (200% zoom)
   await expect(page.getByTestId("system-plan-overlay")).toBeVisible();
   expect(await prices(page)).toEqual(before);
   const box = await page.getByTestId("system-action-badge").boundingBox();
@@ -156,8 +156,8 @@ test("rapid transitions BUY -> WAIT -> SELL -> UNAVAILABLE -> HOLD -> EXIT witho
   expect(await page.evaluate(() => (window as unknown as { __noReload?: number }).__noReload)).toBe(1); // same document: nothing reloaded
 });
 
-test("collision: the action badge never covers a Entry/SL/TP label of the system plan (desktop and phone)", async ({ page }) => {
-  for (const size of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+test("collision: the action badge never covers a Entry/SL/TP label of the system plan (desktop and 200% zoom)", async ({ page }) => {
+  for (const size of [{ width: 1440, height: 900 }, { width: 720, height: 450 }]) {
     await page.setViewportSize(size);
     for (const name of ["buy", "sell", "openPaper"] as GoldenName[]) {
       await mock(page, view(name));
@@ -200,8 +200,8 @@ test("HOLD: hero levels, plan overlay and API agree on the actual fill, not the 
   expect((await prices(page)).entry).toBe(v.desk!.position!.fill_price);
 });
 
-test("collision: system plan labels and badge never overlap the chart's context legend (phone, 200% zoom, desktop)", async ({ page }) => {
-  for (const size of [{ width: 390, height: 844 }, { width: 720, height: 450 }, { width: 1440, height: 900 }]) {
+test("collision: system plan labels and badge never overlap the chart's context legend (200% zoom, desktop)", async ({ page }) => {
+  for (const size of [{ width: 720, height: 450 }, { width: 1440, height: 900 }]) {
     await page.setViewportSize(size);
     await mock(page, view("buy"));
     await page.goto("/trade");

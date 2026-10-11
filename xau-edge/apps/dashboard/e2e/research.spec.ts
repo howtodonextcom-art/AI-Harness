@@ -505,7 +505,7 @@ for (const size of [
   { name: "390", width: 390, height: 844 },
 ]) {
   for (const { path, ready } of PAGES) {
-    test(`renders ${path} at ${size.name} without horizontal scroll or console errors`, async ({ page }) => {
+    test(`renders ${path} at ${size.name}${size.width < 640 ? " @mobile" : ""} without horizontal scroll or console errors`, async ({ page }) => {
       const errors: string[] = [];
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
       page.on("pageerror", (e) => errors.push(String(e)));

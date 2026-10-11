@@ -127,7 +127,7 @@ test("an invalidated or expired setup is CHỜ with a plain note, not an exit an
 // Pre-registered mobile gate (docs/reports/TRADE08_AB_RUBRIC.md): at 390x844, without scrolling, the trader sees the price, the
 // action, the one sentence "when", and at least 280 px of candles; the sticky bar never covers them.
 for (const name of ["wait", "buyWatch", "sellArmed", "buy", "openPaper", "closedPaper"] as const) {
-  test(`phone 390x844 (${name}): price, action and 'when' on the first screen, chart at least 280 px`, async ({ page }) => {
+  test(`phone 390x844 (${name}) @mobile: price, action and 'when' on the first screen, chart at least 280 px`, async ({ page }) => {
     await mock(page, view(name));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/trade");
@@ -233,7 +233,7 @@ test("offline for more than a minute: the hero is UNAVAILABLE, the old plan is f
 // Pre-registered landscape/zoom gate: a wide but SHORT viewport gets two columns (chart | decision) and folded market details.
 for (const [w, h, label] of [[844, 390, "phone landscape"], [720, 450, "200% zoom"]] as const) {
   for (const name of ["wait", "buyWatch", "buy", "openPaper"] as const) {
-    test(`${label} ${w}x${h} (${name}): price, action and at least 160 px of chart on the first screen, nothing overflows`, async ({ page }) => {
+    test(`${label} ${w}x${h} (${name})${w < 640 || label === "phone landscape" ? " @mobile" : ""}: price, action and at least 160 px of chart on the first screen, nothing overflows`, async ({ page }) => {
       await mock(page, view(name));
       await page.setViewportSize({ width: w, height: h });
       await page.goto("/trade");

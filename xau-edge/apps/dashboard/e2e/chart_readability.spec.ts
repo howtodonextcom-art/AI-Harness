@@ -98,7 +98,7 @@ test("the session legend sits above the time axis and never covers its labels", 
   expect(c!.y + c!.height - (l!.y + l!.height), "gap between the legend and the bottom of the chart (time axis is about 28 px)").toBeGreaterThanOrEqual(28);
 });
 
-test("phone: the legend does not eat the chart, and every level is still listed for screen readers", async ({ page }) => {
+test("phone: the legend does not eat the chart, and every level is still listed for screen readers @mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await withStructure(page);
   await mock(page, view("buy"));

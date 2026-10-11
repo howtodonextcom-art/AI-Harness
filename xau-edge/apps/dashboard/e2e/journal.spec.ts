@@ -39,7 +39,7 @@ test("journal API down is an error, not an empty journal", async ({ page }) => {
   await expect(page.getByText("chưa có dữ liệu")).toBeVisible();
 });
 
-test("/journal at 390px has no horizontal page scroll", async ({ page }) => {
+test("/journal at 390px has no horizontal page scroll @mobile", async ({ page }) => {
   await page.route("**/trade/journal**", (route) => route.fulfill({ json: journalClosedGolden() }));
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto("/journal");

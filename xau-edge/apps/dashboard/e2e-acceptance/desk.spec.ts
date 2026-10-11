@@ -371,7 +371,7 @@ test.describe("layouts", () => {
     await shot(page, "21-replay-1920x1080");
   });
 
-  test("mobile 390x844: chart on the first screen and a sticky action bar", async ({ page, request }) => {
+  test("mobile 390x844: chart on the first screen and a sticky action bar @mobile", async ({ page, request }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await load(page, request, "buy_tp");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "BUY_READY");
@@ -382,7 +382,7 @@ test.describe("layouts", () => {
     await shot(page, "23-replay-mobile-390x844-full", true);
   });
 
-  test("phone with an open position, on every workspace tab: no horizontal scroll (red team)", async ({ page, request }) => {
+  test("phone with an open position, on every workspace tab: no horizontal scroll (red team) @mobile", async ({ page, request }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await load(page, request, "buy_tp");
     await openPaper(page);
