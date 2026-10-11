@@ -280,7 +280,7 @@ test.describe("failure states are explicit and never a plain WAIT", () => {
   test("stale data hides the plan", async ({ page, request }) => {
     await load(page, request, "stale");
     await expect(hero(page)).toHaveAttribute("data-hero-state", "STALE");
-    await expect(page.getByTestId("hero-problems")).toContainText("Dữ liệu giá đã quá cũ");
+    await expect(page.getByTestId("hero-problems")).toContainText("Dữ liệu giá và báo giá đã quá cũ");
     await expect(page.getByTestId("plan-card")).toHaveCount(0);
     await expect(page.getByTestId("take-paper")).toHaveCount(0);
     await shot(page, "14-replay-stale");

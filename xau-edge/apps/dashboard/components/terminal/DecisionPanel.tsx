@@ -334,10 +334,12 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups, risk }: { vie
       {!skipped && secondsLeft !== null && (t.code === "BUY" || t.code === "SELL") && <span data-testid="expiry" data-urgent={urgent ? "true" : "false"} className={urgent ? "mt-1 block text-sm font-bold" : "sr-only"}>{urgent ? "Sắp hết hạn" : `còn hiệu lực ${mmss2(secondsLeft)}`}</span>}
       {(state === "UNAVAILABLE" || state === "STALE" || state === "UNKNOWN") && errors.length > 0 && (
         <ul data-testid="hero-problems" className="mt-1 space-y-0.5 text-sm">
-          {errors.map((c) => (
-            <li key={c.code}>
-              {humanCondition(c.code, c.message)}
-              <TechDetail code={c.code}><span className="ml-2">{c.message}</span></TechDetail>
+          {mergeProblems(errors).map((p) => (
+            <li key={p.key}>
+              {p.text}
+              {p.items.map((c) => (
+                <TechDetail key={c.code} code={c.code}><span className="ml-2">{c.message}</span></TechDetail>
+              ))}
             </li>
           ))}
         </ul>
@@ -357,10 +359,20 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups, risk }: { vie
         extra={extra}
         steps={lifecycleSteps(view, setups)}
         honesty={<HonestyBadge view={view} />}
-        levels={<HeroLevels view={view} risk={risk} />}
+        levels={<HeroLevels view={view} risk={risk} blocked={t.code === "UNAVAILABLE"} />}
       />
     </div>
   );
+}
+
+const STALE_CODES = new Set(["DATA_STALE", "QUOTE_STALE"]);
+
+/** One line per problem the trader can act on: stale bars and a stale quote say the same thing. */
+function mergeProblems(errors: TradeView["conditions"]) {
+  const stale = errors.filter((c) => STALE_CODES.has(c.code));
+  const rest = errors.filter((c) => !STALE_CODES.has(c.code)).map((c) => ({ key: c.code, text: humanCondition(c.code, c.message), items: [c] }));
+  if (stale.length < 2) return [...stale.map((c) => ({ key: c.code, text: humanCondition(c.code, c.message), items: [c] })), ...rest];
+  return [{ key: "STALE", text: "Dữ liệu giá và báo giá đã quá cũ. Không thể mở lệnh PAPER.", items: stale }, ...rest];
 }
 
 const mmss2 = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -382,24 +394,29 @@ function HonestyBadge({ view }: { view: TradeView }) {
   );
 }
 
-function HeroLevels({ view, risk }: { view: TradeView; risk?: number }) {
+function HeroLevels({ view, risk, blocked }: { view: TradeView; risk?: number; blocked: boolean }) {
   const l = heroLevels(view);
-  const chosen = view.trade_plan && risk !== undefined ? view.risk_plans?.find((p) => Math.abs(p.risk_pct - risk) < 1e-9) : undefined;
+  const sized = Boolean(view.trade_plan) && risk !== undefined && !blocked;
+  const chosen = sized ? view.risk_plans?.find((p) => Math.abs(p.risk_pct - (risk ?? 0)) < 1e-9) : undefined;
+  const show = (v: number | null | undefined, digits?: number) => (blocked ? "—" : fmt(v, digits));
   const row = (id: string, k: string, v: string) => (
     <div>
-      <dt className="text-[10px] font-bold uppercase opacity-70">{k}</dt>
+      <dt className="text-[10px] font-bold uppercase">{k}</dt>
       <dd data-testid={id} className="font-mono text-sm font-semibold">{v}</dd>
     </div>
   );
   return (
-    <dl data-testid="hero-levels" className={`mt-1 hidden gap-x-2 gap-y-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs ${view.trade_plan && risk !== undefined ? "grid-cols-3" : "grid-cols-4"}`}>
-      {row("hero-entry", "Entry", fmt(l.entry))}
-      {row("hero-sl", "SL", fmt(l.sl))}
-      {row("hero-tp", "TP", fmt(l.tp))}
-      {row("hero-rr", "R:R", fmt(l.rr))}
-      {view.trade_plan && risk !== undefined && row("hero-risk", "Rủi ro", `${fmt(risk, 2)}%`)}
-      {view.trade_plan && risk !== undefined && row("hero-lot", "Lot", fmt(chosen?.lots, 2))}
+    <>
+    {blocked && <p data-testid="hero-levels-blocked" className="mt-1 hidden text-[11px] font-bold sm:block">Kế hoạch bị chặn, không dùng.</p>}
+    <dl data-testid="hero-levels" data-blocked={blocked ? "true" : "false"} className={`mt-1 hidden gap-x-2 gap-y-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs ${sized ? "grid-cols-3" : "grid-cols-4"}`}>
+      {row("hero-entry", "Entry", show(l.entry))}
+      {row("hero-sl", "SL", show(l.sl))}
+      {row("hero-tp", "TP", show(l.tp))}
+      {row("hero-rr", "R:R", show(l.rr))}
+      {sized && row("hero-risk", "Rủi ro", `${fmt(risk, 2)}%`)}
+      {sized && row("hero-lot", "Lot", fmt(chosen?.lots, 2))}
     </dl>
+    </>
   );
 }
 
