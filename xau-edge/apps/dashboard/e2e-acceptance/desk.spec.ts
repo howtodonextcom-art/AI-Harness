@@ -7,7 +7,8 @@ import { expect, test, type APIRequestContext, type Page } from "@playwright/tes
  */
 
 const API = "http://127.0.0.1:8100";
-const SHOTS = "../../docs/reports/img/trading-ui/after";
+// screenshots go to the tracked docs only when asked (SAVE_DOC_SHOTS=1); a plain test run never dirties git
+const SHOTS = process.env.SAVE_DOC_SHOTS ? "../../docs/reports/img/trading-ui/after" : "test-results/shots";
 
 async function load(page: Page, request: APIRequestContext, name: string, path = "/trade") {
   const res = await request.post(`${API}/acceptance/load/${name}`);

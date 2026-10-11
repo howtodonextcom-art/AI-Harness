@@ -71,12 +71,12 @@ test("5-second fold screenshots at 1440 and 1920 (closed LIVE)", async ({ page }
   await expect(page.getByTestId("honesty")).toBeVisible();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.screenshot({
-    path: "../../docs/reports/img/consolidation-2026-10-11/trade-1440-card-b.png",
+    path: (process.env.SAVE_DOC_SHOTS ? "../../docs/reports/img/consolidation-2026-10-11" : "test-results/shots") + "/trade-1440-card-b.png",
     fullPage: false,
   });
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.screenshot({
-    path: "../../docs/reports/img/consolidation-2026-10-11/trade-1920-card-b.png",
+    path: (process.env.SAVE_DOC_SHOTS ? "../../docs/reports/img/consolidation-2026-10-11" : "test-results/shots") + "/trade-1920-card-b.png",
     fullPage: false,
   });
 });

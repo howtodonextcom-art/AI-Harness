@@ -80,7 +80,7 @@ test("fold screenshots of the contract states (fixtures, not live evidence)", as
     await mock(page, v);
     await page.goto("/trade");
     await expect(page.getByTestId("action-word")).toBeVisible();
-    await page.screenshot({ path: `../../docs/reports/img/v3-2026-10-11/trade-1440-${name}.png`, fullPage: false });
+    await page.screenshot({ path: (process.env.SAVE_DOC_SHOTS ? "../../docs/reports/img/v3-2026-10-11" : "test-results/shots") + `/trade-1440-${name}.png`, fullPage: false });
   }
 });
 
