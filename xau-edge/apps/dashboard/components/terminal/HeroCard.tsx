@@ -82,7 +82,7 @@ export function HeroCard(c: Common) {
       )}
       {waiting && t.setup === "Chưa có" && (
         <p data-testid="setup-truth" className="mt-1 hidden text-[11px] leading-snug opacity-80 sm:block">
-          Một nguồn sự thật: chưa có setup. Nhãn PULLBACK trên M15 là vai trò khung (chỗ tìm setup), không phải setup đã hình thành.
+          Một nguồn sự thật: chưa có setup. Nhãn HỒI (pullback: giá hồi ngược xu hướng chính) trên M15 là vai trò khung (chỗ tìm setup), không phải setup đã hình thành.
         </p>
       )}
       <When label={c.whenLabel} body={c.whenBody} short={c.whenShort} veil={c.veil} />

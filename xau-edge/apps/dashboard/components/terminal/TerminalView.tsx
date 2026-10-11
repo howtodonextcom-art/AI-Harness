@@ -587,7 +587,9 @@ export function TerminalView() {
 
   return (
     <main className={`mx-auto w-full max-w-[1800px] space-y-2 px-2 py-2 short:space-y-1 short:py-1 sm:px-3 ${showActionBar ? "pb-20 short:pb-2 lg:pb-2" : ""}`}>
-      <div inert={modalOpen} className="space-y-2">
+      {!view && !error && <p data-testid="loading" role="status" className="sr-only">Đang tải quyết định…</p>}
+      {/* until the first decision lands nothing is painted: content that appears and re-flows is a layout shift (CLS 0.23 measured live) */}
+      <div inert={modalOpen} className={`space-y-2 ${!view && !error ? "invisible" : ""}`}>
       <MarketBar view={view} tf={prefs.tf} zone={prefs.zone} onZone={changeZone} serverNowMs={serverNow} uiStale={uiStale || Boolean(error)} offlineSeconds={lastOk === null ? 0 : Math.max(0, Math.round((now - lastOk) / 1000))} />
 
       {mode !== "LIVE" && (
@@ -633,7 +635,6 @@ export function TerminalView() {
           AUTO_PAPER đang BẬT: lệnh PAPER tự mở khi có quyết định hành động (chỉ bàn paper, không bao giờ gửi lệnh tới MT5).
         </div>
       )}
-      {!view && !error && <p data-testid="loading" className="text-sm text-slate-600 dark:text-slate-400">Đang tải quyết định…</p>}
 
       {/* phone: one column in the order price -> decision -> chart -> plan; desktop: chart column | decision column,
           independent of each other so a tall decision never pushes the multi-timeframe strip down */}
@@ -720,7 +721,7 @@ export function TerminalView() {
             ))}
           </dl>
           <label className="mt-2 flex items-center gap-2 text-sm">
-            <input type="checkbox" data-testid="shortcuts-enabled" checked={prefs.shortcuts} onChange={(e) => setPrefs({ shortcuts: e.target.checked })} />
+            <input type="checkbox" name="shortcuts-enabled" data-testid="shortcuts-enabled" checked={prefs.shortcuts} onChange={(e) => setPrefs({ shortcuts: e.target.checked })} />
             Bật phím tắt một phím
           </label>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">Không có phím tắt nào mở hay đóng lệnh.</p>

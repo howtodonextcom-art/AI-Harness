@@ -1,6 +1,7 @@
 "use client";
 
 import type { DrawingApi } from "@/components/terminal/DrawingLayer";
+import { allocateLabelSlots } from "@/lib/labelSlots";
 import type { TradePlan, TradeView } from "@/lib/trade";
 
 const GREEN = "#16a34a";
@@ -39,6 +40,8 @@ interface Props {
   api: DrawingApi | null;
   width: number;
   height: number;
+  /** px at the top of the chart taken by the context legend: labels and the badge stay below it */
+  topInset?: number;
   planLive: boolean;
   plan: TradePlan | null;
   view: TradeView | null;
@@ -46,7 +49,7 @@ interface Props {
   showPaper: boolean;
 }
 
-function modelFromProps({ planLive, plan, view, showPlan, showPaper }: Omit<Props, "api" | "width" | "height">): OverlayModel | null {
+function modelFromProps({ planLive, plan, view, showPlan, showPaper }: Omit<Props, "api" | "width" | "height" | "topInset">): OverlayModel | null {
   const position = view?.desk?.position;
   if (showPaper && position && position.status === "OPEN") {
     const side = position.side === "SELL" ? "SELL" : "BUY";
@@ -90,7 +93,7 @@ function modelFromProps({ planLive, plan, view, showPlan, showPaper }: Omit<Prop
 
 export function SystemTradePlanOverlay(props: Props) {
   const model = modelFromProps(props);
-  const { api, width, height } = props;
+  const { api, width, height, topInset = 0 } = props;
   if (!model || !api) return null;
   const w = Math.max(1, width);
   const h = Math.max(1, height);
@@ -117,15 +120,20 @@ export function SystemTradePlanOverlay(props: Props) {
   const zoneStart = Math.max(0, w * 0.08);
   const zoneWidth = Math.max(120, w * 0.72);
   const labelX = clamp(10, 6, Math.max(6, w - 180));
-  const sorted = [...levels].sort((a, b) => a.y - b.y);
-  const used: number[] = [];
-  const labelY = (y: number) => {
-    let out = clamp(y - 5, 14, h - 8);
-    while (used.some((u) => Math.abs(u - out) < 16)) out = clamp(out + 16, 14, h - 8);
-    used.push(out);
-    return out;
-  };
-  const badgeTop = clamp(Math.min(entry.y, sl.y, tp1.y) - 52, 4, Math.max(4, h - 54));
+  const PRIORITY: Record<Level["role"], number> = { entry: 0, sl: 1, tp1: 2, now: 3, tp2: 4 };
+  const slots = allocateLabelSlots(levels.map((l) => ({ id: l.role, y: l.y - 5, priority: PRIORITY[l.role] })), Math.min(Math.max(14, topInset + 12), Math.max(14, h - 24)), h - 8, 16, 40);
+  const sorted = [...levels].filter((l) => slots.has(l.role)).sort((a, b) => a.y - b.y);
+  // the badge (44 px + the expiry line) goes to the first band that no plan label touches: a level label always wins
+  const BADGE_H = 66;
+  const labelYs = [...slots.values()];
+  const badgeTop = (() => {
+    const firstTop = Math.max(40, topInset + 6);
+    const lastTop = Math.max(firstTop, h - BADGE_H - 4);
+    for (let top = firstTop; top <= lastTop; top += 8) {
+      if (labelYs.every((ly) => ly < top - 6 || ly > top + BADGE_H + 4)) return top;
+    }
+    return clamp(Math.min(entry.y, sl.y, tp1.y) - 52, 4, Math.max(4, h - 54)); // no free band: the old placement
+  })();
   const action = model.mode === "POSITION" ? "GIỮ" : model.side === "BUY" ? "MUA" : "BÁN";
   const rrText = model.mode === "POSITION" ? (model.rr === null ? "R hiện tại —" : `R hiện tại ${model.rr.toFixed(2)}`) : model.rr === null ? "R:R —" : `R:R 1:${model.rr.toFixed(2)}`;
 
@@ -143,12 +151,12 @@ export function SystemTradePlanOverlay(props: Props) {
       <rect data-testid="system-reward-zone" x={zoneStart} y={Math.min(entry.y, tp1.y)} width={zoneWidth} height={Math.max(1, Math.abs(tp1.y - entry.y))} fill="rgba(22,163,74,0.13)" />
       <rect data-testid="system-risk-zone" x={zoneStart} y={Math.min(entry.y, sl.y)} width={zoneWidth} height={Math.max(1, Math.abs(sl.y - entry.y))} fill="rgba(220,38,38,0.13)" />
       {levels.map((l) => (
-        <g key={l.role} data-testid={`system-line-${l.role}`} data-role={l.role} data-price={l.price} data-y={l.y}>
+        <g key={l.role} data-testid={`system-line-${l.role}`} data-role={l.role} data-price={l.price} data-y={l.y} data-reprice={api.toP(l.y) ?? undefined}>
           <line x1={x0} y1={l.y} x2={x1} y2={l.y} stroke={l.color} strokeWidth={l.role === "tp2" || l.role === "now" ? 1 : 1.7} strokeDasharray={l.dashed ? "7 5" : undefined} opacity={l.role === "tp2" ? 0.72 : 0.95} />
         </g>
       ))}
       {sorted.map((l) => (
-        <text key={`${l.role}-label`} x={labelX} y={labelY(l.y)} fill={l.color} fontSize={11} fontWeight={800} stroke="rgba(255,255,255,0.9)" strokeWidth={3} paintOrder="stroke">
+        <text key={`${l.role}-label`} x={labelX} y={slots.get(l.role)} fill={l.color} fontSize={11} fontWeight={800} stroke="rgba(255,255,255,0.9)" strokeWidth={3} paintOrder="stroke">
           {l.label}
         </text>
       ))}

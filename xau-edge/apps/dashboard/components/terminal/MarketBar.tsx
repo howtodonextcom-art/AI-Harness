@@ -90,7 +90,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
             <div className={stalePrice ? "grayscale" : ""} aria-label="Giá bid">
               <div className={`hidden text-xs font-semibold uppercase sm:block ${MUTED}`}><Term id="bid">Bid (giá bán ra)</Term></div>
               <div className="flex items-baseline gap-1.5">
-                {quote ? <BigPrice value={quote.bid} /> : <span className="text-4xl font-black">—</span>}
+                {quote ? <BigPrice value={quote.bid} /> : <span className="font-mono leading-none"><span className="text-3xl font-black sm:text-5xl">—</span></span>}
                 <span data-testid="price-dir" aria-hidden="true" className={dir === "up" ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}>{arrow}</span>
               </div>
               <span data-testid="price-bid" className="sr-only">{quote ? fmt(quote.bid) : "—"}</span>
@@ -145,7 +145,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
               {serverNowMs > 0 ? clockInZone(serverNowMs, zone) : "--:--:--"}
               {!live && view ? <span className="ml-1 text-xs font-normal text-red-700 dark:text-red-300">(giờ replay)</span> : null}
             </span>
-            <select aria-label="Múi giờ hiển thị" value={zone} onChange={(e) => onZone(e.target.value as DisplayZone)} className={`${more ? "block" : "hidden"} max-w-44 rounded border border-slate-400 bg-transparent px-1 py-0.5 text-xs roomy:block`}>
+            <select name="display-zone" aria-label="Múi giờ hiển thị" value={zone} onChange={(e) => onZone(e.target.value as DisplayZone)} className={`${more ? "block" : "hidden"} max-w-44 rounded border border-slate-400 bg-transparent px-1 py-0.5 text-xs roomy:block`}>
               {(Object.keys(ZONE_LABEL) as DisplayZone[]).map((z) => (
                 <option key={z} value={z}>{ZONE_LABEL[z]}</option>
               ))}

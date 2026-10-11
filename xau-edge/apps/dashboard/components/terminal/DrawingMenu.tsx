@@ -82,7 +82,7 @@ export function DrawingMenu(p: Props) {
                       <button type="button" data-testid="manager-lock" aria-pressed={d.locked} title={d.locked ? "Đang khóa: bấm để mở" : "Khóa để không kéo nhầm"} onClick={() => p.onPatch(d.id, { locked: !d.locked })} className="ml-auto rounded border border-slate-400 px-1">{d.locked ? "🔒" : "🔓"}</button>
                       <button type="button" data-testid="manager-delete" disabled={d.locked} title={d.locked ? "Mở khóa trước khi xóa" : "Xóa"} aria-label={`Xóa ${KIND_VI[d.kind]}`} onClick={() => p.onDelete(d.id)} className="rounded border border-slate-400 px-1 disabled:opacity-40">🗑</button>
                     </div>
-                    <input data-testid="manager-label" aria-label="Tên nét vẽ" maxLength={40} value={d.label} placeholder="Tên / ghi chú (tùy chọn)" onChange={(e) => p.onPatch(d.id, { label: e.target.value })} className="mt-1 w-full rounded border border-slate-400 bg-transparent px-1 py-0.5 text-inherit" />
+                    <input name="manager-label" data-testid="manager-label" aria-label="Tên nét vẽ" maxLength={40} value={d.label} placeholder="Tên / ghi chú (tùy chọn)" onChange={(e) => p.onPatch(d.id, { label: e.target.value })} className="mt-1 w-full rounded border border-slate-400 bg-transparent px-1 py-0.5 text-inherit" />
                     {d.kind === "rr" && <p className="mt-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-400">{RR_NOT_A_SIGNAL}</p>}
                   </li>
                 ))}

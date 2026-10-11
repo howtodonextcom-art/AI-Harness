@@ -97,11 +97,11 @@ function Overview({ view, levels, onRemoveLevel, alerts, onRemoveAlert, notify, 
         <p className="text-xs text-slate-600 dark:text-slate-400">Đường ngang và cảnh báo giá chỉ là ghi chú của bạn: không ảnh hưởng quyết định hay giao dịch.</p>
         <div data-testid="setup-notify" className="mt-2 space-y-1 rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700">
           <label className="flex items-center gap-2">
-            <input type="checkbox" data-testid="notify-setup" checked={notify} onChange={(e) => onNotify(e.target.checked)} />
+            <input type="checkbox" name="notify-setup" data-testid="notify-setup" checked={notify} onChange={(e) => onNotify(e.target.checked)} />
             Báo khi có setup SẴN SÀNG (tiêu đề tab + thông báo trình duyệt)
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" data-testid="notify-sound" checked={sound} disabled={!notify} onChange={(e) => onSound(e.target.checked)} />
+            <input type="checkbox" name="notify-sound" data-testid="notify-sound" checked={sound} disabled={!notify} onChange={(e) => onSound(e.target.checked)} />
             Kèm âm báo ngắn
           </label>
           <p className="text-xs text-slate-600 dark:text-slate-400">Chỉ hoạt động khi trang này đang mở, chỉ với dữ liệu LIVE, mỗi setup một lần. Telegram/file vẫn là kênh cảnh báo chính (xem tab Hệ thống).</p>

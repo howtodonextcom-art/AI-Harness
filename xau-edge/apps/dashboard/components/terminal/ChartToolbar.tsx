@@ -100,7 +100,7 @@ export function ChartToolbar(p: Props) {
           <div data-testid="alert-popover" role="dialog" aria-label="Thêm cảnh báo giá" className="absolute left-0 top-9 z-30 w-64 rounded-lg border border-slate-400 bg-white p-2 text-xs shadow-lg dark:bg-slate-900" onKeyDown={(e) => e.key === "Escape" && setAlertOpen(false)}>
             <label className="flex flex-col gap-1">
               Báo khi bid chạm giá
-              <input data-testid="alert-price" autoFocus inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitAlert()} placeholder={p.bid ? p.bid.toFixed(2) : "4050.00"} className="rounded border border-slate-400 bg-transparent px-1 py-1 font-mono text-sm text-inherit" />
+              <input name="alert-price" data-testid="alert-price" autoFocus inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitAlert()} placeholder={p.bid ? p.bid.toFixed(2) : "4050.00"} className="rounded border border-slate-400 bg-transparent px-1 py-1 font-mono text-sm text-inherit" />
             </label>
             <button type="button" data-testid="alert-add" onClick={submitAlert} className="mt-2 w-full rounded border border-sky-600 bg-sky-500/15 px-2 py-1 font-semibold">Thêm cảnh báo</button>
             <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">Chỉ hoạt động khi trang này đang mở. Không giao dịch gì cả.</p>
@@ -113,12 +113,12 @@ export function ChartToolbar(p: Props) {
           <div role="group" aria-label="Lớp phủ trên biểu đồ" className="absolute right-0 top-9 z-30 w-56 space-y-1 rounded-lg border border-slate-400 bg-white p-2 text-xs shadow-lg sm:left-0 sm:right-auto dark:bg-slate-900" onKeyDown={(e) => e.key === "Escape" && setOverlayOpen(false)}>
             {OVERLAY_LABELS.map(([key, label]) => (
               <label key={key} className="flex items-center gap-2">
-                <input type="checkbox" data-testid={`toggle-${key}`} checked={p.overlays[key]} onChange={(e) => p.onOverlays({ ...p.overlays, [key]: e.target.checked })} />
+                <input type="checkbox" name={`overlay-${key}`} data-testid={`toggle-${key}`} checked={p.overlays[key]} onChange={(e) => p.onOverlays({ ...p.overlays, [key]: e.target.checked })} />
                 {label}
               </label>
             ))}
             <label className="flex items-center gap-2">
-              <input type="checkbox" data-testid="toggle-history" checked={p.history} onChange={(e) => p.onHistory(e.target.checked)} />
+              <input type="checkbox" name="toggle-history" data-testid="toggle-history" checked={p.history} onChange={(e) => p.onHistory(e.target.checked)} />
               Lịch sử lệnh paper
             </label>
           </div>

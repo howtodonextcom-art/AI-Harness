@@ -243,7 +243,12 @@ def action_for(
         side = _bias_side(signal.h1_bias)
         first = signal.refusal_reasons[0].value if signal.refusal_reasons else None
         if side and first in ("NO_SETUP", "NO_TRIGGER"):
-            out.update(stage="WATCHING", side=side, bias=side, missing="SETUP")
+            out.update(
+                stage="WATCHING",
+                side=side,
+                bias=side,
+                missing="TRIGGER" if first == "NO_TRIGGER" else "SETUP",
+            )
         elif phase in ("INVALIDATED", "EXPIRED"):
             out.update(stage=str(phase))
     return out

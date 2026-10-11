@@ -29,7 +29,7 @@ from xau_edge.trading.cockpit import (
 )
 from xau_edge.trading.namespace import NamespaceError, claim_root
 from xau_edge.trading.paper_desk import DeskRefusal
-from xau_edge.trading.schema import TradeDecision, TradingSignal
+from xau_edge.trading.schema import Refusal, TradeDecision, TradingSignal
 from xau_edge.trading.setup_machine import SetupLifecycle, SetupPhase
 
 NOW = datetime(2026, 3, 2, 10, 5, tzinfo=UTC)
@@ -430,6 +430,16 @@ def test_every_hero_state_maps_to_one_action() -> None:
     for state in ("WAIT", "SETUP_ARMED"):
         # a lean of the market is a bias, never the primary action
         assert action_for(_hero(state), wait, None)["code"] == "WAIT"
+
+
+def test_wait_names_the_one_missing_thing_setup_for_no_setup_trigger_for_no_trigger() -> None:
+    """NO_SETUP -> missing SETUP; NO_TRIGGER -> missing TRIGGER (never the same word for both)."""
+    base = signal()  # H1 bias is directional here
+    for refusal, missing in ((Refusal.NO_SETUP, "SETUP"), (Refusal.NO_TRIGGER, "TRIGGER")):
+        waiting = base.model_copy(update={"refusal_reasons": (refusal,), "metadata": {}})
+        out = action_for(_hero("WAIT"), waiting, None)
+        assert (out["code"], out["stage"], out["missing"]) == ("WAIT", "WATCHING", missing)
+        assert out["side"] is not None
 
 
 def test_a_ready_setup_the_desk_would_refuse_is_never_a_buy_or_sell() -> None:

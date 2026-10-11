@@ -287,13 +287,13 @@ function Calculator({ bid }: { bid: number | null }) {
       <p className={`mt-1 rounded border px-2 py-0.5 text-[11px] font-semibold ${WARN}`}>CHỈ LÀ MÁY TÍNH — KHÔNG PHẢI TÍN HIỆU</p>
       <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
         <label className="flex flex-col text-xs text-slate-600 dark:text-slate-400">Entry
-          <input data-testid="calc-entry" inputMode="decimal" value={entry} onChange={(e) => setEntry(e.target.value)} placeholder={bid ? bid.toFixed(2) : ""} className="rounded border border-slate-400 bg-transparent px-1 py-0.5 font-mono text-sm text-inherit" />
+          <input name="calc-entry" data-testid="calc-entry" inputMode="decimal" value={entry} onChange={(e) => setEntry(e.target.value)} placeholder={bid ? bid.toFixed(2) : ""} className="rounded border border-slate-400 bg-transparent px-1 py-0.5 font-mono text-sm text-inherit" />
         </label>
         <label className="flex flex-col text-xs text-slate-600 dark:text-slate-400">SL
-          <input data-testid="calc-sl" inputMode="decimal" value={stop} onChange={(e) => setStop(e.target.value)} className="rounded border border-slate-400 bg-transparent px-1 py-0.5 font-mono text-sm text-inherit" />
+          <input name="calc-sl" data-testid="calc-sl" inputMode="decimal" value={stop} onChange={(e) => setStop(e.target.value)} className="rounded border border-slate-400 bg-transparent px-1 py-0.5 font-mono text-sm text-inherit" />
         </label>
         <label className="flex flex-col text-xs text-slate-600 dark:text-slate-400">Rủi ro %
-          <input data-testid="calc-risk" inputMode="decimal" value={riskPct} onChange={(e) => setRiskPct(e.target.value)} className="rounded border border-slate-400 bg-transparent px-1 py-0.5 font-mono text-sm text-inherit" />
+          <input name="calc-risk" data-testid="calc-risk" inputMode="decimal" value={riskPct} onChange={(e) => setRiskPct(e.target.value)} className="rounded border border-slate-400 bg-transparent px-1 py-0.5 font-mono text-sm text-inherit" />
         </label>
       </div>
       <div data-testid="calc-result" className="mt-2 text-sm">
@@ -359,7 +359,7 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups, risk }: { vie
         extra={extra}
         steps={lifecycleSteps(view, setups)}
         honesty={<HonestyBadge view={view} />}
-        levels={<HeroLevels view={view} risk={risk} blocked={t.code === "UNAVAILABLE"} />}
+        levels={<HeroLevels view={view} risk={risk} blocked={t.code === "UNAVAILABLE" || view.hero.state === "EXPIRED_SETUP"} expired={view.hero.state === "EXPIRED_SETUP"} />}
       />
     </div>
   );
@@ -394,7 +394,7 @@ function HonestyBadge({ view }: { view: TradeView }) {
   );
 }
 
-function HeroLevels({ view, risk, blocked }: { view: TradeView; risk?: number; blocked: boolean }) {
+function HeroLevels({ view, risk, blocked, expired = false }: { view: TradeView; risk?: number; blocked: boolean; expired?: boolean }) {
   const l = heroLevels(view);
   const sized = Boolean(view.trade_plan) && risk !== undefined && !blocked;
   const chosen = sized ? view.risk_plans?.find((p) => Math.abs(p.risk_pct - (risk ?? 0)) < 1e-9) : undefined;
@@ -407,7 +407,7 @@ function HeroLevels({ view, risk, blocked }: { view: TradeView; risk?: number; b
   );
   return (
     <>
-    {blocked && <p data-testid="hero-levels-blocked" className="mt-1 hidden text-[11px] font-bold sm:block">Kế hoạch bị chặn, không dùng.</p>}
+    {blocked && <p data-testid="hero-levels-blocked" className="mt-1 hidden text-[11px] font-bold sm:block">{expired ? "Kế hoạch đã hết hạn, không dùng." : "Kế hoạch bị chặn, không dùng."}</p>}
     <dl data-testid="hero-levels" data-blocked={blocked ? "true" : "false"} className={`mt-1 hidden gap-x-2 gap-y-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs ${sized ? "grid-cols-3" : "grid-cols-4"}`}>
       {row("hero-entry", "Entry", show(l.entry))}
       {row("hero-sl", "SL", show(l.sl))}

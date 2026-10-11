@@ -10,13 +10,13 @@ export function shortState(state: string): { text: string; tone: "up" | "down" |
   const down = s.includes("DOWN") || s.includes("BEAR");
   const tone: "up" | "down" | "flat" = up && !down ? "up" : down && !up ? "down" : "flat";
   if (s.includes("TRIGGERED")) return { text: `KÍCH HOẠT ${tone === "up" ? "↑" : tone === "down" ? "↓" : ""}`.trim(), tone };
-  if (s.includes("PULLBACK")) return { text: `PULLBACK ${tone === "up" ? "↑" : tone === "down" ? "↓" : ""}`.trim(), tone };
+  if (s.includes("PULLBACK")) return { text: `HỒI ${tone === "up" ? "↑" : tone === "down" ? "↓" : ""}`.trim(), tone };
   if (s.startsWith("BULL")) return { text: "TĂNG", tone: "up" };
   if (s.startsWith("BEAR")) return { text: "GIẢM", tone: "down" };
   if (s === "UP") return { text: "↑ TĂNG", tone: "up" };
   if (s === "DOWN") return { text: "↓ GIẢM", tone: "down" };
   if (s.includes("REVERSAL")) return { text: `ĐẢO CHIỀU ${tone === "up" ? "↑" : tone === "down" ? "↓" : ""}`.trim(), tone };
-  const table: Record<string, string> = { RANGE: "ĐI NGANG", SPREAD_WIDE: "SPREAD RỘNG", WIDE: "RỘNG", ELEVATED: "NHỈNH", NEUTRAL: "TRUNG TÍNH", FLAT: "ĐỨNG", GOOD: "TỐT", NORMAL: "BÌNH THƯỜNG", STALE: "CŨ", NONE: "—" };
+  const table: Record<string, string> = { RANGE: "ĐI NGANG", SPREAD_WIDE: "SPREAD RỘNG", WIDE: "RỘNG", ELEVATED: "NHỈNH", NEUTRAL: "TRUNG TÍNH", FLAT: "ĐỨNG", GOOD: "TỐT", NORMAL: "BÌNH THƯỜNG", STALE: "DỮ LIỆU CŨ", NONE: "—" };
   return { text: table[s] ?? state, tone };
 }
 
@@ -35,7 +35,7 @@ export function MtfStrip({ rows, tf, onFocus }: { rows: TimeframeRow[]; tf: stri
             data-testid={`matrix-${r.timeframe}`}
             aria-pressed={tf === r.timeframe}
             onClick={() => onFocus(r.timeframe)}
-            title={`${r.timeframe} · ${TF_ROLE_VI[r.timeframe] ?? r.role} · ${r.state} — bấm để xem biểu đồ`}
+            title={`${r.timeframe} · ${TF_ROLE_VI[r.timeframe] ?? r.role} · ${r.state}${s.text.startsWith("HỒI") ? " · HỒI = giá đang hồi ngược xu hướng chính, chưa phải tín hiệu vào lệnh" : ""} — bấm để xem biểu đồ`}
             className={`rounded-md border px-2 py-1 text-left hover:bg-slate-500/10 ${tf === r.timeframe ? "border-sky-600 bg-sky-500/10" : "border-slate-300 dark:border-slate-700"}`}
           >
             <div className="flex items-center justify-between">
