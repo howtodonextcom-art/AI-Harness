@@ -26,6 +26,16 @@ def read_wav_mono16k(path: Path) -> np.ndarray:  # type: ignore[type-arg,unused-
     return np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
 
 
+LANGUAGE_MIN_PROBABILITY = 0.7
+
+
+def language_label(language: str | None, probability: float | None) -> str | None:
+    """The detected language, or ``und`` when the detector was not confident (it can be wrong)."""
+    if language is None or probability is None or probability < LANGUAGE_MIN_PROBABILITY:
+        return "und"
+    return language
+
+
 def asr_available() -> bool:
     return importlib.util.find_spec("faster_whisper") is not None
 
@@ -54,7 +64,10 @@ def transcribe_wav(
             start_ms=round(seg.start * 1000),
             end_ms=round(seg.end * 1000),
             text=seg.text.strip(),
-            language=info.language,
+            language=language_label(
+                language or info.language, 1.0 if language else info.language_probability
+            ),
+            language_probability=None if language else round(float(info.language_probability), 3),
             low_confidence=bool(seg.avg_logprob < -1.0 or seg.no_speech_prob > 0.6),
         )
         for seg in raw_segments

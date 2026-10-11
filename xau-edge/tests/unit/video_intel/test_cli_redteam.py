@@ -87,7 +87,7 @@ def test_annotate_merges_valid_claims_and_show_reads_them_back(
     capsys.readouterr()
     assert cli.main(["show", vid]) == 0
     shown = json.loads(capsys.readouterr().out)
-    assert shown["claims"][0]["status"] == EvidenceStatus.UNVERIFIED
+    assert shown["claims"][0]["status"] == EvidenceStatus.UNKNOWN
 
 
 def test_instructions_inside_a_transcript_are_inert_data(

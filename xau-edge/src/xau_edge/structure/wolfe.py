@@ -28,7 +28,12 @@ from numpy.typing import ArrayLike
 from pydantic import BaseModel, ConfigDict, Field
 
 from xau_edge.features.indicators import as_hlc
-from xau_edge.structure.swings import StructureConfig, analyse_structure
+from xau_edge.structure.detection import (
+    PatternDetection,
+    PatternPoint,
+    make_pattern_id,
+)
+from xau_edge.structure.pivots import Pivot, alternate, confirmed_pivots
 
 
 class WolfeConfig(BaseModel):
@@ -44,13 +49,9 @@ class WolfeConfig(BaseModel):
     target_horizon_bars: int | None = None  # None: P5.bar - P3.bar bars after P5
     min_reward_risk: float = Field(default=1.0, ge=0.0)  # reject candidates below this R:R
     spread: float = Field(default=0.0, ge=0.0)  # price units added to the cost of entry
-
-
-class Pivot(NamedTuple):
-    bar: int
-    price: float
-    kind: Literal["H", "L"]
-    confirmed_at: int
+    entry_trigger: Literal["P5_CONFIRMED", "LINE13_RECLAIM"] = "P5_CONFIRMED"
+    """Contested: enter when P5 is confirmed, or only after a close back inside line 1-3."""
+    max_reclaim_bars: int = Field(default=20, ge=1)  # LINE13_RECLAIM only: how long to wait
 
 
 class WolfeCandidate(NamedTuple):
@@ -61,30 +62,10 @@ class WolfeCandidate(NamedTuple):
     stop: float
     target: float
     reward_risk: float
-
-
-def _pivots(high: ArrayLike, low: ArrayLike, close: ArrayLike, cfg: WolfeConfig) -> list[Pivot]:
-    h, lo, c = as_hlc(high, low, close)
-    res = analyse_structure(h, lo, c, StructureConfig(left=cfg.pivot_left, right=cfg.pivot_right))
-    found: list[Pivot] = []
-    for j in range(h.size):
-        if res.new_swing_high[j]:
-            found.append(Pivot(j - cfg.pivot_right, float(res.last_swing_high[j]), "H", j))
-        if res.new_swing_low[j]:
-            found.append(Pivot(j - cfg.pivot_right, float(res.last_swing_low[j]), "L", j))
-    found.sort(key=lambda p: (p.confirmed_at, p.bar))
-    return found
-
-
-def _alternate(history: list[Pivot], new: Pivot) -> None:
-    """Keep strictly alternating H/L; of two same-kind neighbours keep the more extreme one."""
-    if history and history[-1].kind == new.kind:
-        last = history[-1]
-        better = new.price > last.price if new.kind == "H" else new.price < last.price
-        if better:
-            history[-1] = new
-        return
-    history.append(new)
+    geometry_known_at: int = -1  # when P5 became confirmed (== confirmed_at unless a reclaim waits)
+    trigger_bar: int = (
+        -1
+    )  # where the trigger happened (the reclaim close; P5 confirmation otherwise)
 
 
 def _line(p: Pivot, q: Pivot) -> tuple[float, float]:
@@ -92,12 +73,15 @@ def _line(p: Pivot, q: Pivot) -> tuple[float, float]:
     return slope, p.price - slope * p.bar
 
 
-def _evaluate(  # noqa: PLR0911 - one early return per geometric rule reads best
-    five: list[Pivot],
-    close: np.ndarray,
-    cfg: WolfeConfig,  # type: ignore[type-arg,unused-ignore]
-) -> WolfeCandidate | None:
-    """Evaluate a bullish pattern on ``five`` (P1 low ... P5 low); mirrored by the caller."""
+class _Lines(NamedTuple):
+    s13: float
+    b13: float
+    s14: float
+    b14: float
+
+
+def _geometry(five: list[Pivot], cfg: WolfeConfig) -> _Lines | None:  # noqa: PLR0911
+    """The geometric rules only (a bullish pattern on P1 low ... P5 low; the caller mirrors)."""
     p1, p2, p3, p4, p5 = five
     if p5.bar - p1.bar > cfg.max_pattern_bars:
         return None
@@ -116,42 +100,142 @@ def _evaluate(  # noqa: PLR0911 - one early return per geometric rule reads best
     if not p5.price < p3.price:
         return None
     s14, b14 = _line(p1, p4)
+    return _Lines(s13, b13, s14, b14)
+
+
+def _plan(
+    five: list[Pivot],
+    lines: _Lines,
+    *,
+    entry_bar: int,
+    close: np.ndarray,  # type: ignore[type-arg,unused-ignore]
+    cfg: WolfeConfig,
+) -> WolfeCandidate | None:
+    """Entry, stop and target for a geometry that is actionable at ``entry_bar``."""
+    p3, p5 = five[2], five[4]
     horizon = cfg.target_horizon_bars if cfg.target_horizon_bars is not None else p5.bar - p3.bar
-    target = s14 * (p5.bar + horizon) + b14
-    entry = float(close[p5.confirmed_at]) + cfg.spread
+    target = lines.s14 * (p5.bar + horizon) + lines.b14
+    entry = float(close[entry_bar]) + cfg.spread
     risk = entry - p5.price
     reward = target - entry
     if risk <= 0 or reward <= 0 or reward / risk < cfg.min_reward_risk:
         return None
     return WolfeCandidate(
-        "BUY", (p1, p2, p3, p4, p5), p5.confirmed_at, entry, p5.price, target, reward / risk
+        "BUY",
+        (five[0], five[1], p3, five[3], p5),
+        entry_bar,
+        entry,
+        p5.price,
+        target,
+        reward / risk,
     )
+
+
+def _await_reclaim(
+    five: list[Pivot],
+    lines: _Lines,
+    low: np.ndarray,  # type: ignore[type-arg,unused-ignore]
+    close: np.ndarray,  # type: ignore[type-arg,unused-ignore]
+    cfg: WolfeConfig,
+) -> tuple[int, int] | None:
+    """The first close back above line 1-3 after P5, as ``(trigger_bar, bar it is knowable)``.
+
+    The stop is P5: if a low pierces it first, the setup is dead. Bars up to P5's confirmation are
+    scanned too (their data is known by then); the trigger is never reported before P5 itself is.
+    """
+    p5 = five[4]
+    limit = min(p5.confirmed_at + cfg.max_reclaim_bars, close.size - 1)
+    for k in range(p5.bar + 1, limit + 1):
+        if low[k] < p5.price:
+            return None
+        if close[k] > lines.s13 * k + lines.b13:
+            return k, max(k, p5.confirmed_at)
+    return None
 
 
 def detect_wolfe(
     high: ArrayLike, low: ArrayLike, close: ArrayLike, config: WolfeConfig | None = None
 ) -> list[WolfeCandidate]:
-    """All Wolfe Wave candidates, each emitted at the bar that confirms its fifth pivot."""
+    """All Wolfe Wave candidates, each emitted at the bar where the chosen trigger is knowable:
+    P5's confirmation (default) or the first close back inside line 1-3 (``LINE13_RECLAIM``)."""
     cfg = config or WolfeConfig()
     h, lo, c = as_hlc(high, low, close)
     out: list[WolfeCandidate] = []
     for side, hh, ll, cc in (("BUY", h, lo, c), ("SELL", -lo, -h, -c)):
         history: list[Pivot] = []
-        for pivot in _pivots(hh, ll, cc, cfg):
-            _alternate(history, pivot)
-            if len(history) >= 5 and history[-1] is pivot and pivot.kind == "L":
-                cand = _evaluate(history[-5:], cc, cfg)
-                if cand is None:
+        for pivot in confirmed_pivots(hh, ll, cc, left=cfg.pivot_left, right=cfg.pivot_right):
+            alternate(history, pivot)
+            if len(history) < 5 or history[-1] is not pivot or pivot.kind != "L":
+                continue
+            five = history[-5:]
+            lines = _geometry(five, cfg)
+            if lines is None:
+                continue
+            known = pivot.confirmed_at
+            if cfg.entry_trigger == "P5_CONFIRMED":
+                trigger, entry_bar = known, known
+            else:
+                hit = _await_reclaim(five, lines, ll, cc, cfg)
+                if hit is None:
                     continue
-                if side == "SELL":  # mirror back to real prices
-                    mirrored = tuple(
-                        Pivot(p.bar, -p.price, "H" if p.kind == "L" else "L", p.confirmed_at)
-                        for p in cand.pivots
-                    )
-                    cand = WolfeCandidate(
-                        "SELL", mirrored,  # type: ignore[arg-type]
-                        cand.confirmed_at, -cand.entry, -cand.stop, -cand.target, cand.reward_risk,
-                    )  # fmt: skip
-                out.append(cand)
+                trigger, entry_bar = hit
+            cand = _plan(five, lines, entry_bar=entry_bar, close=cc, cfg=cfg)
+            if cand is None:
+                continue
+            cand = cand._replace(geometry_known_at=known, trigger_bar=trigger)
+            if side == "SELL":  # mirror back to real prices
+                mirrored = tuple(
+                    Pivot(p.bar, -p.price, "H" if p.kind == "L" else "L", p.confirmed_at)
+                    for p in cand.pivots
+                )
+                cand = cand._replace(
+                    side="SELL",
+                    pivots=mirrored,  # type: ignore[arg-type]
+                    entry=-cand.entry,
+                    stop=-cand.stop,
+                    target=-cand.target,
+                )
+            out.append(cand)
     out.sort(key=lambda x: x.confirmed_at)
     return out
+
+
+WOLFE_DEFINITION = "wolfe/convention-v1 (P5 beyond line 1-3, converging, P1-P4 target; see docs)"
+
+
+def to_detection(candidate: WolfeCandidate, config: WolfeConfig | None = None) -> PatternDetection:
+    """The common contract. The three bar indexes differ only in ``LINE13_RECLAIM`` mode."""
+    cfg = config or WolfeConfig()
+    points = tuple(
+        PatternPoint(label=f"P{i + 1}", bar=p.bar, price=p.price, confirmed_at=p.confirmed_at)
+        for i, p in enumerate(candidate.pivots)
+    )
+    known = candidate.geometry_known_at
+    if known < 0:
+        known = candidate.confirmed_at
+    trigger = candidate.trigger_bar if candidate.trigger_bar >= 0 else candidate.confirmed_at
+    return PatternDetection(
+        pattern_id=make_pattern_id("WOLFE_WAVE", points) + cfg.entry_trigger[:1],
+        pattern_type="WOLFE_WAVE",
+        bias="LONG" if candidate.side == "BUY" else "SHORT",
+        points=points,
+        geometry_known_at=known,
+        detected_at=candidate.confirmed_at,
+        actionable_at=candidate.confirmed_at,
+        trigger_bar=trigger,
+        trigger_delay_bars=candidate.confirmed_at - trigger,
+        source_definition=f"{WOLFE_DEFINITION}; trigger={cfg.entry_trigger}",
+        reference_levels={
+            "entry_reference": candidate.entry,
+            "stop_reference": candidate.stop,
+            "target_reference": candidate.target,
+        },
+        metadata={"reward_risk_reference": candidate.reward_risk},
+    )
+
+
+def detect_wolfe_patterns(
+    high: ArrayLike, low: ArrayLike, close: ArrayLike, config: WolfeConfig | None = None
+) -> list[PatternDetection]:
+    """``detect_wolfe`` through the common detection contract."""
+    return [to_detection(c, config) for c in detect_wolfe(high, low, close, config)]

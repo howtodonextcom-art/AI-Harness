@@ -4,20 +4,25 @@ from __future__ import annotations
 
 import json
 import wave
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from xau_edge.video_intel import ingest, media, store, transcribe
+from xau_edge.video_intel import ask, ingest, media, store, transcribe
 from xau_edge.video_intel.knowledge import (
     Claim,
     EvidenceStatus,
+    ExternalSource,
     ImplementationLink,
+    SourceQuality,
     TradingConcept,
     VideoKnowledge,
     VideoRecord,
     explain_concept,
+    migrate_status,
+    staleness,
 )
 from xau_edge.video_intel.source import Platform, classify_source
 from xau_edge.video_intel.status import ErrorCode, SourceStatus
@@ -256,7 +261,7 @@ def _knowledge() -> VideoKnowledge:
     )  # fmt: skip
     claim = Claim(
         claim_id="c1", video_id="v1", evidence_refs=["frame@8000ms"],
-        assertion="price reaches the target", status=EvidenceStatus.UNVERIFIED,
+        assertion="price reaches the target", status=EvidenceStatus.UNKNOWN,
         verification="single curated example; no statistics",
     )  # fmt: skip
     link = ImplementationLink(
@@ -277,8 +282,113 @@ def test_store_round_trip_and_ids(tmp_path: Path) -> None:
     )
 
 
-def test_concept_query_answers_with_evidence_and_code_links() -> None:
-    answer = explain_concept(_knowledge(), "wolf wave")  # alternative name, any case
-    assert "Wolfe Wave" in answer and "frame@8000ms" in answer
-    assert "[UNVERIFIED]" in answer and "src/xau_edge/structure/wolfe.py" in answer
-    assert "No concept named" in explain_concept(_knowledge(), "diamond")
+def test_concept_query_separates_video_external_code_and_unknown() -> None:
+    k = _knowledge()
+    k = k.model_copy(
+        update={
+            "external_sources": [
+                ExternalSource(
+                    source_id="s1", url="https://example.org/w", title="Guide",
+                    quality=SourceQuality.LOW, opened=True, retrieved_at="2026-10-11",
+                    says="rules",
+                )
+            ],
+            "claims": [
+                *k.claims,
+                Claim(
+                    claim_id="c2", video_id="v1", evidence_refs=["frame@8000ms"],
+                    assertion="stop at P5", status=EvidenceStatus.OBSERVED,
+                    verification="read from the frame",
+                ),
+                Claim(
+                    claim_id="c3", video_id="v1", evidence_refs=["asr@1000ms"],
+                    assertion="sniper entries", status=EvidenceStatus.CLAIMED_BY_AUTHOR,
+                    verification="author statement",
+                ),
+                Claim(
+                    claim_id="c4", video_id="v1", evidence_refs=[], assertion="converging wedge",
+                    status=EvidenceStatus.SUPPORTED_EXTERNALLY, verification="matches the guide",
+                    citations=["s1"],
+                ),
+            ],
+        }
+    )  # fmt: skip
+    answer = explain_concept(k, "wolf wave", root=Path(__file__).resolve().parents[3])
+    video_part, rest = answer.split("EXTERNAL SOURCES SAY:")
+    external_part, rest = rest.split("CODE IMPLEMENTS:")
+    code_part, unknown_part = rest.split("UNKNOWN:")
+    assert (
+        "stop at P5" in video_part
+        and "frame@8000ms" in video_part
+        and "sniper entries" in video_part
+    )
+    assert "converging wedge" in external_part and "s1 (LOW, opened)" in external_part
+    assert "src/xau_edge/structure/wolfe.py" in code_part and "[file exists]" in code_part
+    assert "price reaches the target" in unknown_part
+    assert "No concept named" in explain_concept(k, "diamond")
+
+
+def test_legacy_version_1_statuses_migrate_to_version_2_names() -> None:
+    claim = Claim.model_validate(
+        {"claim_id": "c", "video_id": "v", "evidence_refs": [], "assertion": "x",
+         "status": "VALIDATED", "verification": "old record"}
+    )  # fmt: skip
+    assert claim.status is EvidenceStatus.SUPPORTED_EXTERNALLY
+    for old, new in (
+        ("CLAIMED", "CLAIMED_BY_AUTHOR"),
+        ("DISPROVEN", "CONTRADICTED_EXTERNALLY"),
+        ("UNVERIFIED", "UNKNOWN"),
+    ):
+        assert migrate_status(old) == new
+    assert migrate_status("OBSERVED") == "OBSERVED" and migrate_status(3) == 3
+
+
+def test_staleness_warns_after_thirty_days_only() -> None:
+    k = _knowledge()
+    assert staleness(k, datetime(2026, 10, 20, tzinfo=UTC)) is None
+    assert "STALE: processed 51 days ago" in (staleness(k, datetime(2026, 12, 1, tzinfo=UTC)) or "")
+    bad = k.model_copy(update={"video": k.video.model_copy(update={"processed_at": "garbage"})})
+    assert "not a valid timestamp" in (staleness(bad) or "")
+
+
+def test_ask_router_answers_provenance_summary_rules_and_refuses_to_invent() -> None:
+    k = _knowledge()
+    assert "Provenance of video v1" in ask.answer(k, "what is observed vs inferred?")
+    assert "NOT ESTABLISHED" in ask.answer(k, "what does this video teach?")
+    assert "Wolfe Wave / entry" in ask.answer(k, "what is the entry for Wolfe Wave?")
+    assert "CODE IMPLEMENTS" in ask.answer(k, "how does the code implement Wolfe Wave?")
+    refusal = ask.answer(k, "what colour is the sky")
+    assert "No answer was invented" in refusal and "Wolfe Wave" in refusal
+
+
+def test_store_keeps_history_and_finds_media_twins(tmp_path: Path) -> None:
+    k = _knowledge().model_copy(
+        update={"video": _knowledge().video.model_copy(update={"file_sha256": "ab" * 32})}
+    )
+    store.save(k, tmp_path)
+    assert store.history_count("v1", tmp_path) == 0
+    store.save(k, tmp_path)  # identical content: no churn
+    assert store.history_count("v1", tmp_path) == 0
+    store.save(k.model_copy(update={"transcript_note": "changed"}), tmp_path)
+    assert store.history_count("v1", tmp_path) == 1  # the previous version was kept
+    assert store.find_by_hash("ab" * 32, tmp_path) == "v1"
+    assert store.find_by_hash("cd" * 32, tmp_path) is None
+
+
+def test_language_label_distrusts_a_low_confidence_detector() -> None:
+    assert transcribe.language_label("en", 0.98) == "en"
+    assert transcribe.language_label("yo", 0.31) == "und"  # English speech once came back as Yoruba
+    assert (
+        transcribe.language_label(None, 0.9) == "und"
+        and transcribe.language_label("en", None) == "und"
+    )
+
+
+def test_frame_budget_raises_the_threshold_until_the_selection_fits() -> None:
+    rng = np.random.default_rng(1)
+    frames = [_flat(float(v)) for v in np.cumsum(rng.uniform(0.5, 2.0, 300))]  # constant motion
+    unbounded = media.select_keyframes(frames, threshold=1.0)
+    bounded = media.select_keyframes(frames, threshold=1.0, max_frames=40)
+    assert len(unbounded) > 150 and len(bounded) <= 40
+    assert bounded[0][1] == "first" and bounded[-1][1] == "last"
+    assert [i for i, _, _ in bounded] == sorted(i for i, _, _ in bounded)

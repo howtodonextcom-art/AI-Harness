@@ -125,20 +125,11 @@ def thumbnail_vector(path: Path) -> np.ndarray:  # type: ignore[type-arg,unused-
         return np.asarray(image.convert("L").resize((32, 32)), dtype=np.float64)
 
 
-def select_keyframes(
+def _select_once(
     vectors: Sequence[np.ndarray],  # type: ignore[type-arg,unused-ignore]
-    *,
     threshold: float,
-    always_last: bool = True,
-) -> list[tuple[int, str, float]]:
-    """Pick ``(index, reason, change)``: the first frame, every frame that differs from the last
-    *kept* frame by at least ``threshold`` (mean absolute pixel change), and the last frame.
-
-    Comparing with the last kept frame, not the previous one, matters for charts that are drawn
-    line by line: each step is tiny, but the accumulated change still crosses the threshold.
-    """
-    if not vectors:
-        return []
+    always_last: bool,
+) -> dict[int, tuple[str, float]]:
     picks: dict[int, tuple[str, float]] = {0: ("first", 0.0)}
     reference = vectors[0]
     for i in range(1, len(vectors)):
@@ -149,6 +140,31 @@ def select_keyframes(
     last = len(vectors) - 1
     if always_last and last > 0 and last not in picks:
         picks[last] = ("last", float(np.abs(vectors[last] - reference).mean()))
+    return picks
+
+
+def select_keyframes(
+    vectors: Sequence[np.ndarray],  # type: ignore[type-arg,unused-ignore]
+    *,
+    threshold: float,
+    always_last: bool = True,
+    max_frames: int | None = None,
+) -> list[tuple[int, str, float]]:
+    """Pick ``(index, reason, change)``: the first frame, every frame that differs from the last
+    *kept* frame by at least ``threshold`` (mean absolute pixel change), and the last frame.
+
+    Comparing with the last kept frame, not the previous one, matters for charts that are drawn
+    line by line: each step is tiny, but the accumulated change still crosses the threshold.
+
+    ``max_frames`` is a budget: ordinary footage (a presenter, a moving camera) changes a little
+    on every frame, so the threshold is raised by 50% steps until the selection fits.
+    """
+    if not vectors:
+        return []
+    picks = _select_once(vectors, threshold, always_last)
+    while max_frames is not None and len(picks) > max(2, max_frames) and threshold < 255.0:
+        threshold *= 1.5
+        picks = _select_once(vectors, threshold, always_last)
     return [(i, reason, change) for i, (reason, change) in sorted(picks.items())]
 
 
@@ -160,9 +176,15 @@ def extract_keyframes(
     sample_fps: float = 2.0,
     threshold: float = 1.0,
     width: int = 720,
+    max_frames: int = 60,
+    max_candidates: int = 900,
+    duration_s: float | None = None,
     runner: Runner = _run,
 ) -> tuple[SourceCheck, list[KeyFrame]]:
     """Sample at ``sample_fps``, then keep only frames that changed (duplicate elimination)."""
+    fps = sample_fps
+    if duration_s and duration_s * sample_fps > max_candidates:
+        fps = max_candidates / duration_s  # long video: sample sparser, never explode in size
     out_dir.mkdir(parents=True, exist_ok=True)
     for old in out_dir.glob("cand_*.png"):
         old.unlink()
@@ -174,7 +196,7 @@ def extract_keyframes(
         "-i",
         str(video),
         "-vf",
-        f"fps={sample_fps},scale={width}:-1",
+        f"fps={fps:g},scale={width}:-1",
     ]
     code, _out, err = runner([*cmd, str(out_dir / "cand_%04d.png")])
     candidates = sorted(out_dir.glob("cand_*.png"))
@@ -185,14 +207,17 @@ def extract_keyframes(
         ), []  # fmt: skip
     vectors = [thumbnail_vector(p) for p in candidates]
     keep = {
-        i: (reason, change) for i, reason, change in select_keyframes(vectors, threshold=threshold)
+        i: (reason, change)
+        for i, reason, change in select_keyframes(
+            vectors, threshold=threshold, max_frames=max_frames
+        )
     }
     kept: list[KeyFrame] = []
     for i, path in enumerate(candidates):
         if i in keep:
             kept.append(
                 KeyFrame(
-                    timestamp_ms=round(i * 1000 / sample_fps),
+                    timestamp_ms=round(i * 1000 / fps),
                     path=path.name,
                     change_score=round(keep[i][1], 3),
                     reason=keep[i][0],

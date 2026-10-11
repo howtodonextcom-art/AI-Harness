@@ -1,0 +1,259 @@
+{
+  "schema_version": 2,
+  "video": {
+    "id": "43513faff337",
+    "source_url": "https://www.youtube.com/watch?v=HfsBmSDwhgE",
+    "source_platform": "youtube",
+    "source_aliases": [],
+    "title": "Wolfe Wave Pattern Strategy Explained | How to Trade Reversals Like a Pro",
+    "author": "Abioye Israel Pelumi ",
+    "access_status": "MEDIA_READY",
+    "access_code": "OK",
+    "processing_status": "frames+asr",
+    "duration_s": 269.8,
+    "width": 1914,
+    "height": 1080,
+    "has_audio": true,
+    "file_sha256": "82e361c5fdda06630748dfba760846c63b91d8b228bbb7be3b3c0eca6e54bbc4",
+    "processed_at": "2026-10-11T10:24:52+00:00",
+    "provenance": "yt-dlp, no cookies, no credentials"
+  },
+  "transcript": [],
+  "transcript_note": "86 ASR segments are stored in data/video_knowledge (not committed: third-party content). Short quotes appear in traces. ASR text is untrusted and misheard numbers; see claim y-asr.",
+  "visual": [],
+  "claims": [
+    {
+      "claim_id": "y-def",
+      "video_id": "43513faff337",
+      "evidence_refs": [
+        "asr@75000ms",
+        "asr@114240ms"
+      ],
+      "assertion": "The speaker defines the pattern with Fibonacci constraints: wave 3 within 127.2%-161.8% extension of waves 1-2, wave 4 between wave 2 and wave 3, wave 5 within 127.2%-161.8% of waves 3-4, and waves 3-4 similar in size to waves 1-2.",
+      "status": "OBSERVED",
+      "verification": "Read from the ASR transcript. The ASR heard 'within 1.37.2 to 1.61.8'; we interpret 1.37.2 as 127.2 (a standard Fibonacci extension) - that reading is INFERRED. The ASR also garbled 'wave' as 'with'.",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "y-def-ext",
+      "video_id": "43513faff337",
+      "evidence_refs": [
+        "asr@75000ms"
+      ],
+      "assertion": "Fibonacci extension limits and size symmetry are part of the Wolfe Wave definition.",
+      "status": "CONTRADICTED_EXTERNALLY",
+      "verification": "Bulkowski's identification rules (opened) use only point order, converging lines and the sweet zone, no Fibonacci limits; LuxAlgo prefers similar duration and slope but gives no Fibonacci rule. It is a variant, not the consensus.",
+      "citations": [
+        "bulkowski",
+        "luxalgo"
+      ],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "y-entry",
+      "video_id": "43513faff337",
+      "evidence_refs": [
+        "asr@140000ms",
+        "asr@163000ms"
+      ],
+      "assertion": "Entry is not at wave 5: wait for price to cross and close beyond line 1-3, then to come back and close inside it, and enter on that close; stop at wave 5; exit when price touches line 1-4.",
+      "status": "OBSERVED",
+      "verification": "Read from the ASR transcript (bearish version described first, bullish mirrored from 181 s). Wording is garbled but the sequence is consistent in both halves.",
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "y-entry-ext",
+      "video_id": "43513faff337",
+      "evidence_refs": [
+        "asr@154000ms"
+      ],
+      "assertion": "Waiting for a close back inside line 1-3 before entering is a recognised variant.",
+      "status": "SUPPORTED_EXTERNALLY",
+      "verification": "LuxAlgo (opened) recommends confirmation by a reversal bar that closes back inside line 1-3. Bulkowski's statistics use entry at the exact point-5 extreme.",
+      "citations": [
+        "luxalgo",
+        "bulkowski"
+      ],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "y-marketing",
+      "video_id": "43513faff337",
+      "evidence_refs": [
+        "asr@10000ms",
+        "asr@16000ms",
+        "asr@246000ms"
+      ],
+      "assertion": "The speaker claims the pattern gives 'sniper entries, minimal risk and ideal targets', that he teaches strategies that 'actually work', and that it is 'the most underrated trading strategy'; he also says 'I am not saying this trading strategy is perfect'.",
+      "status": "CLAIMED_BY_AUTHOR",
+      "verification": "Author statements. No sample size, period, costs or live results are given. Commercial content: the description link offers to turn strategies into trading bots (a service).",
+      "citations": [],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "y-perf",
+      "video_id": "43513faff337",
+      "evidence_refs": [
+        "asr@10000ms"
+      ],
+      "assertion": "The pattern gives high-quality entries with minimal risk.",
+      "status": "UNKNOWN",
+      "verification": "No evidence in the video; independent statistics (Bulkowski) are idealised and rank the pattern 34 of 39.",
+      "citations": [
+        "bulkowski"
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "claim_id": "y-asr",
+      "video_id": "43513faff337",
+      "evidence_refs": [
+        "asr"
+      ],
+      "assertion": "The ASR transcript contains errors that change meaning (numbers and the word 'wave').",
+      "status": "OBSERVED",
+      "verification": "Examples: 'Moth traders' for 'most traders', '1.37.2' for 127.2, 'with' for 'wave'. The language detector also returned a wrong code (yo) for English speech, now stored as 'und' when the probability is below 0.7. Treat transcript numbers as inferred until checked on screen.",
+      "citations": [],
+      "confidence": "HIGH"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t-yt-fib",
+      "source_url": "https://www.youtube.com/watch?v=HfsBmSDwhgE",
+      "asset_sha256": null,
+      "locator": "asr@114240ms",
+      "observation": "ASR text: 'With five, it must be within 1.37.2 and 1.61.8 Fibonacci extension of with three and with four.'",
+      "interpretation": "Wave 5 must lie within the 127.2%-161.8% extension of the 3-4 move (INFERRED reading of the garbled numbers).",
+      "concept_id": "wolfe_wave_fib",
+      "rule": "p5_extension",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t-yt-entry",
+      "source_url": "https://www.youtube.com/watch?v=HfsBmSDwhgE",
+      "asset_sha256": null,
+      "locator": "asr@154000ms",
+      "observation": "ASR text: 'wait for the markets to cross above and close above the trend line connecting wave one to wave three. After that, wait again for the markets to come back and cross and close below the trend line.'",
+      "interpretation": "Entry trigger is the first close back inside line 1-3 after the overshoot (a confirmation variant), later than entering at wave 5.",
+      "concept_id": "wolfe_wave_fib",
+      "rule": "entry",
+      "code_ref": null,
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t-yt-stop",
+      "source_url": "https://www.youtube.com/watch?v=HfsBmSDwhgE",
+      "asset_sha256": null,
+      "locator": "asr@169000ms",
+      "observation": "ASR text: 'Your stop loss will be the wave five.'",
+      "interpretation": "Stop at the wave-5 extreme.",
+      "concept_id": "wolfe_wave_fib",
+      "rule": "stop_loss",
+      "code_ref": "src/xau_edge/structure/wolfe.py:_evaluate (stop = P5 price)",
+      "confidence": "HIGH"
+    },
+    {
+      "trace_id": "t-yt-target",
+      "source_url": "https://www.youtube.com/watch?v=HfsBmSDwhgE",
+      "asset_sha256": null,
+      "locator": "asr@174000ms",
+      "observation": "ASR text: 'whenever the market touches the trend line connecting wave one to wave four, make sure you close the trade.'",
+      "interpretation": "Exit when price touches the 1-4 line (the EPA line); profits otherwise 'anywhere'.",
+      "concept_id": "wolfe_wave_fib",
+      "rule": "target",
+      "code_ref": "src/xau_edge/structure/wolfe.py:_evaluate (target on the P1-P4 line)",
+      "confidence": "HIGH"
+    }
+  ],
+  "external_sources": [
+    {
+      "source_id": "bulkowski",
+      "url": "https://thepatternsite.com/WolfeWaveBull.html",
+      "title": "Bulkowski, Bullish Wolfe Wave",
+      "quality": "MEDIUM",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Identification rules and idealised statistics; P5 need not bottom on line 1-3; no Fibonacci requirement is stated."
+    },
+    {
+      "source_id": "luxalgo",
+      "url": "https://www.luxalgo.com/library/concept/wolfe-waves/",
+      "title": "LuxAlgo library: Wolfe Waves",
+      "quality": "LOW",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Recommends confirmation by a bar closing back inside line 1-3; no rigorous public statistics."
+    }
+  ],
+  "concepts": [
+    {
+      "concept_id": "wolfe_wave_fib",
+      "name": "Wolfe Wave (Fibonacci and confirmation variant)",
+      "alt_names": [
+        "Wolf Wave",
+        "Wolfe Wave"
+      ],
+      "video_id": "43513faff337",
+      "source_evidence": [
+        "asr@75000ms",
+        "asr@114240ms",
+        "asr@154000ms"
+      ],
+      "plain_language": "Five alternating swings; waves 3 and 5 must land within Fibonacci extensions of the previous move; enter only after price closes beyond and then back inside the 1-3 line; stop at wave 5; exit at the 1-4 line.",
+      "rules": {
+        "p3": "within 127.2%-161.8% extension of waves 1-2 (inferred from garbled ASR)",
+        "p4": "between wave 2 and wave 3; waves 3-4 similar in size to waves 1-2",
+        "p5_extension": "within 127.2%-161.8% extension of waves 3-4 (inferred)",
+        "entry": "close back inside line 1-3 after a close beyond it",
+        "stop_loss": "wave 5",
+        "target": "touch of line 1-4"
+      },
+      "configurable_disagreements": [
+        "Fibonacci limits: not in Bulkowski or LuxAlgo (variant)",
+        "Entry: at P5 (reel, Bulkowski) versus after reclaiming line 1-3 (this video, LuxAlgo)"
+      ],
+      "invalidation": [
+        "no close back inside line 1-3",
+        "stop at wave 5 breached"
+      ],
+      "entry": "first close back inside line 1-3 after the overshoot",
+      "stop_loss": "wave 5 extreme",
+      "target": "price touches line 1-4",
+      "repaint_risk": "Wave 5 is only known after bars to its right; entering after the reclaim close is later and more reliable to know in real time than entering at wave 5.",
+      "failure_modes": [
+        "no reclaim after the overshoot",
+        "Fibonacci limits chosen by eye",
+        "ASR-transcribed numbers misread"
+      ],
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
+    }
+  ],
+  "links": [
+    {
+      "concept_id": "wolfe_wave_fib",
+      "requirement_id": "VI-REQ-01 geometric detector, non-repainting (entry at P5 confirmation)",
+      "source_file": "src/xau_edge/structure/wolfe.py",
+      "test_file": "tests/unit/structure/test_wolfe.py",
+      "implementation_status": "IMPLEMENTED"
+    },
+    {
+      "concept_id": "wolfe_wave_fib",
+      "requirement_id": "VI-REQ-03 Fibonacci extension limits on P3 and P5",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "PLANNED"
+    },
+    {
+      "concept_id": "wolfe_wave_fib",
+      "requirement_id": "VI-REQ-04 entry after reclaim of line 1-3",
+      "source_file": "n/a",
+      "test_file": "n/a",
+      "implementation_status": "PLANNED"
+    }
+  ]
+}

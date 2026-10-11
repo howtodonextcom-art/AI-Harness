@@ -1,8 +1,10 @@
 {
+  "schema_version": 2,
   "video": {
     "id": "d34e96f7f2e6",
     "source_url": "https://www.facebook.com/share/r/18kMRKXFsk/?mibextid=wwXIfr",
     "source_platform": "facebook",
+    "source_aliases": [],
     "title": "1.9K reactions · 183 shares | 🐺 Bullish Wolf Wave Pattern Mila! 📈 Kya Market Ab Powerful Breakout Ke Liye Ready Hai? 💰 #BullishWolfWave #TechnicalAnalysis #trading #PriceAction #tradingstrategy | Zenix Arixon",
     "author": "Zenix Arixon",
     "access_status": "MEDIA_READY",
@@ -32,6 +34,7 @@
         "Bottom panel: a price chart on a monitor with an early descending channel and no annotations yet."
       ],
       "status": "OBSERVED",
+      "confidence": "MEDIUM",
       "uncertain": false
     },
     {
@@ -47,6 +50,7 @@
         "Instrument, symbol and timeframe are not readable; time axis ticks run 04:00-09:00 in 30 minute steps."
       ],
       "status": "OBSERVED",
+      "confidence": "MEDIUM",
       "uncertain": false
     },
     {
@@ -58,27 +62,11 @@
         "Price rises from P5 toward the extended P1-P4 line; the annotated setup is shown after the move occurred."
       ],
       "status": "OBSERVED",
+      "confidence": "MEDIUM",
       "uncertain": true
     }
   ],
   "claims": [
-    {
-      "claim_id": "c-geometry",
-      "video_id": "d34e96f7f2e6",
-      "evidence_refs": [
-        "frame@0ms",
-        "frame@12000ms"
-      ],
-      "assertion": "A bullish Wolfe Wave is a descending converging wedge of five points where P5 undercuts the 1-3 line, with the P1-P4 line extended as the target and the stop at P5.",
-      "status": "VALIDATED",
-      "verification": "Matches the geometry on education pages that were OPENED and read (LuxAlgo, ATAS) and on pages seen only in search-result summaries, not opened (TheRightTrader, Bajaj Finserv). These are not authoritative references and differ on the entry trigger; VALIDATED means 'matches the common convention', not 'proven to work'.",
-      "citations": [
-        "https://www.luxalgo.com/library/concept/wolfe-waves/",
-        "https://atas.net/technical-analysis/wolfe-wave-pattern-how-to-profitably-trade-on-wolf-waves",
-        "https://therighttrader.com/learn/chart-patterns/wolfe-wave (search summary only)",
-        "https://www.bajajfinserv.in/wolfe-wave-pattern (search summary only)"
-      ]
-    },
     {
       "claim_id": "c-caption",
       "video_id": "d34e96f7f2e6",
@@ -86,9 +74,10 @@
         "metadata.title"
       ],
       "assertion": "The caption says a Bullish Wolf Wave was found and asks whether the market is ready for a powerful breakout (Hinglish).",
-      "status": "CLAIMED",
+      "status": "CLAIMED_BY_AUTHOR",
       "verification": "Author caption, untrusted metadata. It is phrased as a question, not a measured result.",
-      "citations": []
+      "citations": [],
+      "confidence": "MEDIUM"
     },
     {
       "claim_id": "c-outcome",
@@ -98,9 +87,10 @@
         "frame@15500ms"
       ],
       "assertion": "Price moves from P5 toward the target after the ENTRY LONG label.",
-      "status": "UNVERIFIED",
+      "status": "UNKNOWN",
       "verification": "One curated example drawn after the fact (hindsight). No sample size, no losing cases, no costs, no instrument or timeframe. It is evidence of nothing statistical.",
-      "citations": []
+      "citations": [],
+      "confidence": "MEDIUM"
     },
     {
       "claim_id": "c-no-speech",
@@ -111,7 +101,101 @@
       "assertion": "The video contains no spoken explanation.",
       "status": "OBSERVED",
       "verification": "faster-whisper base with VAD returned 0 segments on 16.7 s of audio (rms 0.15). The audio is not speech; whether it is music was not classified.",
-      "citations": []
+      "citations": [],
+      "confidence": "MEDIUM"
+    },
+    {
+      "claim_id": "c-geometry",
+      "video_id": "d34e96f7f2e6",
+      "evidence_refs": [
+        "frame@0ms",
+        "frame@12000ms"
+      ],
+      "assertion": "A bullish Wolfe Wave is a descending converging wedge of five points (P3 below P1, P4 below P2) with the P1-P4 line extended as the target and the stop beyond P5.",
+      "status": "SUPPORTED_EXTERNALLY",
+      "verification": "Consistent with Bulkowski (opened: P4 below P2, lines 1-3 and 2-4 converge), LuxAlgo and ATAS (opened). NOT consensus: whether P5 must overshoot line 1-3 (the reel and LuxAlgo: yes; Bulkowski: 'need not bottom on line 13', sweet zone instead) and where to enter (reel: at P5; LuxAlgo and the YouTube video: after a close back inside line 1-3). SUPPORTED_EXTERNALLY means 'matches published convention', not 'works'.",
+      "citations": [
+        "bulkowski",
+        "luxalgo",
+        "atas"
+      ],
+      "confidence": "MEDIUM"
+    }
+  ],
+  "traces": [
+    {
+      "trace_id": "t-reel-stop",
+      "source_url": "https://www.facebook.com/share/r/18kMRKXFsk/?mibextid=wwXIfr",
+      "asset_sha256": "1348521a745adbef654a5a07799ed271b468352966bbfea79b30e74eb9de4e28",
+      "locator": "frame@12000ms",
+      "observation": "A red line labelled STOP-LOSS ends at the level of the lowest point (labelled 5); it first appears after the ENTRY LONG label (frame@9000ms has no stop line).",
+      "interpretation": "The author places the stop at point 5; no distance, ATR or pip rule is shown.",
+      "concept_id": "wolfe_wave",
+      "rule": "stop",
+      "code_ref": "src/xau_edge/structure/wolfe.py:_evaluate (stop = P5 price)",
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t-reel-entry",
+      "source_url": "https://www.facebook.com/share/r/18kMRKXFsk/?mibextid=wwXIfr",
+      "asset_sha256": "1348521a745adbef654a5a07799ed271b468352966bbfea79b30e74eb9de4e28",
+      "locator": "frame@9000ms",
+      "observation": "A green ENTRY LONG label with an arrow pointing at point 5 and a red zone below the lower line; price at the right edge is still at point 5.",
+      "interpretation": "Entry is drawn at point 5 with no confirmation candle; whether it was marked live is not knowable.",
+      "concept_id": "wolfe_wave",
+      "rule": "entry",
+      "code_ref": "src/xau_edge/structure/wolfe.py:detect_wolfe (entry = close of the P5 confirmation bar)",
+      "confidence": "MEDIUM"
+    },
+    {
+      "trace_id": "t-reel-target",
+      "source_url": "https://www.facebook.com/share/r/18kMRKXFsk/?mibextid=wwXIfr",
+      "asset_sha256": "1348521a745adbef654a5a07799ed271b468352966bbfea79b30e74eb9de4e28",
+      "locator": "frame@6000ms",
+      "observation": "A blue line from point 1 through point 4 is extended to the upper right and a yellow arrow from point 5 ends at a box numbered 6; drawn before any ENTRY label.",
+      "interpretation": "Target is the extended 1-4 line (the EPA line); its time of arrival is not stated.",
+      "concept_id": "wolfe_wave",
+      "rule": "target",
+      "code_ref": "src/xau_edge/structure/wolfe.py:_evaluate (target on the P1-P4 line)",
+      "confidence": "MEDIUM"
+    }
+  ],
+  "external_sources": [
+    {
+      "source_id": "bulkowski",
+      "url": "https://thepatternsite.com/WolfeWaveBull.html",
+      "title": "Bulkowski, Bullish Wolfe Wave",
+      "quality": "MEDIUM",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Identification rules (P4 below P2, lines 1-3 and 2-4 must converge, P5 need not bottom on line 1-3, no other higher peak or lower valley between points); statistics on 6,269 stock patterns, daily; 47% meet the EPA under 'perfect trades' (entry at the exact point-5 low) which the page says cannot be duplicated; rank 34 of 39."
+    },
+    {
+      "source_id": "luxalgo",
+      "url": "https://www.luxalgo.com/library/concept/wolfe-waves/",
+      "title": "LuxAlgo library: Wolfe Waves",
+      "quality": "LOW",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Rules and a recommended confirmation bar closing back inside line 1-3; states no rigorous public statistics exist and that loose rules find waves everywhere in hindsight; does not address repainting."
+    },
+    {
+      "source_id": "atas",
+      "url": "https://atas.net/technical-analysis/wolfe-wave-pattern-how-to-profitably-trade-on-wolf-waves",
+      "title": "ATAS: Wolfe Wave guide",
+      "quality": "LOW",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Entry at point 5 with nuances, Wolfe gave no strict stop rule, target is the 1-4 line, no accuracy figures, subjective recognition."
+    },
+    {
+      "source_id": "quantum",
+      "url": "https://www.quantum-algo.com/blog/guides/wolfe-wave/",
+      "title": "Quantum Algo: Wolfe Wave guide",
+      "quality": "LOW",
+      "opened": true,
+      "retrieved_at": "2026-10-11",
+      "says": "Cites Bulkowski as 41% bullish and 35% bearish reaching the EPA; this does not match Bulkowski's own headline of 47%."
     }
   ],
   "concepts": [
@@ -157,7 +241,8 @@
         "hindsight drawing bias in teaching examples",
         "pivot window changes which points exist"
       ],
-      "validation_status": "UNVERIFIED"
+      "validation_status": "UNKNOWN",
+      "confidence": "LOW"
     }
   ],
   "links": [
