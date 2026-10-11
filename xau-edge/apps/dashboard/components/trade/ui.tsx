@@ -68,7 +68,3 @@ export function Row({ k, v, testId }: { k: string; v: ReactNode; testId?: string
     </div>
   );
 }
-
-export function biasText(bias: number | null): string {
-  return bias === null ? "—" : bias > 0 ? "▲" : bias < 0 ? "▼" : "•";
-}
