@@ -13,8 +13,11 @@ Anything else returns the list of things that can be asked, never an invented an
 
 from __future__ import annotations
 
+from collections import Counter
+from collections.abc import Sequence
 from pathlib import Path
 
+from xau_edge.structure.registry import lookup
 from xau_edge.video_intel.knowledge import (
     EvidenceStatus,
     VideoKnowledge,
@@ -112,3 +115,86 @@ def answer(knowledge: VideoKnowledge, question: str, root: Path | None = None) -
         f"a concept by name ({names}); and its entry, stop, target or code. "
         "No answer was invented for this question."
     )
+
+
+def _concept_matches(knowledge: VideoKnowledge, names: tuple[str, ...]) -> bool:
+    for concept in knowledge.concepts:
+        labels = [concept.name.lower(), *(a.lower() for a in concept.alt_names)]
+        if any(n in label or label in n for n in names for label in labels):
+            return True
+    return False
+
+
+def answer_pattern(name: str, records: Sequence[VideoKnowledge]) -> str:
+    """Everything the store knows about one pattern family across all records and the code."""
+    status = lookup(name)
+    names = status.names if status else (name.strip().lower(),)
+    matched = [k for k in records if _concept_matches(k, names)]
+    out = [f"PATTERN: {status.key if status else name}"]
+    if status is None:
+        out.append("No entry in the pattern registry: no detector or research status is claimed.")
+    if not matched:
+        out.append("SOURCES: no knowledge record mentions this pattern.")
+    else:
+        authors = sorted({k.video.author or "unknown" for k in matched})
+        counts: Counter[str] = Counter()
+        for k in matched:
+            counts.update(c.status.value for c in k.claims)
+        dup = sum(1 for k in matched for c in k.claims if c.claim_id.endswith("-dup"))
+        out.append(
+            f"SOURCES: {len(matched)} records by {len(authors)} author(s) ({', '.join(authors)}); "
+            f"repeated reels by one author are one voice, not independent evidence; "
+            f"{dup} near-duplicate flag(s)"
+        )
+        out.append(
+            "PROVENANCE OF THEIR CLAIMS: "
+            + ", ".join(f"{s} {n}" for s, n in sorted(counts.items()))
+        )
+        contradicted = {
+            (c.verification, tuple(c.citations))
+            for k in matched
+            for c in k.claims
+            if c.status is EvidenceStatus.CONTRADICTED_EXTERNALLY
+        }
+        supported = {
+            (c.verification, tuple(c.citations))
+            for k in matched
+            for c in k.claims
+            if c.status is EvidenceStatus.SUPPORTED_EXTERNALLY
+        }
+        out.append("EXTERNAL SOURCES SAY (support):")
+        out.extend(f"  - {v} {list(c)}" for v, c in sorted(supported)) if supported else out.append(
+            "  - (none)"
+        )
+        out.append("EXTERNAL SOURCES SAY (contradiction):")
+        out.extend(
+            f"  - {v} {list(c)}" for v, c in sorted(contradicted)
+        ) if contradicted else out.append("  - (none)")
+        drawn = sorted(
+            {c.assertion for k in matched for c in k.claims if c.claim_id.endswith("-entry")}
+        )
+        out.append("ENTRY AS DRAWN BY THE AUTHOR:")
+        out.extend(f"  - {d}" for d in drawn[:6])
+    if status is not None:
+        out.append(f"CONFIRMATION RULE: {status.confirmation}")
+        out.append(f"DETECTOR: {status.detector or 'none'}")
+        out.append(f"CAUSALITY: {status.causality}")
+        out.append(f"REPAINT CLASS: {status.repaint_class}")
+        out.append(f"RESEARCH STATUS: {status.research_status}")
+        if status.note:
+            out.append(f"NOTE: {status.note}")
+    out.append(
+        "UNKNOWN: whether acting on this pattern has positive expectancy (no outcome study exists)."
+    )
+    return "\n".join(out)
+
+
+def answer_source(knowledge: VideoKnowledge) -> str:
+    """Observed, inferred, author claim, external support and code mapping for one source."""
+    parts = [_teaching_summary(knowledge), "", provenance_breakdown(knowledge)]
+    mapped = [
+        f"{x.requirement_id}: {x.source_file} [{x.implementation_status}]" for x in knowledge.links
+    ]
+    parts.append("CODE MAPPING:")
+    parts.extend(f"  - {m}" for m in (mapped or ["(none)"]))
+    return "\n".join(parts)

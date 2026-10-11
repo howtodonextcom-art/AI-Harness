@@ -98,6 +98,7 @@
         "max": 80.44144144146576
       },
       "share_reference_rr_at_least_1_5": 0.9014084507042254,
+      "distance_to_invalidation_atr": null,
       "distinct_pattern_ids": 71,
       "overlap": {
         "detections": 71,
@@ -209,6 +210,13 @@
         "max": 0.9970326409495576
       },
       "share_reference_rr_at_least_1_5": 0.0,
+      "distance_to_invalidation_atr": {
+        "min": 2.1106206392930154,
+        "p25": 3.2600148918332037,
+        "median": 3.897951536540792,
+        "p75": 5.233735448156837,
+        "max": 26.551973149557874
+      },
       "distinct_pattern_ids": 287,
       "overlap": {
         "detections": 287,
@@ -321,6 +329,13 @@
         "max": 1.9426998172549839
       },
       "share_reference_rr_at_least_1_5": 0.2857142857142857,
+      "distance_to_invalidation_atr": {
+        "min": 3.1088952005028156,
+        "p25": 4.088120521380431,
+        "median": 4.22385967797131,
+        "p75": 4.668696580230206,
+        "max": 7.624175705233929
+      },
       "distinct_pattern_ids": 7,
       "overlap": {
         "detections": 7,
@@ -344,6 +359,58 @@
         "20": 1
       }
     }
+  },
+  "double_formation_lifecycle": {
+    "structures": 3456,
+    "per_10k_bars": 713.0183618733237,
+    "final_state": {
+      "INVALIDATED": 3167,
+      "CONFIRMED": 287,
+      "NEAR_CONFIRMATION": 1,
+      "POSSIBLE": 1
+    },
+    "reached": {
+      "POSSIBLE": 3349,
+      "DEVELOPING": 1097,
+      "NEAR_CONFIRMATION": 835,
+      "CONFIRMED": 287
+    },
+    "reached_share": {
+      "POSSIBLE": 0.9690393518518519,
+      "DEVELOPING": 0.31741898148148145,
+      "NEAR_CONFIRMATION": 0.2416087962962963,
+      "CONFIRMED": 0.08304398148148148
+    },
+    "invalidation_reasons": {
+      "SECOND_PEAK_NOT_EQUAL": 1298,
+      "NECKLINE_BROKEN_FIRST": 871,
+      "PEAK_EXCEEDED": 192,
+      "PEAK_BAND_EXCEEDED": 339,
+      "VALLEY_SUPERSEDED": 115,
+      "BREAK_WINDOW_EXPIRED": 352
+    },
+    "bars_start_to_confirmed": {
+      "min": 13,
+      "p25": 22,
+      "median": 28.0,
+      "p75": 32,
+      "max": 58
+    },
+    "bars_start_to_invalidated": {
+      "min": 9,
+      "p25": 15,
+      "median": 21.0,
+      "p75": 28,
+      "max": 69
+    },
+    "bars_near_to_confirmed": {
+      "min": 0,
+      "p25": 1,
+      "median": 7.0,
+      "p75": 13,
+      "max": 20
+    },
+    "note": "structure frequencies only; no price outcome after confirmation is measured"
   },
   "block_shuffled_null": {
     "block_bars": 48,

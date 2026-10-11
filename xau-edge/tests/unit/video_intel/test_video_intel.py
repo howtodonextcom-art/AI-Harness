@@ -392,3 +392,38 @@ def test_frame_budget_raises_the_threshold_until_the_selection_fits() -> None:
     assert len(unbounded) > 150 and len(bounded) <= 40
     assert bounded[0][1] == "first" and bounded[-1][1] == "last"
     assert [i for i, _, _ in bounded] == sorted(i for i, _, _ in bounded)
+
+
+def test_ask_pattern_aggregates_records_and_reads_the_registry() -> None:
+    def record(vid: str, author: str, status: EvidenceStatus) -> VideoKnowledge:
+        base = _knowledge()
+        concept = base.concepts[0].model_copy(
+            update={"concept_id": "rising_wedge", "name": "Rising Wedge", "alt_names": []}
+        )
+        claim = Claim(
+            claim_id=f"{vid}-external",
+            video_id=vid,
+            evidence_refs=[],
+            assertion="family",
+            status=status,
+            verification="Bulkowski ranks it last",
+            citations=["bk"],
+        )
+        video = base.video.model_copy(update={"id": vid, "author": author})
+        return base.model_copy(update={"video": video, "concepts": [concept], "claims": [claim]})
+
+    records = [
+        record("a", "Auth", EvidenceStatus.CONTRADICTED_EXTERNALLY),
+        record("b", "Auth", EvidenceStatus.UNKNOWN),
+    ]
+    text = ask.answer_pattern("rising wedge", records)
+    assert "SOURCES: 2 records by 1 author(s)" in text and "one voice" in text
+    assert "Bulkowski ranks it last" in text and "DETECTOR: none" in text
+    assert "REPAINT CLASS: POTENTIAL REPAINT" in text and "no outcome study exists" in text
+    wolfe = ask.answer_pattern("wolf wave", [])
+    assert "NON_REPAINT PROVEN" in wolfe and "no knowledge record mentions" in wolfe
+    unknown = ask.answer_pattern("quasimodo", [])
+    assert "No entry in the pattern registry" in unknown
+    assert "Provenance of video" in ask.answer_source(
+        records[0]
+    ) and "CODE MAPPING" in ask.answer_source(records[0])

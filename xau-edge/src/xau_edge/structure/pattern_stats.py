@@ -14,6 +14,7 @@ from datetime import datetime
 from statistics import median
 
 from xau_edge.structure.detection import PatternDetection
+from xau_edge.structure.formation import FormationState, FormationTrack
 
 
 def _quantiles(values: Sequence[float]) -> dict[str, float] | None:
@@ -51,6 +52,61 @@ def reference_reward_risk(detection: PatternDetection) -> float | None:
     if risk <= 0:
         return None
     return reward / risk
+
+
+def distance_to_invalidation_atr(detection: PatternDetection) -> float | None:
+    """How far the textbook invalidation level is from the trigger close, in ATR (geometry only)."""
+    ref = detection.reference_levels
+    height = detection.metadata.get("height")
+    height_atr = detection.metadata.get("height_atr")
+    if "trigger_close" not in ref or "invalidation_reference" not in ref:
+        return None
+    if not isinstance(height, float) or not isinstance(height_atr, float) or height_atr <= 0:
+        return None
+    return abs(ref["invalidation_reference"] - ref["trigger_close"]) / (height / height_atr)
+
+
+def describe_formations(tracks: Sequence[FormationTrack], n_bars: int) -> dict[str, object]:
+    """How structures progress: reach rates per milestone, why they fail, how long each step takes.
+
+    A reach rate is a frequency of *structure*, not of price outcomes. It says how often a possible
+    double top went on to be confirmed, never what price did after the confirmation.
+    """
+    n = len(tracks)
+    out: dict[str, object] = {
+        "structures": n,
+        "per_10k_bars": 10_000 * n / n_bars if n_bars else 0.0,
+    }
+    states = Counter(t.state.value for t in tracks)
+    out["final_state"] = dict(states)
+    reached: dict[str, int] = {}
+    for state in (
+        FormationState.POSSIBLE,
+        FormationState.DEVELOPING,
+        FormationState.NEAR_CONFIRMATION,
+        FormationState.CONFIRMED,
+    ):
+        reached[state.value] = sum(1 for t in tracks if any(e.state is state for e in t.events))
+    out["reached"] = reached
+    out["reached_share"] = {k: (v / n if n else 0.0) for k, v in reached.items()}
+    out["invalidation_reasons"] = dict(
+        Counter(t.invalidation_reason for t in tracks if t.invalidation_reason is not None)
+    )
+    confirmed = [t for t in tracks if t.state is FormationState.CONFIRMED]
+    out["bars_start_to_confirmed"] = _quantiles(
+        [t.confirmed_at - t.started_at for t in confirmed if t.confirmed_at is not None]
+    )
+    out["bars_start_to_invalidated"] = _quantiles(
+        [t.invalidated_at - t.started_at for t in tracks if t.invalidated_at is not None]
+    )
+    near_to_confirmed = []
+    for t in confirmed:
+        near = next((e.bar for e in t.events if e.state is FormationState.NEAR_CONFIRMATION), None)
+        if near is not None and t.confirmed_at is not None:
+            near_to_confirmed.append(t.confirmed_at - near)
+    out["bars_near_to_confirmed"] = _quantiles(near_to_confirmed)
+    out["note"] = "structure frequencies only; no price outcome after confirmation is measured"
+    return out
 
 
 def overlap_stats(detections: Sequence[PatternDetection]) -> dict[str, float | int]:
@@ -109,6 +165,8 @@ def describe(
     out["share_reference_rr_at_least_1_5"] = (
         sum(1 for r in rr if r >= 1.5) / len(rr) if rr else None
     )
+    dist = [d for x in detections if (d := distance_to_invalidation_atr(x)) is not None]
+    out["distance_to_invalidation_atr"] = _quantiles(dist)
     out["distinct_pattern_ids"] = len({d.pattern_id for d in detections})
     out["overlap"] = overlap_stats(detections)
     if timestamps is not None:

@@ -1,6 +1,7 @@
 """Score the pattern candidates with the pre-written rubric and test how robust the ranking is.
 
-    uv run python scripts/pattern_rubric.py
+    uv run python scripts/pattern_rubric.py        # rubric v1 (phase 2)
+    uv run python scripts/pattern_rubric.py v2     # rubric v2 (pattern intelligence)
 
 Reads docs/video-intelligence/pattern-research/{rubric,scores}.json. Pure arithmetic: no data, no
 network. The rubric (criteria, weights, selection rule) was written before the scores.
@@ -14,7 +15,11 @@ from pathlib import Path
 
 import numpy as np
 
-BASE = Path(__file__).resolve().parents[1] / "docs" / "video-intelligence" / "pattern-research"
+DOCS = Path(__file__).resolve().parents[1] / "docs"
+BASES = {
+    "v1": (DOCS / "video-intelligence" / "pattern-research", "rubric.json", "scores.json"),
+    "v2": (DOCS / "pattern-intelligence", "rubric_v2.json", "scores_v2.json"),
+}
 DRAWS = 2000
 SEED = 11
 
@@ -25,16 +30,20 @@ def normalized(scores: dict[str, int], weights: dict[str, float]) -> float:
 
 
 def disqualified(scores: dict[str, int]) -> str | None:
-    if scores["research_novelty"] == 0:
+    novelty = scores.get("research_novelty", scores.get("novelty_vs_closed_research_and_baseline"))
+    clarity = scores.get("definition_clarity", scores.get("formal_definability"))
+    if novelty == 0:
         return "already tested and closed in V1-V3"
-    if scores["definition_clarity"] <= 1:
+    if clarity is not None and clarity <= 1:
         return "no formal definition without discretion"
     return None
 
 
 def main() -> int:
-    rubric = json.loads((BASE / "rubric.json").read_text(encoding="utf-8"))
-    cands = json.loads((BASE / "scores.json").read_text(encoding="utf-8"))["candidates"]
+    version = sys.argv[1] if len(sys.argv) > 1 else "v1"
+    base, rubric_file, scores_file = BASES[version]
+    rubric = json.loads((base / rubric_file).read_text(encoding="utf-8"))
+    cands = json.loads((base / scores_file).read_text(encoding="utf-8"))["candidates"]
     weights = {k: float(v["weight"]) for k, v in rubric["criteria"].items()}
     rows = []
     for name, entry in cands.items():

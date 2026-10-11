@@ -268,6 +268,17 @@ def cmd_ask(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ask_pattern(args: argparse.Namespace) -> int:
+    records = [store.load(i) for i in store.list_ids()]
+    print(ask.answer_pattern(" ".join(args.name), records))
+    return 0
+
+
+def cmd_ask_source(args: argparse.Namespace) -> int:
+    print(ask.answer_source(store.load(args.video_id)))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]  # titles carry emoji
     parser = argparse.ArgumentParser(
@@ -295,6 +306,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("video_id")
     p.add_argument("question", nargs="+")
     p.set_defaults(fn=cmd_ask)
+    p = sub.add_parser("ask-pattern")
+    p.add_argument("name", nargs="+")
+    p.set_defaults(fn=cmd_ask_pattern)
+    p = sub.add_parser("ask-source")
+    p.add_argument("video_id")
+    p.set_defaults(fn=cmd_ask_source)
     args = parser.parse_args(argv)
     return int(args.fn(args))
 

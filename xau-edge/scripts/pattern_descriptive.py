@@ -31,7 +31,8 @@ from xau_edge.structure.descriptive_data import (
     require_descriptive,
 )
 from xau_edge.structure.detection import PatternDetection
-from xau_edge.structure.pattern_stats import describe
+from xau_edge.structure.formation import track_double_formations
+from xau_edge.structure.pattern_stats import describe, describe_formations
 from xau_edge.structure.reversal import ReversalConfig, detect_reversals
 from xau_edge.structure.wolfe import WolfeConfig, detect_wolfe_patterns
 
@@ -154,6 +155,11 @@ def run_random_walk(seeds: int, bars: int) -> dict[str, object]:
             }
         result[label] = {"sigma": sigma, "bar_range_noise": noise, "detectors": per_detector}
     result["wolfe_entry_timing_synthetic"] = reclaim_timing(seeds, bars)
+    tracks = []
+    for seed in range(seeds):
+        hh, ll, cc = random_walk_series(seed, bars, 0.3, 0.1)
+        tracks.extend(track_double_formations(hh, ll, cc))
+    result["double_formation_lifecycle"] = describe_formations(tracks, bars * seeds)
     return result
 
 
@@ -182,6 +188,9 @@ def run_dev2() -> dict[str, object]:
             "per_10k_bars_min": round(float(np.min(rates)), 2),
             "per_10k_bars_max": round(float(np.max(rates)), 2),
         }
+    formation = describe_formations(
+        track_double_formations(h, lo, c, timeframe="H1"), int(frame.height)
+    )
     return {
         "dataset": "dev2_h1",
         "classification": policy.classification,
@@ -196,6 +205,7 @@ def run_dev2() -> dict[str, object]:
         "outcome_analysis": "NONE",
         "clock_note": "broker clock is certified only for some years; hour-of-day counts are informational",
         "detectors": per_detector,
+        "double_formation_lifecycle": formation,
         "block_shuffled_null": {"block_bars": NULL_BLOCK, "shuffles": 20, "per_detector": null},
     }
 

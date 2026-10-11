@@ -96,6 +96,7 @@
             "max": 181.11645413291234
           },
           "share_reference_rr_at_least_1_5": 0.875268817204301,
+          "distance_to_invalidation_atr": null,
           "distinct_pattern_ids": 930,
           "overlap": {
             "detections": 930,
@@ -178,6 +179,13 @@
             "max": 0.9995634408160959
           },
           "share_reference_rr_at_least_1_5": 0.0,
+          "distance_to_invalidation_atr": {
+            "min": 2.2061783055518385,
+            "p25": 4.087760627222004,
+            "median": 4.897942271833248,
+            "p75": 5.870052054198981,
+            "max": 11.040669600056052
+          },
           "distinct_pattern_ids": 1170,
           "overlap": {
             "detections": 1170,
@@ -260,6 +268,13 @@
             "max": 1.9331258473185908
           },
           "share_reference_rr_at_least_1_5": 0.11764705882352941,
+          "distance_to_invalidation_atr": {
+            "min": 2.29776396849934,
+            "p25": 4.360949511571038,
+            "median": 5.559408411082841,
+            "p75": 6.673415714368262,
+            "max": 12.237241093364968
+          },
           "distinct_pattern_ids": 85,
           "overlap": {
             "detections": 85,
@@ -335,6 +350,7 @@
             "max": 83.14693539592105
           },
           "share_reference_rr_at_least_1_5": 0.8834285714285715,
+          "distance_to_invalidation_atr": null,
           "distinct_pattern_ids": 875,
           "overlap": {
             "detections": 875,
@@ -417,6 +433,13 @@
             "max": 0.9998951177033539
           },
           "share_reference_rr_at_least_1_5": 0.0,
+          "distance_to_invalidation_atr": {
+            "min": 2.0892466921755917,
+            "p25": 3.1266119012117684,
+            "median": 3.620958979235465,
+            "p75": 4.22754219387074,
+            "max": 6.770745296978757
+          },
           "distinct_pattern_ids": 1271,
           "overlap": {
             "detections": 1271,
@@ -499,6 +522,13 @@
             "max": 2.593428261575046
           },
           "share_reference_rr_at_least_1_5": 0.14035087719298245,
+          "distance_to_invalidation_atr": {
+            "min": 2.1291448233511603,
+            "p25": 3.053416523040135,
+            "median": 4.001593845021497,
+            "p75": 5.029094378072976,
+            "max": 9.731735110149087
+          },
           "distinct_pattern_ids": 57,
           "overlap": {
             "detections": 57,
@@ -526,5 +556,58 @@
       "p75": 1.0,
       "max": 38.81249279040345
     }
+  },
+  "double_formation_lifecycle": {
+    "structures": 18098,
+    "per_10k_bars": 904.9,
+    "final_state": {
+      "INVALIDATED": 16917,
+      "CONFIRMED": 1170,
+      "POSSIBLE": 4,
+      "DEVELOPING": 1,
+      "NEAR_CONFIRMATION": 6
+    },
+    "reached": {
+      "POSSIBLE": 17952,
+      "DEVELOPING": 5977,
+      "NEAR_CONFIRMATION": 3086,
+      "CONFIRMED": 1170
+    },
+    "reached_share": {
+      "POSSIBLE": 0.9919328102552768,
+      "DEVELOPING": 0.3302574870151398,
+      "NEAR_CONFIRMATION": 0.17051607912476516,
+      "CONFIRMED": 0.06464802740634325
+    },
+    "invalidation_reasons": {
+      "SECOND_PEAK_NOT_EQUAL": 4928,
+      "NECKLINE_BROKEN_FIRST": 7273,
+      "PEAK_BAND_EXCEEDED": 2575,
+      "BREAK_WINDOW_EXPIRED": 393,
+      "PEAK_EXCEEDED": 1516,
+      "VALLEY_SUPERSEDED": 232
+    },
+    "bars_start_to_confirmed": {
+      "min": 13,
+      "p25": 19,
+      "median": 23.0,
+      "p75": 30,
+      "max": 61
+    },
+    "bars_start_to_invalidated": {
+      "min": 9,
+      "p25": 13,
+      "median": 17.0,
+      "p75": 22,
+      "max": 70
+    },
+    "bars_near_to_confirmed": {
+      "min": 0,
+      "p25": 2,
+      "median": 5.0,
+      "p75": 10,
+      "max": 24
+    },
+    "note": "structure frequencies only; no price outcome after confirmation is measured"
   }
 }
