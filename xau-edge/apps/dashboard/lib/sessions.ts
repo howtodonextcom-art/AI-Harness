@@ -64,10 +64,10 @@ function labelAt(ms: number): Session {
 }
 
 export const SESSION_COLORS: Record<Session, string> = {
-  ASIA: "rgba(14,165,233,0.07)",
-  LONDON: "rgba(245,158,11,0.09)",
-  NEW_YORK: "rgba(34,197,94,0.08)",
-  LONDON_NY_OVERLAP: "rgba(168,85,247,0.11)",
+  ASIA: "rgba(14,165,233,0.045)",
+  LONDON: "rgba(245,158,11,0.055)",
+  NEW_YORK: "rgba(34,197,94,0.05)",
+  LONDON_NY_OVERLAP: "rgba(168,85,247,0.07)",
   OFF_HOURS: "rgba(0,0,0,0)",
 };
 

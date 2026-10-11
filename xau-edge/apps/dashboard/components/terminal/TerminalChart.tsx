@@ -24,6 +24,7 @@ import {
 } from "lightweight-charts";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { TF_SECONDS, barIndexAt, signalBarIndex } from "@/lib/chartMath";
+import { defaultWindowBars, scaleRange } from "@/lib/chartScale";
 import { DrawingLayer, type DrawingApi } from "@/components/terminal/DrawingLayer";
 import { NewsMarkers } from "@/components/terminal/NewsMarkers";
 import { SystemTradePlanOverlay } from "@/components/terminal/SystemTradePlanOverlay";
@@ -97,6 +98,9 @@ interface Props {
 }
 
 const GREEN = "#16a34a";
+const RIGHT_OFFSET = 10;
+/** Lines the trader acts on: the price scale always contains them. Everything else is context. */
+const ALWAYS_IN_SCALE = new Set(["ENTRY", "SL", "TP1", "PAPER ENTRY", "PAPER SL", "PAPER TP", "NOW"]);
 const RED = "#dc2626";
 const BLUE = "#2563eb";
 const GREY = "#64748b";
@@ -372,7 +376,8 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     detailsRef.current = details.map((d) => ({ time: shiftedSeconds(d.barTime, zone), detail: d }));
   }, [details, zone]);
 
-  const extraPrices = useRef<number[]>([]);
+  const extraPrices = useRef<number[]>([]); // plan / position levels: always inside the price scale
+  const contextPrices = useRef<number[]>([]); // structure, key levels, alerts: inside the scale only when they are near the candles
 
   // ---- create the chart (again only when the timeframe changes) --------------------------------
   useEffect(() => {
@@ -391,14 +396,13 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       autoSize: true,
       ...palette(scheme.matches),
       crosshair: { mode: CrosshairMode.Normal },
-      timeScale: { timeVisible: true, secondsVisible: false, shiftVisibleRangeOnNewBar: followRef.current, rightOffset: 10 },
+      timeScale: { timeVisible: true, secondsVisible: false, shiftVisibleRangeOnNewBar: followRef.current, rightOffset: RIGHT_OFFSET },
     });
     const candles = chart.addSeries(CandlestickSeries, {
       autoscaleInfoProvider: (original: () => AutoscaleInfo | null) => {
         const base = original();
-        const extra = extraPrices.current;
-        if (!base || !base.priceRange || extra.length === 0) return base;
-        return { ...base, priceRange: { minValue: Math.min(base.priceRange.minValue, ...extra), maxValue: Math.max(base.priceRange.maxValue, ...extra) } };
+        if (!base || !base.priceRange) return base;
+        return { ...base, priceRange: scaleRange(base.priceRange, extraPrices.current, contextPrices.current) };
       },
       upColor: GREEN,
       downColor: RED,
@@ -647,7 +651,10 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     h.candles.applyOptions({ priceLineColor: last.close >= last.open ? GREEN : RED });
     // a new timeframe OR a new display zone re-places every bar in time: the old visible range would point at nothing
     if (fitted.current !== `${timeframe}|${zone}`) {
-      h.chart.timeScale().fitContent();
+      const want = defaultWindowBars(container.current?.clientWidth ?? 0);
+      const count = h.candles.data().length;
+      if (count > want) h.chart.timeScale().setVisibleLogicalRange({ from: (count - want) as Logical, to: (count - 1 + RIGHT_OFFSET) as Logical });
+      else h.chart.timeScale().fitContent();
       h.chart.timeScale().scrollToRealTime();
       fitted.current = `${timeframe}|${zone}`;
     }
@@ -786,7 +793,8 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     if (!h) return;
     const lineSpecs = lineSpecsRef.current;
     for (const line of h.lines) h.candles.removePriceLine(line);
-    extraPrices.current = lineSpecs.filter((l) => !l.id.startsWith("level-") && !l.id.startsWith("alert-") && !l.id.startsWith("key-")).map((l) => l.price);
+    extraPrices.current = lineSpecs.filter((l) => ALWAYS_IN_SCALE.has(l.id)).map((l) => l.price);
+    contextPrices.current = lineSpecs.filter((l) => !ALWAYS_IN_SCALE.has(l.id)).map((l) => l.price);
     h.candles.priceScale().applyOptions({ autoScale: true });
     h.lines = lineSpecs.map((l) => h.candles.createPriceLine({ price: l.price, color: l.color, lineWidth: l.width, lineStyle: l.style, axisLabelVisible: true, title: `${l.title} ${l.price.toFixed(2)}` }));
     lineStateRef.current = [];
@@ -963,7 +971,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
 
       <ul ref={legendRef} data-testid="chart-legend" aria-label="Các đường trên biểu đồ" className="pointer-events-none absolute left-2 top-12 z-10 flex max-w-[70%] sm:top-6 short:top-12 flex-wrap gap-x-3 gap-y-0 text-[11px] font-semibold">
         {lineSpecs.map((l) => (
-          <li key={l.id} data-testid={`line-${l.title.replace(/ /g, "-")}`} style={{ color: l.color }} className="rounded bg-white/70 px-1 dark:bg-slate-900/70">
+          <li key={l.id} data-testid={`line-${l.title.replace(/ /g, "-")}`} style={{ color: l.color }} className={`rounded bg-white/70 px-1 dark:bg-slate-900/70 ${ALWAYS_IN_SCALE.has(l.id) ? "" : "text-[10px] font-medium opacity-80"}`}>
             {l.title} {l.price.toFixed(2)}
           </li>
         ))}
