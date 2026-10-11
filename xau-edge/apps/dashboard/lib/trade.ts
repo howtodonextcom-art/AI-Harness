@@ -16,6 +16,7 @@ export type SourceMode = "LIVE" | "ACCEPTANCE_REPLAY" | "FIXTURE";
 export type HeroState =
   | "UNAVAILABLE"
   | "STALE"
+  | "UNKNOWN"
   | "MARKET_CLOSED"
   | "POSITION_OPEN"
   | "BUY_READY"
@@ -138,6 +139,11 @@ export interface TradeDecisionBody {
   volume_type: string;
   m1_execution_state: string;
   source_mode: SourceMode;
+  schema_version?: number;
+  setup_phase?: string | null;
+  entry_basis?: "ASK" | "BID" | "UNKNOWN";
+  equity_basis?: number | null;
+  spec_version?: string;
 }
 
 export interface WhyStage {
@@ -413,7 +419,7 @@ export interface TradeView {
     position: PaperTrade | null;
     today: Record<string, number | string | null>;
     closure_policy: string;
-    limits: { daily_loss_stop_pct: number; daily_loss_pct: number; max_trades_per_day: number; max_entry_drift_r: number; day_start_equity: number };
+    limits: { daily_loss_stop_pct: number; daily_loss_pct: number; daily_loss_flatten_pct?: number; daily_loss_guard?: boolean; flatten_required?: boolean; max_trades_per_day: number; max_entry_drift_r: number; day_start_equity: number };
     last_exit: { trade_id: string; side: Side; exit_reason: string | null; net_pnl: number | null; r_multiple: number | null; duration_minutes: number | null; closed_at: string } | null;
   };
   funnel?: Funnel;

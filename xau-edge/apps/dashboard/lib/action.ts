@@ -89,6 +89,9 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
     if (a.stage === "API_DOWN") {
       return make("UNAVAILABLE", "error", "KHÔNG KHẢ DỤNG", "Mất kết nối API: những gì thấy trên màn hình có thể đã cũ.", "Khi nào?", "Đừng vào lệnh lúc này. Đây không phải trạng thái chờ bình thường: đợi kết nối trở lại.");
     }
+    if (a.stage === "UNKNOWN" || view.hero.state === "UNKNOWN") {
+      return make("UNAVAILABLE", "error", "THỊ TRƯỜNG KHÔNG RÕ", "Lịch thị trường không xác định được. Không phải cửa đóng.", "Khi nào?", "Không vào lệnh. Đây không phải trạng thái chờ bình thường và không phải thị trường đóng.");
+    }
     return make("UNAVAILABLE", "error", "KHÔNG KHẢ DỤNG", err ? "Hệ thống chưa cho quyết định đáng tin (lý do bên dưới)." : "Hệ thống chưa cho quyết định đáng tin.", "Khi nào?", "Đừng vào lệnh lúc này. Đây không phải trạng thái chờ bình thường: hãy kiểm tra hệ thống.");
   }
 

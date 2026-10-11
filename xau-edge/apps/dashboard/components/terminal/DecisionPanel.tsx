@@ -326,7 +326,7 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups }: { view: Tra
   const extra = (
     <>
       {!skipped && secondsLeft !== null && (t.code === "BUY" || t.code === "SELL") && <span data-testid="expiry" data-urgent={urgent ? "true" : "false"} className={urgent ? "mt-1 block text-sm font-bold" : "sr-only"}>{urgent ? "Sắp hết hạn" : `còn hiệu lực ${mmss2(secondsLeft)}`}</span>}
-      {(state === "UNAVAILABLE" || state === "STALE") && errors.length > 0 && (
+      {(state === "UNAVAILABLE" || state === "STALE" || state === "UNKNOWN") && errors.length > 0 && (
         <ul data-testid="hero-problems" className="mt-1 space-y-0.5 text-sm">
           {errors.map((c) => (
             <li key={c.code}>
@@ -502,6 +502,16 @@ function AccountStrip({ view }: { view: TradeView }) {
           <div role="progressbar" aria-label="Mức lỗ trong ngày so với giới hạn" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(used)} className="mt-0.5 h-1.5 w-full rounded bg-slate-300 dark:bg-slate-700">
             <div className={`h-1.5 rounded ${used >= 80 ? "bg-red-600" : used >= 50 ? "bg-amber-500" : "bg-emerald-600"}`} style={{ width: `${used}%` }} />
           </div>
+          {l.daily_loss_guard ? (
+            <p data-testid="daily-loss-block" className="mt-1 text-xs font-semibold text-red-800 dark:text-red-300">
+              Chặn lệnh mới: lỗ trong ngày đã chạm giới hạn. Quản lý vị thế đang mở vẫn chạy.
+            </p>
+          ) : null}
+          {l.flatten_required ? (
+            <p data-testid="flatten-required" className="mt-1 text-xs font-semibold text-red-800 dark:text-red-300">
+              Flatten bắt buộc: lỗ trong ngày chạm sàn khẩn cấp — đóng vị thế PAPER (không gửi broker).
+            </p>
+          ) : null}
         </div>
       )}
     </section>

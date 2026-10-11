@@ -1,6 +1,6 @@
 # ADR-0028 (NHÁP): Contract `TradingSignal` v2 — chỉ bổ sung, không đổi tên, `source_mode` bắt buộc
 
-Status: **draft** (2026-10-11), chờ Gate A. Nguồn: `docs/reports/CONSOLIDATION_AUDIT_AND_EDGE_PATH.md` §4, quyết định (c).
+Status: **SUPERSEDED** as the working copy — accepted text is `docs/decisions/0028-trading-signal-contract-v2.md` (2026-10-11). Draft kept for the closed-loop rationale.
 
 ## Bối cảnh (đã kiểm)
 - `TradingSignal` (`trading/schema.py:63-129`, `extra="forbid"` tại `:66`) đã có symbol, timestamp, strategy_id/version, decision (BUY/SELL/WAIT), setup_id, entry_price, stop_loss, take_profit(+_2), risk_reward, risk_pct/risk_amount/position_size, signal_expiry, invalidation, evidence_status, reasons, warnings, code_version, inputs_hash.

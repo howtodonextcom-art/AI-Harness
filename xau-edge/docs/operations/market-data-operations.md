@@ -33,6 +33,13 @@ giao dịch và không bị đụng tới.
 `status_market_stack.ps1` in từng thành phần (MT5, supervisor, collector, API, dashboard), tuổi nhịp tim,
 báo giá, nến M1 gần nhất, độ mới từng khung, kho tick, đĩa, rồi liệt kê "WHY THE UI MAY BE STALE".
 
+### Freeze-LIVE
+
+- Giờ thị trường mở: stack `:8000`/`:3000` chỉ để quan sát. Không rebuild `.next` live, không restart.
+- Giờ thị trường đóng: được rebuild + `stop_market_stack.ps1` / `start_market_stack.ps1 -Dashboard`
+  sau khi ruff/mypy/pytest (không `mt5`) xanh. Không kill terminal MT5.
+- Tự khởi động: Task Scheduler `XAU-EDGE Market Stack`. Không phụ thuộc cửa sổ supervisor mở tay.
+
 ## 3. Trang `/market` đọc thế nào
 
 Sáu viên trạng thái độc lập: **MT5** (terminal), **Collector**, **API**, **Thị trường** (MỞ / ĐÓNG cuối tuần /

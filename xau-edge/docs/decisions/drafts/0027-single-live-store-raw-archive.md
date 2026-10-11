@@ -1,6 +1,6 @@
 # ADR-0027 (NHÁP): Một kho live duy nhất `data/market`; `data/raw` đóng băng thành kho nghiên cứu chỉ đọc
 
-Status: **draft** (2026-10-11), chờ chủ dự án duyệt ở Gate A. Nguồn: `docs/reports/CONSOLIDATION_AUDIT_AND_EDGE_PATH.md` §3, quyết định (b).
+Status: **SUPERSEDED** as the working copy — accepted text is `docs/decisions/0027-single-live-store.md` (2026-10-11). Draft kept for the closed-loop rationale.
 
 ## Bối cảnh (đã kiểm 2026-10-11)
 - `data/market` (ledger của collector, ~1,5 GB, trong đó tick ~1,4 GB) là nguồn của Trading Core (`trading/live_source.py:157,195`) và `/md/*`.

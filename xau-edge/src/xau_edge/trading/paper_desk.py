@@ -762,6 +762,9 @@ class PaperDesk:
         )
         # exits are judged on the side a close would trade: bid for a long, ask for a short
         high, low = (bar.high, bar.low) if direction > 0 else (bar.high + spread, bar.low + spread)
+        equity = self.broker.get_account().equity
+        start = self.day_start_equity(bar.time)
+        flatten = self.governor.flatten_required(start, equity)
         ctx = ManagerContext(
             now=bar.time,
             bar_high=high,
@@ -774,6 +777,7 @@ class PaperDesk:
             lowest_since_entry=rec["fill_price"] - rec["mfe"] if direction < 0 else None,
             spread_points=bar.spread_points,
             invalidated=invalidated,
+            daily_loss_guard=flatten,
         )
         action = evaluate(position, ctx, self.config.manager)
         if action.kind == "MODIFY_SL" and action.new_sl is not None:

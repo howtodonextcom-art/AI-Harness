@@ -302,4 +302,12 @@ Sửa theo 3a (không tự tuyên PASS, không mở vòng 4): số R ← `%TEMP%
 4. Nháp ADR 0026–0030 giữ draft. **#4 / #9 / contract v2 / UNKNOWN=đóng / alert 2 phút / họ giả thuyết mới không làm.**
 5. Q1 (news SLA), Q2 (auto position), Q4 (thói quen freeze-LIVE), Q5 (Telegram) vẫn mở của chủ.
 
-**Tuyên đúng:** sandbox `/trade` trung thực hơn (UNVALIDATED + độ phủ trên fold). **Bàn LIVE `:3000` chưa đổi.** Edge vẫn UNVALIDATED. Không sẵn sàng tiền thật.
+**Tuyên đúng:** sandbox `/trade` trung thực hơn (UNVALIDATED + độ phủ trên fold). **Bàn LIVE `:3000` chưa đổi** tại thời điểm đóng audit. Edge vẫn UNVALIDATED. Không sẵn sàng tiền thật.
+
+## 15. PHASE 1 AUDIT = CLOSED (2026-10-11)
+
+Không chạy Santa vòng 4 (cùng issue S3 đã ghi 3 vòng). Reviewer FAIL vì citation đã sửa tại chỗ trong §1–§13. ADR nháp 0026–0030 tồn tại; bản **ACCEPTED** chuyển sang `docs/decisions/0026`–`0030` + `0031` khi Phase 2 triển khai. Findings còn lại là **BLOCKED-by-policy** (S3 independence) hoặc **resolved-by-evidence**, không phải defect cite.
+
+- HEAD baseline lúc đóng audit: `03b7a0e` trên `d732602` trên `a004958` (verify trước Phase 2).
+- `k_cap` SoT = ledger 24 (`research/service.py:175-192`).
+- Thẻ B đã có trong mã sandbox; LIVE deploy là việc Phase 2 khi thị trường đóng.

@@ -1,4 +1,8 @@
-"""Assemble the decision inputs from market data at one moment and produce a signal.
+"""DEPRECATED — READ ONLY / MIGRATION PENDING.
+
+``generate_signal`` is the legacy research/demo brain. The live PAPER path uses
+``xau_edge.trading`` (``TradeEngine`` → ``TradingSignal``). Do not add new runtime callers.
+Retire after decision-parity is proven and no research/runtime importer remains.
 
 Everything is computed from bars that had CLOSED by the decision time (the close of the last closed
 M15 bar at or before ``at``), so the same call on data truncated there returns the identical signal

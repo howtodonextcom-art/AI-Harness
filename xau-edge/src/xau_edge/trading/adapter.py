@@ -1,4 +1,9 @@
-"""Adapter from ``TradingSignal`` to the platform's existing ``Signal`` (the bridge's input).
+"""DEPRECATED — READ ONLY / MIGRATION PENDING.
+
+Do not use this adapter on any execution path. ``to_legacy_signal`` plus
+``execution.bridge`` adds the BUY spread a second time (baseline entry is already the ask;
+the bridge then does ``zone_mid + spread``). Canonical path: ``TradingSignal`` →
+``intent_from_signal`` → adapters. Tests may still call this helper.
 
 The existing evidence gate stays untouched: a BUY/SELL baseline is expressed exactly as the
 documented UNVALIDATED lean (ADR-0019 override): direction WAIT with the single reason

@@ -72,6 +72,8 @@ class SnapshotInputs:
     news_state: str
     market_open: bool
     data_ok: bool
+    source_mode: str = "UNKNOWN"
+    market_status: str = "OPEN"
 
 
 def evaluate_many(
@@ -106,10 +108,12 @@ def evaluate_many(
         spec=spec,
         equity=inputs.equity,
         market_open=inputs.market_open,
+        market_status=inputs.market_status,
         data_ok=inputs.data_ok,
         spec_known=inputs.spec is not None,
         bid=inputs.bid,
         ask=inputs.ask,
+        source_mode=inputs.source_mode,
     )
     signals = {
         name: decide(

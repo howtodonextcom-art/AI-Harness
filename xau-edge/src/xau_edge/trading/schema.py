@@ -12,9 +12,13 @@ import hashlib
 import json
 from datetime import datetime
 from enum import StrEnum
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+SCHEMA_VERSION = 2
+SOURCE_MODES = ("LIVE", "ACCEPTANCE_REPLAY", "PAPER_REPLAY", "DEMO_DRY_RUN", "UNKNOWN")
+SourceMode = Literal["LIVE", "ACCEPTANCE_REPLAY", "PAPER_REPLAY", "DEMO_DRY_RUN", "UNKNOWN"]
 
 
 class TradeDecision(StrEnum):
@@ -113,6 +117,38 @@ class TradingSignal(BaseModel):
     ask: float | None = None
     generated_at: datetime | None = None
     data_age_seconds: float | None = None
+    schema_version: int = 1
+    source_mode: SourceMode = "UNKNOWN"
+    setup_phase: str | None = None
+    entry_basis: Literal["ASK", "BID", "UNKNOWN"] = "UNKNOWN"
+    equity_basis: float | None = None
+    spec_version: str = ""
+
+    @property
+    def entry(self) -> float | None:
+        return self.entry_price
+
+    @property
+    def sl(self) -> float | None:
+        return self.stop_loss
+
+    @property
+    def tp(self) -> float | None:
+        return self.take_profit
+
+    @property
+    def rr(self) -> float | None:
+        return self.risk_reward
+
+    @property
+    def evidence_label(self) -> EvidenceLabel:
+        return self.evidence_status
+
+    @property
+    def bias(self) -> str:
+        if self.h1_bias == self.h4_bias:
+            return self.h1_bias
+        return f"{self.h4_bias}/{self.h1_bias}"
 
     @property
     def decision_id(self) -> str:
@@ -158,7 +194,28 @@ class TradingSignal(BaseModel):
         if self.evidence_status is EvidenceLabel.VALIDATED:
             msg = "the operational baseline can never be labelled VALIDATED"
             raise ValueError(msg)
+        if self.schema_version not in (1, SCHEMA_VERSION):
+            msg = f"unsupported TradingSignal schema_version {self.schema_version}"
+            raise ValueError(msg)
         return self
+
+
+class TradingSignalRecord(BaseModel):
+    """Loose reader for journals: unknown keys ignored; missing source_mode is UNKNOWN."""
+
+    model_config = ConfigDict(frozen=True, extra="ignore")
+
+    signal_id: str = ""
+    timestamp: datetime | None = None
+    symbol: str = ""
+    decision: str = "WAIT"
+    schema_version: int = 1
+    source_mode: SourceMode = "UNKNOWN"
+
+
+def read_signal_record(data: dict[str, object]) -> TradingSignalRecord:
+    """Parse a stored decision without failing on additive v2 fields."""
+    return TradingSignalRecord.model_validate(data)
 
 
 TradingDecision = TradingSignal

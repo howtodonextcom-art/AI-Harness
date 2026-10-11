@@ -31,6 +31,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from xau_edge.trading.levels import LevelConfig, compute_stop, compute_targets
 from xau_edge.trading.market_state import MarketState
 from xau_edge.trading.schema import (
+    SCHEMA_VERSION,
+    SOURCE_MODES,
     EntryType,
     EvidenceLabel,
     Refusal,
@@ -95,6 +97,7 @@ class DecisionContext:
     daily_limit_hit: bool = False
     risk_limit_hit: bool = False
     market_open: bool = True
+    market_status: str = "OPEN"
     data_ok: bool = True
     """False when the live source says a required timeframe, the quote or the collector is stale."""
     spec_known: bool = True
@@ -104,6 +107,8 @@ class DecisionContext:
     """Executable quote: BUY enters at the ask, SELL at the bid (else last close +/- spread/2)."""
     lifecycle: SetupLifecycle | None = None
     """v1.2 only: the setup lifecycle computed from the closed bars (None for v1.1)."""
+    source_mode: str = "UNKNOWN"
+    """Provenance of the snapshot: LIVE, ACCEPTANCE_REPLAY, PAPER_REPLAY, DEMO_DRY_RUN, UNKNOWN."""
 
 
 def m1_execution_state(state: MarketState, direction: int = 0) -> str:
@@ -147,7 +152,9 @@ def _volume_state(state: MarketState) -> str:
     return "HIGH" if z >= 1.0 else "LOW" if z <= -1.0 else "NORMAL"
 
 
-def _common(state: MarketState, cfg: BaselineConfig, ctx: DecisionContext) -> dict[str, object]:
+def _common(
+    state: MarketState, cfg: BaselineConfig, ctx: DecisionContext, *, direction: int = 0
+) -> dict[str, object]:
     return {
         "timestamp": state.timestamp,
         "symbol": state.symbol,
@@ -168,7 +175,24 @@ def _common(state: MarketState, cfg: BaselineConfig, ctx: DecisionContext) -> di
         "volatility_regime": state.volatility_regime,
         "bid": ctx.bid,
         "ask": ctx.ask,
+        "schema_version": SCHEMA_VERSION,
+        "source_mode": ctx.source_mode if ctx.source_mode in SOURCE_MODES else "UNKNOWN",
+        "setup_phase": (
+            None
+            if ctx.lifecycle is None
+            else getattr(ctx.lifecycle.phase, "value", str(ctx.lifecycle.phase))
+        ),
+        "entry_basis": _entry_basis(ctx, direction),
+        "equity_basis": ctx.equity,
     }
+
+
+def _entry_basis(ctx: DecisionContext, direction: int) -> str:
+    if direction > 0:
+        return "ASK" if ctx.ask is not None else "UNKNOWN"
+    if direction < 0:
+        return "BID" if ctx.bid is not None else "UNKNOWN"
+    return "UNKNOWN"
 
 
 def _wait(
@@ -206,6 +230,8 @@ def _gates(  # noqa: PLR0912 - one gate per condition
 ) -> tuple[list[Refusal], tuple[str, ...]]:
     out: list[Refusal] = []
     warnings: list[str] = []
+    if getattr(ctx, "market_status", "OPEN") == "UNKNOWN":
+        return [Refusal.UNKNOWN_STATE], ()
     if not ctx.market_open or not state.market_open:
         return [Refusal.MARKET_CLOSED], ()
     if not ctx.broker_connected:
@@ -410,5 +436,5 @@ def decide(  # noqa: PLR0911, PLR0912, PLR0915 - one refusal per link of the cha
             "gross_rr": targets.gross_rr,
             "capped_by_structure": str(targets.capped_by_structure),
         },
-        **_common(state, cfg, ctx),
+        **_common(state, cfg, ctx, direction=direction),
     )

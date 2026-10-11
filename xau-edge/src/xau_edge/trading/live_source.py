@@ -89,7 +89,8 @@ class LiveSnapshot:
 
     @property
     def market_open(self) -> bool:
-        return self.status in (MarketStatus.OPEN, MarketStatus.UNKNOWN)
+        """True only when the calendar says OPEN. UNKNOWN is not tradable (fail-closed)."""
+        return self.status is MarketStatus.OPEN
 
     @property
     def data_age_seconds(self) -> float | None:
@@ -234,7 +235,7 @@ class LiveTradingMarketSource:
         except FrameError as exc:
             problems.append(f"bars unusable: {exc}")
             bars = MultiTfBars({})
-        open_market = status in (MarketStatus.OPEN, MarketStatus.UNKNOWN)
+        open_market = status is MarketStatus.OPEN
         stale = tuple(
             tf.value
             for tf in REQUIRED

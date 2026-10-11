@@ -222,7 +222,7 @@ class TradeEngine:
         for minutes in range(0, horizon_minutes + 1, 5):
             at = now + timedelta(minutes=minutes)
             status = market_status(at, self.source.calendar)
-            if status not in (MarketStatus.OPEN, MarketStatus.UNKNOWN):
+            if status is not MarketStatus.OPEN:
                 kind = "DAILY_BREAK" if status is MarketStatus.ROLLOVER else "WEEKEND_OR_HOLIDAY"
                 found = (at, kind)
                 break
@@ -266,6 +266,8 @@ class TradeEngine:
             news_state=news,
             market_open=snap.market_open,
             data_ok=data_ok,
+            source_mode=self.source_mode,
+            market_status=snap.status.value,
         )
         state, signal = evaluate(inputs, self.config.baseline, self.broker_clock, self._memo)
         signal = signal.model_copy(
@@ -432,7 +434,15 @@ class TradeEngine:
             )
             return out
         collector = self._read_collector() if self.source_mode == "LIVE" else {"connected": True}
-        if snap.market_open:
+        if snap.status is MarketStatus.UNKNOWN:
+            out.append(
+                condition(
+                    "MARKET_UNKNOWN",
+                    "ERROR",
+                    "market status is unknown; new BUY/SELL permission is refused",
+                )
+            )
+        elif snap.market_open:
             if not snap.collector_alive:
                 out.append(
                     condition("COLLECTOR_STALE", "ERROR", "the market collector is not publishing")
@@ -899,7 +909,11 @@ class TradeEngine:
         start = self.desk.day_start_equity(stamp)
         return {
             "daily_loss_stop_pct": cfg.daily_loss_stop_pct,
+            "daily_loss_flatten_pct": cfg.daily_loss_flatten_pct,
             "daily_loss_pct": round(self.desk.governor.daily_loss_pct(start, equity), 3),
+            "daily_loss_guard": self.desk.governor.daily_loss_pct(start, equity)
+            >= cfg.daily_loss_stop_pct,
+            "flatten_required": self.desk.governor.flatten_required(start, equity),
             "max_trades_per_day": cfg.max_trades_per_day,
             "max_entry_drift_r": self.desk.config.max_entry_drift_r,
             "day_start_equity": round(start, 2),

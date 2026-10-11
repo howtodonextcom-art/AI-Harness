@@ -298,6 +298,8 @@ def _reference(world: AcceptanceWorld, now: datetime) -> dict[str, Any]:
         news_state="UNKNOWN",
         market_open=snap.market_open,
         data_ok=snap.usable if snap.market_open else True,
+        source_mode=engine.source_mode,
+        market_status=snap.status.value,
     )
     state, signal = evaluate(inputs, engine.config.baseline, engine.broker_clock)
     m5 = state.snapshots.get("M5")

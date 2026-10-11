@@ -416,6 +416,7 @@ def test_every_hero_state_maps_to_one_action() -> None:
     assert action_for(_hero("SELL_READY", "SELL"), buy, None)["code"] == "SELL"
     assert action_for(_hero("UNAVAILABLE"), None, None)["code"] == "UNAVAILABLE"
     assert action_for(_hero("STALE"), buy, None)["code"] == "UNAVAILABLE"
+    assert action_for(_hero("UNKNOWN"), buy, None)["code"] == "UNAVAILABLE"
     assert action_for(_hero("MARKET_CLOSED"), wait, None) == {
         "code": "WAIT",
         "stage": "CLOSED",

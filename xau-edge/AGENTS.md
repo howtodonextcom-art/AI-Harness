@@ -118,6 +118,21 @@ sample size, regime dependence, model instability) and document findings.
 Code implemented, types valid, tests pass (`check` green), docs updated, acceptance criteria
 met, no known critical bug, result reproducible.
 
+## Freeze-LIVE (development vs observation)
+
+* Develop and rebuild the dashboard on the **sandbox** (`serve_acceptance.py` + a non-3000 Next
+  port, `NEXT_DIST_DIR=.next-sandbox`). Do not rebuild `apps/dashboard/.next` while the live
+  `next start` process is serving it.
+* Do **not** restart the live stack (`:8000` / `:3000`) while the market is OPEN. Restart only
+  when the calendar says CLOSED, after static/type/test gates, via
+  `scripts\stop_market_stack.ps1` then `scripts\start_market_stack.ps1 -Dashboard`
+  (never kill the owner's MT5 terminal).
+* Survival is Windows Task Scheduler task `XAU-EDGE Market Stack` → `start_market_stack.ps1`.
+  Do not start `run_market_stack.py` from a throwaway console. Do not depend on a manual
+  supervisor window staying open.
+* NSSM is not the market-stack owner. Do not replace Task Scheduler unless it cannot meet
+  the requirements above.
+
 ## Forbidden
 
 Enabling live trading; changing risk limits silently; removing safety gates; claiming

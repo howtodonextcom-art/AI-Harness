@@ -160,7 +160,8 @@ class SignalBridge:
         if not all(math.isfinite(v) for v in (zone_mid, signal.stop_loss, signal.take_profit_1)):
             return _refuse("SIGNAL_LEVELS_INVALID")
         direction = 1 if side is Direction.BUY else -1
-        # The signal's price is a bar close (a bid). A BUY fills at the ask: spread above it.
+        # Legacy path only. TradingSignal entries are already ASK/BID; do not feed them here
+        # or BUY is priced twice. Canonical path: intent_from_signal (no second spread).
         spread_price = spread_points * self.point if math.isfinite(spread_points) else math.nan
         entry = round(zone_mid + (spread_price if direction == 1 else 0.0), self.digits)
         stop_loss = round(signal.stop_loss, self.digits)

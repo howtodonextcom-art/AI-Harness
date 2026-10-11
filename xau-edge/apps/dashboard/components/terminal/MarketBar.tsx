@@ -57,7 +57,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
   const reopen = !open && ctx?.next_open ? Date.parse(ctx.next_open) : null;
   const reopenIn = countdownText(reopen, serverNowMs);
   // an old quote while the market is closed is normal (the last price); it is only an alarm while trading is open
-  const faulted = view?.hero.state === "UNAVAILABLE" || view?.hero.state === "STALE"; // the engine itself says the data cannot be trusted
+  const faulted = view?.hero.state === "UNAVAILABLE" || view?.hero.state === "STALE" || view?.hero.state === "UNKNOWN";
   const stalePrice = uiStale || faulted || (open && Boolean(quote?.stale));
   const extra = uiStale ? offlineSeconds : 0;
   const lastPrice = !open && Boolean(quote?.stale) && !uiStale;

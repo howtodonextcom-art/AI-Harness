@@ -16,6 +16,7 @@ export const HERO_VI: Record<HeroState, { label: string; hint: string }> = {
   NOT_ACTIONABLE: { label: "CHƯA ĐỦ KẾ HOẠCH", hint: "Phát hiện setup nhưng kế hoạch chưa đầy đủ." },
   STALE: { label: "DỮ LIỆU CŨ", hint: "Không tin được dữ liệu. Đây KHÔNG phải trạng thái chờ." },
   UNAVAILABLE: { label: "KHÔNG THỂ TÍNH", hint: "Hệ thống không tính được quyết định. Đây KHÔNG phải trạng thái chờ." },
+  UNKNOWN: { label: "THỊ TRƯỜNG KHÔNG RÕ", hint: "Lịch thị trường không xác định được. Không phải cửa đóng và không phải chờ thường." },
   MARKET_CLOSED: { label: "THỊ TRƯỜNG ĐÓNG CỬA", hint: "Không có quyết định khi thị trường nghỉ." },
 };
 
@@ -30,6 +31,7 @@ export const HERO_ICON: Record<HeroState, string> = {
   NOT_ACTIONABLE: "⚠",
   STALE: "⌛",
   UNAVAILABLE: "⚠",
+  UNKNOWN: "?",
   MARKET_CLOSED: "☾",
 };
 
@@ -45,6 +47,7 @@ export const CONDITION_VI: Record<string, string> = {
   WRITER_LOCK: "Một tiến trình khác đang giữ quyền ghi bàn PAPER. Tiến trình này chỉ đọc.",
   PAPER_STATE_ERROR: "Trạng thái bàn PAPER không khớp nhật ký. Mọi lệnh mới bị chặn cho tới khi khôi phục.",
   MARKET_CLOSED: "Thị trường đang đóng cửa.",
+  MARKET_UNKNOWN: "Trạng thái thị trường không rõ. Không được phép vào lệnh mới.",
   NEWS_UNKNOWN: "Chưa có lịch tin kinh tế: hãy tự kiểm tra tin trước khi tin vào một setup.",
   SPREAD_WIDE: "Spread đang rộng.",
 };

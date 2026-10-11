@@ -1,6 +1,6 @@
 # ADR-0029 (NHÁP): Freeze-LIVE — stack live chỉ để quan sát; phát triển chạy trên sandbox
 
-Status: **draft** (2026-10-11), Gate A đã duyệt hẹp (thẻ B + một nguồn `k_cap`); Q4 freeze-LIVE vẫn là thói quen của chủ.
+Status: **SUPERSEDED** as the working copy — accepted text is `docs/decisions/0029-freeze-live.md` (2026-10-11). Draft kept for the closed-loop rationale.
 
 ## Bối cảnh (đã kiểm)
 - Độ phủ quyết định 48,6% (232/477), hai khoảng thiếu 30 và 215 phút (`/trade/decision` → `decision_coverage`; `trading/coverage.py`, `COVERAGE_OK_PCT=95`).

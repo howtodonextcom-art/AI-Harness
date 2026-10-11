@@ -215,7 +215,7 @@ def action_for(
         "thesis": None,
         "missing": None,
     }
-    if state in ("UNAVAILABLE", "STALE"):
+    if state in ("UNAVAILABLE", "STALE", "UNKNOWN"):
         out.update(code="UNAVAILABLE", stage=state)
     elif state == "MARKET_CLOSED":
         out.update(stage="CLOSED")
@@ -274,6 +274,13 @@ def hero_state(  # noqa: PLR0911 - one return per product state, in priority ord
         why = ", ".join(faults) if faults else "the engine has not produced a decision yet"
         return hero("UNAVAILABLE", "DECISION UNAVAILABLE", "error", f"Not WAIT: {why}")
     stale = sorted(codes & set(UNTRUSTED_STALE))
+    if any(c.get("code") == "MARKET_UNKNOWN" for c in conditions):
+        return hero(
+            "UNKNOWN",
+            "MARKET STATE UNKNOWN",
+            "error",
+            "Market status is unknown; new BUY/SELL permission is refused",
+        )
     if stale and market_open:
         return hero(
             "STALE",

@@ -18,11 +18,12 @@ Không có đường nào từ quyết định trên `/trade` tới lệnh MT5.
 1. **Gate trước khi báo xong**: `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`,
    `uv run pytest -m "not mt5"` (hoặc `.\scripts\dev.ps1 check`). **Luôn có `-m "not mt5"`**: test
    marker `mt5` kết nối terminal FTMO thật.
-2. **Cẩn thận với stack live** (Task Scheduler "XAU-EDGE Market Stack" → `scripts/run_market_stack.py`):
-   chỉ restart bằng `scripts\stop_market_stack.ps1` rồi `scripts\start_market_stack.ps1` khi nhiệm vụ yêu cầu
-   (không kill terminal MT5 của chủ). Sau `npm run build` phải khởi động lại dashboard (`next start` đọc `.next`).
-   Dashboard cần `XAU_EDGE_API_URL` khi chạy replay. Cần thử API riêng thì chạy instance phụ ở cổng khác với thư mục
-   trade tạm.
+2. **Freeze-LIVE.** Phát triển trên sandbox (`serve_acceptance.py`, Next cổng ≠ 3000,
+   `NEXT_DIST_DIR=.next-sandbox`). Không rebuild `apps/dashboard/.next` khi `next start` live đang chạy.
+   Không restart `:8000`/`:3000` khi thị trường **MỞ**. Khi thị trường **ĐÓNG** và cổng kiểm tra đã xanh:
+   `scripts\stop_market_stack.ps1` rồi `scripts\start_market_stack.ps1 -Dashboard` (không kill MT5).
+   Task Scheduler `XAU-EDGE Market Stack` là chủ restart; không mở `run_market_stack.py` từ console tay.
+   Dashboard cần `XAU_EDGE_API_URL` khi chạy replay. Cần thử API riêng thì chạy instance phụ ở cổng khác.
 3. **Không gửi lệnh**: không chạy `scripts/smoke_demo_order.py`, không bật `XAU_EDGE_ENABLE_DEMO_TRADING`,
    `XAU_EDGE_ENABLE_FUNDED_TRADING`, `XAU_EDGE_DEMO_DRY_RUN=false`, không nhập mật khẩu.
 4. **Không đọc hay in `.env`**, token, mật khẩu, số tài khoản đầy đủ (tối đa 3 số cuối).

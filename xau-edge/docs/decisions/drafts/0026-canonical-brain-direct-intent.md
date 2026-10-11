@@ -1,6 +1,6 @@
 # ADR-0026 (NHÁP): Một bộ não — `TradingSignal` → `OrderIntent` trực tiếp; bridge chỉ veto
 
-Status: **draft** (2026-10-11), chờ Gate A. Nguồn: `docs/reports/CONSOLIDATION_AUDIT_AND_EDGE_PATH.md` §3, quyết định (a). Bổ sung (không thay) `docs/architecture/canonical-brain.md`.
+Status: **SUPERSEDED** as the working copy — accepted text is `docs/decisions/0026-canonical-brain-direct-intent.md` (2026-10-11). Draft kept for the closed-loop rationale.
 
 ## Bối cảnh (đã kiểm 2026-10-11)
 - Hai bộ não: Trading Core (`data/market` → `TradeEngine` → `TradingSignal` → `PaperDesk`) đang chạy PAPER; bot DEMO legacy (`data/raw` → `signals.engine` → `Signal` → `SignalBridge` → `OrderIntent` → executor) khoá, không chạy. Adapter `to_legacy_signal` chỉ có test (`trading/adapter.py`; importer duy nhất `tests/unit/trading/test_decision_levels_sizing.py`).

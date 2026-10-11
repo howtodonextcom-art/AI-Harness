@@ -1,6 +1,6 @@
 # ADR-0030 (NHÁP): Chốt trần K trước mọi giả thuyết mới; luật nhận họ giả thuyết V3; luật chi tiêu Test-H/Holdout
 
-Status: **draft** (2026-10-11), cần chủ dự án ký (append-only vào `docs/research/edge-program-v2/ledger.md`). Nguồn: báo cáo consolidation §6, quyết định (e).
+Status: **SUPERSEDED** as the working copy — accepted text is `docs/decisions/0030-k-cap-and-v3-intake.md` (2026-10-11). Draft kept for the closed-loop rationale. K cap = 24 is already on the ledger; no further owner signature required to keep that cap.
 
 ## Bối cảnh (đã kiểm)
 - Mâu thuẫn trần K: `docs/research/edge-program-v2/ledger.md:7` ghi "trần K cap = 24"; `STATE.json:3` ghi `"k_cap": 48`, và Research Console hiển thị 20/48. Văn bản D-1 (2026-10-09) ghi "≤ 48 variants". `STATE.json` tự nói ledger là nguồn sự thật.
