@@ -254,6 +254,13 @@ def action_for(
     return out
 
 
+def _recent_exit(last_exit: dict[str, Any] | None, now: datetime) -> bool:
+    if last_exit is None:
+        return False
+    closed_at = datetime.fromisoformat(str(last_exit["closed_at"]))
+    return now - closed_at <= timedelta(minutes=EXIT_BANNER_MINUTES)
+
+
 def hero_state(  # noqa: PLR0911 - one return per product state, in priority order
     *,
     signal: TradingSignal | None,
@@ -264,9 +271,17 @@ def hero_state(  # noqa: PLR0911 - one return per product state, in priority ord
     last_exit: dict[str, Any] | None,
     market_open: bool,
     now: datetime,
+    blocked: bool = False,
 ) -> dict[str, Any]:
     """BUY READY / SELL READY / SETUP ARMED / POSITION OPEN / EXITED / WAIT / and the non-WAIT
-    states (UNAVAILABLE, STALE, MARKET CLOSED, NOT ACTIONABLE, EXPIRED SETUP)."""
+    states (UNAVAILABLE, STALE, MARKET CLOSED, NOT ACTIONABLE, EXPIRED SETUP).
+
+    Priority (formalised after MCP QA round 3): fault > unknown > stale > market closed > open
+    position (HOLD) > a READY setup that nothing blocks > a RECENT EXIT (within
+    ``EXIT_BANNER_MINUTES``) over every setup state that cannot be acted on (blocked, expired,
+    incomplete) > armed > WAIT. ``blocked`` says the desk would refuse the entry (already taken,
+    cooldown, closure near, ...): the setup is then consumed for the Human, and a trade that has
+    just closed must not be hidden behind it."""
     codes = {c["code"] for c in conditions if c["severity"] == "ERROR"}
 
     def hero(
@@ -302,8 +317,21 @@ def hero_state(  # noqa: PLR0911 - one return per product state, in priority ord
         return hero(
             "POSITION_OPEN", f"POSITION OPEN — {side}", "info", "A paper position is open", side
         )
+    recent_exit = _recent_exit(last_exit, now)
+
+    def exited() -> dict[str, Any]:
+        assert last_exit is not None  # noqa: S101 - recent_exit implies it
+        return hero(
+            "EXITED",
+            f"EXITED — {last_exit['exit_reason']}",
+            "info",
+            f"Last paper trade {last_exit['trade_id']} closed",
+        )
+
     if signal.decision is not TradeDecision.WAIT:
         side = signal.decision.value
+        if recent_exit and (blocked or expired or plan is None or not plan["complete"]):
+            return exited()
         if expired:
             return hero(
                 "EXPIRED_SETUP",
@@ -335,15 +363,8 @@ def hero_state(  # noqa: PLR0911 - one return per product state, in priority ord
             "info",
             "An M15 setup is armed; waiting for the M5 trigger",
         )
-    if last_exit is not None:
-        closed_at = datetime.fromisoformat(str(last_exit["closed_at"]))
-        if now - closed_at <= timedelta(minutes=EXIT_BANNER_MINUTES):
-            return hero(
-                "EXITED",
-                f"EXITED — {last_exit['exit_reason']}",
-                "info",
-                f"Last paper trade {last_exit['trade_id']} closed",
-            )
+    if recent_exit:
+        return exited()
     return hero("WAIT", "WAIT", "neutral", "The engine evaluated and chose no trade")
 
 

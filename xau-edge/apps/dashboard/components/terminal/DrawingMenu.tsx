@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { announcePopover, useClosedByOtherPopover } from "@/lib/popovers";
 import { KIND_VI, RR_NOT_A_SIGNAL, rrGeometry, type Drawing, type DrawingKind } from "@/lib/drawings";
 import type { Tool } from "@/components/terminal/TerminalChart";
+import type { ManualLevel } from "@/lib/prefs";
 
 const TOOLS: { kind: DrawingKind; icon: string; how: string }[] = [
   { kind: "trend", icon: "⟋", how: "Bấm 2 điểm" },
@@ -22,6 +24,8 @@ interface Props {
   onPatch: (id: string, patch: Partial<Drawing>) => void;
   onDelete: (id: string) => void;
   onClear: () => void;
+  levels: ManualLevel[];
+  onRemoveLevel: (id: string) => void;
   scopeLabel: string | null;
   btn: string;
   on: string;
@@ -43,11 +47,15 @@ export function DrawingMenu(p: Props) {
   const [menu, setMenu] = useState(false);
   const [manager, setManager] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const closeMenu = useCallback(() => setMenu(false), []);
+  const closeManager = useCallback(() => { setManager(false); setConfirmClear(false); }, []);
+  useClosedByOtherPopover("draw-menu", closeMenu);
+  useClosedByOtherPopover("drawing-manager", closeManager);
   const drawing = TOOLS.some((t) => t.kind === p.tool);
   return (
     <>
       <div className={`relative ${p.roomy}`}>
-        <button type="button" data-testid="draw-menu" title="Công cụ vẽ" aria-expanded={menu} aria-haspopup="true" onClick={() => { setMenu(!menu); setManager(false); }} className={`inline-flex ${p.btn} ${menu || drawing ? p.on : p.off}`}>
+        <button type="button" data-testid="draw-menu" title="Công cụ vẽ" aria-expanded={menu} aria-haspopup="true" onClick={() => { if (!menu) announcePopover("draw-menu"); setMenu(!menu); setManager(false); }} className={`inline-flex ${p.btn} ${menu || drawing ? p.on : p.off}`}>
           ✎&nbsp;Vẽ
         </button>
         {menu && (
@@ -64,7 +72,7 @@ export function DrawingMenu(p: Props) {
         )}
       </div>
       <div className={`relative ${p.roomy}`}>
-        <button type="button" data-testid="drawing-manager-btn" title="Quản lý các nét vẽ" aria-expanded={manager} onClick={() => { setManager(!manager); setMenu(false); setConfirmClear(false); }} className={`inline-flex ${p.btn} ${manager ? p.on : p.off}`}>
+        <button type="button" data-testid="drawing-manager-btn" title="Quản lý các nét vẽ" aria-expanded={manager} onClick={() => { if (!manager) announcePopover("drawing-manager"); setManager(!manager); setMenu(false); setConfirmClear(false); }} className={`inline-flex ${p.btn} ${manager ? p.on : p.off}`}>
           ☷&nbsp;Nét vẽ ({p.drawings.length})
         </button>
         {manager && (
@@ -87,6 +95,19 @@ export function DrawingMenu(p: Props) {
                   </li>
                 ))}
               </ul>
+            )}
+            {p.levels.length > 0 && (
+              <div data-testid="manager-levels" className="mt-2">
+                <p className="font-semibold">Đường ngang của bạn</p>
+                <ul className="space-y-0.5">
+                  {p.levels.map((l) => (
+                    <li key={l.id} className="flex items-center gap-2">
+                      <span className="font-mono text-[11px]">{l.label || "Đường"} {l.price.toFixed(2)}</span>
+                      <button type="button" data-testid="manager-level-delete" aria-label={`Xóa đường ${l.price.toFixed(2)}`} onClick={() => p.onRemoveLevel(l.id)} className="ml-auto rounded px-1.5 hover:bg-slate-500/20">✕</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
             {p.drawings.length > 0 && (
               <div className="mt-2 flex items-center gap-2">

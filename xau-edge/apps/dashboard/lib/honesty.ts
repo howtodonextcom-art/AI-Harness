@@ -64,9 +64,10 @@ export function heroLevels(view: TradeView): { entry: number | null; sl: number 
   const plan = view.trade_plan ?? null;
   const pos = view.desk?.position ?? null;
   return {
-    entry: plan?.planned_entry ?? pos?.fill_price ?? null,
-    sl: plan?.sl ?? pos?.sl ?? null,
-    tp: plan?.tp1 ?? pos?.tp ?? null,
+    // an open position is what is real: its actual fill and live levels win over the plan it came from (QA round 3, M-03)
+    entry: pos?.fill_price ?? plan?.planned_entry ?? null,
+    sl: pos?.sl ?? plan?.sl ?? null,
+    tp: pos?.tp ?? plan?.tp1 ?? null,
     rr: plan?.rr_net ?? null,
   };
 }

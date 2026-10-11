@@ -7,6 +7,7 @@ import { Term } from "@/components/terminal/Term";
 import { useEffect, useState, type ReactNode } from "react";
 import { actionText } from "@/lib/action";
 import { heroLevels, honestyLine } from "@/lib/honesty";
+import { humanSurface } from "@/lib/humanState";
 import { HeroCard, TONE_STYLE } from "@/components/terminal/HeroCard";
 import { parseDecimal } from "@/lib/chartMath";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
@@ -323,7 +324,8 @@ export function expiryOf(view: TradeView, serverNowMs: number) {
 function ActionHero({ view, expiredNow, secondsLeft, zone, setups, risk }: { view: TradeView; expiredNow: boolean; secondsLeft: number | null; zone: DisplayZone; setups: SetupHistoryRow[] | null; risk?: number }) {
   const clock = (iso: string | null | undefined) => (iso ? `${formatInZone(iso, zone).slice(11, 16)} ${ZONE_SHORT[zone]}` : null);
   const t = actionText(view, secondsLeft, expiredNow, clock);
-  const state = expiredNow && (view.hero.state === "BUY_READY" || view.hero.state === "SELL_READY") ? "EXPIRED_SETUP" : view.hero.state;
+  const surface = humanSurface(view, { expiredNow, offline: false });
+  const state = expiredNow && (view.hero.state === "BUY_READY" || view.hero.state === "SELL_READY") ? "EXPIRED_SETUP" : surface.id === "WAIT_BLOCKED" ? "SETUP_BLOCKED" : view.hero.state;
   const errors = view.conditions.filter((c) => c.severity === "ERROR" && c.code !== "MARKET_CLOSED");
   const solid = t.tone === "buy" || t.tone === "sell";
   const veil = solid ? "bg-black/25" : "bg-black/10 dark:bg-white/10"; // solid heroes keep white text on a darker, never lighter, panel
@@ -359,7 +361,7 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups, risk }: { vie
         extra={extra}
         steps={lifecycleSteps(view, setups)}
         honesty={<HonestyBadge view={view} />}
-        levels={<HeroLevels view={view} risk={risk} blocked={t.code === "UNAVAILABLE" || view.hero.state === "EXPIRED_SETUP"} expired={view.hero.state === "EXPIRED_SETUP"} />}
+        levels={<HeroLevels view={view} risk={risk} blocked={t.code === "UNAVAILABLE" || (surface.heroLevels === null && view.trade_plan !== null) || view.hero.state === "EXPIRED_SETUP"} reason={surface.id === "WAIT_BLOCKED" ? "setup" : view.hero.state === "EXPIRED_SETUP" || surface.id === "EXPIRED" ? "expired" : surface.id === "EXIT" ? "exit" : "blocked"} />}
       />
     </div>
   );
@@ -394,7 +396,7 @@ function HonestyBadge({ view }: { view: TradeView }) {
   );
 }
 
-function HeroLevels({ view, risk, blocked, expired = false }: { view: TradeView; risk?: number; blocked: boolean; expired?: boolean }) {
+function HeroLevels({ view, risk, blocked, reason = "blocked" }: { view: TradeView; risk?: number; blocked: boolean; reason?: "blocked" | "expired" | "setup" | "exit" }) {
   const l = heroLevels(view);
   const sized = Boolean(view.trade_plan) && risk !== undefined && !blocked;
   const chosen = sized ? view.risk_plans?.find((p) => Math.abs(p.risk_pct - (risk ?? 0)) < 1e-9) : undefined;
@@ -407,7 +409,7 @@ function HeroLevels({ view, risk, blocked, expired = false }: { view: TradeView;
   );
   return (
     <>
-    {blocked && <p data-testid="hero-levels-blocked" className="mt-1 hidden text-[11px] font-bold sm:block">{expired ? "Kế hoạch đã hết hạn, không dùng." : "Kế hoạch bị chặn, không dùng."}</p>}
+    {blocked && reason !== "exit" && <p data-testid="hero-levels-blocked" className="mt-1 hidden text-[11px] font-bold sm:block">{reason === "expired" ? "Kế hoạch đã hết hạn, không dùng." : reason === "setup" ? "Setup bị chặn: không được vào lệnh, không có kế hoạch để dùng." : "Kế hoạch bị chặn, không dùng."}</p>}
     <dl data-testid="hero-levels" data-blocked={blocked ? "true" : "false"} className={`mt-1 hidden gap-x-2 gap-y-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs ${sized ? "grid-cols-3" : "grid-cols-4"}`}>
       {row("hero-entry", "Entry", show(l.entry))}
       {row("hero-sl", "SL", show(l.sl))}
@@ -431,7 +433,9 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
   const { expiredNow } = expiryOf(view, serverNowMs);
   const plan = view.trade_plan ?? null;
   const state = view.hero.state;
-  const showTicket = (state === "BUY_READY" || state === "SELL_READY") && plan !== null;
+  const surface = humanSurface(view, { expiredNow, offline: false }); // offline is handled below: a stale READY is folded away, never offered
+  const showTicket = surface.ticket && plan !== null;
+  const showReference = surface.referencePlan && plan !== null;
   const showPosition = state === "POSITION_OPEN" && view.desk?.position;
   const waiting = state === "WAIT" || state === "SETUP_ARMED" || state === "NOT_ACTIONABLE";
   return (
@@ -448,6 +452,7 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
           </div>
         </details>
       )}
+      {showReference && plan && <ReferencePlan view={view} plan={plan} />}
       {waiting && <Pipeline view={view} tf={tf} onFocusTf={onFocusTf} />}
       {waiting && <WaitContext view={view} zone={zone} setups={setups} journal={journal} />}
       {state !== "POSITION_OPEN" && <LastExit view={view} />}
@@ -456,6 +461,24 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
       <AccountStrip view={view} />
       {!showTicket && !showPosition && <Calculator bid={view.quote?.bid ?? null} />}
     </section>
+  );
+}
+
+/** A setup that is technically ready but blocked: its numbers are history, not an offer. Folded, neutral, labelled first. */
+function ReferencePlan({ view, plan }: { view: TradeView; plan: NonNullable<TradeView["trade_plan"]> }) {
+  const b = view.hero.action.blocked_by;
+  const why = b ? (BLOCKER_VI[b.code] ?? b.message) : "đang bị chặn";
+  return (
+    <details data-testid="blocked-reference" className="rounded-lg border border-slate-400 bg-slate-500/5 p-2 text-sm">
+      <summary className="cursor-pointer font-bold">SETUP BỊ CHẶN — KHÔNG ĐƯỢC VÀO LỆNH <span className="font-normal text-slate-600 dark:text-slate-400">(chỉ tham khảo)</span></summary>
+      <p className="mt-1 font-semibold">Vì sao: {why}</p>
+      <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Các mức dưới đây là kế hoạch cũ của setup này. Chúng không phải tín hiệu và không dùng để vào lệnh.</p>
+      <dl className="mt-1 grid grid-cols-3 gap-2 font-mono text-slate-600 dark:text-slate-300">
+        <div><dt className="text-[10px] font-bold uppercase">Giá kế hoạch</dt><dd data-testid="blocked-ref-entry">{fmt(plan.planned_entry)}</dd></div>
+        <div><dt className="text-[10px] font-bold uppercase">SL</dt><dd>{fmt(plan.sl)}</dd></div>
+        <div><dt className="text-[10px] font-bold uppercase">TP</dt><dd>{fmt(plan.tp1)}</dd></div>
+      </dl>
+    </details>
   );
 }
 
@@ -493,7 +516,7 @@ function ClosedInfo({ view, zone }: { view: TradeView; zone: DisplayZone }) {
   return (
     <div data-testid="closed-info" className="space-y-2 rounded-lg border border-slate-300 p-3 text-sm dark:border-slate-700">
       <p>Bộ máy quyết định tạm dừng và tự tính lại khi thị trường mở cửa; giá và biểu đồ là dữ liệu cuối cùng.</p>
-      {view.market_context?.next_open && <p data-testid="reopen-at">Thị trường mở lại lúc <b className="font-mono">{formatInZone(view.market_context.next_open, zone).slice(0, 16)}</b>.</p>}
+      {view.market_context?.next_open && <p data-testid="reopen-at">Thị trường mở lại lúc <b className="font-mono">{formatInZone(view.market_context.next_open, zone).slice(0, 16)}</b> ({ZONE_SHORT[zone]}).</p>}
       {d && (
         <p>
           Phiên giao dịch gần nhất: {d.change >= 0 ? "tăng" : "giảm"} <b className="font-mono">{fmt(Math.abs(d.change))}</b> ({d.change_pct === null ? "—" : `${d.change_pct >= 0 ? "+" : ""}${d.change_pct.toFixed(2)}%`}), biên <b className="font-mono">{fmt(d.range)}</b>, đóng cửa tại <b className="font-mono">{fmt(d.last)}</b>.
@@ -530,6 +553,7 @@ function AccountStrip({ view }: { view: TradeView }) {
           <div role="progressbar" aria-label="Mức lỗ trong ngày so với giới hạn" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(used)} className="mt-0.5 h-1.5 w-full rounded bg-slate-300 dark:bg-slate-700">
             <div className={`h-1.5 rounded ${used >= 80 ? "bg-red-600" : used >= 50 ? "bg-amber-500" : "bg-emerald-600"}`} style={{ width: `${used}%` }} />
           </div>
+          <p data-testid="loss-limits-note" className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">{l.daily_loss_stop_pct}% là giới hạn thường: chạm thì bàn chặn lệnh mới. 3,5% là sàn khẩn cấp: chạm thì bàn đóng hết lệnh đang mở.</p>
           {l.daily_loss_guard ? (
             <p data-testid="daily-loss-block" className="mt-1 text-xs font-semibold text-red-800 dark:text-red-300">
               Chặn lệnh mới: lỗ trong ngày đã chạm giới hạn. Quản lý vị thế đang mở vẫn chạy.

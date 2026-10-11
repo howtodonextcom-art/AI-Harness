@@ -23,11 +23,12 @@ export function shortState(state: string): { text: string; tone: "up" | "down" |
 const TONE_CLASS = { up: "text-emerald-700 dark:text-emerald-300", down: "text-red-700 dark:text-red-300", flat: "text-slate-600 dark:text-slate-300" };
 
 /** Multi-timeframe context in one row; a click switches the chart to that timeframe. */
-export function MtfStrip({ rows, tf, onFocus }: { rows: TimeframeRow[]; tf: string; onFocus: (tf: string) => void }) {
+export function MtfStrip({ rows, tf, onFocus, marketClosed = false }: { rows: TimeframeRow[]; tf: string; onFocus: (tf: string) => void; marketClosed?: boolean }) {
   return (
     <div data-testid="matrix" role="group" aria-label="Bối cảnh đa khung thời gian" className="grid grid-cols-3 gap-1 text-xs sm:grid-cols-6">
       {rows.map((r) => {
-        const s = shortState(r.state);
+        // a closed market has old bars by definition: say so, and keep "DỮ LIỆU CŨ" for a real stale-data failure while it is open
+        const s = marketClosed && r.state.toUpperCase() === "STALE" ? { text: "ĐÓNG CỬA", tone: "flat" as const } : shortState(r.state);
         return (
           <button
             key={r.timeframe}

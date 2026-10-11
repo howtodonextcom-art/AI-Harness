@@ -3,7 +3,7 @@
 import { Term } from "@/components/terminal/Term";
 import { useEffect, useRef, useState } from "react";
 import { countdownText } from "@/lib/chartMath";
-import { ZONE_LABEL, clockInZone, formatInZone, type DisplayZone } from "@/lib/time";
+import { ZONE_LABEL, ZONE_SHORT, clockInZone, formatInZone, type DisplayZone } from "@/lib/time";
 import type { TradeView } from "@/lib/trade";
 import { ageText, fmt } from "@/components/trade/ui";
 
@@ -152,7 +152,7 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
             </select>
           </div>
           <div data-testid="countdown" className={`font-mono text-xs ${MUTED}`}>
-            {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
+            {countdown ? <>Nến {tf} đóng sau <b className="text-sm text-inherit">{countdown}</b></> : <span>{open ? `Nến ${tf}: chờ dữ liệu` : reopen !== null ? <>Mở lại lúc <b className="text-sm text-inherit">{formatInZone(ctx?.next_open ?? null, zone).slice(5, 16)}</b> <span title={ZONE_LABEL[zone]}>({ZONE_SHORT[zone]})</span> · còn <b className="text-sm text-inherit">{reopenIn}</b></> : `Nến ${tf}: thị trường đóng`}</span>}
           </div>
           <span data-testid="data-age" className={`hidden text-xs sm:inline ${MUTED}`}>dữ liệu: {ageText(view?.data_age_seconds === null || view?.data_age_seconds === undefined ? view?.data_age_seconds : view.data_age_seconds + extra)}</span>
           <button type="button" data-testid="market-more" aria-expanded={more} onClick={() => setMore(!more)} className="text-xs font-semibold underline roomy:hidden">{more ? "Ẩn chi tiết thị trường ▴" : "Chi tiết thị trường ▾"}</button>

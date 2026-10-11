@@ -43,15 +43,17 @@ interface Props {
   /** px at the top of the chart taken by the context legend: labels and the badge stay below it */
   topInset?: number;
   planLive: boolean;
+  /** the Human action authorizes the open position's facts on the chart (action HOLD) */
+  holdLive: boolean;
   plan: TradePlan | null;
   view: TradeView | null;
   showPlan: boolean;
   showPaper: boolean;
 }
 
-function modelFromProps({ planLive, plan, view, showPlan, showPaper }: Omit<Props, "api" | "width" | "height" | "topInset">): OverlayModel | null {
+function modelFromProps({ planLive, holdLive, plan, view, showPlan, showPaper }: Omit<Props, "api" | "width" | "height" | "topInset">): OverlayModel | null {
   const position = view?.desk?.position;
-  if (showPaper && position && position.status === "OPEN") {
+  if (showPaper && holdLive && position && position.status === "OPEN") {
     const side = position.side === "SELL" ? "SELL" : "BUY";
     const entry = position.fill_price;
     const sl = position.sl;

@@ -69,7 +69,15 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
       ? "Đã kích hoạt"
       : phase === "ARMED"
         ? `Đã hình thành, chờ trigger M5${n !== null && validBars !== null ? ` (còn ${Math.max(0, validBars - n)} nến M5)` : ""}`
-        : "Chưa có";
+        : a.stage === "BLOCKED"
+          ? "Đã đủ điều kiện kỹ thuật, đang bị chặn"
+          : a.stage === "EXPIRED" || expiredNow
+            ? "Đã hết hiệu lực"
+            : a.stage === "INVALIDATED"
+              ? "Vừa bị vô hiệu"
+              : a.stage === "INCOMPLETE"
+                ? "Có setup, kế hoạch chưa đầy đủ"
+                : "Chưa có";
   const make = (code: ActionText["code"], tone: ActionTone, word: string, sub: string, whenLabel: string, whenBody: string, whenShort?: string): ActionText => ({
     code,
     tone,
@@ -135,7 +143,16 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
 
   if (a.stage === "BLOCKED" && a.blocked_by) {
     const why = BLOCKER_VI[a.blocked_by.code] ?? a.blocked_by.message;
-    return make("WAIT", "wait", "CHỜ", `${SIDE ? `Có setup ${SIDE.toLowerCase()} nhưng ` : ""}không mở được: ${why}`, "Khi nào?", "Đừng mở lệnh cho setup này. Bàn sẽ tự cập nhật khi lý do chặn hết hoặc có setup mới.");
+    const reason = why.replace(/[.\s]+$/, "");
+    return make(
+      "WAIT",
+      "wait",
+      "CHỜ",
+      `Setup ${SIDE ? `${SIDE.toLowerCase()} ` : ""}đã đủ điều kiện kỹ thuật nhưng đang bị chặn: ${reason}`,
+      "Vì sao chặn?",
+      `${reason}. Đừng mở lệnh cho setup này; bàn sẽ tự cập nhật khi lý do chặn hết hoặc có setup mới.`,
+      `${reason}. Chờ setup mới.`,
+    );
   }
   if (a.stage === "CLOSED") return make("WAIT", "wait", "CHỜ", "Thị trường đóng cửa", "Khi nào?", "Chưa làm gì. Bộ máy tự tính lại khi thị trường mở cửa.");
   if (a.stage === "EXPIRED" || expiredNow) return make("WAIT", "wait", "CHỜ", "Setup đã hết hiệu lực, không còn mở được", "Khi nào?", "Chưa làm gì. Chờ setup mới.");

@@ -75,6 +75,7 @@ interface Props {
   history: boolean;
   /** False when the decision must not be drawn as a live plan (stale data, expired, WAIT). */
   planLive: boolean;
+  holdLive: boolean;
   plan: TradePlan | null;
   focus: { from: string; to: string } | null;
   follow: boolean;
@@ -183,7 +184,7 @@ interface Measure {
  * the ruler). Nothing here derives a signal.
  */
 export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalChart(
-  { bars, timeframe, zone, overlays, view, markers, history, planLive, plan, focus, follow, onFollowChange, levels, alerts, setups, tool, onAddLevel, onToolDone, drawings, selectedDrawing, onSelectDrawing, onAddDrawing, onChangeDrawing, onDeleteDrawing, extraLines },
+  { bars, timeframe, zone, overlays, view, markers, history, planLive, holdLive, plan, focus, follow, onFollowChange, levels, alerts, setups, tool, onAddLevel, onToolDone, drawings, selectedDrawing, onSelectDrawing, onAddDrawing, onChangeDrawing, onDeleteDrawing, extraLines },
   ref,
 ) {
   const container = useRef<HTMLDivElement>(null);
@@ -238,7 +239,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     return () => ro.disconnect();
   }, []);  const lastRange = useRef<{ from: number; to: number } | null>(null);
   const lastWidth = useRef(0);
-  const systemOverlayActive = Boolean((overlays.plan && planLive && plan && plan.complete) || (overlays.paper && view?.desk?.position?.status === "OPEN"));
+  const systemOverlayActive = Boolean((overlays.plan && planLive && plan && plan.complete) || (overlays.paper && holdLive && view?.desk?.position?.status === "OPEN"));
 
   useEffect(() => {
     followRef.current = follow;
@@ -765,7 +766,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       add(plan.tp2, "TP2 tham khảo", GREEN, LineStyle.SparseDotted, 1, "TP2");
     }
     const position = view?.desk?.position;
-    if (overlays.paper && position && position.status === "OPEN") {
+    if (overlays.paper && holdLive && position && position.status === "OPEN") {
       add(position.fill_price, "PAPER ENTRY", BLUE, LineStyle.Solid, 2);
       add(position.sl, "PAPER SL", RED, LineStyle.Dashed);
       add(position.tp, "PAPER TP", GREEN, LineStyle.Dotted);
@@ -782,7 +783,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
     for (const l of extraLines ?? []) add(l.price, l.title, l.color, LineStyle.SparseDotted, 1, l.id);
     for (const a of alerts) if (a.firedAt === null) add(a.price, `CẢNH BÁO ${a.direction === "UP" ? "↑" : "↓"}`, AMBER, LineStyle.LargeDashed, 1, `alert-${a.id}`);
     return out;
-  }, [view, plan, overlays.plan, overlays.paper, overlays.structure, planLive, levels, alerts, extraLines]);
+  }, [view, plan, overlays.plan, overlays.paper, overlays.structure, planLive, holdLive, levels, alerts, extraLines]);
 
   const lineKey = useMemo(() => lineSpecs.map((l) => `${l.id}|${l.title}|${l.price}|${l.color}|${l.style}|${l.width}`).join(";"), [lineSpecs]);
   const lineSpecsRef = useRef(lineSpecs);
@@ -879,7 +880,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       />
 
       {overlays.news && <NewsMarkers news={view?.news} api={drawApiRef.current} zone={zone} width={size.w} height={size.h} />}
-      <SystemTradePlanOverlay api={drawApiRef.current} width={size.w} height={size.h} topInset={legendBottom} planLive={planLive} plan={plan} view={view} showPlan={overlays.plan} showPaper={overlays.paper} />
+      <SystemTradePlanOverlay api={drawApiRef.current} width={size.w} height={size.h} topInset={legendBottom} planLive={planLive} holdLive={holdLive} plan={plan} view={view} showPlan={overlays.plan} showPaper={overlays.paper} />
       <DrawingLayer drawings={drawings} draft={draft} selectedId={selectedDrawing} api={drawApiRef.current} width={size.w} height={size.h} onSelect={onSelectDrawing} onChange={onChangeDrawing} onDelete={onDeleteDrawing} passive={tool !== "none"} />
 
       {shown && (

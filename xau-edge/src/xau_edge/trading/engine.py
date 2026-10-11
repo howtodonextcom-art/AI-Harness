@@ -772,6 +772,7 @@ class TradeEngine:
             hero = hero_state(
                 signal=signal, conditions=conditions, expired=expired, plan=plan, position=position,
                 last_exit=self._last_exit(), market_open=snap.market_open, now=stamp,
+                blocked=bool(entry_blockers),
             )  # fmt: skip
             hero["action"] = action_for(hero, signal, position, entry_blockers)
             decision = signal.model_dump(mode="json")

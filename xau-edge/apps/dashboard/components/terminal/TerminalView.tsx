@@ -34,6 +34,16 @@ import {
 } from "@/lib/trade";
 import { BASE_TITLE, beep, isNewSetup, readyTitle, systemNotify } from "@/lib/notify";
 import { EXIT_REASON_VI, HERO_ICON, HERO_VI, actionErrorText, humanCondition } from "@/lib/vi";
+import { humanSurface, type HumanSurface } from "@/lib/humanState";
+import { announcePopover } from "@/lib/popovers";
+
+/** The short state words of the fullscreen summary and the phone bar: they follow the Human surface, never `hero.state` alone. */
+function heroLabel(view: TradeViewData, surface: HumanSurface | null): string {
+  if (surface?.id === "WAIT_BLOCKED") return "⏸ CHỜ — SETUP BỊ CHẶN";
+  if (surface?.id === "EXPIRED") return `${HERO_ICON.EXPIRED_SETUP} ${HERO_VI.EXPIRED_SETUP.label}`;
+  if (surface && (surface.id === "WAIT_NO_SETUP" || surface.id === "WAIT_NO_TRIGGER") && view.hero.state !== "WAIT" && view.hero.state !== "SETUP_ARMED") return `${HERO_ICON.WAIT} ${HERO_VI.WAIT.label}`;
+  return `${HERO_ICON[view.hero.state]} ${HERO_VI[view.hero.state].label}`;
+}
 
 const POLL_MS = 3000;
 const SYMBOL = "XAUUSD"; // this terminal is single-symbol: the symbol is part of the storage scope
@@ -345,7 +355,9 @@ export function TerminalView() {
   const plan = view?.trade_plan ?? null;
   const expiresMs = plan?.expires_at ? Date.parse(plan.expires_at) : null;
   const expiredNow = plan !== null && (plan.expired || (expiresMs !== null && expiresMs <= serverNow));
-  const planLive = !uiStale && !error && !expiredNow && Boolean(plan?.complete) && (hero?.state === "BUY_READY" || hero?.state === "SELL_READY");
+  const surface = view ? humanSurface(view, { expiredNow, offline: uiStale || Boolean(error) }) : null;
+  const planLive = !uiStale && !error && !expiredNow && Boolean(plan?.complete) && surface?.overlay === "PLAN";
+  const holdLive = !uiStale && !error && surface?.overlay === "POSITION";
   const untrusted = hero?.state === "UNAVAILABLE" || hero?.state === "STALE";
   const dim = uiStale || untrusted;
   const mode = view?.source_mode ?? "LIVE";
@@ -430,7 +442,7 @@ export function TerminalView() {
 
   // ---- a setup became ready: tab title, notification, optional beep (LIVE only, once per setup) -------
   const seenSetups = useRef<Set<string>>(new Set());
-  const readySide = view?.source_mode === "LIVE" && !uiStale && !error && !expiredNow && (hero?.state === "BUY_READY" || hero?.state === "SELL_READY") ? plan?.side ?? null : null;
+  const readySide = view?.source_mode === "LIVE" && !uiStale && !error && !expiredNow && surface?.overlay === "PLAN" ? plan?.side ?? null : null;
   const readyId = readySide ? plan?.setup_id ?? null : null;
   const readyEntry = plan?.planned_entry ?? null;
   useEffect(() => {
@@ -472,7 +484,10 @@ export function TerminalView() {
       else if (k === "x") setFullscreen((v) => !v);
       else if (k === "m") setTool((t) => (t === "measure" ? "none" : "measure"));
       else if (k === "t") setTool((t) => (t === "line" ? "none" : "line"));
-      else if (e.key === "?") setHelp(true);
+      else if (e.key === "?") {
+        announcePopover("help");
+        setHelp(true);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -502,9 +517,9 @@ export function TerminalView() {
       journal={journal && journal.source_mode === mode ? journal : null}
     />
   );
-  const ready = hero?.state === "BUY_READY" || hero?.state === "SELL_READY";
+  const ready = surface?.stickyBar === "OPEN";
   const canOpen = Boolean(view?.actionable && !uiStale && !error && !expiredNow && plan?.complete && chosen?.ok);
-  const showActionBar = Boolean(view && ((ready && !expiredNow && !uiStale && !error) || hero?.state === "POSITION_OPEN")); // a stale READY offers nothing
+  const showActionBar = Boolean(view && ((ready && !expiredNow && !uiStale && !error) || surface?.stickyBar === "CLOSE")); // only what the Human action authorizes: a blocked, stale or expired READY offers nothing
 
   const chartBlock = (
     <section
@@ -531,6 +546,10 @@ export function TerminalView() {
         onAlert={addAlert}
         bid={view?.quote?.bid ?? null}
         alertCount={alerts.filter((a) => !a.firedAt).length}
+        alerts={alerts}
+        onRemoveAlert={removeAlert}
+        levels={levels}
+        onRemoveLevel={(id) => setLevels((l) => l.filter((x) => x.id !== id))}
         onHelp={() => setHelp(true)}
         drawings={drawings}
         selectedDrawing={selectedDrawing}
@@ -540,7 +559,7 @@ export function TerminalView() {
         onClearDrawings={clearDrawings}
         scopeLabel={scope ? scopeLabel(scope) : null}
       />
-      <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[min(28rem,62vh)] sm:h-[28rem] short:h-[calc(100dvh-11rem)] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
+      <div className={`relative flex min-h-0 ${fullscreen ? "flex-1" : "h-[min(28rem,62vh)] sm:h-[28rem] short:h-[calc(100dvh-10.5rem)] lg:h-[min(38rem,calc(100vh-14rem))]"}`}>
         {dim && <div data-testid="chart-veil" aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] bg-white/60 dark:bg-slate-950/60" />}
         {hydrated && <TerminalChart
           ref={chart}
@@ -552,6 +571,7 @@ export function TerminalView() {
           markers={markers && markers.source_mode === mode ? markers : null}
           history={prefs.history}
           planLive={planLive}
+          holdLive={holdLive}
           plan={plan}
           focus={focus}
           follow={prefs.follow}
@@ -573,12 +593,12 @@ export function TerminalView() {
       </div>
       {fullscreen && view && (
         <div data-testid="fullscreen-summary" className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border border-slate-400 px-3 py-1.5 text-sm">
-          <b>{HERO_ICON[view.hero.state]} {HERO_VI[view.hero.state].label}</b>
+          <b>{heroLabel(view, surface)}</b>
           {planLive && plan && <span className="font-mono">Entry {fmt(plan.planned_entry)} · SL {fmt(plan.sl)} · TP {fmt(plan.tp1)} · R/R {fmt(plan.rr_net)}</span>}
           {position && <span className="font-mono">{position.side} {fmt(position.fill_price)} · P&L {money(position.unrealized_pnl)} · {fmt(position.unrealized_r, 2)}R</span>}
           <span className="font-mono text-slate-600 dark:text-slate-400">{view.quote ? `${fmt(view.quote.bid)} / ${fmt(view.quote.ask)}` : ""}</span>
           {ready && !expiredNow && !uiStale && !error && <button type="button" data-testid="fs-open" disabled={!canOpen || busy} onClick={requestOpen} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Mở lệnh…</button>}
-          {hero?.state === "POSITION_OPEN" && <button type="button" data-testid="fs-close" disabled={busy} onClick={() => setClosing(true)} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Đóng lệnh…</button>}
+          {surface?.stickyBar === "CLOSE" && <button type="button" data-testid="fs-close" disabled={busy} onClick={() => setClosing(true)} className="rounded border-2 border-slate-600 px-2 py-0.5 text-xs font-bold disabled:opacity-40">Đóng lệnh…</button>}
           <button type="button" onClick={() => setFullscreen(false)} className="ml-auto rounded border border-slate-400 px-2 py-0.5 text-xs font-semibold">⤡ Thu nhỏ (Esc)</button>
         </div>
       )}
@@ -642,7 +662,7 @@ export function TerminalView() {
         <div className="contents short:flex short:min-w-0 short:flex-col short:gap-2 short:[grid-area:left] lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:left]">
           {chartBlock}
           <div style={{ gridArea: "mtf" }} className="min-w-0">
-            <MtfStrip rows={view?.timeframes ?? []} tf={prefs.tf} onFocus={focusTf} />
+            <MtfStrip rows={view?.timeframes ?? []} tf={prefs.tf} onFocus={focusTf} marketClosed={view?.hero.state === "MARKET_CLOSED"} />
           </div>
         </div>
         <div className="contents short:flex short:max-h-[calc(100dvh-4.5rem)] short:min-w-0 short:flex-col short:gap-2 short:overflow-y-auto short:pb-16 short:[grid-area:side] lg:flex lg:min-w-0 lg:flex-col lg:gap-2 lg:[grid-area:side]">
@@ -685,7 +705,7 @@ export function TerminalView() {
       </div>
       {showActionBar && view && (
         <div data-testid="mobile-action-bar" inert={modalOpen} style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }} className="fixed inset-x-0 bottom-0 z-[45] short:left-auto short:w-[38%] short:rounded-tl-xl flex items-center gap-3 border-t-2 border-slate-400 bg-white px-3 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] lg:hidden dark:bg-slate-900">
-          {hero?.state === "POSITION_OPEN" && position ? (
+          {surface?.stickyBar === "CLOSE" && position ? (
             <>
               <div className="min-w-0 flex-1 text-sm">
                 <b>{HERO_ICON.POSITION_OPEN} {position.side === "BUY" ? "MUA" : "BÁN"} paper</b>
@@ -696,10 +716,10 @@ export function TerminalView() {
           ) : (
             <>
               <div className="min-w-0 flex-1 text-sm">
-                <b>{hero ? HERO_ICON[hero.state] : ""} {hero ? HERO_VI[hero.state].label : ""}</b>
+                <b>{view ? heroLabel(view, surface) : ""}</b>
                 <div className="font-mono text-xs leading-tight">SL {fmt(plan?.sl)} · TP {fmt(plan?.tp1)} · R/R {fmt(plan?.rr_net)}</div>
               </div>
-              <button type="button" data-testid="action-bar-open" disabled={!canOpen || busy} onClick={requestOpen} className={`rounded-md border-2 px-4 py-2 text-sm font-black text-white disabled:opacity-40 ${hero?.state === "BUY_READY" ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>
+              <button type="button" data-testid="action-bar-open" disabled={!canOpen || busy} onClick={requestOpen} className={`rounded-md border-2 px-4 py-2 text-sm font-black text-white disabled:opacity-40 ${surface?.id === "BUY_READY" ? "border-emerald-700 bg-emerald-700" : "border-red-700 bg-red-700"}`}>
                 Mở lệnh…
               </button>
             </>
@@ -720,6 +740,7 @@ export function TerminalView() {
               </div>
             ))}
           </dl>
+          <p data-testid="shortcut-note" className="mt-2 text-xs text-slate-600 dark:text-slate-400">Phím số không theo thứ tự khung: 1 = M1, 5 = M5, 2 = M15, 3 = M30, 4 = H4; chữ H = H1. (Giữ nguyên để không phá thói quen cũ.)</p>
           <label className="mt-2 flex items-center gap-2 text-sm">
             <input type="checkbox" name="shortcuts-enabled" data-testid="shortcuts-enabled" checked={prefs.shortcuts} onChange={(e) => setPrefs({ shortcuts: e.target.checked })} />
             Bật phím tắt một phím
