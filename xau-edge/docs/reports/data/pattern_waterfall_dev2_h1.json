@@ -1,0 +1,154 @@
+{
+  "dataset": "dev2_h1",
+  "classification": "BURNED",
+  "bars": 48470,
+  "outcome_analysis": "NONE",
+  "gate": {
+    "min_net_rr": 1.5,
+    "tick": 0.01,
+    "pivots": "left=right=3, confirmed_at <= actionable_at"
+  },
+  "cost_ledger_blockers": [
+    [
+      "slippage",
+      "BLOCKED_EXTERNALLY",
+      "N >= 30 broker-executed demo fills with requested and filled prices and times (owner authorization for demo execution is required to produce them)"
+    ],
+    [
+      "commission",
+      "BLOCKED_EXTERNALLY",
+      "the account's commission schedule (FTMO account-type terms or a closed demo deal's commission field)"
+    ]
+  ],
+  "no_barrier_known": 1,
+  "waterfall": {
+    "ALL": {
+      "detected": 365,
+      "first_failure": {
+        "INVALID_GEOMETRY": 20,
+        "ROOM_FAIL": 343,
+        "GROSS_RR_FAIL": 1,
+        "FILL_UNVERIFIED": 1,
+        "COST_UNVERIFIED": 0,
+        "NET_RR_FAIL": 0,
+        "PROBABILITY_UNAVAILABLE": 0,
+        "ENTRY_ELIGIBLE": 0
+      },
+      "raw_reasons_overlapping": {
+        "INVALID_GEOMETRY": 20,
+        "ROOM_FAIL": 363,
+        "GROSS_RR_FAIL": 291,
+        "FILL_UNVERIFIED": 365,
+        "COST_UNVERIFIED": 365,
+        "NET_RR_FAIL": 365,
+        "PROBABILITY_UNAVAILABLE": 365
+      },
+      "survivors": {
+        "DETECTED": 365,
+        "PASSED_INVALID_GEOMETRY": 345,
+        "PASSED_ROOM_FAIL": 2,
+        "PASSED_GROSS_RR_FAIL": 1,
+        "PASSED_FILL_UNVERIFIED": 0,
+        "PASSED_COST_UNVERIFIED": 0,
+        "PASSED_NET_RR_FAIL": 0,
+        "PASSED_PROBABILITY_UNAVAILABLE": 0
+      }
+    },
+    "double_top_bottom": {
+      "detected": 287,
+      "first_failure": {
+        "INVALID_GEOMETRY": 20,
+        "ROOM_FAIL": 266,
+        "GROSS_RR_FAIL": 1,
+        "FILL_UNVERIFIED": 0,
+        "COST_UNVERIFIED": 0,
+        "NET_RR_FAIL": 0,
+        "PROBABILITY_UNAVAILABLE": 0,
+        "ENTRY_ELIGIBLE": 0
+      },
+      "raw_reasons_overlapping": {
+        "INVALID_GEOMETRY": 20,
+        "ROOM_FAIL": 286,
+        "GROSS_RR_FAIL": 281,
+        "FILL_UNVERIFIED": 287,
+        "COST_UNVERIFIED": 287,
+        "NET_RR_FAIL": 287,
+        "PROBABILITY_UNAVAILABLE": 287
+      },
+      "survivors": {
+        "DETECTED": 287,
+        "PASSED_INVALID_GEOMETRY": 267,
+        "PASSED_ROOM_FAIL": 1,
+        "PASSED_GROSS_RR_FAIL": 0,
+        "PASSED_FILL_UNVERIFIED": 0,
+        "PASSED_COST_UNVERIFIED": 0,
+        "PASSED_NET_RR_FAIL": 0,
+        "PASSED_PROBABILITY_UNAVAILABLE": 0
+      }
+    },
+    "head_and_shoulders": {
+      "detected": 7,
+      "first_failure": {
+        "INVALID_GEOMETRY": 0,
+        "ROOM_FAIL": 7,
+        "GROSS_RR_FAIL": 0,
+        "FILL_UNVERIFIED": 0,
+        "COST_UNVERIFIED": 0,
+        "NET_RR_FAIL": 0,
+        "PROBABILITY_UNAVAILABLE": 0,
+        "ENTRY_ELIGIBLE": 0
+      },
+      "raw_reasons_overlapping": {
+        "INVALID_GEOMETRY": 0,
+        "ROOM_FAIL": 7,
+        "GROSS_RR_FAIL": 3,
+        "FILL_UNVERIFIED": 7,
+        "COST_UNVERIFIED": 7,
+        "NET_RR_FAIL": 7,
+        "PROBABILITY_UNAVAILABLE": 7
+      },
+      "survivors": {
+        "DETECTED": 7,
+        "PASSED_INVALID_GEOMETRY": 7,
+        "PASSED_ROOM_FAIL": 0,
+        "PASSED_GROSS_RR_FAIL": 0,
+        "PASSED_FILL_UNVERIFIED": 0,
+        "PASSED_COST_UNVERIFIED": 0,
+        "PASSED_NET_RR_FAIL": 0,
+        "PASSED_PROBABILITY_UNAVAILABLE": 0
+      }
+    },
+    "wolfe": {
+      "detected": 71,
+      "first_failure": {
+        "INVALID_GEOMETRY": 0,
+        "ROOM_FAIL": 70,
+        "GROSS_RR_FAIL": 0,
+        "FILL_UNVERIFIED": 1,
+        "COST_UNVERIFIED": 0,
+        "NET_RR_FAIL": 0,
+        "PROBABILITY_UNAVAILABLE": 0,
+        "ENTRY_ELIGIBLE": 0
+      },
+      "raw_reasons_overlapping": {
+        "INVALID_GEOMETRY": 0,
+        "ROOM_FAIL": 70,
+        "GROSS_RR_FAIL": 7,
+        "FILL_UNVERIFIED": 71,
+        "COST_UNVERIFIED": 71,
+        "NET_RR_FAIL": 71,
+        "PROBABILITY_UNAVAILABLE": 71
+      },
+      "survivors": {
+        "DETECTED": 71,
+        "PASSED_INVALID_GEOMETRY": 71,
+        "PASSED_ROOM_FAIL": 1,
+        "PASSED_GROSS_RR_FAIL": 1,
+        "PASSED_FILL_UNVERIFIED": 0,
+        "PASSED_COST_UNVERIFIED": 0,
+        "PASSED_NET_RR_FAIL": 0,
+        "PASSED_PROBABILITY_UNAVAILABLE": 0
+      }
+    }
+  }
+}
