@@ -144,7 +144,7 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
     return make("WAIT", "wait", "CHỜ", `Setup đã hình thành, chưa có trigger — chưa được vào lệnh`, `Chỉ ${verb} khi:`, `nến M5 kế tiếp đóng xác nhận trigger ${dir}${left === null ? "" : ` (còn ${left} nến M5 trước khi setup hết hạn)`}; lúc đó hành động chuyển thành ${verb} PAPER.`);
   }
   if (bias.side) {
-    return make("WAIT", "wait", "CHỜ", "Chưa có tín hiệu vào lệnh", `Chỉ ${verb} khi:`, `M15 có nhịp pullback tạo setup, rồi nến M5 đóng xác nhận trigger ${dir}; lúc đó hành động chuyển thành ${verb} PAPER.`);
+    return make("WAIT", "wait", "CHỜ", "Chưa có tín hiệu vào lệnh", `Chỉ ${verb} khi:`, `M15 có nhịp pullback (đó mới là lúc có setup; hiện chưa có), rồi nến M5 đóng xác nhận trigger ${dir}; lúc đó hành động chuyển thành ${verb} PAPER.`);
   }
   return make("WAIT", "wait", "CHỜ", next ? `Chưa có hướng ưu tiên · đang chờ: ${next}` : "Chưa có hướng ưu tiên", "Khi nào?", "Chưa làm gì. Chờ là trạng thái bình thường: bộ máy rất ít khi có kế hoạch.");
 }

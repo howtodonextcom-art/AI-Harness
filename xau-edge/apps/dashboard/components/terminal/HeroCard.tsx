@@ -31,6 +31,8 @@ interface Common {
   veil: string;
   extra: ReactNode;
   steps: Step[] | null;
+  honesty?: ReactNode;
+  levels?: ReactNode;
 }
 
 const arrow = (side: "BUY" | "SELL" | null) => (side === "BUY" ? "↑" : side === "SELL" ? "↓" : "→");
@@ -66,6 +68,8 @@ export function HeroCard(c: Common) {
           <span data-testid="no-entry" className="rounded border border-dashed border-slate-600 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide dark:border-slate-400">Không vào lệnh</span>
         )}
       </div>
+      {c.honesty}
+      {c.levels}
       {/* a phone drops the sub line only where it repeats the "KHÔNG VÀO LỆNH" badge (a lean with no setup yet); every other state keeps it */}
       <p data-testid="action-sub" className={`mt-1 text-sm font-semibold ${waiting && t.bias.side && t.setup === "Chưa có" ? "hidden sm:block" : ""}`}>{c.sub}</p>
       {waiting && t.showBias && (
@@ -75,6 +79,11 @@ export function HeroCard(c: Common) {
           <dt className="hidden font-bold uppercase tracking-wide opacity-75 sm:block"><Term id="setup">Setup</Term></dt>
           <dd data-testid="setup-stage" className="hidden sm:block">{t.setup}</dd>
         </dl>
+      )}
+      {waiting && t.setup === "Chưa có" && (
+        <p data-testid="setup-truth" className="mt-1 hidden text-[11px] leading-snug opacity-80 sm:block">
+          Một nguồn sự thật: chưa có setup. Nhãn PULLBACK trên M15 là vai trò khung (chỗ tìm setup), không phải setup đã hình thành.
+        </p>
       )}
       <When label={c.whenLabel} body={c.whenBody} short={c.whenShort} veil={c.veil} />
       {c.steps && (

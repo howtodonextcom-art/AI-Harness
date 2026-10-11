@@ -6,6 +6,7 @@ import { TechDetail } from "@/components/terminal/TechDetail";
 import { Term } from "@/components/terminal/Term";
 import { useEffect, useState, type ReactNode } from "react";
 import { actionText } from "@/lib/action";
+import { heroLevels, honestyLine } from "@/lib/honesty";
 import { HeroCard, TONE_STYLE } from "@/components/terminal/HeroCard";
 import { parseDecimal } from "@/lib/chartMath";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
@@ -349,12 +350,47 @@ function ActionHero({ view, expiredNow, secondsLeft, zone, setups }: { view: Tra
         veil={veil}
         extra={extra}
         steps={lifecycleSteps(view, setups)}
+        honesty={<HonestyBadge view={view} />}
+        levels={<HeroLevels view={view} />}
       />
     </div>
   );
 }
 
 const mmss2 = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+function HonestyBadge({ view }: { view: TradeView }) {
+  const h = honestyLine(view);
+  return (
+    <div
+      data-testid="honesty"
+      data-label={h.label}
+      data-below-gate={h.belowGate ? "true" : "false"}
+      className={`mt-1 hidden rounded border px-1.5 py-0.5 text-[11px] leading-snug sm:block ${h.label === "UNVALIDATED" || h.belowGate ? "border-amber-700 bg-amber-500/20" : "border-emerald-700 bg-emerald-500/20"}`}
+    >
+      <div className="font-bold uppercase tracking-wide">{h.label} · {h.gloss} · phủ {h.coverageText} / {h.gate}%</div>
+      <p className="mt-0.5 hidden font-semibold normal-case tracking-normal sm:block">{h.consequence}</p>
+    </div>
+  );
+}
+
+function HeroLevels({ view }: { view: TradeView }) {
+  const l = heroLevels(view);
+  const row = (id: string, k: string, v: string) => (
+    <div>
+      <dt className="text-[10px] font-bold uppercase opacity-70">{k}</dt>
+      <dd data-testid={id} className="font-mono text-sm font-semibold">{v}</dd>
+    </div>
+  );
+  return (
+    <dl data-testid="hero-levels" className="mt-1 hidden grid-cols-4 gap-1 text-[10px] sm:mt-1.5 sm:grid sm:text-xs">
+      {row("hero-entry", "Entry", fmt(l.entry))}
+      {row("hero-sl", "SL", fmt(l.sl))}
+      {row("hero-tp", "TP", fmt(l.tp))}
+      {row("hero-rr", "R:R", fmt(l.rr))}
+    </dl>
+  );
+}
 
 /** The state that dominates the decision area (always first, also on a phone). */
 export function DecisionHero({ view, serverNowMs, zone, setups }: { view: TradeView; serverNowMs: number; zone: DisplayZone; setups: SetupHistoryRow[] | null }) {

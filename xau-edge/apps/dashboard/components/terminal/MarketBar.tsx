@@ -74,8 +74,13 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
           <div className="flex flex-wrap items-center gap-1.5">
             <h1 className="mr-1 text-lg font-black tracking-tight">XAUUSD</h1>
             <span data-testid="source-pill" className={`${pill} ${live ? (open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300") : "border-red-600 bg-red-500/15 text-red-800 dark:text-red-200"}`}>
-              {view ? (live ? (open ? "LIVE" : "LIVE · ĐÓNG CỬA") : "REPLAY · NOT LIVE") : "…"}
+              {view ? (live ? (open ? "DỮ LIỆU LIVE" : "DỮ LIỆU LIVE · ĐÓNG CỬA") : "REPLAY · NOT LIVE") : "…"}
             </span>
+            {!open && view && (
+              <span data-testid="header-action-pill" className={`${pill} border-slate-500 bg-slate-500/15 text-slate-800 dark:text-slate-200`}>
+                ⏸ {view.hero.action.code === "HOLD" ? "GIỮ" : view.hero.action.code === "EXIT" ? "ĐÃ THOÁT" : "CHỜ"} · {view.evidence.validated_edge ? "ĐÃ KIỂM CHỨNG" : "CHƯA KIỂM CHỨNG"}
+              </span>
+            )}
             <span data-testid="market-pill" className={`${pill} ${uiStale ? "border-red-600 bg-red-500/15 text-red-800 dark:text-red-200" : open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300"}`}>
               {uiStale ? "Mất kết nối" : open ? `Thị trường MỞ${live ? "" : " (replay)"}` : status === "—" ? "…" : `Thị trường ${status === "CLOSED" ? "ĐÓNG" : status}`}
             </span>
