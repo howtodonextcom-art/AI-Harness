@@ -60,7 +60,7 @@ for (const side of ["BUY", "SELL"] as const) {
     // M-01: the actual blocker, visible (not display:none, not inside a closed <details>)
     const reason = hero.getByText("Gần giờ thị trường đóng cửa", { exact: false }).first();
     await expect(reason).toBeVisible();
-    await expect(page.getByTestId("action-when")).toContainText("Chờ setup mới");
+    await expect(page.getByTestId("action-when")).toContainText("Chờ lý do chặn hết");
   });
 }
 
@@ -217,4 +217,44 @@ test("L-05, L-06, L-07: shortcut note, loss-limit explanation, and a labelled re
   await expect(page.getByTestId("loss-limits-note")).toContainText("chặn lệnh mới");
   await page.getByTestId("shortcut-help").click();
   await expect(page.getByTestId("shortcut-note")).toContainText("2 = M15");
+});
+
+test("independent review finding: the BUY/SELL signal marker of a blocked setup is a grey 'bị chặn' dot, not an offer-looking arrow", async ({ page }) => {
+  for (const side of ["BUY", "SELL"] as const) {
+    const v = blocked(side);
+    const markers = {
+      simulated: true,
+      source_mode: v.source_mode,
+      paper_trades: [],
+      signals: [{ at: v.served_at, bar_time: v.served_at, setup_id: v.trade_plan!.setup_id, side, entry: v.trade_plan!.planned_entry, sl: v.trade_plan!.sl, tp1: v.trade_plan!.tp1, tp2: v.trade_plan!.tp2, rr: v.trade_plan!.rr_net, lots: 0.03, expires_at: v.trade_plan!.expires_at, taken: false, strategy_version: "1.2.1" }],
+    };
+    await mock(page, v, { markers: markers as never });
+    await page.goto("/trade");
+    await expect(page.getByTestId("trade-chart")).toHaveAttribute("data-blocked-markers", "1");
+    // and a READY (not blocked) setup keeps its normal arrow
+    const ready = view(side === "BUY" ? "buy" : "sell");
+    await mock(page, ready, { markers: { ...markers, signals: markers.signals.map((s) => ({ ...s, setup_id: ready.trade_plan!.setup_id })) } as never });
+    await page.goto("/trade");
+    await expect(page.getByTestId("trade-chart")).toHaveAttribute("data-blocked-markers", "0");
+  }
+});
+
+test("independent review finding: the stale quote and the data age never contradict (GIÁ CŨ 2 phút next to dữ liệu: 0s)", async ({ page }) => {
+  const v = view("stale");
+  await mock(page, v);
+  await page.goto("/trade");
+  await expect(page.getByTestId("price-stale")).toContainText("GIÁ CŨ");
+  const stale = (await page.getByTestId("price-stale").innerText()).replace(/\s+/g, " ");
+  const age = (await page.getByTestId("data-age").innerText()).replace(/\s+/g, " ");
+  expect(stale).toContain("GIÁ CŨ");
+  expect(age, `data age must not claim fresh data while the quote is stale: "${age}" vs "${stale}"`).not.toMatch(/: 0 giây/);
+});
+
+test("independent review finding: the phone bar carries the entry price, and the chart expiry label uses the trader's zone", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mock(page, view("buy"));
+  await page.goto("/trade");
+  await expect(page.getByTestId("mobile-action-bar")).toContainText("@ 4236.47");
+  await expect(page.getByTestId("system-plan-overlay")).toContainText("GMT+7");
+  await expect(page.getByTestId("system-plan-overlay")).not.toContainText(" UTC");
 });
