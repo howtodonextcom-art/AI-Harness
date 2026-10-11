@@ -35,7 +35,14 @@ def build_children(
     py = python_argv()
     children = []
     if collector:
-        children.append(ChildSpec("collector", [*py, "scripts/run_market_collector.py"], ROOT))
+        children.append(
+            ChildSpec(
+                "collector",
+                [*py, "scripts/run_market_collector.py"],
+                ROOT,
+                heartbeat=ROOT / "data" / "market" / "collector_status.json",
+            )
+        )
     if news:
         children.append(ChildSpec("news", [*py, "scripts/run_news_refresher.py"], ROOT))
     if api:

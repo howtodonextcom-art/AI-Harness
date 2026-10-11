@@ -42,6 +42,9 @@ class ChildSpec:
     argv: Sequence[str]
     cwd: Path
     env: dict[str, str] = field(default_factory=dict)
+    heartbeat: Path | None = None
+    """A file the child rewrites while it works; older than ``stale_after`` means hung, not slow."""
+    stale_after: float = 300.0
 
 
 @dataclass
@@ -53,6 +56,9 @@ class _Child:
     backoff: float = BACKOFF_START
     next_start: float = 0.0
     last_exit: int | None = None
+    last_reason: str | None = None
+    kill_reason: str | None = None
+    hung_kills: int = 0
     logger: logging.Logger | None = None
     pump: threading.Thread | None = None
 
@@ -122,11 +128,13 @@ class Supervisor:
         log_dir: Path,
         clock: Callable[[], float] = time.monotonic,
         sleep: Callable[[float], None] = time.sleep,
+        wall: Callable[[], float] = time.time,
     ) -> None:
         self.run_dir = run_dir
         self.log_dir = log_dir
         self._clock = clock
         self._sleep = sleep
+        self._wall = wall
         self._children = [_Child(spec) for spec in children]
         self._stop = threading.Event()
 
@@ -192,6 +200,8 @@ class Supervisor:
         kill_tree(process)  # leftovers of a dead wrapper would keep the port busy
         child.process = None
         child.restarts += 1
+        child.last_reason = child.kill_reason or f"EXIT code={child.last_exit}"
+        child.kill_reason = None
         child.backoff = (
             BACKOFF_START if ran >= STABLE_AFTER else min(BACKOFF_MAX, child.backoff * 2)
         )
@@ -202,9 +212,32 @@ class Supervisor:
                 child.last_exit, ran, child.backoff,
             )  # fmt: skip
 
+    def _kill_if_hung(self, child: _Child) -> None:
+        spec, process = child.spec, child.process
+        if spec.heartbeat is None or process is None or process.poll() is not None:
+            return
+        if self._clock() - child.started_at < spec.stale_after:
+            return
+        try:
+            age = self._wall() - spec.heartbeat.stat().st_mtime
+        except OSError:
+            age = float("inf")
+        if age < spec.stale_after:
+            return
+        child.hung_kills += 1
+        child.kill_reason = f"HUNG heartbeat {age:.0f}s old"
+        if child.logger:
+            child.logger.info(
+                "SUPERVISOR child hung: %s not updated for %.0fs (limit %.0fs); killing pid=%s",
+                spec.heartbeat.name, age, spec.stale_after, process.pid,
+            )  # fmt: skip
+        kill_tree(process)
+        process.wait(timeout=10)
+
     def tick(self) -> None:
-        """One supervision pass: reap dead children, start the ones that are due."""
+        """One supervision pass: kill hung children, reap dead ones, start the ones that are due."""
         for child in self._children:
+            self._kill_if_hung(child)
             self._reap(child)
             if child.process is None and self._clock() >= child.next_start:
                 self._start(child)
@@ -218,6 +251,8 @@ class Supervisor:
                 "pid": child.process.pid if alive and child.process else None,
                 "restarts": child.restarts,
                 "last_exit": child.last_exit,
+                "last_restart_reason": child.last_reason,
+                "hung_kills": child.hung_kills,
                 "uptime_seconds": round(self._clock() - child.started_at) if alive else 0,
             }
         return {

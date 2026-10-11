@@ -85,6 +85,45 @@ def test_stable_child_resets_backoff(tmp_path: Path) -> None:
     assert child.backoff == BACKOFF_START
 
 
+def test_a_hung_child_with_a_stale_heartbeat_is_killed_and_restarted(tmp_path: Path) -> None:
+    beat = tmp_path / "status.json"
+    beat.write_text("{}", encoding="utf-8")
+    clock, wall = [0.0], [beat.stat().st_mtime]
+    spec = ChildSpec(
+        "collector", [PY, "-c", "import time; time.sleep(60)"], tmp_path, heartbeat=beat
+    )
+    sup = Supervisor(
+        [spec],
+        run_dir=tmp_path / "run",
+        log_dir=tmp_path / "logs",
+        clock=lambda: clock[0],
+        sleep=lambda _s: None,
+        wall=lambda: wall[0],
+    )
+    (tmp_path / "run").mkdir()
+    child = sup._children[0]
+    try:
+        sup.tick()
+        first = child.process
+        assert first is not None
+        clock[0], wall[0] = 400.0, wall[0] + 100.0  # running long enough, heartbeat fresh
+        sup.tick()
+        assert child.process is first and child.hung_kills == 0
+        wall[0] += 300.0  # heartbeat now 400 s old
+        sup.tick()
+        assert child.hung_kills == 1
+        assert child.process is None
+        assert child.last_reason == "HUNG heartbeat 400s old"
+        assert sup.snapshot()["children"]["collector"]["last_restart_reason"] == child.last_reason
+        clock[0] = 1000.0
+        sup.tick()
+        assert child.process is not None and child.process is not first
+        log = (tmp_path / "logs" / "collector.log").read_text(encoding="utf-8")
+        assert "SUPERVISOR child hung: status.json not updated for 400s" in log
+    finally:
+        sup.stop_children(grace=5)
+
+
 def test_snapshot_reports_children_and_pid_files(tmp_path: Path) -> None:
     sup = make(tmp_path, "import time; time.sleep(30)", name="collector")
     (tmp_path / "run").mkdir()
