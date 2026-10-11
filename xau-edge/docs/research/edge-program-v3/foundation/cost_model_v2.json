@@ -1,0 +1,1384 @@
+{
+ "generated_at": "2026-10-11T04:48:57.075098+00:00",
+ "class": "D (cost description, no outcome)",
+ "tick_coverage": {
+  "first": "2021-10-01 11:32:00+00:00",
+  "last": "2026-10-09 17:15:00+00:00",
+  "minutes": 1759281
+ },
+ "tick_spread_by_year": [
+  {
+   "y": 2021,
+   "n": 85938,
+   "median": 11.0,
+   "p90": 16.0
+  },
+  {
+   "y": 2022,
+   "n": 349894,
+   "median": 17.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2023,
+   "n": 349408,
+   "median": 17.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2024,
+   "n": 351700,
+   "median": 20.0,
+   "p90": 27.0
+  },
+  {
+   "y": 2025,
+   "n": 350576,
+   "median": 26.0,
+   "p90": 32.0
+  },
+  {
+   "y": 2026,
+   "n": 271765,
+   "median": 46.0,
+   "p90": 62.0
+  }
+ ],
+ "tick_spread_by_session": [
+  {
+   "session": "ASIA",
+   "n": 543782,
+   "median": 22.0,
+   "p90": 47.0
+  },
+  {
+   "session": "LDN_NY_OVERLAP",
+   "n": 310919,
+   "median": 20.0,
+   "p90": 44.0
+  },
+  {
+   "session": "LONDON",
+   "n": 388353,
+   "median": 20.0,
+   "p90": 42.0
+  },
+  {
+   "session": "NY_LATE",
+   "n": 373309,
+   "median": 20.0,
+   "p90": 43.0
+  },
+  {
+   "session": "ROLLOVER",
+   "n": 142918,
+   "median": 25.0,
+   "p90": 50.0
+  }
+ ],
+ "tick_spread_by_hour_utc": [
+  {
+   "hour_utc": 0,
+   "n": 77678,
+   "median": 23.0,
+   "p90": 49.0
+  },
+  {
+   "hour_utc": 1,
+   "n": 77669,
+   "median": 23.0,
+   "p90": 49.0
+  },
+  {
+   "hour_utc": 2,
+   "n": 77682,
+   "median": 22.0,
+   "p90": 48.0
+  },
+  {
+   "hour_utc": 3,
+   "n": 77685,
+   "median": 22.0,
+   "p90": 47.0
+  },
+  {
+   "hour_utc": 4,
+   "n": 77689,
+   "median": 22.0,
+   "p90": 47.0
+  },
+  {
+   "hour_utc": 5,
+   "n": 77689,
+   "median": 23.0,
+   "p90": 49.0
+  },
+  {
+   "hour_utc": 6,
+   "n": 77690,
+   "median": 21.0,
+   "p90": 42.0
+  },
+  {
+   "hour_utc": 7,
+   "n": 77686,
+   "median": 20.0,
+   "p90": 41.0
+  },
+  {
+   "hour_utc": 8,
+   "n": 77669,
+   "median": 20.0,
+   "p90": 41.0
+  },
+  {
+   "hour_utc": 9,
+   "n": 77625,
+   "median": 19.0,
+   "p90": 41.0
+  },
+  {
+   "hour_utc": 10,
+   "n": 77664,
+   "median": 19.0,
+   "p90": 41.0
+  },
+  {
+   "hour_utc": 11,
+   "n": 77709,
+   "median": 20.0,
+   "p90": 44.0
+  },
+  {
+   "hour_utc": 12,
+   "n": 77740,
+   "median": 20.0,
+   "p90": 44.0
+  },
+  {
+   "hour_utc": 13,
+   "n": 77718,
+   "median": 20.0,
+   "p90": 44.0
+  },
+  {
+   "hour_utc": 14,
+   "n": 77730,
+   "median": 20.0,
+   "p90": 44.0
+  },
+  {
+   "hour_utc": 15,
+   "n": 77731,
+   "median": 19.0,
+   "p90": 44.0
+  },
+  {
+   "hour_utc": 16,
+   "n": 77740,
+   "median": 19.0,
+   "p90": 42.0
+  },
+  {
+   "hour_utc": 17,
+   "n": 77379,
+   "median": 19.0,
+   "p90": 42.0
+  },
+  {
+   "hour_utc": 18,
+   "n": 76727,
+   "median": 20.0,
+   "p90": 42.0
+  },
+  {
+   "hour_utc": 19,
+   "n": 75143,
+   "median": 20.0,
+   "p90": 42.0
+  },
+  {
+   "hour_utc": 20,
+   "n": 66320,
+   "median": 22.0,
+   "p90": 47.0
+  },
+  {
+   "hour_utc": 21,
+   "n": 20843,
+   "median": 22.5,
+   "p90": 40.0
+  },
+  {
+   "hour_utc": 22,
+   "n": 46765,
+   "median": 27.0,
+   "p90": 53.0
+  },
+  {
+   "hour_utc": 23,
+   "n": 75310,
+   "median": 24.0,
+   "p90": 49.0
+  }
+ ],
+ "tick_spread_by_year_session": [
+  {
+   "y": 2021,
+   "session": "ASIA",
+   "n": 26458,
+   "median": 12.0,
+   "p90": 17.0
+  },
+  {
+   "y": 2021,
+   "session": "LDN_NY_OVERLAP",
+   "n": 15351,
+   "median": 12.0,
+   "p90": 15.0
+  },
+  {
+   "y": 2021,
+   "session": "LONDON",
+   "n": 18928,
+   "median": 10.5,
+   "p90": 15.0
+  },
+  {
+   "y": 2021,
+   "session": "NY_LATE",
+   "n": 18487,
+   "median": 10.0,
+   "p90": 15.0
+  },
+  {
+   "y": 2021,
+   "session": "ROLLOVER",
+   "n": 6714,
+   "median": 14.0,
+   "p90": 22.5
+  },
+  {
+   "y": 2022,
+   "session": "ASIA",
+   "n": 108358,
+   "median": 19.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2022,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61913,
+   "median": 17.0,
+   "p90": 22.0
+  },
+  {
+   "y": 2022,
+   "session": "LONDON",
+   "n": 77400,
+   "median": 16.0,
+   "p90": 21.0
+  },
+  {
+   "y": 2022,
+   "session": "NY_LATE",
+   "n": 73794,
+   "median": 16.0,
+   "p90": 22.0
+  },
+  {
+   "y": 2022,
+   "session": "ROLLOVER",
+   "n": 28429,
+   "median": 22.0,
+   "p90": 36.0
+  },
+  {
+   "y": 2023,
+   "session": "ASIA",
+   "n": 107923,
+   "median": 18.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2023,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61676,
+   "median": 16.0,
+   "p90": 22.0
+  },
+  {
+   "y": 2023,
+   "session": "LONDON",
+   "n": 77099,
+   "median": 17.0,
+   "p90": 22.0
+  },
+  {
+   "y": 2023,
+   "session": "NY_LATE",
+   "n": 74318,
+   "median": 15.5,
+   "p90": 22.0
+  },
+  {
+   "y": 2023,
+   "session": "ROLLOVER",
+   "n": 28392,
+   "median": 21.0,
+   "p90": 31.0
+  },
+  {
+   "y": 2024,
+   "session": "ASIA",
+   "n": 108690,
+   "median": 21.0,
+   "p90": 28.0
+  },
+  {
+   "y": 2024,
+   "session": "LDN_NY_OVERLAP",
+   "n": 62086,
+   "median": 19.0,
+   "p90": 27.0
+  },
+  {
+   "y": 2024,
+   "session": "LONDON",
+   "n": 77645,
+   "median": 18.0,
+   "p90": 26.0
+  },
+  {
+   "y": 2024,
+   "session": "NY_LATE",
+   "n": 74807,
+   "median": 19.0,
+   "p90": 28.0
+  },
+  {
+   "y": 2024,
+   "session": "ROLLOVER",
+   "n": 28472,
+   "median": 21.0,
+   "p90": 28.0
+  },
+  {
+   "y": 2025,
+   "session": "ASIA",
+   "n": 108353,
+   "median": 28.0,
+   "p90": 33.0
+  },
+  {
+   "y": 2025,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61893,
+   "median": 25.0,
+   "p90": 29.0
+  },
+  {
+   "y": 2025,
+   "session": "LONDON",
+   "n": 77281,
+   "median": 24.0,
+   "p90": 28.0
+  },
+  {
+   "y": 2025,
+   "session": "NY_LATE",
+   "n": 74577,
+   "median": 25.0,
+   "p90": 30.0
+  },
+  {
+   "y": 2025,
+   "session": "ROLLOVER",
+   "n": 28472,
+   "median": 29.5,
+   "p90": 35.0
+  },
+  {
+   "y": 2026,
+   "session": "ASIA",
+   "n": 84000,
+   "median": 50.0,
+   "p90": 64.0
+  },
+  {
+   "y": 2026,
+   "session": "LDN_NY_OVERLAP",
+   "n": 48000,
+   "median": 45.0,
+   "p90": 60.0
+  },
+  {
+   "y": 2026,
+   "session": "LONDON",
+   "n": 60000,
+   "median": 44.0,
+   "p90": 58.0
+  },
+  {
+   "y": 2026,
+   "session": "NY_LATE",
+   "n": 57326,
+   "median": 45.0,
+   "p90": 61.0
+  },
+  {
+   "y": 2026,
+   "session": "ROLLOVER",
+   "n": 22439,
+   "median": 52.0,
+   "p90": 81.0
+  }
+ ],
+ "tick_vs_bar_same_minute": {
+  "minutes": 1758822,
+  "by_year": [
+   {
+    "y": 2021,
+    "n": 85938,
+    "tick_median": 11.0,
+    "bar_median": 7.0,
+    "ratio_median": 1.429,
+    "ratio_p90": 1.857
+   },
+   {
+    "y": 2022,
+    "n": 349451,
+    "tick_median": 17.0,
+    "bar_median": 10.0,
+    "ratio_median": 1.562,
+    "ratio_p90": 2.286
+   },
+   {
+    "y": 2023,
+    "n": 349400,
+    "tick_median": 17.0,
+    "bar_median": 9.0,
+    "ratio_median": 1.625,
+    "ratio_p90": 2.429
+   },
+   {
+    "y": 2024,
+    "n": 351700,
+    "tick_median": 20.0,
+    "bar_median": 18.0,
+    "ratio_median": 1.1,
+    "ratio_p90": 1.7
+   },
+   {
+    "y": 2025,
+    "n": 350568,
+    "tick_median": 26.0,
+    "bar_median": 24.0,
+    "ratio_median": 1.042,
+    "ratio_p90": 1.192
+   },
+   {
+    "y": 2026,
+    "n": 271765,
+    "tick_median": 46.0,
+    "bar_median": 44.0,
+    "ratio_median": 1.033,
+    "ratio_p90": 1.15
+   }
+  ]
+ },
+ "bar_spread_points_by_year": [
+  {
+   "y": 2011,
+   "n": 323138,
+   "median": 70.0,
+   "p90": 86.0
+  },
+  {
+   "y": 2012,
+   "n": 330060,
+   "median": 41.0,
+   "p90": 60.0
+  },
+  {
+   "y": 2013,
+   "n": 348910,
+   "median": 36.0,
+   "p90": 52.0
+  },
+  {
+   "y": 2014,
+   "n": 348720,
+   "median": 44.0,
+   "p90": 58.0
+  },
+  {
+   "y": 2015,
+   "n": 346977,
+   "median": 42.0,
+   "p90": 53.0
+  },
+  {
+   "y": 2016,
+   "n": 350507,
+   "median": 33.0,
+   "p90": 41.0
+  },
+  {
+   "y": 2017,
+   "n": 349307,
+   "median": 28.0,
+   "p90": 39.0
+  },
+  {
+   "y": 2018,
+   "n": 349988,
+   "median": 21.0,
+   "p90": 27.0
+  },
+  {
+   "y": 2019,
+   "n": 349777,
+   "median": 23.0,
+   "p90": 26.0
+  },
+  {
+   "y": 2020,
+   "n": 351518,
+   "median": 17.0,
+   "p90": 41.0
+  },
+  {
+   "y": 2021,
+   "n": 351264,
+   "median": 7.0,
+   "p90": 15.0
+  },
+  {
+   "y": 2022,
+   "n": 350345,
+   "median": 10.0,
+   "p90": 18.0
+  },
+  {
+   "y": 2023,
+   "n": 349508,
+   "median": 9.0,
+   "p90": 16.0
+  },
+  {
+   "y": 2024,
+   "n": 352105,
+   "median": 18.0,
+   "p90": 25.0
+  },
+  {
+   "y": 2025,
+   "n": 350687,
+   "median": 24.0,
+   "p90": 31.0
+  },
+  {
+   "y": 2026,
+   "n": 271979,
+   "median": 44.0,
+   "p90": 59.0
+  }
+ ],
+ "bar_spread_points_by_year_session": [
+  {
+   "y": 2011,
+   "session": "ASIA",
+   "n": 99691,
+   "median": 70.0,
+   "p90": 80.0
+  },
+  {
+   "y": 2011,
+   "session": "LDN_NY_OVERLAP",
+   "n": 58446,
+   "median": 69.0,
+   "p90": 80.0
+  },
+  {
+   "y": 2011,
+   "session": "LONDON",
+   "n": 72917,
+   "median": 70.0,
+   "p90": 80.0
+  },
+  {
+   "y": 2011,
+   "session": "NY_LATE",
+   "n": 68121,
+   "median": 68.0,
+   "p90": 80.0
+  },
+  {
+   "y": 2011,
+   "session": "ROLLOVER",
+   "n": 23963,
+   "median": 80.0,
+   "p90": 120.0
+  },
+  {
+   "y": 2012,
+   "session": "ASIA",
+   "n": 101510,
+   "median": 40.0,
+   "p90": 50.0
+  },
+  {
+   "y": 2012,
+   "session": "LDN_NY_OVERLAP",
+   "n": 58267,
+   "median": 40.0,
+   "p90": 50.0
+  },
+  {
+   "y": 2012,
+   "session": "LONDON",
+   "n": 73059,
+   "median": 39.0,
+   "p90": 47.0
+  },
+  {
+   "y": 2012,
+   "session": "NY_LATE",
+   "n": 70246,
+   "median": 50.0,
+   "p90": 64.0
+  },
+  {
+   "y": 2012,
+   "session": "ROLLOVER",
+   "n": 26978,
+   "median": 60.0,
+   "p90": 73.0
+  },
+  {
+   "y": 2013,
+   "session": "ASIA",
+   "n": 107875,
+   "median": 34.0,
+   "p90": 50.0
+  },
+  {
+   "y": 2013,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61905,
+   "median": 32.0,
+   "p90": 49.0
+  },
+  {
+   "y": 2013,
+   "session": "LONDON",
+   "n": 77391,
+   "median": 29.0,
+   "p90": 47.0
+  },
+  {
+   "y": 2013,
+   "session": "NY_LATE",
+   "n": 73695,
+   "median": 41.0,
+   "p90": 57.0
+  },
+  {
+   "y": 2013,
+   "session": "ROLLOVER",
+   "n": 28044,
+   "median": 44.0,
+   "p90": 63.0
+  },
+  {
+   "y": 2014,
+   "session": "ASIA",
+   "n": 106955,
+   "median": 41.0,
+   "p90": 57.0
+  },
+  {
+   "y": 2014,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61866,
+   "median": 44.0,
+   "p90": 59.0
+  },
+  {
+   "y": 2014,
+   "session": "LONDON",
+   "n": 77334,
+   "median": 44.0,
+   "p90": 58.0
+  },
+  {
+   "y": 2014,
+   "session": "NY_LATE",
+   "n": 73818,
+   "median": 43.0,
+   "p90": 58.0
+  },
+  {
+   "y": 2014,
+   "session": "ROLLOVER",
+   "n": 28747,
+   "median": 48.0,
+   "p90": 66.0
+  },
+  {
+   "y": 2015,
+   "session": "ASIA",
+   "n": 107103,
+   "median": 42.0,
+   "p90": 51.0
+  },
+  {
+   "y": 2015,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61665,
+   "median": 41.0,
+   "p90": 52.0
+  },
+  {
+   "y": 2015,
+   "session": "LONDON",
+   "n": 77065,
+   "median": 41.0,
+   "p90": 52.0
+  },
+  {
+   "y": 2015,
+   "session": "NY_LATE",
+   "n": 73027,
+   "median": 42.0,
+   "p90": 54.0
+  },
+  {
+   "y": 2015,
+   "session": "ROLLOVER",
+   "n": 28117,
+   "median": 47.0,
+   "p90": 68.0
+  },
+  {
+   "y": 2016,
+   "session": "ASIA",
+   "n": 108329,
+   "median": 34.0,
+   "p90": 40.0
+  },
+  {
+   "y": 2016,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61849,
+   "median": 30.0,
+   "p90": 35.0
+  },
+  {
+   "y": 2016,
+   "session": "LONDON",
+   "n": 77375,
+   "median": 33.0,
+   "p90": 38.0
+  },
+  {
+   "y": 2016,
+   "session": "NY_LATE",
+   "n": 74196,
+   "median": 34.0,
+   "p90": 41.0
+  },
+  {
+   "y": 2016,
+   "session": "ROLLOVER",
+   "n": 28758,
+   "median": 40.0,
+   "p90": 50.0
+  },
+  {
+   "y": 2017,
+   "session": "ASIA",
+   "n": 107516,
+   "median": 29.0,
+   "p90": 39.0
+  },
+  {
+   "y": 2017,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61679,
+   "median": 24.0,
+   "p90": 37.0
+  },
+  {
+   "y": 2017,
+   "session": "LONDON",
+   "n": 77100,
+   "median": 26.0,
+   "p90": 38.0
+  },
+  {
+   "y": 2017,
+   "session": "NY_LATE",
+   "n": 73919,
+   "median": 28.0,
+   "p90": 38.0
+  },
+  {
+   "y": 2017,
+   "session": "ROLLOVER",
+   "n": 29093,
+   "median": 35.0,
+   "p90": 43.0
+  },
+  {
+   "y": 2018,
+   "session": "ASIA",
+   "n": 107699,
+   "median": 22.0,
+   "p90": 27.0
+  },
+  {
+   "y": 2018,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61920,
+   "median": 19.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2018,
+   "session": "LONDON",
+   "n": 77400,
+   "median": 20.0,
+   "p90": 25.0
+  },
+  {
+   "y": 2018,
+   "session": "NY_LATE",
+   "n": 73982,
+   "median": 20.0,
+   "p90": 26.0
+  },
+  {
+   "y": 2018,
+   "session": "ROLLOVER",
+   "n": 28987,
+   "median": 23.0,
+   "p90": 30.0
+  },
+  {
+   "y": 2019,
+   "session": "ASIA",
+   "n": 107744,
+   "median": 23.0,
+   "p90": 27.0
+  },
+  {
+   "y": 2019,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61920,
+   "median": 22.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2019,
+   "session": "LONDON",
+   "n": 77399,
+   "median": 23.0,
+   "p90": 25.0
+  },
+  {
+   "y": 2019,
+   "session": "NY_LATE",
+   "n": 73690,
+   "median": 23.0,
+   "p90": 26.0
+  },
+  {
+   "y": 2019,
+   "session": "ROLLOVER",
+   "n": 29024,
+   "median": 25.0,
+   "p90": 29.0
+  },
+  {
+   "y": 2020,
+   "session": "ASIA",
+   "n": 108366,
+   "median": 18.0,
+   "p90": 45.0
+  },
+  {
+   "y": 2020,
+   "session": "LDN_NY_OVERLAP",
+   "n": 62156,
+   "median": 14.0,
+   "p90": 28.0
+  },
+  {
+   "y": 2020,
+   "session": "LONDON",
+   "n": 77687,
+   "median": 16.0,
+   "p90": 33.0
+  },
+  {
+   "y": 2020,
+   "session": "NY_LATE",
+   "n": 73973,
+   "median": 16.0,
+   "p90": 36.0
+  },
+  {
+   "y": 2020,
+   "session": "ROLLOVER",
+   "n": 29336,
+   "median": 24.0,
+   "p90": 77.0
+  },
+  {
+   "y": 2021,
+   "session": "ASIA",
+   "n": 108329,
+   "median": 7.0,
+   "p90": 16.0
+  },
+  {
+   "y": 2021,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61712,
+   "median": 7.0,
+   "p90": 12.0
+  },
+  {
+   "y": 2021,
+   "session": "LONDON",
+   "n": 77322,
+   "median": 7.0,
+   "p90": 13.0
+  },
+  {
+   "y": 2021,
+   "session": "NY_LATE",
+   "n": 74374,
+   "median": 7.0,
+   "p90": 15.0
+  },
+  {
+   "y": 2021,
+   "session": "ROLLOVER",
+   "n": 29527,
+   "median": 11.0,
+   "p90": 20.0
+  },
+  {
+   "y": 2022,
+   "session": "ASIA",
+   "n": 108355,
+   "median": 12.0,
+   "p90": 19.0
+  },
+  {
+   "y": 2022,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61920,
+   "median": 7.0,
+   "p90": 13.0
+  },
+  {
+   "y": 2022,
+   "session": "LONDON",
+   "n": 77400,
+   "median": 8.0,
+   "p90": 14.0
+  },
+  {
+   "y": 2022,
+   "session": "NY_LATE",
+   "n": 74269,
+   "median": 9.0,
+   "p90": 16.0
+  },
+  {
+   "y": 2022,
+   "session": "ROLLOVER",
+   "n": 28401,
+   "median": 18.0,
+   "p90": 30.0
+  },
+  {
+   "y": 2023,
+   "session": "ASIA",
+   "n": 107938,
+   "median": 11.0,
+   "p90": 17.0
+  },
+  {
+   "y": 2023,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61674,
+   "median": 7.0,
+   "p90": 12.0
+  },
+  {
+   "y": 2023,
+   "session": "LONDON",
+   "n": 77099,
+   "median": 8.0,
+   "p90": 14.0
+  },
+  {
+   "y": 2023,
+   "session": "NY_LATE",
+   "n": 74341,
+   "median": 8.0,
+   "p90": 14.0
+  },
+  {
+   "y": 2023,
+   "session": "ROLLOVER",
+   "n": 28456,
+   "median": 14.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2024,
+   "session": "ASIA",
+   "n": 108779,
+   "median": 19.0,
+   "p90": 26.0
+  },
+  {
+   "y": 2024,
+   "session": "LDN_NY_OVERLAP",
+   "n": 62159,
+   "median": 17.0,
+   "p90": 24.0
+  },
+  {
+   "y": 2024,
+   "session": "LONDON",
+   "n": 77700,
+   "median": 16.0,
+   "p90": 23.0
+  },
+  {
+   "y": 2024,
+   "session": "NY_LATE",
+   "n": 74886,
+   "median": 16.0,
+   "p90": 25.0
+  },
+  {
+   "y": 2024,
+   "session": "ROLLOVER",
+   "n": 28581,
+   "median": 20.0,
+   "p90": 25.0
+  },
+  {
+   "y": 2025,
+   "session": "ASIA",
+   "n": 108359,
+   "median": 26.0,
+   "p90": 32.0
+  },
+  {
+   "y": 2025,
+   "session": "LDN_NY_OVERLAP",
+   "n": 61917,
+   "median": 24.0,
+   "p90": 29.0
+  },
+  {
+   "y": 2025,
+   "session": "LONDON",
+   "n": 77358,
+   "median": 23.0,
+   "p90": 27.0
+  },
+  {
+   "y": 2025,
+   "session": "NY_LATE",
+   "n": 74575,
+   "median": 23.0,
+   "p90": 29.0
+  },
+  {
+   "y": 2025,
+   "session": "ROLLOVER",
+   "n": 28478,
+   "median": 28.0,
+   "p90": 34.0
+  },
+  {
+   "y": 2026,
+   "session": "ASIA",
+   "n": 84000,
+   "median": 46.0,
+   "p90": 62.0
+  },
+  {
+   "y": 2026,
+   "session": "LDN_NY_OVERLAP",
+   "n": 48000,
+   "median": 44.0,
+   "p90": 58.0
+  },
+  {
+   "y": 2026,
+   "session": "LONDON",
+   "n": 60000,
+   "median": 41.0,
+   "p90": 56.0
+  },
+  {
+   "y": 2026,
+   "session": "NY_LATE",
+   "n": 57540,
+   "median": 42.0,
+   "p90": 57.0
+  },
+  {
+   "y": 2026,
+   "session": "ROLLOVER",
+   "n": 22439,
+   "median": 50.0,
+   "p90": 66.0
+  }
+ ],
+ "bar_spread_over_atr_h1_by_year": [
+  {
+   "y": 2011,
+   "n": 323138,
+   "median": 0.1291,
+   "p90": 0.2531
+  },
+  {
+   "y": 2012,
+   "n": 330060,
+   "median": 0.1002,
+   "p90": 0.1528
+  },
+  {
+   "y": 2013,
+   "n": 348910,
+   "median": 0.0672,
+   "p90": 0.1233
+  },
+  {
+   "y": 2014,
+   "n": 348720,
+   "median": 0.1259,
+   "p90": 0.2098
+  },
+  {
+   "y": 2015,
+   "n": 346977,
+   "median": 0.1212,
+   "p90": 0.1804
+  },
+  {
+   "y": 2016,
+   "n": 350507,
+   "median": 0.0831,
+   "p90": 0.1347
+  },
+  {
+   "y": 2017,
+   "n": 349307,
+   "median": 0.1015,
+   "p90": 0.1648
+  },
+  {
+   "y": 2018,
+   "n": 349988,
+   "median": 0.0748,
+   "p90": 0.1146
+  },
+  {
+   "y": 2019,
+   "n": 349777,
+   "median": 0.0723,
+   "p90": 0.1193
+  },
+  {
+   "y": 2020,
+   "n": 351518,
+   "median": 0.024,
+   "p90": 0.0671
+  },
+  {
+   "y": 2021,
+   "n": 351264,
+   "median": 0.0172,
+   "p90": 0.0404
+  },
+  {
+   "y": 2022,
+   "n": 350345,
+   "median": 0.0231,
+   "p90": 0.044
+  },
+  {
+   "y": 2023,
+   "n": 349508,
+   "median": 0.0242,
+   "p90": 0.0425
+  },
+  {
+   "y": 2024,
+   "n": 352105,
+   "median": 0.029,
+   "p90": 0.0485
+  },
+  {
+   "y": 2025,
+   "n": 350687,
+   "median": 0.0244,
+   "p90": 0.0457
+  },
+  {
+   "y": 2026,
+   "n": 271979,
+   "median": 0.0225,
+   "p90": 0.0323
+  }
+ ],
+ "bar_spread_over_atr_h1_by_era_regime": [
+  {
+   "era": "DEV2_2011_2018",
+   "vol_regime": "HIGH",
+   "n": 898838,
+   "spread_pts_median": 40.0,
+   "median": 0.0699,
+   "p90": 0.1081
+  },
+  {
+   "era": "DEV2_2011_2018",
+   "vol_regime": "LOW",
+   "n": 937378,
+   "spread_pts_median": 37.0,
+   "median": 0.1348,
+   "p90": 0.2235
+  },
+  {
+   "era": "DEV2_2011_2018",
+   "vol_regime": "MID",
+   "n": 911391,
+   "spread_pts_median": 38.0,
+   "median": 0.096,
+   "p90": 0.1499
+  },
+  {
+   "era": "RECENT_2022_2026",
+   "vol_regime": "HIGH",
+   "n": 556441,
+   "spread_pts_median": 19.0,
+   "median": 0.0171,
+   "p90": 0.0294
+  },
+  {
+   "era": "RECENT_2022_2026",
+   "vol_regime": "LOW",
+   "n": 560100,
+   "spread_pts_median": 16.0,
+   "median": 0.0327,
+   "p90": 0.0528
+  },
+  {
+   "era": "RECENT_2022_2026",
+   "vol_regime": "MID",
+   "n": 558083,
+   "spread_pts_median": 18.0,
+   "median": 0.0246,
+   "p90": 0.0391
+  },
+  {
+   "era": "VAL2_2019_2021",
+   "vol_regime": "HIGH",
+   "n": 345548,
+   "spread_pts_median": 18.0,
+   "median": 0.0204,
+   "p90": 0.0543
+  },
+  {
+   "era": "VAL2_2019_2021",
+   "vol_regime": "LOW",
+   "n": 356577,
+   "spread_pts_median": 17.0,
+   "median": 0.0465,
+   "p90": 0.1197
+  },
+  {
+   "era": "VAL2_2019_2021",
+   "vol_regime": "MID",
+   "n": 350434,
+   "spread_pts_median": 17.0,
+   "median": 0.0302,
+   "p90": 0.0807
+  }
+ ],
+ "event_spread_nfp_proxy": {
+  "note": "NFP proxy = first Friday 08:30 America/New_York; known shifted releases are not excluded (proxy, not a PIT calendar)",
+  "events": 60,
+  "by_kind_offset_bucket": [
+   {
+    "kind": "CONTROL_FRIDAY",
+    "bucket": "post_3_5",
+    "n": 180,
+    "median": 23.0,
+    "p90": 45.0
+   },
+   {
+    "kind": "CONTROL_FRIDAY",
+    "bucket": "post_6_15",
+    "n": 600,
+    "median": 21.0,
+    "p90": 45.0
+   },
+   {
+    "kind": "CONTROL_FRIDAY",
+    "bucket": "pre_-5_-1",
+    "n": 300,
+    "median": 22.0,
+    "p90": 46.0
+   },
+   {
+    "kind": "CONTROL_FRIDAY",
+    "bucket": "release_0_2",
+    "n": 180,
+    "median": 26.0,
+    "p90": 48.0
+   },
+   {
+    "kind": "NFP_PROXY",
+    "bucket": "post_3_5",
+    "n": 174,
+    "median": 25.0,
+    "p90": 44.0
+   },
+   {
+    "kind": "NFP_PROXY",
+    "bucket": "post_6_15",
+    "n": 575,
+    "median": 22.0,
+    "p90": 44.0
+   },
+   {
+    "kind": "NFP_PROXY",
+    "bucket": "pre_-5_-1",
+    "n": 290,
+    "median": 23.0,
+    "p90": 45.0
+   },
+   {
+    "kind": "NFP_PROXY",
+    "bucket": "release_0_2",
+    "n": 174,
+    "median": 31.0,
+    "p90": 50.0
+   }
+  ]
+ }
+}

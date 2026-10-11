@@ -1,0 +1,139 @@
+{
+ "alpha": {
+  "stage1_holm_fw0.10_first": 0.03333333333333333,
+  "val": 0.016666666666666666,
+  "test_h": 0.0011363636363636365
+ },
+ "years": {
+  "dev2": 8.0,
+  "val2": 3.0,
+  "test_h": 3.33,
+  "holdout": 0.43
+ },
+ "rate_per_year": {
+  "F1_residual": 250,
+  "F3_us_momentum": 250,
+  "F2_macro_setB": 120,
+  "F2_macro_setA": 32
+ },
+ "families": {
+  "F1_residual": {
+   "dev2": {
+    "n": 2000,
+    "mde_sigma1.0": 0.06,
+    "mde_sigma1.3": 0.078
+   },
+   "val2": {
+    "n": 750,
+    "mde_sigma1.0": 0.108,
+    "mde_sigma1.3": 0.141
+   },
+   "test_h": {
+    "n": 832,
+    "mde_sigma1.0": 0.135,
+    "mde_sigma1.3": 0.175
+   },
+   "holdout": {
+    "n": 108,
+    "mde_sigma1.0": 0.286,
+    "mde_sigma1.3": 0.372
+   },
+   "forward_years_to_detect_0.15R_sigma1.0_at_val_alpha": 1.57,
+   "forward_years_to_detect_0.15R_sigma1.3_at_val_alpha": 2.65,
+   "meets_150_per_year": true
+  },
+  "F3_us_momentum": {
+   "dev2": {
+    "n": 2000,
+    "mde_sigma1.0": 0.06,
+    "mde_sigma1.3": 0.078
+   },
+   "val2": {
+    "n": 750,
+    "mde_sigma1.0": 0.108,
+    "mde_sigma1.3": 0.141
+   },
+   "test_h": {
+    "n": 832,
+    "mde_sigma1.0": 0.135,
+    "mde_sigma1.3": 0.175
+   },
+   "holdout": {
+    "n": 108,
+    "mde_sigma1.0": 0.286,
+    "mde_sigma1.3": 0.372
+   },
+   "forward_years_to_detect_0.15R_sigma1.0_at_val_alpha": 1.57,
+   "forward_years_to_detect_0.15R_sigma1.3_at_val_alpha": 2.65,
+   "meets_150_per_year": true
+  },
+  "F2_macro_setB": {
+   "dev2": {
+    "n": 960,
+    "mde_sigma1.0": 0.086,
+    "mde_sigma1.3": 0.112
+   },
+   "val2": {
+    "n": 360,
+    "mde_sigma1.0": 0.157,
+    "mde_sigma1.3": 0.203
+   },
+   "test_h": {
+    "n": 400,
+    "mde_sigma1.0": 0.195,
+    "mde_sigma1.3": 0.253
+   },
+   "holdout": {
+    "n": 52,
+    "mde_sigma1.0": 0.413,
+    "mde_sigma1.3": 0.537
+   },
+   "forward_years_to_detect_0.15R_sigma1.0_at_val_alpha": 3.27,
+   "forward_years_to_detect_0.15R_sigma1.3_at_val_alpha": 5.52,
+   "meets_150_per_year": false
+  },
+  "F2_macro_setA": {
+   "dev2": {
+    "n": 256,
+    "mde_sigma1.0": 0.167,
+    "mde_sigma1.3": 0.217
+   },
+   "val2": {
+    "n": 96,
+    "mde_sigma1.0": 0.303,
+    "mde_sigma1.3": 0.394
+   },
+   "test_h": {
+    "n": 107,
+    "mde_sigma1.0": 0.377,
+    "mde_sigma1.3": 0.49
+   },
+   "holdout": {
+    "n": 14,
+    "mde_sigma1.0": 0.801,
+    "mde_sigma1.3": 1.041
+   },
+   "forward_years_to_detect_0.15R_sigma1.0_at_val_alpha": 12.25,
+   "forward_years_to_detect_0.15R_sigma1.3_at_val_alpha": 20.7,
+   "meets_150_per_year": false
+  }
+ },
+ "economics_at_0.15R": {
+  "risk0.25_rate120": {
+   "edge_R": 0.15,
+   "expected_annual_pct": 4.5
+  },
+  "risk0.25_rate250": {
+   "edge_R": 0.15,
+   "expected_annual_pct": 9.38
+  },
+  "risk0.5_rate120": {
+   "edge_R": 0.15,
+   "expected_annual_pct": 9.0
+  },
+  "risk0.5_rate250": {
+   "edge_R": 0.15,
+   "expected_annual_pct": 18.75
+  }
+ }
+}
