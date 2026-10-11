@@ -1,0 +1,189 @@
+{
+ "family": "F3-USMOM-0930-1400-1500-1645",
+ "stage": "Stage 1 (Development-2)",
+ "window_ny_dates": [
+  "2011-01-01",
+  "2019-01-01"
+ ],
+ "counts": {
+  "weekdays": 2086,
+  "excluded_clock_mask": 135,
+  "excluded_holiday_or_early_close": 86,
+  "excluded_missing_anchor": 126,
+  "excluded_low_coverage": 3,
+  "excluded_no_atr": 0,
+  "no_signal_zero_move": 1
+ },
+ "n": 1735,
+ "events_per_year": 216.875,
+ "gross": {
+  "n": 1735,
+  "mean_r": -0.010316836096918091,
+  "median_r": -0.014966044319877216,
+  "win_rate": 0.4853025936599424,
+  "avg_win_r": 0.37295538955349217,
+  "avg_loss_r": -0.371700054459343,
+  "profit_factor": 0.9460735381982098,
+  "max_drawdown_r": 39.36197063231189,
+  "sum_r": -17.89971062815289
+ },
+ "net_base": {
+  "n": 1735,
+  "mean_r": -0.2141917169951207,
+  "median_r": -0.2071795458850471,
+  "win_rate": 0.2979827089337176,
+  "avg_win_r": 0.3536018311375514,
+  "avg_loss_r": -0.4552009652583321,
+  "profit_factor": 0.3297270566630078,
+  "max_drawdown_r": 373.4541279553077,
+  "sum_r": -371.62262898653444
+ },
+ "net_pessimistic": {
+  "n": 1735,
+  "mean_r": -0.3272600868718081,
+  "median_r": -0.3089802940362756,
+  "win_rate": 0.22997118155619597,
+  "avg_win_r": 0.34751800985402537,
+  "avg_loss_r": -0.5287843837233107,
+  "profit_factor": 0.19627506647962384,
+  "max_drawdown_r": 568.9662398927308,
+  "sum_r": -567.796250722587
+ },
+ "frequency_label": "FREQUENCY OK",
+ "bootstrap": {
+  "p_one_sided": 1.0,
+  "ci95_mean_base": [
+   -0.24024036448842198,
+   -0.18840488605065547
+  ],
+  "resamples": 10000,
+  "block_days": 5,
+  "seed": 20261011
+ },
+ "placebo": {
+  "draws": 1000,
+  "median": -0.2021154892033071,
+  "p95": -0.18231885586526664,
+  "percentile_of_real": 16.3
+ },
+ "by_year": {
+  "2011": {
+   "n": 150,
+   "mean_base_r": -0.21609833077771942
+  },
+  "2012": {
+   "n": 225,
+   "mean_base_r": -0.226688904766265
+  },
+  "2013": {
+   "n": 208,
+   "mean_base_r": -0.21500412137395483
+  },
+  "2014": {
+   "n": 228,
+   "mean_base_r": -0.2914635765846687
+  },
+  "2015": {
+   "n": 227,
+   "mean_base_r": -0.2594766566008536
+  },
+  "2016": {
+   "n": 230,
+   "mean_base_r": -0.16950425143095657
+  },
+  "2017": {
+   "n": 234,
+   "mean_base_r": -0.20967692022748574
+  },
+  "2018": {
+   "n": 233,
+   "mean_base_r": -0.12908474197267975
+  }
+ },
+ "by_weekday_descriptive": {
+  "0": {
+   "n": 326,
+   "mean_base_r": -0.21821640748372342
+  },
+  "1": {
+   "n": 354,
+   "mean_base_r": -0.223678081659509
+  },
+  "2": {
+   "n": 360,
+   "mean_base_r": -0.21625776594026583
+  },
+  "3": {
+   "n": 348,
+   "mean_base_r": -0.19610637833511826
+  },
+  "4": {
+   "n": 347,
+   "mean_base_r": -0.21672686985665002
+  }
+ },
+ "by_abs_move_quintile_descriptive": {
+  "1": {
+   "n": 347,
+   "mean_base_r": -0.24784623275870044
+  },
+  "2": {
+   "n": 347,
+   "mean_base_r": -0.20913752425684426
+  },
+  "3": {
+   "n": 347,
+   "mean_base_r": -0.20112651121274633
+  },
+  "4": {
+   "n": 347,
+   "mean_base_r": -0.24264741595020764
+  },
+  "5": {
+   "n": 347,
+   "mean_base_r": -0.17020090079710495
+  }
+ },
+ "exit_reasons": {
+  "STOP_LOSS": 6,
+  "TIME_EXIT": 1729
+ },
+ "cost_attribution_mean_r": {
+  "gross": -0.010316836096918091,
+  "slippage": -0.01645005860987658,
+  "spread_and_path": -0.18742482228832605,
+  "net_base": -0.2141917169951207
+ },
+ "break_even_commission_usd_per_lot_per_side": -39.062180033787925,
+ "expected_contribution_per_year_pct_at_0_25_risk": -11.613207155829201,
+ "mean_without_top_1pct": -0.2338534177815746,
+ "years_positive": 0,
+ "gate": {
+  "checks": {
+   "n_at_least_minimum": true,
+   "p_below_alpha": false,
+   "mean_base_at_least_floor": false,
+   "mean_pessimistic_positive": false,
+   "artefact_years_positive": false,
+   "artefact_without_top1pct_positive": false,
+   "artefact_placebo_percentile": false
+  },
+  "verdict": "FAIL",
+  "alpha": 0.0333,
+  "n_min": 1500
+ },
+ "verdict": "FAIL",
+ "provenance": {
+  "code_head": "065197281773165f1b0d934a289e184119c34fe6",
+  "preregistration_commit": "4a03273e9bcc0c982aefc640ace8e357221c2de1",
+  "amendment_commit": "6ca3342",
+  "prereg_sha256": "df07fe71cfde2a93fc3946aa7251dabdf7bb026bb2cd1322a34c8d48ccc82b9c",
+  "amendment_sha256": "e05cb3561c0255d72a3160790693d75b3ff5ef877c06c2df3df28b4161e897b7",
+  "protocol_sha256": "a724ab99aac62da0690c7d91eccc75b754b0a35d0738a9fbbe52480008f1a251",
+  "clock_certificate_sha256": "73669eea36657a2452512528a3f06149499f8f4f09337a4e3c457cedd25b4f78",
+  "data_files": 198,
+  "data_sha256_of_file_hashes": "495d945278f86e8596c2292cf9550a1945b17a3049b207135378c3ad421173b8",
+  "closures_sha256": "b469cdf846fc93d64816310dbe1c6d0f079277c927134ea0d8325b5e03ed67f2",
+  "generated_at": "2026-10-11T06:34:11.036380+00:00"
+ }
+}
