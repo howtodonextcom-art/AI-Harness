@@ -26,6 +26,7 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState }
 import { TF_SECONDS, barIndexAt, signalBarIndex } from "@/lib/chartMath";
 import { DrawingLayer, type DrawingApi } from "@/components/terminal/DrawingLayer";
 import { NewsMarkers } from "@/components/terminal/NewsMarkers";
+import { SystemTradePlanOverlay } from "@/components/terminal/SystemTradePlanOverlay";
 import { DEFAULT_RR, DRAWING_COLORS, fromLogical, toLogical, type Drawing, type DrawingKind, type Pt } from "@/lib/drawings";
 import type { MarketBar } from "@/lib/market";
 import type { ManualLevel, Overlays, PriceAlert } from "@/lib/prefs";
@@ -216,6 +217,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   const [size, setSize] = useState({ w: 0, h: 0 });
   const lastRange = useRef<{ from: number; to: number } | null>(null);
   const lastWidth = useRef(0);
+  const systemOverlayActive = Boolean((overlays.plan && planLive && plan && plan.complete) || (overlays.paper && view?.desk?.position?.status === "OPEN"));
 
   useEffect(() => {
     followRef.current = follow;
@@ -224,8 +226,8 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
   useEffect(() => {
     // the ruler and the drawings are positioned from the visible range and the price scale
     const news = overlays.news && (view?.news?.next_events.length ?? 0) > 0;
-    hasOverlay.current = measure.a !== null || drawings.length > 0 || draft !== null || news;
-  }, [measure.a, drawings.length, draft, overlays.news, view?.news?.next_events.length]);
+    hasOverlay.current = measure.a !== null || drawings.length > 0 || draft !== null || news || systemOverlayActive;
+  }, [measure.a, drawings.length, draft, overlays.news, view?.news?.next_events.length, systemOverlayActive]);
   useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
@@ -733,7 +735,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       out.push({ id, title, price, color, style, width });
     };
     if (overlays.plan && planLive && plan && plan.complete) {
-      add(plan.planned_entry, "ENTRY", BLUE, LineStyle.Solid, 2); // solid
+      add(plan.planned_entry, `${plan.side} ENTRY`, BLUE, LineStyle.Solid, 2, "ENTRY"); // solid
       add(plan.sl, "SL", RED, LineStyle.Dashed, 2); // dashed
       add(plan.tp1, "TP1", GREEN, LineStyle.Dotted, 2); // dotted
       add(plan.tp2, "TP2 tham khảo", GREEN, LineStyle.SparseDotted, 1, "TP2");
@@ -852,6 +854,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
       />
 
       {overlays.news && <NewsMarkers news={view?.news} api={drawApiRef.current} zone={zone} width={size.w} height={size.h} />}
+      <SystemTradePlanOverlay api={drawApiRef.current} width={size.w} height={size.h} planLive={planLive} plan={plan} view={view} showPlan={overlays.plan} showPaper={overlays.paper} />
       <DrawingLayer drawings={drawings} draft={draft} selectedId={selectedDrawing} api={drawApiRef.current} width={size.w} height={size.h} onSelect={onSelectDrawing} onChange={onChangeDrawing} onDelete={onDeleteDrawing} passive={tool !== "none"} />
 
       {shown && (

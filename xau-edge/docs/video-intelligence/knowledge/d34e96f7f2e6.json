@@ -71,12 +71,12 @@
       ],
       "assertion": "A bullish Wolfe Wave is a descending converging wedge of five points where P5 undercuts the 1-3 line, with the P1-P4 line extended as the target and the stop at P5.",
       "status": "VALIDATED",
-      "verification": "Matches the geometry on several published education pages (LuxAlgo, ATAS, TheRightTrader, Bajaj). Those pages are not authoritative references and differ on the entry trigger; so VALIDATED means 'matches the common convention', not 'proven to work'.",
+      "verification": "Matches the geometry on education pages that were OPENED and read (LuxAlgo, ATAS) and on pages seen only in search-result summaries, not opened (TheRightTrader, Bajaj Finserv). These are not authoritative references and differ on the entry trigger; VALIDATED means 'matches the common convention', not 'proven to work'.",
       "citations": [
         "https://www.luxalgo.com/library/concept/wolfe-waves/",
         "https://atas.net/technical-analysis/wolfe-wave-pattern-how-to-profitably-trade-on-wolf-waves",
-        "https://therighttrader.com/learn/chart-patterns/wolfe-wave",
-        "https://www.bajajfinserv.in/wolfe-wave-pattern"
+        "https://therighttrader.com/learn/chart-patterns/wolfe-wave (search summary only)",
+        "https://www.bajajfinserv.in/wolfe-wave-pattern (search summary only)"
       ]
     },
     {
