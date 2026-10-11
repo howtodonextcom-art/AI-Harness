@@ -41,11 +41,30 @@ def test_the_overview_states_the_verdict_k_and_the_no_edge_banner(repo: Path) ->
     assert view["v1"]["hypotheses_budget"] == 6
     assert view["v2"]["started"] is False
     assert view["v2"]["hypotheses_budget"] == 8
-    assert view["v2"]["k_cap"] == 48
+    assert view["v2"]["k_cap"] is None
     assert view["banner"] == NO_EDGE_BANNER
     ids = [d["id"] for d in view["decisions"]]
     assert ids == ["D-1", "D-2"]
     assert all(d["state"] == "pending" for d in view["decisions"])
+
+
+def test_v2_k_cap_follows_ledger_when_state_disagrees(repo: Path) -> None:
+    """Ledger.md is the only cap. STATE.json / the old default 48 must not win."""
+    write(
+        repo,
+        "docs/research/edge-program-v2/ledger.md",
+        "* **K = 0 + 20 = 20; trần K cap = 24.** alpha = 0.05 / 20 = 0.0025.\n",
+    )
+    write(
+        repo,
+        "docs/research/edge-program-v2/STATE.json",
+        json.dumps({"sprint": "P0", "k_cap": 48, "k_declared": 20, "hypotheses_budget": 8}),
+    )
+    view = _service(repo).overview()["v2"]
+    assert view["k_cap"] == 24
+    assert view["k_cap_source"] == "docs/research/edge-program-v2/ledger.md"
+    assert view["k_cap_mismatch"] is True
+    assert view["k_cap_state"] == 48
 
 
 def test_a_decision_the_owner_recorded_is_shown_as_such(repo: Path) -> None:

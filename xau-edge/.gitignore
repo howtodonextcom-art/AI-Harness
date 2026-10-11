@@ -62,6 +62,12 @@ experiments/runs/
 # Node / dashboard (later sprints)
 node_modules/
 .next/
+.next-sandbox/
+.next-e2e/
+
+# Portable NSSM (binaries stay local; never commit)
+tools/nssm/
+*.exe
 
 # Trained model artifacts (binary, local)
 /models/

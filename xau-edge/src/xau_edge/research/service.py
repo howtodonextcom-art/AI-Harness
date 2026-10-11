@@ -172,6 +172,25 @@ class ResearchService:
             return {}
         return data if isinstance(data, dict) else {}
 
+    def _v2_k_cap(self, ledger: LedgerParse | None, state: dict[str, Any]) -> dict[str, Any]:
+        """Ledger.md owns the cap. STATE.json may confirm or disagree; it never overrides."""
+        ledger_cap = ledger.k_cap if ledger is not None else None
+        raw = state.get("k_cap") if state else None
+        state_cap = raw if isinstance(raw, int) else None
+        if ledger_cap is not None:
+            return {
+                "k_cap": ledger_cap,
+                "k_cap_source": V2_LEDGER,
+                "k_cap_mismatch": state_cap is not None and state_cap != ledger_cap,
+                "k_cap_state": state_cap,
+            }
+        return {
+            "k_cap": None,
+            "k_cap_source": V2_LEDGER if ledger is not None else None,
+            "k_cap_mismatch": False,
+            "k_cap_state": state_cap,
+        }
+
     def _candidate_files(self) -> list[str]:
         out: list[str] = []
         for folder in ("experiments/edge_program", "experiments/edge_program_v2"):
@@ -303,6 +322,7 @@ class ResearchService:
         state = self._state()
         v2_ledger = self._ledger(V2_LEDGER)
         started = bool(state) or v2_ledger is not None
+        k_cap = self._v2_k_cap(v2_ledger, state)
         v2_view = (
             {
                 "status": "ok",
@@ -314,7 +334,7 @@ class ResearchService:
                     else state.get("k_declared")
                 ),
                 "k_source": V2_LEDGER if v2_ledger is not None and v2_ledger.k else V2_STATE,
-                "k_cap": state.get("k_cap", 48),
+                **k_cap,
                 "hypotheses_used": (
                     len({r.hypothesis for r in v2_ledger.runs})
                     if v2_ledger is not None and v2_ledger.runs
@@ -329,7 +349,7 @@ class ResearchService:
                 "status": "ok",
                 "started": False,
                 "message": "chưa bắt đầu V2 (cần quyết định D-1 của chủ dự án)",
-                "k_cap": 48,
+                **k_cap,
                 "hypotheses_budget": 8,
                 "source": V2_STATE,
             }
