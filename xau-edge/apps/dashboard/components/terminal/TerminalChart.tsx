@@ -977,7 +977,7 @@ export const TerminalChart = forwardRef<ChartHandle, Props>(function TerminalCha
         ))}
       </ul>
       {overlays.sessions && (
-        <ul data-testid="session-legend" aria-label="Chú giải phiên giao dịch" className="pointer-events-none absolute bottom-1 left-2 z-10 flex gap-2 text-[11px]">
+        <ul data-testid="session-legend" aria-label="Chú giải phiên giao dịch" className="pointer-events-none absolute bottom-9 left-2 z-10 flex gap-2 text-[11px]">
           {(["ASIA", "LONDON", "NEW_YORK", "LONDON_NY_OVERLAP"] as const).map((k) => (
             <li key={k} className="rounded px-1 text-slate-700 dark:text-slate-200" style={{ background: SESSION_COLORS[k].replace(/[\d.]+\)$/, "0.35)") }}>{SESSION_NAMES[k]}</li>
           ))}

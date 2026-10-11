@@ -85,3 +85,15 @@ test("a live plan stays inside the price scale while far context levels do not m
     expect(ys[role], `${role} inside the chart`).toBeLessThan(box!.height);
   }
 });
+
+test("the session legend sits above the time axis and never covers its labels", async ({ page }) => {
+  await page.addInitScript((key) => {
+    window.localStorage.setItem(key, JSON.stringify({ overlays: { sessions: true } }));
+  }, PREFS_KEY);
+  await mock(page, view("wait"));
+  await page.goto("/trade");
+  const legend = page.getByTestId("session-legend");
+  await expect(legend).toBeVisible();
+  const [l, c] = await Promise.all([legend.boundingBox(), page.getByTestId("trade-chart").boundingBox()]);
+  expect(c!.y + c!.height - (l!.y + l!.height), "gap between the legend and the bottom of the chart (time axis is about 28 px)").toBeGreaterThanOrEqual(28);
+});
