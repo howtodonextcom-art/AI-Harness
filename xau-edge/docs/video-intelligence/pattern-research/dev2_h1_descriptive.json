@@ -1,0 +1,341 @@
+{
+  "dataset": "dev2_h1",
+  "classification": "BURNED",
+  "reason": "Development-2 2011-01-01..2018-12-31 was consumed by Batch A (V2) and F1/F3 (V3) Stage 1 outcome tests; counts-only use has the precedent event-counts-dev2.json (D-2)",
+  "window": [
+    "2011-01-01T00:00:00+00:00",
+    "2019-01-01T00:00:00+00:00"
+  ],
+  "bars": 48470,
+  "first_bar": "2011-01-03T00:00:00+00:00",
+  "last_bar": "2018-12-31T18:00:00+00:00",
+  "source_file": "mt5-ftmo-demo-history__20100124T230000__20250430T230000__9b521cda6648.parquet",
+  "source_sha256_from_manifest": "6251e454293d8f1bf0aa17e325678435dae998fa4ce135fe0d2b348819e10696",
+  "parameters": {
+    "wolfe": {
+      "pivot_left": 3,
+      "pivot_right": 3,
+      "require_p5_beyond_line13": true,
+      "require_converging": true,
+      "require_p4_inside_p2_p3": true,
+      "min_leg_bars": 3,
+      "max_pattern_bars": 400,
+      "target_horizon_bars": null,
+      "min_reward_risk": 1.0,
+      "spread": 0.0
+    },
+    "reversal": {
+      "pivot_left": 3,
+      "pivot_right": 3,
+      "equal_tolerance": 0.25,
+      "min_height_atr": 2.0,
+      "min_bars_between": 5,
+      "max_pattern_bars": 200,
+      "max_break_bars": 20
+    },
+    "tuned_on_market_data": false
+  },
+  "outcome_analysis": "NONE",
+  "clock_note": "broker clock is certified only for some years; hour-of-day counts are informational",
+  "detectors": {
+    "wolfe": {
+      "n_bars": 48470,
+      "detections": 71,
+      "per_10k_bars": 14.648236022281823,
+      "by_type": {
+        "WOLFE_WAVE": 71
+      },
+      "by_bias": {
+        "LONG": 23,
+        "SHORT": 48
+      },
+      "confirmation_lag_bars": {
+        "min": 3,
+        "p25": 3,
+        "median": 3.0,
+        "p75": 3,
+        "max": 3
+      },
+      "wait_for_trigger_bars": {
+        "min": 0,
+        "p25": 0,
+        "median": 0.0,
+        "p75": 0,
+        "max": 0
+      },
+      "trigger_delay_bars": {
+        "min": 0,
+        "p25": 0,
+        "median": 0.0,
+        "p75": 0,
+        "max": 0
+      },
+      "duration_bars_first_point_to_actionable": {
+        "min": 18,
+        "p25": 28,
+        "median": 34.0,
+        "p75": 38,
+        "max": 58
+      },
+      "leg_bars": {
+        "min": 3,
+        "p25": 4,
+        "median": 6.0,
+        "p75": 10,
+        "max": 36
+      },
+      "height_in_atr": null,
+      "geometry_fit": null,
+      "distinct_pattern_ids": 71,
+      "overlap": {
+        "detections": 71,
+        "overlapping": 10,
+        "nested": 0,
+        "overlap_rate": 0.14084507042253522
+      },
+      "per_year": {
+        "2011": 26,
+        "2012": 12,
+        "2013": 4,
+        "2014": 7,
+        "2015": 5,
+        "2016": 7,
+        "2017": 4,
+        "2018": 6
+      },
+      "by_actionable_hour_utc": {
+        "0": 7,
+        "1": 6,
+        "2": 1,
+        "4": 6,
+        "5": 3,
+        "6": 4,
+        "7": 3,
+        "8": 1,
+        "9": 5,
+        "10": 4,
+        "11": 2,
+        "12": 3,
+        "13": 5,
+        "14": 2,
+        "15": 2,
+        "17": 3,
+        "18": 3,
+        "19": 4,
+        "20": 2,
+        "21": 1,
+        "22": 1,
+        "23": 3
+      }
+    },
+    "double_top_bottom": {
+      "n_bars": 48470,
+      "detections": 287,
+      "per_10k_bars": 59.21188363936456,
+      "by_type": {
+        "DOUBLE_BOTTOM": 144,
+        "DOUBLE_TOP": 143
+      },
+      "by_bias": {
+        "LONG": 144,
+        "SHORT": 143
+      },
+      "confirmation_lag_bars": {
+        "min": 3,
+        "p25": 3,
+        "median": 3.0,
+        "p75": 3,
+        "max": 3
+      },
+      "wait_for_trigger_bars": {
+        "min": 0,
+        "p25": 1,
+        "median": 7.0,
+        "p75": 13,
+        "max": 20
+      },
+      "trigger_delay_bars": {
+        "min": 0,
+        "p25": 0,
+        "median": 0.0,
+        "p75": 0,
+        "max": 2
+      },
+      "duration_bars_first_point_to_actionable": {
+        "min": 13,
+        "p25": 22,
+        "median": 28.0,
+        "p75": 32,
+        "max": 58
+      },
+      "leg_bars": {
+        "min": 5,
+        "p25": 6,
+        "median": 7.0,
+        "p75": 10,
+        "max": 25
+      },
+      "height_in_atr": {
+        "min": 2.004194137636575,
+        "p25": 2.717342585970812,
+        "median": 3.2923009305153665,
+        "p75": 3.9742992949428095,
+        "max": 10.52815210837249
+      },
+      "geometry_fit": {
+        "min": 0.005224660397021963,
+        "p25": 0.3006535947711484,
+        "median": 0.5462091864969647,
+        "p75": 0.8271604938271595,
+        "max": 1.0
+      },
+      "distinct_pattern_ids": 287,
+      "overlap": {
+        "detections": 287,
+        "overlapping": 36,
+        "nested": 3,
+        "overlap_rate": 0.1254355400696864
+      },
+      "per_year": {
+        "2011": 27,
+        "2012": 31,
+        "2013": 39,
+        "2014": 37,
+        "2015": 44,
+        "2016": 42,
+        "2017": 31,
+        "2018": 36
+      },
+      "by_actionable_hour_utc": {
+        "0": 18,
+        "1": 11,
+        "2": 3,
+        "4": 3,
+        "5": 3,
+        "6": 7,
+        "7": 10,
+        "8": 6,
+        "9": 4,
+        "10": 2,
+        "11": 5,
+        "12": 14,
+        "13": 21,
+        "14": 9,
+        "15": 13,
+        "16": 19,
+        "17": 10,
+        "18": 11,
+        "19": 5,
+        "20": 5,
+        "21": 59,
+        "22": 47,
+        "23": 2
+      }
+    },
+    "head_and_shoulders": {
+      "n_bars": 48470,
+      "detections": 7,
+      "per_10k_bars": 1.4441922838869403,
+      "by_type": {
+        "HEAD_AND_SHOULDERS": 3,
+        "INVERSE_HEAD_AND_SHOULDERS": 4
+      },
+      "by_bias": {
+        "SHORT": 3,
+        "LONG": 4
+      },
+      "confirmation_lag_bars": {
+        "min": 3,
+        "p25": 3,
+        "median": 3.0,
+        "p75": 3,
+        "max": 3
+      },
+      "wait_for_trigger_bars": {
+        "min": 0,
+        "p25": 0,
+        "median": 1.0,
+        "p75": 3,
+        "max": 18
+      },
+      "trigger_delay_bars": {
+        "min": 0,
+        "p25": 0,
+        "median": 0.0,
+        "p75": 1,
+        "max": 2
+      },
+      "duration_bars_first_point_to_actionable": {
+        "min": 37,
+        "p25": 42,
+        "median": 47.0,
+        "p75": 48,
+        "max": 54
+      },
+      "leg_bars": {
+        "min": 5,
+        "p25": 5,
+        "median": 7.0,
+        "p75": 10,
+        "max": 31
+      },
+      "height_in_atr": {
+        "min": 4.79556819354366,
+        "p25": 5.556223420447311,
+        "median": 6.08128640383692,
+        "p75": 6.16800382306165,
+        "max": 6.950802052485719
+      },
+      "geometry_fit": {
+        "min": 0.3616193071233744,
+        "p25": 0.5443946188340683,
+        "median": 0.6042121994834111,
+        "p75": 0.7407838571983164,
+        "max": 0.8486366165832309
+      },
+      "distinct_pattern_ids": 7,
+      "overlap": {
+        "detections": 7,
+        "overlapping": 0,
+        "nested": 0,
+        "overlap_rate": 0.0
+      },
+      "per_year": {
+        "2011": 1,
+        "2012": 1,
+        "2014": 2,
+        "2017": 2,
+        "2018": 1
+      },
+      "by_actionable_hour_utc": {
+        "0": 1,
+        "1": 2,
+        "8": 1,
+        "12": 1,
+        "15": 1,
+        "20": 1
+      }
+    }
+  },
+  "block_shuffled_null": {
+    "block_bars": 48,
+    "shuffles": 20,
+    "per_detector": {
+      "wolfe": {
+        "per_10k_bars_mean": 15.84,
+        "per_10k_bars_min": 14.44,
+        "per_10k_bars_max": 18.57
+      },
+      "double_top_bottom": {
+        "per_10k_bars_mean": 55.75,
+        "per_10k_bars_min": 53.64,
+        "per_10k_bars_max": 58.59
+      },
+      "head_and_shoulders": {
+        "per_10k_bars_mean": 2.7,
+        "per_10k_bars_min": 1.24,
+        "per_10k_bars_max": 3.92
+      }
+    }
+  }
+}

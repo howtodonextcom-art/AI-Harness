@@ -1,0 +1,480 @@
+{
+  "dataset": "random_walk",
+  "classification": "SYNTHETIC",
+  "seeds": 20,
+  "bars_per_seed": 10000,
+  "parameters": {
+    "wolfe": {
+      "pivot_left": 3,
+      "pivot_right": 3,
+      "require_p5_beyond_line13": true,
+      "require_converging": true,
+      "require_p4_inside_p2_p3": true,
+      "min_leg_bars": 3,
+      "max_pattern_bars": 400,
+      "target_horizon_bars": null,
+      "min_reward_risk": 1.0,
+      "spread": 0.0,
+      "entry_trigger": "P5_CONFIRMED",
+      "max_reclaim_bars": 20
+    },
+    "reversal": {
+      "pivot_left": 3,
+      "pivot_right": 3,
+      "equal_tolerance": 0.25,
+      "min_height_atr": 2.0,
+      "min_bars_between": 5,
+      "max_pattern_bars": 200,
+      "max_break_bars": 20
+    },
+    "tuned_on_market_data": false
+  },
+  "outcome_analysis": "NONE",
+  "baseline": {
+    "sigma": 0.3,
+    "bar_range_noise": 0.1,
+    "detectors": {
+      "wolfe": {
+        "per_10k_bars_mean": 46.5,
+        "per_10k_bars_min": 30.0,
+        "per_10k_bars_max": 60.0,
+        "pooled": {
+          "n_bars": 200000,
+          "detections": 930,
+          "per_10k_bars": 46.5,
+          "by_type": {
+            "WOLFE_WAVE": 930
+          },
+          "by_bias": {
+            "LONG": 469,
+            "SHORT": 461
+          },
+          "confirmation_lag_bars": {
+            "min": 3,
+            "p25": 3,
+            "median": 3.0,
+            "p75": 3,
+            "max": 3
+          },
+          "wait_for_trigger_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 0,
+            "max": 0
+          },
+          "trigger_delay_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 0,
+            "max": 0
+          },
+          "duration_bars_first_point_to_actionable": {
+            "min": 15,
+            "p25": 25,
+            "median": 30.0,
+            "p75": 35,
+            "max": 66
+          },
+          "leg_bars": {
+            "min": 3,
+            "p25": 4,
+            "median": 6.0,
+            "p75": 9,
+            "max": 36
+          },
+          "height_in_atr": null,
+          "geometry_fit": null,
+          "distinct_pattern_ids": 930,
+          "overlap": {
+            "detections": 930,
+            "overlapping": 877,
+            "nested": 258,
+            "overlap_rate": 0.943010752688172
+          }
+        }
+      },
+      "double_top_bottom": {
+        "per_10k_bars_mean": 58.5,
+        "per_10k_bars_min": 44.0,
+        "per_10k_bars_max": 72.0,
+        "pooled": {
+          "n_bars": 200000,
+          "detections": 1170,
+          "per_10k_bars": 58.5,
+          "by_type": {
+            "DOUBLE_BOTTOM": 574,
+            "DOUBLE_TOP": 596
+          },
+          "by_bias": {
+            "LONG": 574,
+            "SHORT": 596
+          },
+          "confirmation_lag_bars": {
+            "min": 3,
+            "p25": 3,
+            "median": 3.0,
+            "p75": 3,
+            "max": 3
+          },
+          "wait_for_trigger_bars": {
+            "min": 0,
+            "p25": 2,
+            "median": 5.0,
+            "p75": 10,
+            "max": 20
+          },
+          "trigger_delay_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 0,
+            "max": 2
+          },
+          "duration_bars_first_point_to_actionable": {
+            "min": 13,
+            "p25": 19,
+            "median": 23.0,
+            "p75": 30,
+            "max": 61
+          },
+          "leg_bars": {
+            "min": 5,
+            "p25": 6,
+            "median": 7.0,
+            "p75": 9,
+            "max": 25
+          },
+          "height_in_atr": {
+            "min": 2.030143892411936,
+            "p25": 3.617289955835529,
+            "median": 4.330796405062495,
+            "p75": 5.270062948351973,
+            "max": 9.915448967449379
+          },
+          "geometry_fit": {
+            "min": 4.054305838674388e-05,
+            "p25": 0.22838357883187166,
+            "median": 0.47771143778861624,
+            "p75": 0.7334102158412321,
+            "max": 0.9991750800973385
+          },
+          "distinct_pattern_ids": 1170,
+          "overlap": {
+            "detections": 1170,
+            "overlapping": 1106,
+            "nested": 430,
+            "overlap_rate": 0.9452991452991453
+          }
+        }
+      },
+      "head_and_shoulders": {
+        "per_10k_bars_mean": 4.25,
+        "per_10k_bars_min": 1.0,
+        "per_10k_bars_max": 9.0,
+        "pooled": {
+          "n_bars": 200000,
+          "detections": 85,
+          "per_10k_bars": 4.25,
+          "by_type": {
+            "INVERSE_HEAD_AND_SHOULDERS": 42,
+            "HEAD_AND_SHOULDERS": 43
+          },
+          "by_bias": {
+            "LONG": 42,
+            "SHORT": 43
+          },
+          "confirmation_lag_bars": {
+            "min": 3,
+            "p25": 3,
+            "median": 3.0,
+            "p75": 3,
+            "max": 3
+          },
+          "wait_for_trigger_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 1.0,
+            "p75": 4,
+            "max": 18
+          },
+          "trigger_delay_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 1,
+            "max": 2
+          },
+          "duration_bars_first_point_to_actionable": {
+            "min": 25,
+            "p25": 35,
+            "median": 39.0,
+            "p75": 45,
+            "max": 66
+          },
+          "leg_bars": {
+            "min": 5,
+            "p25": 6,
+            "median": 8.0,
+            "p75": 10,
+            "max": 30
+          },
+          "height_in_atr": {
+            "min": 3.186111746547942,
+            "p25": 5.2701713773581105,
+            "median": 6.535054144848721,
+            "p75": 7.329925715335856,
+            "max": 12.102586840822505
+          },
+          "geometry_fit": {
+            "min": 0.04530787771187139,
+            "p25": 0.29007510469550246,
+            "median": 0.5097029396982553,
+            "p75": 0.77901118184879,
+            "max": 0.9757299634840232
+          },
+          "distinct_pattern_ids": 85,
+          "overlap": {
+            "detections": 85,
+            "overlapping": 32,
+            "nested": 5,
+            "overlap_rate": 0.3764705882352941
+          }
+        }
+      }
+    }
+  },
+  "wide_bar_ranges": {
+    "sigma": 0.3,
+    "bar_range_noise": 0.3,
+    "detectors": {
+      "wolfe": {
+        "per_10k_bars_mean": 43.75,
+        "per_10k_bars_min": 27.0,
+        "per_10k_bars_max": 55.0,
+        "pooled": {
+          "n_bars": 200000,
+          "detections": 875,
+          "per_10k_bars": 43.75,
+          "by_type": {
+            "WOLFE_WAVE": 875
+          },
+          "by_bias": {
+            "LONG": 430,
+            "SHORT": 445
+          },
+          "confirmation_lag_bars": {
+            "min": 3,
+            "p25": 3,
+            "median": 3.0,
+            "p75": 3,
+            "max": 3
+          },
+          "wait_for_trigger_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 0,
+            "max": 0
+          },
+          "trigger_delay_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 0,
+            "max": 0
+          },
+          "duration_bars_first_point_to_actionable": {
+            "min": 16,
+            "p25": 24,
+            "median": 29.0,
+            "p75": 35,
+            "max": 59
+          },
+          "leg_bars": {
+            "min": 3,
+            "p25": 4,
+            "median": 6.0,
+            "p75": 8,
+            "max": 33
+          },
+          "height_in_atr": null,
+          "geometry_fit": null,
+          "distinct_pattern_ids": 875,
+          "overlap": {
+            "detections": 875,
+            "overlapping": 812,
+            "nested": 240,
+            "overlap_rate": 0.928
+          }
+        }
+      },
+      "double_top_bottom": {
+        "per_10k_bars_mean": 63.55,
+        "per_10k_bars_min": 47.0,
+        "per_10k_bars_max": 78.0,
+        "pooled": {
+          "n_bars": 200000,
+          "detections": 1271,
+          "per_10k_bars": 63.55,
+          "by_type": {
+            "DOUBLE_BOTTOM": 628,
+            "DOUBLE_TOP": 643
+          },
+          "by_bias": {
+            "LONG": 628,
+            "SHORT": 643
+          },
+          "confirmation_lag_bars": {
+            "min": 3,
+            "p25": 3,
+            "median": 3.0,
+            "p75": 3,
+            "max": 3
+          },
+          "wait_for_trigger_bars": {
+            "min": 0,
+            "p25": 3,
+            "median": 7.0,
+            "p75": 12,
+            "max": 20
+          },
+          "trigger_delay_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 0,
+            "max": 2
+          },
+          "duration_bars_first_point_to_actionable": {
+            "min": 13,
+            "p25": 20,
+            "median": 25.0,
+            "p75": 31,
+            "max": 54
+          },
+          "leg_bars": {
+            "min": 5,
+            "p25": 6,
+            "median": 7.0,
+            "p75": 9,
+            "max": 24
+          },
+          "height_in_atr": {
+            "min": 2.018587849265475,
+            "p25": 2.8421315026776433,
+            "median": 3.3479345707173707,
+            "p75": 3.8406163870534704,
+            "max": 6.564458695384998
+          },
+          "geometry_fit": {
+            "min": 0.00033642094088126573,
+            "p25": 0.2245935696518495,
+            "median": 0.46676271928928104,
+            "p75": 0.7255487352559956,
+            "max": 0.9997738673830469
+          },
+          "distinct_pattern_ids": 1271,
+          "overlap": {
+            "detections": 1271,
+            "overlapping": 1224,
+            "nested": 471,
+            "overlap_rate": 0.963021243115657
+          }
+        }
+      },
+      "head_and_shoulders": {
+        "per_10k_bars_mean": 2.85,
+        "per_10k_bars_min": 1.0,
+        "per_10k_bars_max": 5.0,
+        "pooled": {
+          "n_bars": 200000,
+          "detections": 57,
+          "per_10k_bars": 2.85,
+          "by_type": {
+            "HEAD_AND_SHOULDERS": 36,
+            "INVERSE_HEAD_AND_SHOULDERS": 21
+          },
+          "by_bias": {
+            "SHORT": 36,
+            "LONG": 21
+          },
+          "confirmation_lag_bars": {
+            "min": 3,
+            "p25": 3,
+            "median": 3.0,
+            "p75": 3,
+            "max": 3
+          },
+          "wait_for_trigger_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 3.0,
+            "p75": 10,
+            "max": 20
+          },
+          "trigger_delay_bars": {
+            "min": 0,
+            "p25": 0,
+            "median": 0.0,
+            "p75": 1,
+            "max": 2
+          },
+          "duration_bars_first_point_to_actionable": {
+            "min": 23,
+            "p25": 35,
+            "median": 40.0,
+            "p75": 48,
+            "max": 70
+          },
+          "leg_bars": {
+            "min": 5,
+            "p25": 6,
+            "median": 7.0,
+            "p75": 10,
+            "max": 27
+          },
+          "height_in_atr": {
+            "min": 2.8576194183783006,
+            "p25": 3.9552230178481644,
+            "median": 4.612434047271542,
+            "p75": 5.083045552530262,
+            "max": 8.27319509416603
+          },
+          "geometry_fit": {
+            "min": 0.03297740345341704,
+            "p25": 0.2702131828454909,
+            "median": 0.5819728545673339,
+            "p75": 0.8049152959638195,
+            "max": 0.9787749478155714
+          },
+          "distinct_pattern_ids": 57,
+          "overlap": {
+            "detections": 57,
+            "overlapping": 8,
+            "nested": 2,
+            "overlap_rate": 0.14035087719298245
+          }
+        }
+      }
+    }
+  },
+  "wolfe_entry_timing_synthetic": {
+    "note": "synthetic random walk only; matches the same P5 in both modes",
+    "geometries_at_p5_confirmation": 930,
+    "also_found_with_reclaim_trigger": 652,
+    "extra_bars_waited_after_p5_confirmed": {
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "max": 18.0
+    },
+    "risk_distance_ratio_reclaim_over_p5": {
+      "p25": 1.0,
+      "median": 1.0,
+      "p75": 1.0,
+      "max": 38.81249279040345
+    }
+  }
+}

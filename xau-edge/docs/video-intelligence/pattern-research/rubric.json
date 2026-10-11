@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "written_before_scoring": true,
+  "scale": "0..5 per criterion; 5 is always the better end (so risk, parameter count and complexity are inverted: 5 = low risk, few parameters, simple)",
+  "criteria": {
+    "definition_clarity": {"weight": 3, "meaning": "Do independent sources agree on a formal definition? 5 = one definition most sources share; 1 = every source differs or it is drawn by eye"},
+    "causal_detectability": {"weight": 3, "meaning": "Can it be detected using only data up to the detection bar? 5 = trivially (closed-bar trigger); 1 = needs future bars to define"},
+    "repaint_risk": {"weight": 2, "meaning": "5 = nothing drawn can change after the fact; 1 = points move or appear retroactively"},
+    "parameter_freedom": {"weight": 2, "meaning": "5 = 3 or fewer free parameters; 3 = about 6; 1 = more than 9 or discretionary"},
+    "expected_frequency": {"weight": 1, "meaning": "5 = frequent enough to study without being noise; 1 = too rare to study; also 1 if it fires on almost every bar"},
+    "coding_complexity": {"weight": 1, "meaning": "5 = under 100 lines on top of existing pivots; 1 = needs fitting, clustering or heavy state"},
+    "external_evidence_quality": {"weight": 1, "meaning": "5 = reproducible independent statistics on a clear definition; 1 = educational claims only"},
+    "research_novelty": {"weight": 2, "meaning": "5 = mechanism not covered by Edge Programs V1-V3; 0 = already tested and closed"},
+    "addresses_known_xau_edge_weakness": {"weight": 1, "meaning": "Setup scarcity, late entry or R:R collapse, judged by mechanism, not by appearance"}
+  },
+  "selection_rule": {
+    "disqualify_if": ["already tested and closed in V1-V3 (novelty 0)", "no formal definition possible without discretion (definition_clarity <= 1)"],
+    "implement_if": "normalized score >= 70 AND rank in the top 2 among non-disqualified candidates",
+    "max_implementations": 2,
+    "if_none_qualify": "implement none",
+    "robustness": "report how often each candidate stays in the top 2 when every weight is randomly scaled by 0.5..1.5 (2000 draws, seed 11); a pick that is not robust is called out"
+  }
+}

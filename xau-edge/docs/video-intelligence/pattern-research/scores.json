@@ -1,0 +1,45 @@
+{
+  "rater": "single rater (the research agent); judgement scores, see rationale; +-1 on any criterion is plausible",
+  "candidates": {
+    "Wolfe Wave": {
+      "scores": {"definition_clarity": 2, "causal_detectability": 4, "repaint_risk": 3, "parameter_freedom": 2, "expected_frequency": 3, "coding_complexity": 3, "external_evidence_quality": 2, "research_novelty": 4, "addresses_known_xau_edge_weakness": 2},
+      "rationale": "Sources disagree on P5 (beyond line, on line, sweet zone, Fibonacci variant) and on entry; Bulkowski 47% EPA under perfect entry, rank 34/39; already implemented."
+    },
+    "Double Top / Double Bottom": {
+      "scores": {"definition_clarity": 4, "causal_detectability": 5, "repaint_risk": 4, "parameter_freedom": 3, "expected_frequency": 4, "coding_complexity": 4, "external_evidence_quality": 3, "research_novelty": 4, "addresses_known_xau_edge_weakness": 3},
+      "rationale": "Two equal peaks, a valley, a close beyond the valley as the trigger; widely and consistently defined; the trigger is a closed-bar event. Reversal patterns were not a V1-V3 mechanism."
+    },
+    "Head and Shoulders / Inverse": {
+      "scores": {"definition_clarity": 4, "causal_detectability": 5, "repaint_risk": 4, "parameter_freedom": 3, "expected_frequency": 2, "coding_complexity": 3, "external_evidence_quality": 3, "research_novelty": 4, "addresses_known_xau_edge_weakness": 2},
+      "rationale": "Five pivots, head higher than both shoulders, neckline break on close; clear definition; rarer than double tops and needs a sloped neckline."
+    },
+    "Triangle (ascending, descending, symmetrical)": {
+      "scores": {"definition_clarity": 3, "causal_detectability": 3, "repaint_risk": 3, "parameter_freedom": 2, "expected_frequency": 3, "coding_complexity": 2, "external_evidence_quality": 3, "research_novelty": 3, "addresses_known_xau_edge_weakness": 2},
+      "rationale": "Needs line fitting with touch counts and tolerances; trendline choice changes the pattern."
+    },
+    "Flag / Pennant": {
+      "scores": {"definition_clarity": 2, "causal_detectability": 4, "repaint_risk": 3, "parameter_freedom": 2, "expected_frequency": 4, "coding_complexity": 3, "external_evidence_quality": 2, "research_novelty": 2, "addresses_known_xau_edge_weakness": 3},
+      "rationale": "Pole size and consolidation shape vary by source; continuation after a pullback overlaps H04 (trend and pullback) of V1."
+    },
+    "Diamond": {
+      "scores": {"definition_clarity": 1, "causal_detectability": 2, "repaint_risk": 2, "parameter_freedom": 1, "expected_frequency": 1, "coding_complexity": 1, "external_evidence_quality": 1, "research_novelty": 4, "addresses_known_xau_edge_weakness": 1},
+      "rationale": "Rare, no shared geometry, expanding then contracting range is discretionary."
+    },
+    "Cup and Handle": {
+      "scores": {"definition_clarity": 2, "causal_detectability": 3, "repaint_risk": 3, "parameter_freedom": 2, "expected_frequency": 1, "coding_complexity": 2, "external_evidence_quality": 3, "research_novelty": 3, "addresses_known_xau_edge_weakness": 1},
+      "rationale": "Curvature has no agreed measure; long formation, rare on intraday gold."
+    },
+    "Break-and-Retest": {
+      "scores": {"definition_clarity": 3, "causal_detectability": 4, "repaint_risk": 4, "parameter_freedom": 3, "expected_frequency": 4, "coding_complexity": 4, "external_evidence_quality": 1, "research_novelty": 1, "addresses_known_xau_edge_weakness": 4},
+      "rationale": "Overlaps H08 breakout acceptance and continuation (V2, Stage 1 failed); mostly educational sources; directly about entry timing, which is why it still scores on the weakness criterion."
+    },
+    "Supply / Demand zone interaction": {
+      "scores": {"definition_clarity": 1, "causal_detectability": 2, "repaint_risk": 2, "parameter_freedom": 1, "expected_frequency": 3, "coding_complexity": 2, "external_evidence_quality": 1, "research_novelty": 3, "addresses_known_xau_edge_weakness": 2},
+      "rationale": "Zone construction is vendor-specific (base candles, departure strength, freshness); no shared definition."
+    },
+    "Liquidity Sweep + Reclaim": {
+      "scores": {"definition_clarity": 3, "causal_detectability": 4, "repaint_risk": 4, "parameter_freedom": 3, "expected_frequency": 4, "coding_complexity": 4, "external_evidence_quality": 1, "research_novelty": 0, "addresses_known_xau_edge_weakness": 3},
+      "rationale": "This is H07 of Edge Program V2 (12 variants over PD and ASIA levels, reject and accept modes, Stage 1 failed). Reopening it would reopen closed research."
+    }
+  }
+}
