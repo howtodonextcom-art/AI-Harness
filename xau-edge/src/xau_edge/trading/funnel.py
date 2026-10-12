@@ -254,3 +254,105 @@ def waiting_for(signal: TradingSignal) -> str | None:
         Refusal.BROKER_DISCONNECTED: "the broker connection",
     }
     return texts.get(first)
+
+
+_AUTH_STAGE_PLAN = 7
+"""Index of the last stage ("Trade plan"): reached only when every earlier stage passed."""
+
+
+def _bias_of(signal: TradingSignal) -> tuple[str, str]:
+    """(BUY | SELL | NEUTRAL, with-trend structure word) from H1, the only source of direction."""
+    if signal.h1_bias == "BULLISH":
+        return "BUY", "UP"
+    if signal.h1_bias == "BEARISH":
+        return "SELL", "DOWN"
+    return "NEUTRAL", ""
+
+
+def _diag_rows(signal: TradingSignal, side: str, with_trend: str) -> list[tuple[str, str, str]]:
+    """(stage, PASS | FAIL | NOT_EVALUATED, observed) for every stage, from the recorded state."""
+    refusals = set(signal.refusal_reasons)
+    stage0 = any(_STAGE_OF.get(r, 0) == 0 for r in refusals)
+    stage1 = any(_STAGE_OF.get(r, 0) == 1 for r in refusals)
+    m15_structure, _, m15_pullback = signal.m15_setup.partition("/")
+    skip = "NOT_EVALUATED"
+    live = not stage0  # the readings below are meaningless when the market or the data is unusable
+    directed = live and side != "NEUTRAL"
+    vetoes = {"BUY": "TREND_DOWN", "SELL": "TREND_UP"}
+    against = {"UP": "DOWN", "DOWN": "UP"}.get(with_trend, "")
+    pullback = {"BUY": "PULLBACK_IN_UPTREND", "SELL": "PULLBACK_IN_DOWNTREND"}.get(side, "")
+    align_ok = signal.h4_bias != vetoes.get(side) and m15_structure != against
+    plan_ok = signal.decision is not TradeDecision.WAIT
+    plan_failed = (
+        directed and not plan_ok and any(_STAGE_OF.get(r, 0) == _AUTH_STAGE_PLAN for r in refusals)
+    )
+    return [
+        (STAGE_NAMES[0], "FAIL" if stage0 else "PASS", "market/data"),
+        (
+            STAGE_NAMES[1],
+            skip if not live else "FAIL" if stage1 else "PASS",
+            f"{signal.spread_state}/{signal.volatility_regime}",
+        ),
+        (
+            STAGE_NAMES[2],
+            skip if not live else "PASS" if side != "NEUTRAL" else "FAIL",
+            f"H1:{signal.h1_bias}",
+        ),
+        (
+            STAGE_NAMES[3],
+            skip if not directed else "PASS" if align_ok else "FAIL",
+            f"H4:{signal.h4_bias} M15:{m15_structure}",
+        ),
+        (
+            STAGE_NAMES[4],
+            skip
+            if not directed
+            else "PASS"
+            if m15_structure == with_trend and m15_pullback == pullback
+            else "FAIL",
+            f"M15:{signal.m15_setup}",
+        ),
+        (
+            STAGE_NAMES[5],
+            skip if not directed else "PASS" if signal.m5_trigger == with_trend else "FAIL",
+            f"M5:{signal.m5_trigger}",
+        ),
+        (
+            STAGE_NAMES[6],
+            skip if not directed else "PASS" if signal.m1_execution_state == "GOOD" else "FAIL",
+            f"M1:{signal.m1_execution_state}",
+        ),
+        (STAGE_NAMES[7], "PASS" if plan_ok else "FAIL" if plan_failed else skip, "plan"),
+    ]
+
+
+def diagnostic_from_signal(signal: TradingSignal) -> dict[str, Any]:
+    """The WHOLE funnel for a human: every stage judged from the recorded state.
+
+    This is an explanation, never an authorization: ``decide`` still stops at the first refusal and
+    its
+    ``refusal_reasons`` remain the only thing that allows or forbids a trade. The bias (H1) is shown
+    separately from the action so "the system sees an uptrend" is never read as "BUY is allowed".
+    """
+    side, with_trend = _bias_of(signal)
+    rows = _diag_rows(signal, side, with_trend)
+    trade = signal.decision is not TradeDecision.WAIT
+    if trade:
+        rows = [(n, "PASS", o) for n, _, o in rows]
+    first = signal.refusal_reasons[0].value if signal.refusal_reasons and not trade else None
+    primary_stage = min((_STAGE_OF.get(r, 0) for r in signal.refusal_reasons), default=None)
+    failed = [n for n, s, _ in rows if s == "FAIL"]
+    primary_name = None if primary_stage is None or trade else STAGE_NAMES[primary_stage]
+    return {
+        "bias": {"side": side, "source": "H1", "reading": signal.h1_bias},
+        "action": signal.decision.value,
+        "rows": [
+            {"stage": n, "status": s, "timeframe": STAGE_TIMEFRAME[n], "observed": o}
+            for n, s, o in rows
+        ],
+        "required_total": len(STAGE_NAMES),
+        "required_passed": sum(1 for _, s, _ in rows if s == "PASS"),
+        "primary_blocker": first,
+        "primary_stage": primary_name,
+        "also_missing": [n for n in failed if n != primary_name],
+    }

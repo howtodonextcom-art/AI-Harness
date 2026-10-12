@@ -152,7 +152,27 @@ export interface WhyStage {
   timeframe: string;
 }
 
+export interface DiagnosticRow {
+  stage: string;
+  status: "PASS" | "FAIL" | "NOT_EVALUATED";
+  timeframe: string;
+  observed: string;
+}
+
+/** Whole-funnel explanation of a WAIT; it explains and never authorizes. */
+export interface Diagnostic {
+  bias: { side: "BUY" | "SELL" | "NEUTRAL"; source: string; reading: string };
+  action: string;
+  rows: DiagnosticRow[];
+  required_total: number;
+  required_passed: number;
+  primary_blocker: string | null;
+  primary_stage: string | null;
+  also_missing: string[];
+}
+
 export interface WhyWait {
+  diagnostic?: Diagnostic;
   stages: WhyStage[];
   waiting_for: string | null;
   waiting_for_code: string | null;

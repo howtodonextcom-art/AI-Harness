@@ -568,6 +568,69 @@
   "blocked_by": [
    "MARKET_CLOSED"
   ],
+  "diagnostic": {
+   "action": "WAIT",
+   "also_missing": [],
+   "bias": {
+    "reading": "NEUTRAL",
+    "side": "NEUTRAL",
+    "source": "H1"
+   },
+   "primary_blocker": "MARKET_CLOSED",
+   "primary_stage": "Market & data",
+   "required_passed": 0,
+   "required_total": 8,
+   "rows": [
+    {
+     "observed": "market/data",
+     "stage": "Market & data",
+     "status": "FAIL",
+     "timeframe": "M5"
+    },
+    {
+     "observed": "WIDE/NORMAL",
+     "stage": "Spread & regime",
+     "status": "NOT_EVALUATED",
+     "timeframe": "H4"
+    },
+    {
+     "observed": "H1:NEUTRAL",
+     "stage": "H1 direction",
+     "status": "NOT_EVALUATED",
+     "timeframe": "H1"
+    },
+    {
+     "observed": "H4:RANGE M15:RANGE",
+     "stage": "H4 / M15 alignment",
+     "status": "NOT_EVALUATED",
+     "timeframe": "M15"
+    },
+    {
+     "observed": "M15:RANGE/NONE",
+     "stage": "M15 setup",
+     "status": "NOT_EVALUATED",
+     "timeframe": "M15"
+    },
+    {
+     "observed": "M5:FLAT",
+     "stage": "M5 trigger",
+     "status": "NOT_EVALUATED",
+     "timeframe": "M5"
+    },
+    {
+     "observed": "M1:STALE",
+     "stage": "M1 execution",
+     "status": "NOT_EVALUATED",
+     "timeframe": "M1"
+    },
+    {
+     "observed": "plan",
+     "stage": "Trade plan",
+     "status": "NOT_EVALUATED",
+     "timeframe": "M5"
+    }
+   ]
+  },
   "stages": [
    {
     "stage": "Market & data",

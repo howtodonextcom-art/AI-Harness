@@ -665,6 +665,69 @@
  },
  "why_wait": {
   "blocked_by": [],
+  "diagnostic": {
+   "action": "BUY",
+   "also_missing": [],
+   "bias": {
+    "reading": "BULLISH",
+    "side": "BUY",
+    "source": "H1"
+   },
+   "primary_blocker": null,
+   "primary_stage": null,
+   "required_passed": 8,
+   "required_total": 8,
+   "rows": [
+    {
+     "observed": "market/data",
+     "stage": "Market & data",
+     "status": "PASS",
+     "timeframe": "M5"
+    },
+    {
+     "observed": "GOOD/NORMAL",
+     "stage": "Spread & regime",
+     "status": "PASS",
+     "timeframe": "H4"
+    },
+    {
+     "observed": "H1:BULLISH",
+     "stage": "H1 direction",
+     "status": "PASS",
+     "timeframe": "H1"
+    },
+    {
+     "observed": "H4:RANGE M15:UP",
+     "stage": "H4 / M15 alignment",
+     "status": "PASS",
+     "timeframe": "M15"
+    },
+    {
+     "observed": "M15:UP/NONE",
+     "stage": "M15 setup",
+     "status": "PASS",
+     "timeframe": "M15"
+    },
+    {
+     "observed": "M5:UP",
+     "stage": "M5 trigger",
+     "status": "PASS",
+     "timeframe": "M5"
+    },
+    {
+     "observed": "M1:GOOD",
+     "stage": "M1 execution",
+     "status": "PASS",
+     "timeframe": "M1"
+    },
+    {
+     "observed": "plan",
+     "stage": "Trade plan",
+     "status": "PASS",
+     "timeframe": "M5"
+    }
+   ]
+  },
   "stages": [
    {
     "stage": "Market & data",
