@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -236,3 +236,20 @@ def test_engine_paper_open_then_manual_close_end_to_end(
     assert closed["status"] == "CLOSED" and closed["exit_reason"] == "MANUAL_CLOSE"
     with pytest.raises(Exception, match="NOT_OPEN"):
         eng.paper_close(record["trade_id"], now=client.now)
+
+
+def test_paper_fill_is_announced_once_with_the_fill_details(tmp_path: Path) -> None:
+    sent: list[AlertEvent] = []
+
+    class Sink:
+        def dispatch(self, event: AlertEvent) -> None:
+            sent.append(event)
+
+    alerts = SetupAlerts(Sink(), tmp_path / "a.json")
+    trade = {
+        "trade_id": "T1", "side": "BUY", "fill_price": 4191.05, "planned_entry": 4191.0,
+        "sl": 4185.0, "tp": 4203.0, "lots": 0.1, "risk_pct": 0.25,
+    }  # fmt: skip
+    alerts.on_paper_open(trade, datetime(2026, 10, 12, 1, 0, tzinfo=UTC))
+    assert [e.code for e in sent] == ["PAPER_FILLED:T1"]
+    assert "FILLED at 4191.05" in sent[0].message and "SL 4185.0" in sent[0].message

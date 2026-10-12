@@ -670,8 +670,26 @@
    "also_missing": [],
    "bias": {
     "reading": "BULLISH",
+    "reason": "H1 \u0111ang t\u0103ng (gi\u00e1 tr\u00ean EMA50, EMA20 tr\u00ean EMA50)",
     "side": "BUY",
     "source": "H1"
+   },
+   "blockers": [],
+   "execution": {
+    "atr_m15": 5.865935149263405,
+    "atr_percentile": 0.525,
+    "atr_percentile_min": 0.2,
+    "m1_state": "NEUTRAL",
+    "spread_percentile": 0.6066666666666667,
+    "spread_percentile_limit": 0.9,
+    "spread_points": 24.0,
+    "spread_to_atr_limit": 0.15,
+    "spread_to_atr_m5": 0.059629911488618334,
+    "volatility_regime": "NORMAL"
+   },
+   "formation": {
+    "bars_since_armed": 3,
+    "state": "READY"
    },
    "primary_blocker": null,
    "primary_stage": null,

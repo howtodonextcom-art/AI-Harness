@@ -44,7 +44,12 @@ from xau_edge.trading.coverage import apply_to_forward, decision_coverage
 from xau_edge.trading.data_health import data_ages, decision_age, system_health
 from xau_edge.trading.decision_core import ROLES, SnapshotInputs, evaluate, explain
 from xau_edge.trading.demo_lock import demo_lock_status
-from xau_edge.trading.funnel import diagnostic_from_signal, stages_from_signal, waiting_for
+from xau_edge.trading.funnel import (
+    diagnostic_from_signal,
+    execution_evidence,
+    stages_from_signal,
+    waiting_for,
+)
 from xau_edge.trading.live_source import LiveSnapshot, LiveTradingMarketSource
 from xau_edge.trading.market_context import market_context
 from xau_edge.trading.market_state import MarketState, SnapshotMemo
@@ -831,7 +836,10 @@ class TradeEngine:
                 "explanation": explain(signal),
                 "why_wait": {
                     "stages": stages_from_signal(signal),
-                    "diagnostic": diagnostic_from_signal(signal),
+                    "diagnostic": {
+                        **diagnostic_from_signal(signal),
+                        "execution": execution_evidence(state),
+                    },
                     "waiting_for": waiting_for(signal),
                     "waiting_for_code": None
                     if signal.decision is not TradeDecision.WAIT or not signal.refusal_reasons
@@ -994,6 +1002,8 @@ class TradeEngine:
                 signal, risk_pct=risk_pct, quote=quote, spec=snap.spec, now=stamp, market=market
             )
             self._key = None  # the desk changed: the next step recomputes the blockers
+            if self.alerts is not None:
+                self.alerts.on_paper_open(record, stamp)
             return record
 
     def paper_close(self, trade_id: str, now: datetime | None = None) -> dict[str, Any]:

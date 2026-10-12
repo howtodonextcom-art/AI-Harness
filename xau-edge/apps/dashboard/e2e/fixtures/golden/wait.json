@@ -591,8 +591,28 @@
    "also_missing": [],
    "bias": {
     "reading": "NEUTRAL",
+    "reason": "H1 ch\u01b0a r\u00f5 h\u01b0\u1edbng",
     "side": "NEUTRAL",
     "source": "H1"
+   },
+   "blockers": [
+    "NO_DIRECTION"
+   ],
+   "execution": {
+    "atr_m15": 7.215581082683458,
+    "atr_percentile": 0.285,
+    "atr_percentile_min": 0.2,
+    "m1_state": "ACTIVE_UP",
+    "spread_percentile": 0.235,
+    "spread_percentile_limit": 0.9,
+    "spread_points": 21.0,
+    "spread_to_atr_limit": 0.15,
+    "spread_to_atr_m5": 0.0568051254900433,
+    "volatility_regime": "NORMAL"
+   },
+   "formation": {
+    "bars_since_armed": null,
+    "state": "NO_SETUP"
    },
    "primary_blocker": "NO_DIRECTION",
    "primary_stage": "H1 direction",

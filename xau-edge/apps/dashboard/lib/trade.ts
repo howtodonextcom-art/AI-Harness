@@ -161,7 +161,21 @@ export interface DiagnosticRow {
 
 /** Whole-funnel explanation of a WAIT; it explains and never authorizes. */
 export interface Diagnostic {
-  bias: { side: "BUY" | "SELL" | "NEUTRAL"; source: string; reading: string };
+  bias: { side: "BUY" | "SELL" | "NEUTRAL"; source: string; reading: string; reason?: string };
+  formation?: { state: "NO_SETUP" | "FORMING" | "WAITING_TRIGGER" | "READY"; bars_since_armed: number | null };
+  blockers?: string[];
+  execution?: {
+    spread_points: number | null;
+    spread_percentile: number | null;
+    spread_percentile_limit: number;
+    spread_to_atr_m5: number | null;
+    spread_to_atr_limit: number;
+    volatility_regime: string;
+    atr_m15: number | null;
+    atr_percentile: number | null;
+    atr_percentile_min: number;
+    m1_state: string;
+  };
   action: string;
   rows: DiagnosticRow[];
   required_total: number;

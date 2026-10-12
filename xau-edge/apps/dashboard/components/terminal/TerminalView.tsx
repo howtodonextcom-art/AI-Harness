@@ -8,6 +8,7 @@ import { DecisionBody, DecisionHero } from "@/components/terminal/DecisionPanel"
 import { MarketBar } from "@/components/terminal/MarketBar";
 import { Modal } from "@/components/terminal/Modal";
 import { MtfStrip } from "@/components/terminal/MtfStrip";
+import { ChartBiasStrip } from "@/components/terminal/WaitBriefing";
 import { TerminalChart, type ChartHandle, type Tool } from "@/components/terminal/TerminalChart";
 import { Workspace } from "@/components/terminal/Workspace";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
@@ -528,6 +529,7 @@ export function TerminalView() {
       style={fullscreen ? undefined : { gridArea: "chart" }}
       className={fullscreen ? "fixed inset-0 z-40 flex flex-col gap-1 bg-white p-2 dark:bg-slate-950" : "relative flex min-w-0 flex-col gap-1"}
     >
+      {view && <ChartBiasStrip view={view} />}
       <ChartToolbar
         tf={prefs.tf}
         onTf={focusTf}

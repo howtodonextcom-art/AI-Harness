@@ -630,8 +630,28 @@
    ],
    "bias": {
     "reading": "BEARISH",
+    "reason": "H1 \u0111ang gi\u1ea3m (gi\u00e1 d\u01b0\u1edbi EMA50, EMA20 d\u01b0\u1edbi EMA50)",
     "side": "SELL",
     "source": "H1"
+   },
+   "blockers": [
+    "TIMEFRAME_CONFLICT"
+   ],
+   "execution": {
+    "atr_m15": 4.231944075817292,
+    "atr_percentile": 0.67,
+    "atr_percentile_min": 0.2,
+    "m1_state": "NEUTRAL",
+    "spread_percentile": 0.2916666666666667,
+    "spread_percentile_limit": 0.9,
+    "spread_points": 21.0,
+    "spread_to_atr_limit": 0.15,
+    "spread_to_atr_m5": 0.1278404260568956,
+    "volatility_regime": "NORMAL"
+   },
+   "formation": {
+    "bars_since_armed": 12,
+    "state": "NO_SETUP"
    },
    "primary_blocker": "TIMEFRAME_CONFLICT",
    "primary_stage": "H4 / M15 alignment",

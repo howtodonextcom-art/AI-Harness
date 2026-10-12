@@ -16,7 +16,7 @@ from typing import Any
 
 from xau_edge.trading.baseline import BaselineConfig, DecisionContext, m1_execution_state
 from xau_edge.trading.levels import compute_stop, compute_targets
-from xau_edge.trading.market_state import MarketState
+from xau_edge.trading.market_state import MarketState, StateConfig
 from xau_edge.trading.schema import Refusal, TradeDecision, TradingSignal
 from xau_edge.trading.sizing import size_for_risk
 
@@ -343,8 +343,28 @@ def diagnostic_from_signal(signal: TradingSignal) -> dict[str, Any]:
     primary_stage = min((_STAGE_OF.get(r, 0) for r in signal.refusal_reasons), default=None)
     failed = [n for n, s, _ in rows if s == "FAIL"]
     primary_name = None if primary_stage is None or trade else STAGE_NAMES[primary_stage]
+    phase = signal.metadata.get("setup_phase")
+    status = {n: st for n, st, _ in rows}
+    if trade:
+        formation = "READY"
+    elif phase == "ARMED":
+        formation = "FORMING"
+    elif side == "NEUTRAL" or status[STAGE_NAMES[4]] != "PASS":
+        formation = "NO_SETUP"
+    else:
+        formation = "WAITING_TRIGGER"
+    bias_reason = {
+        "BUY": "H1 đang tăng (giá trên EMA50, EMA20 trên EMA50)",
+        "SELL": "H1 đang giảm (giá dưới EMA50, EMA20 dưới EMA50)",
+        "NEUTRAL": "H1 chưa rõ hướng",
+    }[side]
     return {
-        "bias": {"side": side, "source": "H1", "reading": signal.h1_bias},
+        "bias": {"side": side, "source": "H1", "reading": signal.h1_bias, "reason": bias_reason},
+        "formation": {
+            "state": formation,
+            "bars_since_armed": signal.metadata.get("setup_bars_since_armed"),
+        },
+        "blockers": [r.value for r in signal.refusal_reasons],
         "action": signal.decision.value,
         "rows": [
             {"stage": n, "status": s, "timeframe": STAGE_TIMEFRAME[n], "observed": o}
@@ -355,4 +375,25 @@ def diagnostic_from_signal(signal: TradingSignal) -> dict[str, Any]:
         "primary_blocker": first,
         "primary_stage": primary_name,
         "also_missing": [n for n in failed if n != primary_name],
+    }
+
+
+def execution_evidence(state: MarketState) -> dict[str, Any]:
+    """The numbers behind the spread / volatility gates, for the tooltips (values, never decisions).
+
+    Thresholds are the ``StateConfig`` defaults the baseline runs with.
+    """
+    cfg = StateConfig()
+    m15 = state.snapshots.get("M15")
+    return {
+        "spread_points": state.spread,
+        "spread_percentile": state.spread_percentile,
+        "spread_percentile_limit": cfg.wide_spread_percentile,
+        "spread_to_atr_m5": state.spread_to_atr_m5,
+        "spread_to_atr_limit": cfg.max_spread_to_atr,
+        "volatility_regime": state.volatility_regime,
+        "atr_m15": state.atr_m15,
+        "atr_percentile": None if m15 is None else m15.atr_percentile,
+        "atr_percentile_min": cfg.low_vol_percentile,
+        "m1_state": state.m1_micro_state,
     }

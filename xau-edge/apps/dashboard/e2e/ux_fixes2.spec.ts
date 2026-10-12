@@ -31,7 +31,7 @@ test("replay and WAIT never retitle the tab", async ({ page }) => {
 test("the waiting panel gives one reason and how far the pipeline got", async ({ page }) => {
   await mock(page, view("wait"));
   await page.goto("/trade");
-  await expect(page.getByTestId("stages-progress")).toContainText(/đạt \d\/8/);
+  await expect(page.getByTestId("stages-progress")).toContainText(/\d+ đạt/);
   await expect(page.getByTestId("waiting-for")).toBeAttached();
   await expect(page.getByTestId("blocked-by")).toContainText("Mã chặn");
 });

@@ -93,3 +93,24 @@ def test_ready_trade_passes_every_stage() -> None:
         _signal((), m15="UP/PULLBACK_IN_UPTREND", m5="UP", decision=TradeDecision.BUY)
     )
     assert d["required_passed"] == d["required_total"] and d["primary_blocker"] is None
+
+
+def test_formation_states_and_blockers() -> None:
+    none = diagnostic_from_signal(_signal((Refusal.NO_SETUP,)))
+    waiting = diagnostic_from_signal(_signal((Refusal.NO_TRIGGER,), m15="UP/PULLBACK_IN_UPTREND"))
+    ready = diagnostic_from_signal(
+        _signal((), m15="UP/PULLBACK_IN_UPTREND", m5="UP", decision=TradeDecision.BUY)
+    )
+    assert none["formation"]["state"] == "NO_SETUP"
+    assert waiting["formation"]["state"] == "WAITING_TRIGGER"
+    assert ready["formation"]["state"] == "READY"
+    both = diagnostic_from_signal(_signal((Refusal.SPREAD_TOO_WIDE, Refusal.VOLATILITY_TOO_LOW)))
+    assert both["blockers"] == ["SPREAD_TOO_WIDE", "VOLATILITY_TOO_LOW"]
+    assert "tăng" in both["bias"]["reason"]
+
+
+def test_an_armed_setup_is_forming_and_reports_its_age() -> None:
+    sig = _signal((Refusal.NO_TRIGGER,), m15="UP/PULLBACK_IN_UPTREND")
+    object.__setattr__(sig, "metadata", {"setup_phase": "ARMED", "setup_bars_since_armed": 2})
+    d = diagnostic_from_signal(sig)
+    assert d["formation"] == {"state": "FORMING", "bars_since_armed": 2}

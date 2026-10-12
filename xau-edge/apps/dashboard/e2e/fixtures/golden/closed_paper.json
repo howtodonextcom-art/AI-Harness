@@ -609,8 +609,28 @@
    "also_missing": [],
    "bias": {
     "reading": "BULLISH",
+    "reason": "H1 \u0111ang t\u0103ng (gi\u00e1 tr\u00ean EMA50, EMA20 tr\u00ean EMA50)",
     "side": "BUY",
     "source": "H1"
+   },
+   "blockers": [
+    "NO_SETUP"
+   ],
+   "execution": {
+    "atr_m15": 7.20094657950105,
+    "atr_percentile": 0.79,
+    "atr_percentile_min": 0.2,
+    "m1_state": "ACTIVE_DOWN",
+    "spread_percentile": 0.8083333333333333,
+    "spread_percentile_limit": 0.9,
+    "spread_points": 25.0,
+    "spread_to_atr_limit": 0.15,
+    "spread_to_atr_m5": 0.04942619808236987,
+    "volatility_regime": "NORMAL"
+   },
+   "formation": {
+    "bars_since_armed": 15,
+    "state": "NO_SETUP"
    },
    "primary_blocker": "NO_SETUP",
    "primary_stage": "M15 setup",

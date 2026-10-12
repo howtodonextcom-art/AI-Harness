@@ -610,8 +610,28 @@
    "also_missing": [],
    "bias": {
     "reading": "BEARISH",
+    "reason": "H1 \u0111ang gi\u1ea3m (gi\u00e1 d\u01b0\u1edbi EMA50, EMA20 d\u01b0\u1edbi EMA50)",
     "side": "SELL",
     "source": "H1"
+   },
+   "blockers": [
+    "NO_TRIGGER"
+   ],
+   "execution": {
+    "atr_m15": 8.7268293682772,
+    "atr_percentile": 0.73,
+    "atr_percentile_min": 0.2,
+    "m1_state": "ACTIVE_UP",
+    "spread_percentile": 0.45,
+    "spread_percentile_limit": 0.9,
+    "spread_points": 22.0,
+    "spread_to_atr_limit": 0.15,
+    "spread_to_atr_m5": 0.054105899177814616,
+    "volatility_regime": "NORMAL"
+   },
+   "formation": {
+    "bars_since_armed": 0,
+    "state": "FORMING"
    },
    "primary_blocker": "NO_TRIGGER",
    "primary_stage": "M5 trigger",

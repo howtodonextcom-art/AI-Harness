@@ -165,6 +165,21 @@ class SetupAlerts:
         ]
         return max(hits, key=lambda h: h["at"] or "", default=None)
 
+    def on_paper_open(self, trade: dict[str, Any], now: datetime) -> None:
+        """PAPER_FILLED: the simulated order was filled (a ready alert is not a fill)."""
+        fill = trade.get("fill_price")
+        planned = trade.get("planned_entry")
+        slip = None if fill is None or planned is None else round(float(fill) - float(planned), 2)
+        self._send(
+            f"PAPER_FILLED:{trade['trade_id']}",
+            "info",
+            f"Paper trade {trade['trade_id']} {trade['side']} FILLED at {fill} "
+            f"(planned {planned}, difference {slip}); SL {trade.get('sl')} TP {trade.get('tp')}, "
+            f"{trade.get('lots')} lot at {trade.get('risk_pct')}% risk (simulated)",
+            now,
+            trade_id=trade["trade_id"],
+        )
+
     def on_paper_close(self, trade: dict[str, Any], now: datetime) -> None:
         """PAPER_SL / PAPER_TP (and the other exit reasons) once per trade."""
         reason = str(trade.get("exit_reason", "CLOSED"))

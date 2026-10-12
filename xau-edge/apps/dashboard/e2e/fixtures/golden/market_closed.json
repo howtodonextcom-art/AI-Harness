@@ -573,8 +573,28 @@
    "also_missing": [],
    "bias": {
     "reading": "NEUTRAL",
+    "reason": "H1 ch\u01b0a r\u00f5 h\u01b0\u1edbng",
     "side": "NEUTRAL",
     "source": "H1"
+   },
+   "blockers": [
+    "MARKET_CLOSED"
+   ],
+   "execution": {
+    "atr_m15": 6.657354777693942,
+    "atr_percentile": 0.68,
+    "atr_percentile_min": 0.2,
+    "m1_state": "NEUTRAL",
+    "spread_percentile": 1.0,
+    "spread_percentile_limit": 0.9,
+    "spread_points": 56.0,
+    "spread_to_atr_limit": 0.15,
+    "spread_to_atr_m5": 0.1830814922146814,
+    "volatility_regime": "NORMAL"
+   },
+   "formation": {
+    "bars_since_armed": null,
+    "state": "NO_SETUP"
    },
    "primary_blocker": "MARKET_CLOSED",
    "primary_stage": "Market & data",

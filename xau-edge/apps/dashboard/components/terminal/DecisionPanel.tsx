@@ -9,6 +9,7 @@ import { actionText } from "@/lib/action";
 import { heroLevels, honestyLine } from "@/lib/honesty";
 import { humanSurface } from "@/lib/humanState";
 import { HeroCard, TONE_STYLE } from "@/components/terminal/HeroCard";
+import { WaitBriefing } from "@/components/terminal/WaitBriefing";
 import { parseDecimal } from "@/lib/chartMath";
 import { BAD, WARN, fmt, money } from "@/components/trade/ui";
 import { ZONE_SHORT, formatInZone, type DisplayZone } from "@/lib/time";
@@ -36,24 +37,9 @@ interface Props {
 // ---- setup pipeline ------------------------------------------------------------------------------
 
 function Pipeline({ view, tf, onFocusTf }: { view: TradeView; tf: string; onFocusTf: (tf: string) => void }) {
-  const diag = view.why_wait?.diagnostic;
-  const stages = diag ? diag.rows : (view.why_wait?.stages ?? []);
-  const side = diag?.bias.side;
-  const missing = diag ? diag.rows.filter((r) => r.status === "FAIL").map((r) => STAGE_VI[r.stage] ?? r.stage) : [];
+  const stages = view.why_wait?.stages ?? [];
   return (
     <div data-testid="why-wait">
-      {diag && side && (
-        <div data-testid="bias-action" className="mb-1 rounded-md bg-slate-500/10 px-2 py-1 text-sm">
-          <p>
-            Thiên hướng (H1): <b data-testid="bias-side">{side === "BUY" ? "▲ MUA" : side === "SELL" ? "▼ BÁN" : "– TRUNG TÍNH"}</b> · Hành động: <b>{diag.action === "WAIT" ? "CHỜ" : diag.action}</b>
-          </p>
-          {diag.action === "WAIT" && (
-            <p data-testid="bias-note" className="text-xs text-slate-700 dark:text-slate-300">
-              {side === "NEUTRAL" ? "H1 chưa có hướng rõ." : "Thiên hướng không phải quyền vào lệnh."} {missing.length > 0 ? `Còn thiếu: ${missing.join(" · ")}.` : ""}
-            </p>
-          )}
-        </div>
-      )}
       <p data-testid="stages-progress" className="mb-1 text-sm font-semibold">
         Điều kiện vào lệnh: đạt {stages.filter((s) => s.status === "PASS").length}/{stages.length} — cần đủ tất cả, chưa được vào lệnh
       </p>
@@ -65,14 +51,14 @@ function Pipeline({ view, tf, onFocusTf }: { view: TradeView; tf: string; onFocu
               data-testid={`stage-${s.stage.replace(/[^A-Za-z0-9]+/g, "-")}`}
               data-timeframe={s.timeframe}
               data-status={s.status}
-              aria-label={`${STAGE_VI[s.stage] ?? s.stage}: ${s.status === "PASS" ? "đạt" : s.status === "FAIL" ? "chưa đạt" : s.status === "NOT_EVALUATED" ? "chưa đánh giá" : "chưa tới"}. Xem biểu đồ ${s.timeframe}`}
+              aria-label={`${STAGE_VI[s.stage] ?? s.stage}: ${s.status === "PASS" ? "đạt" : s.status === "FAIL" ? "chưa đạt" : "chưa tới"}. Xem biểu đồ ${s.timeframe}`}
               onClick={() => onFocusTf(s.timeframe)}
               className={`flex w-full items-center gap-2 rounded px-1.5 py-0.5 text-left hover:bg-slate-500/10 ${tf === s.timeframe ? "bg-sky-500/10" : ""}`}
             >
               <span aria-hidden="true" className={`w-4 text-center font-bold ${s.status === "PASS" ? "text-emerald-700 dark:text-emerald-400" : s.status === "FAIL" ? "text-red-700 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}`}>
                 {s.status === "PASS" ? "✓" : s.status === "FAIL" ? "✗" : "○"}
               </span>
-              <span className="flex-1">{STAGE_VI[s.stage] ?? s.stage}{"observed" in s && diag && s.status !== "NOT_EVALUATED" && s.stage !== "Trade plan" ? <span className="ml-1 text-xs text-slate-600 dark:text-slate-400">({s.observed})</span> : null}</span>
+              <span className="flex-1">{STAGE_VI[s.stage] ?? s.stage}</span>
               <span className="text-xs text-slate-600 dark:text-slate-400">{s.timeframe}</span>
             </button>
           </li>
@@ -468,7 +454,7 @@ export function DecisionBody({ view, serverNowMs, risk, onRisk, onOpenRequest, o
         </details>
       )}
       {showReference && plan && <ReferencePlan view={view} plan={plan} />}
-      {waiting && <Pipeline view={view} tf={tf} onFocusTf={onFocusTf} />}
+      {waiting && (view.why_wait?.diagnostic ? <WaitBriefing view={view} tf={tf} onFocusTf={onFocusTf} /> : <Pipeline view={view} tf={tf} onFocusTf={onFocusTf} />)}
       {waiting && <WaitContext view={view} zone={zone} setups={setups} journal={journal} />}
       {state !== "POSITION_OPEN" && <LastExit view={view} />}
       <AlertChannelNotice view={view} />
