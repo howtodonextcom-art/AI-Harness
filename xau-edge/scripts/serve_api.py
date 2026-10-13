@@ -29,13 +29,15 @@ from xau_edge.execution.safety import ExecutionSafety, assert_live_trading_disab
 from xau_edge.execution.trader import PaperTrader
 from xau_edge.experiments.registry import ExperimentRegistry
 from xau_edge.market_data.catalog import DatasetCatalog
+from xau_edge.market_data.source_profile import active_profile
 from xau_edge.observability import configure_logging
 from xau_edge.research.service import ResearchService
 from xau_edge.risk.engine import RiskEngine, RiskLimits
 from xau_edge.risk.prop_rules import load_prop_profile
 from xau_edge.signals.engine import MarketFrames
 
-DEFAULT_TERMINAL = r"C:\Program Files\FTMO Global Markets MT5 Terminal\terminal64.exe"
+PROFILE = active_profile()
+DEFAULT_TERMINAL = PROFILE.terminal_path
 
 
 def main() -> None:
@@ -76,9 +78,10 @@ def main() -> None:
     default_news = Path("data/news/calendar.csv")
     news_path = settings.news_calendar_path or (default_news if default_news.exists() else None)
     trade = build_trade_engine(
-        Path("data/market"),
-        Path("data/trade"),
+        PROFILE.market_root,
+        PROFILE.trade_root,
         news_calendar_path=news_path,
+        market_source=PROFILE,
     )
     ctx = ApiContext(
         load_frames=load,
@@ -97,7 +100,7 @@ def main() -> None:
         journal_path=journal,
         control=control,
         control_port=args.port,
-        market_root=Path("data/market"),
+        market_root=PROFILE.market_root,
         trade=trade,
     )
     EngineRunner(trade).start()

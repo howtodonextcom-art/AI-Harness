@@ -28,17 +28,22 @@ from xau_edge.market_data.collector_runner import (  # noqa: E402
 )
 from xau_edge.market_data.ledger import BarLedger  # noqa: E402
 from xau_edge.market_data.mt5.feed import Mt5Feed  # noqa: E402
-from xau_edge.market_data.mt5.runtime import DEFAULT_TERMINAL, open_feed  # noqa: E402
+from xau_edge.market_data.mt5.runtime import open_feed  # noqa: E402
+from xau_edge.market_data.source_profile import (  # noqa: E402
+    active_profile,
+    check_server,
+    claim_store,
+)
 from xau_edge.market_data.tick_ledger import TickLedger  # noqa: E402
 
-DEFAULT_ROOT = ROOT / "data" / "market"
+PROFILE = active_profile()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--terminal-path", default=DEFAULT_TERMINAL)
+    parser.add_argument("--terminal-path", default=PROFILE.terminal_path)
     parser.add_argument("--symbol", default="XAUUSD")
-    parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
+    parser.add_argument("--root", type=Path, default=PROFILE.market_root)
     parser.add_argument("--quote-interval", type=float, default=1.0)
     parser.add_argument("--bar-interval", type=float, default=5.0)
     parser.add_argument("--once", action="store_true")
@@ -47,6 +52,8 @@ def main() -> int:
     status_path = args.root / "collector_status.json"
 
     def build(feed: Mt5Feed) -> MarketCollector:
+        check_server(PROFILE, feed.facts().server)  # a foreign terminal never writes this store
+        claim_store(args.root, PROFILE)
         mapping = feed.discover_symbol(args.symbol)
         feed.select(mapping.broker_symbol)
         return MarketCollector(

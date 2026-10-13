@@ -10,8 +10,11 @@
     or an already running dashboard).
 .PARAMETER NoTerminal
     Do not start the MT5 terminal (it is already running, or you start it yourself).
+.PARAMETER Source
+    Market source: 'ftmo' (default, the research baseline) or 'metaquotes' (MetaQuotes-Demo terminal,
+    its own data stores under data (market-metaquotes and trade-metaquotes); never mixed with FTMO).
 .PARAMETER TerminalPath
-    terminal64.exe of the FTMO terminal.
+    terminal64.exe of the terminal for the chosen source (default per source).
 .PARAMETER WaitSeconds
     How long to wait for the first healthy collector update (default 120).
 .EXAMPLE
@@ -22,7 +25,8 @@ param(
     [switch]$Dashboard,
     [switch]$Open,
     [switch]$NoTerminal,
-    [string]$TerminalPath = 'C:\Program Files\FTMO Global Markets MT5 Terminal\terminal64.exe',
+    [ValidateSet('ftmo', 'metaquotes')][string]$Source = 'ftmo',
+    [string]$TerminalPath = '',
     [int]$WaitSeconds = 120
 )
 
@@ -30,7 +34,14 @@ Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $RunDir = Join-Path $Repo 'data\run'
-$Market = Join-Path $Repo 'data\market'
+$env:XAU_EDGE_MARKET_SOURCE = $Source   # inherited by the supervisor and its children
+if ($Source -eq 'metaquotes') {
+    $Market = Join-Path $Repo 'data\market-metaquotes'
+    if (-not $TerminalPath) { $TerminalPath = 'C:\Program Files\MetaTrader 5\terminal64.exe' }
+} else {
+    $Market = Join-Path $Repo 'data\market'
+    if (-not $TerminalPath) { $TerminalPath = 'C:\Program Files\FTMO Global Markets MT5 Terminal\terminal64.exe' }
+}
 New-Item -ItemType Directory -Force -Path $RunDir | Out-Null
 
 function Test-PidAlive([string]$File) {
@@ -89,7 +100,7 @@ if (-not $fresh) {
 }
 Push-Location $Repo
 try {
-    & uv run python scripts/check_market_data_health.py --allow-degraded | Select-String '"health"|"market_status"|"collector_running"' | ForEach-Object { Write-Host $_.Line.Trim() }
+    & uv run python scripts/check_market_data_health.py --root $Market --allow-degraded | Select-String '"health"|"market_status"|"collector_running"' | ForEach-Object { Write-Host $_.Line.Trim() }
     $code = $LASTEXITCODE
 } finally { Pop-Location }
 if ($Open) { Start-Process 'http://127.0.0.1:3000/market' }

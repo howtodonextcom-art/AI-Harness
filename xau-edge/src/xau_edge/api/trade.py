@@ -21,6 +21,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from xau_edge.market_data.calendars import ftmo_calendar
+from xau_edge.market_data.source_profile import SourceProfile, claim_store
 from xau_edge.ops.code_version import current_code_version
 from xau_edge.ops.notifier import Notifier, build_dispatcher
 from xau_edge.ops.process_lock import WriterLock, WriterLockError
@@ -51,6 +52,7 @@ def build_trade_engine(
     baseline_version: str | None = None,
     notifier: Notifier | None = None,
     news_calendar_path: Path | None = None,
+    market_source: SourceProfile | None = None,
 ) -> TradeEngine:
     """The production wiring: collector files in, paper desk + journal + alerts out.
 
@@ -66,6 +68,8 @@ def build_trade_engine(
     source = source or LiveTradingMarketSource(market_root, ftmo_calendar())
     mode = source.SOURCE_MODE
     claim_root(trade_root, mode)
+    if market_source is not None:
+        claim_store(trade_root, market_source)  # a desk store belongs to one market source
     lock = WriterLock(trade_root / "writer.lock", role="trade-engine", code_version=code_version)
     writer_error: str | None = None
     try:
@@ -112,6 +116,8 @@ def build_trade_engine(
         telemetry=DecisionTelemetry(trade_root, source_mode=mode),
         clock=now,
     )
+    if market_source is not None:
+        engine.market_source = market_source.payload()
     engine.writer_error = writer_error
     engine.writer_lock = lock  # held for the life of the process
     return engine

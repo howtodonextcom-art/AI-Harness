@@ -6,7 +6,7 @@
  "conditions": [
   {
    "code": "WRITER_LOCK",
-   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-sw8brtag\\writer_conflict\\writer.lock is owned by pid 33464 (another-api-process); only one process may write it",
+   "message": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-3yafve7a\\writer_conflict\\writer.lock is owned by pid 11860 (another-api-process); only one process may write it",
    "severity": "ERROR"
   },
   {
@@ -290,6 +290,12 @@
    "label": "London + New York"
   }
  },
+ "market_source": {
+  "id": "ftmo",
+  "label": "FTMO-Demo",
+  "research_baseline": true,
+  "server": null
+ },
  "news": {
   "blocked_by": null,
   "coverage": null,
@@ -485,7 +491,7 @@
    "state": "WARN"
   },
   {
-   "detail": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-sw8brtag\\writer_conflict\\writer.lock is owned by pid 33464 (another-api-process); only one process may write it",
+   "detail": "SINGLE WRITER CONFLICT: C:\\Users\\KIEUOA~1\\AppData\\Local\\Temp\\xau-goldens-3yafve7a\\writer_conflict\\writer.lock is owned by pid 11860 (another-api-process); only one process may write it",
    "id": "writer_lock",
    "label": "Quy\u1ec1n ghi b\u00e0n PAPER",
    "state": "ERROR"

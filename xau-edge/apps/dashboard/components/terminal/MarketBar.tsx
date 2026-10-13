@@ -84,6 +84,11 @@ export function MarketBar({ view, tf, zone, onZone, serverNowMs, uiStale, offlin
             <span data-testid="market-pill" className={`${pill} ${uiStale ? "border-red-600 bg-red-500/15 text-red-800 dark:text-red-200" : open ? "border-emerald-600 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200" : "border-slate-500 bg-slate-500/15 text-slate-700 dark:text-slate-300"}`}>
               {uiStale ? "Mất kết nối" : open ? `Thị trường MỞ${live ? "" : " (replay)"}` : status === "—" ? "…" : `Thị trường ${status === "CLOSED" ? "ĐÓNG" : status}`}
             </span>
+            {view?.market_source && !view.market_source.research_baseline && (
+              <span data-testid="market-source-pill" title="Dữ liệu từ terminal này, tách riêng khỏi kho FTMO. Spread, giờ và chi phí khác FTMO; không dùng làm bằng chứng nghiên cứu." className={`${pill} border-violet-700 bg-violet-500/15 text-violet-900 dark:text-violet-200`}>
+                <span aria-hidden="true">◈ </span>Nguồn {view.market_source.label} · không phải FTMO
+              </span>
+            )}
             <span data-testid="paper-only" className={`${pill} border-amber-600 bg-amber-500/15 text-amber-800 dark:text-amber-200`}><span className="roomy:hidden">PAPER</span><span className="hidden roomy:inline">PAPER · không gửi lệnh thật</span></span>
           </div>
           <div className="mt-1 flex flex-wrap items-end gap-x-5 gap-y-1" data-testid="quote">

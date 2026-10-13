@@ -402,9 +402,18 @@ export interface MarketContext {
   next_open: string | null;
 }
 
+export interface MarketSource {
+  id: string;
+  label: string;
+  server: string | null;
+  research_baseline: boolean;
+}
+
 export interface TradeView {
   available: boolean;
   source_mode: SourceMode;
+  /** which MT5 feed the desk runs on; only FTMO is the research baseline */
+  market_source?: MarketSource;
   generated_at: string;
   served_at?: string;
   hero: Hero;

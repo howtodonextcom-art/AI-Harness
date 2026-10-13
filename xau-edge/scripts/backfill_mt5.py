@@ -30,9 +30,16 @@ from xau_edge.market_data.history_backfill import (  # noqa: E402
     coverage_gaps,
 )
 from xau_edge.market_data.ledger import BarLedger  # noqa: E402
-from xau_edge.market_data.mt5.runtime import DEFAULT_TERMINAL, open_feed  # noqa: E402
+from xau_edge.market_data.mt5.runtime import open_feed  # noqa: E402
+from xau_edge.market_data.source_profile import (  # noqa: E402
+    active_profile,
+    check_server,
+    claim_store,
+)
 
-DEFAULT_ROOT = ROOT / "data" / "market"
+PROFILE = active_profile()
+DEFAULT_ROOT = PROFILE.market_root
+DEFAULT_TERMINAL = PROFILE.terminal_path
 REPORTS = ROOT / "docs" / "reports"
 OWNER_ACTION = (
     "close FTMO MT5 completely, run `uv run python scripts/mt5_set_max_bars.py --value 10000000 "
@@ -92,6 +99,8 @@ def main() -> int:
     gaps: dict[str, Any] = {}
     with open_feed(args.terminal_path) as feed:
         facts = feed.facts()
+        check_server(PROFILE, facts.server)  # a foreign terminal never writes this store
+        claim_store(args.root, PROFILE)
         mapping = feed.discover_symbol(args.symbol)
         feed.select(mapping.broker_symbol)
         for name in args.timeframes:

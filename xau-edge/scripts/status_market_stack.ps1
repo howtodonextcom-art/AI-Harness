@@ -11,7 +11,7 @@ Set-StrictMode -Off
 $ErrorActionPreference = 'Continue'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Run = Join-Path $Repo 'data\run'
-$Market = Join-Path $Repo 'data\market'
+$Market = if ($env:XAU_EDGE_MARKET_SOURCE -eq 'metaquotes') { Join-Path $Repo 'data\market-metaquotes' } else { Join-Path $Repo 'data\market' }
 
 function Read-Json([string]$Path) {
     if (-not (Test-Path $Path)) { return $null }

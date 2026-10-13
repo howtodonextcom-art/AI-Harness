@@ -18,6 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from xau_edge.market_data.source_profile import active_profile  # noqa: E402
 from xau_edge.ops.supervisor import ChildSpec, Supervisor  # noqa: E402
 
 
@@ -40,7 +41,7 @@ def build_children(
                 "collector",
                 [*py, "scripts/run_market_collector.py"],
                 ROOT,
-                heartbeat=ROOT / "data" / "market" / "collector_status.json",
+                heartbeat=active_profile().market_root / "collector_status.json",
             )
         )
     if news:

@@ -292,6 +292,12 @@
    "label": "Phi\u00ean New York"
   }
  },
+ "market_source": {
+  "id": "ftmo",
+  "label": "FTMO-Demo",
+  "research_baseline": true,
+  "server": null
+ },
  "news": {
   "blocked_by": null,
   "coverage": null,

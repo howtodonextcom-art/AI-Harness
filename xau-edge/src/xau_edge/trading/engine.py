@@ -161,6 +161,13 @@ class TradeEngine:
         self.broker_clock = broker_clock
         self.alerts = alerts
         self.telemetry = telemetry or DecisionTelemetry(config.root)
+        self.market_source: dict[str, Any] = {
+            "id": "ftmo",
+            "label": "FTMO-Demo",
+            "server": None,
+            "research_baseline": True,
+        }
+        """Which feed this desk runs on (set by the wiring; the collector adds the server)."""
         self._clock = clock
         self._lock = threading.RLock()
         self._key: tuple[Any, ...] | None = None
@@ -816,9 +823,13 @@ class TradeEngine:
                 if snap.latest_m1_close is None
                 else snap.latest_m1_close.isoformat(),
                 "data_age_seconds": snap.data_age_seconds,
-                "source": "FTMO MT5 via data/market (closed canonical bars + live quote)"
+                "source": f"{self.market_source['label']} MT5 (closed canonical bars + live quote)"
                 if self.source_mode == "LIVE"
                 else "ACCEPTANCE REPLAY of burned FTMO bars (NOT LIVE)",
+                "market_source": {
+                    **self.market_source,
+                    "server": None if collector is None else collector.get("server"),
+                },
                 "market": {"status": snap.status.value, "open": snap.market_open},
                 "quote": None
                 if quote is None
