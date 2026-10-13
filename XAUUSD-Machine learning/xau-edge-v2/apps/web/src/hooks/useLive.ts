@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type FormingBar,
+  type Intelligence,
   type PaperPosition,
   type PaperSummary,
   type Health,
@@ -8,6 +9,7 @@ import {
   type State,
   type WsEvent,
   fetchForming,
+  fetchIntelligence,
   fetchPaperPositions,
   fetchPaperSummary,
   fetchHealth,
@@ -18,6 +20,8 @@ export type WsStatus = "connecting" | "open" | "retrying";
 
 export interface Live {
   state: State | null;
+  /** Market description, scenarios and the layered reason the strategy waits (authority NONE). */
+  intel: Intelligence | null;
   health: Health | null;
   error: string | null;
   ws: WsStatus;
@@ -42,12 +46,13 @@ const formingMap = (bars: readonly FormingBar[]): Record<string, FormingBar["bar
   Object.fromEntries(bars.map((b) => [b.timeframe, b.bar]));
 
 const HEALTH_REFRESH_MS = 15_000;
+const INTEL_REFRESH_MS = 4_000;
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 15000, 30000];
 
 /** State + health over REST, kept fresh by a WebSocket whose `seq` reveals any missed event. */
 export function useLive(): Live {
   const [live, setLive] = useState<Live>({
-    state: null, health: null, error: null, ws: "connecting", retries: 0, gaps: 0,
+    state: null, intel: null, health: null, error: null, ws: "connecting", retries: 0, gaps: 0,
     quote: null, forming: {}, dataVersion: null, paper: null, positions: [], paperRevision: 0, humanRevision: 0, reload: () => undefined,
   });
   const lastSeq = useRef<number | null>(null);
@@ -59,6 +64,9 @@ export function useLive(): Live {
       void Promise.all([fetchPaperSummary(signal), fetchPaperPositions(signal)])
         .then(([paper, list]) => setLive((l) => ({ ...l, paper, positions: list.positions })))
         .catch(() => undefined); // paper numbers are shown when available, never invented
+      void fetchIntelligence(signal)
+        .then((intel) => setLive((l) => ({ ...l, intel })))
+        .catch(() => undefined); // the description is extra; the strategy state is the truth
       void fetchForming(signal)
         .then((f) => setLive((l) => ({ ...l, forming: formingMap(f.bars) })))
         .catch(() => undefined); // the forming bar is a nicety; the closed history is the truth
@@ -74,9 +82,16 @@ export function useLive(): Live {
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") void refresh();
     }, HEALTH_REFRESH_MS);
+    const intelTimer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void fetchIntelligence()
+        .then((intel) => setLive((l) => ({ ...l, intel })))
+        .catch(() => undefined);
+    }, INTEL_REFRESH_MS);
     return () => {
       abort.abort();
       clearInterval(timer);
+      clearInterval(intelTimer);
     };
   }, [refresh]);
 

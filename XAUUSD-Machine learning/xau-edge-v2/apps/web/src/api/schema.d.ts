@@ -75,6 +75,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/intelligence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Intelligence */
+        get: operations["intelligence_api_v2_intelligence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/market/bars": {
         parameters: {
             query?: never;
@@ -309,6 +326,43 @@ export interface components {
          * @enum {string}
          */
         ActionCode: "WAIT" | "BUY" | "SELL" | "HOLD" | "EXIT" | "UNAVAILABLE";
+        /**
+         * Authorization
+         * @description The strategy's word, split into the market's reason, the safety gates and the governor.
+         */
+        Authorization: {
+            /** Action */
+            action: string;
+            /**
+             * Candidate Active
+             * @default false
+             * @constant
+             */
+            candidate_active: false;
+            chain_blocker: components["schemas"]["GateView"] | null;
+            /** Chain Verdict */
+            chain_verdict: string;
+            /**
+             * Evidence
+             * @default UNVALIDATED
+             * @constant
+             */
+            evidence: "UNVALIDATED";
+            /** Explanation */
+            explanation: string;
+            /** Funnel */
+            funnel: components["schemas"]["FunnelStep"][];
+            /** Gates */
+            gates: components["schemas"]["GateView"][];
+            /** Next Condition */
+            next_condition: string | null;
+            /** Strategy Id */
+            strategy_id: string;
+            /** Strategy Version */
+            strategy_version: string;
+            /** System Hold */
+            system_hold: components["schemas"]["GateView"][];
+        };
         /** Bar */
         Bar: {
             /** Close */
@@ -358,6 +412,18 @@ export interface components {
             symbol: string;
             timeframe: components["schemas"]["Timeframe"];
         };
+        /** ChangeView */
+        ChangeView: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Kind */
+            kind: string;
+            /** Text */
+            text: string;
+        };
         /** DataInfo */
         DataInfo: {
             /** Data Timestamp */
@@ -379,6 +445,40 @@ export interface components {
             error_code: string;
             /** Message */
             message: string;
+        };
+        /** EventView */
+        EventView: {
+            /**
+             * Age Bars
+             * @default 0
+             */
+            age_bars: number;
+            /**
+             * Bar Open
+             * Format: date-time
+             */
+            bar_open: string;
+            /** Invalidation */
+            invalidation?: number | null;
+            /** Kind */
+            kind: string;
+            /**
+             * Known At
+             * Format: date-time
+             */
+            known_at: string;
+            /** Level */
+            level?: number | null;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "PRICE_ACTION" | "STRUCTURE" | "VOLATILITY";
+            /** Strength */
+            strength?: number | null;
+            /** Text */
+            text: string;
+            timeframe: components["schemas"]["Timeframe"];
         };
         /**
          * EvidenceLabel
@@ -520,6 +620,34 @@ export interface components {
             ] | null;
             /** Wins */
             wins: number;
+        };
+        /** FunnelStep */
+        FunnelStep: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Observed */
+            observed: string;
+            /** Required */
+            required: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PASS" | "FAIL" | "NOT_REACHED" | "NOT_APPLICABLE";
+        };
+        /** GateView */
+        GateView: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "DATA" | "COST" | "VOLATILITY" | "NEWS" | "GOVERNOR" | "STRATEGY";
+            /** Code */
+            code: string;
+            /** Text */
+            text: string;
         };
         /** GovernorStatus */
         GovernorStatus: {
@@ -711,6 +839,25 @@ export interface components {
             /** Events */
             events: components["schemas"]["JournalEventView"][];
         };
+        /** LevelView */
+        LevelView: {
+            /**
+             * Confirmed
+             * @default true
+             */
+            confirmed: boolean;
+            /** Distance Atr */
+            distance_atr?: number | null;
+            /** Known At */
+            known_at?: string | null;
+            /** Label */
+            label: string;
+            /** Price */
+            price: number;
+            /** Role */
+            role: string;
+            timeframe?: components["schemas"]["Timeframe"] | null;
+        };
         /**
          * M1Execution
          * @description Is this a good MOMENT to act on an idea the higher timeframes already support? Timing only:
@@ -749,6 +896,63 @@ export interface components {
             reasons: string[];
             /** State */
             state?: ("TOO_EARLY" | "WATCH" | "FORMING" | "CONFIRMED" | "EXECUTION_WINDOW" | "TOO_LATE" | "INVALIDATED") | null;
+        };
+        /** MarketIntelligence */
+        MarketIntelligence: {
+            /**
+             * Authority
+             * @default NONE
+             * @constant
+             */
+            authority: "NONE";
+            authorization: components["schemas"]["Authorization"];
+            /**
+             * Changes
+             * @default []
+             */
+            changes: components["schemas"]["ChangeView"][];
+            /** Data State */
+            data_state: string;
+            /**
+             * Descriptive Only
+             * @default true
+             * @constant
+             */
+            descriptive_only: true;
+            /** Events */
+            events: components["schemas"]["EventView"][];
+            /**
+             * Evidence
+             * @default UNVALIDATED
+             * @constant
+             */
+            evidence: "UNVALIDATED";
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Last Closed M5 */
+            last_closed_m5: string | null;
+            /** Levels */
+            levels: components["schemas"]["LevelView"][];
+            /** Market Open */
+            market_open: boolean;
+            /** Price */
+            price: number | null;
+            /** Quote Age S */
+            quote_age_s: number | null;
+            /** Scenarios */
+            scenarios: components["schemas"]["ScenarioView"][];
+            /**
+             * Schema Version
+             * @default intel-1
+             */
+            schema_version: string;
+            /** Summary */
+            summary: string;
+            /** Timeframes */
+            timeframes: components["schemas"]["TimeframeView"][];
         };
         /**
          * MarketStatus
@@ -1084,6 +1288,34 @@ export interface components {
             /** Swap Note */
             swap_note?: string | null;
         };
+        /** ScenarioView */
+        ScenarioView: {
+            /** Confirm */
+            confirm: string;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "UP" | "DOWN" | "NONE";
+            /** Invalidate */
+            invalidate: string;
+            /** Key */
+            key: string;
+            /**
+             * Levels
+             * @default []
+             */
+            levels: components["schemas"]["LevelView"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "WATCH" | "CONTEXT" | "INACTIVE" | "BLOCKED";
+            /** Title */
+            title: string;
+            /** Why */
+            why: string[];
+        };
         /**
          * StateSnapshot
          * @description The one decision surface the page renders (WAIT/BUY/SELL/HOLD/EXIT/UNAVAILABLE).
@@ -1324,6 +1556,42 @@ export interface components {
              */
             state: "FRESH" | "STALE" | "MARKET_CLOSED" | "UNKNOWN";
             timeframe: components["schemas"]["Timeframe"];
+        };
+        /** TimeframeView */
+        TimeframeView: {
+            /** Atr */
+            atr?: number | null;
+            /** Atr Ratio */
+            atr_ratio?: number | null;
+            /** Available */
+            available: boolean;
+            /** Last Closed */
+            last_closed?: string | null;
+            last_swing_high?: components["schemas"]["LevelView"] | null;
+            last_swing_low?: components["schemas"]["LevelView"] | null;
+            provisional_high?: components["schemas"]["LevelView"] | null;
+            provisional_low?: components["schemas"]["LevelView"] | null;
+            /** Regime */
+            regime?: string | null;
+            /** Role */
+            role: string;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+            timeframe: components["schemas"]["Timeframe"];
+            /**
+             * Trend
+             * @default NONE
+             * @enum {string}
+             */
+            trend: "UP" | "DOWN" | "NONE";
+            /**
+             * Volatility Phase
+             * @default UNKNOWN
+             */
+            volatility_phase: string;
         };
         /**
          * TradePlan
@@ -1627,6 +1895,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    intelligence_api_v2_intelligence_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketIntelligence"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

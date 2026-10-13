@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 
 from xau_edge_v2.api.context import AppContext
+from xau_edge_v2.api.intelligence import live_intelligence
 from xau_edge_v2.api.state import _spec, live_decision
 from xau_edge_v2.core.decision import DecisionConfig
 from xau_edge_v2.domain.contract import (
@@ -320,6 +321,7 @@ def engine_tick(ctx: AppContext, now: datetime | None = None) -> list[str]:
         changed += desk.manage(moment, minute_bars(ctx, floor), bid, ask)
     if log_forward(ctx, moment):
         engine_status(ctx).logged_bars += 1
+    live_intelligence(ctx)  # records every state transition in decision_events (event-driven)
     if desk.auto and desk.open_row() is None:
         decision = live_decision(ctx)
         if (

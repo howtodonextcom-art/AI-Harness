@@ -1,10 +1,12 @@
-import type { Health, PaperPosition, PaperSummary, State } from "../api/client";
+import type { Health, Intelligence, PaperPosition, PaperSummary, State } from "../api/client";
 import { EvidencePanel } from "./EvidencePanel";
+import { IntelligencePanel } from "./IntelligencePanel";
 import { ModelPanel } from "./ModelPanel";
 import { PaperJournal } from "./PaperJournal";
 import { DRAWERS, type Drawer, useDrawer } from "../hooks/useHash";
 
 const TITLE: Record<Drawer, string> = {
+  market: "Thị trường",
   journal: "Nhật ký",
   evidence: "Bằng chứng",
   data: "Sức khỏe dữ liệu",
@@ -32,6 +34,7 @@ function DataHealth({ health }: { health: Health | null }) {
 
 interface Props {
   state: State | null;
+  intel: Intelligence | null;
   health: Health | null;
   paper: PaperSummary | null;
   positions: PaperPosition[];
@@ -40,7 +43,7 @@ interface Props {
   onPaperChanged: () => void;
 }
 
-export function Drawers({ state, health, paper, positions, paperRevision, humanRevision, onPaperChanged }: Props) {
+export function Drawers({ state, intel, health, paper, positions, paperRevision, humanRevision, onPaperChanged }: Props) {
   const [open, setOpen] = useDrawer();
   return (
     <section className="drawers" aria-label="Ngăn kéo thông tin" data-testid="drawers">
@@ -60,6 +63,7 @@ export function Drawers({ state, health, paper, positions, paperRevision, humanR
       </div>
       {open && (
         <div role="tabpanel" id={`panel-${open}`} aria-labelledby={`tab-${open}`} className="panel" data-testid="drawer-panel">
+          {open === "market" && <IntelligencePanel intel={intel} />}
           {open === "journal" && (
             <PaperJournal
               summary={paper}

@@ -1,0 +1,56 @@
+{
+  "version": "intel-1",
+  "created": "2026-10-13",
+  "status": "PROPOSED: nothing here is frozen, nothing has an outcome",
+  "rules": [
+    "one primary specification per family; no parameter grid, no 'try variants and keep the best'",
+    "every constant is the a-priori value in core/intelligence (frozen by the spec hash once the owner approves)",
+    "outcomes are opened only on VALIDATION' once, after the spec hash is recorded and the owner approves",
+    "Test-H, Holdout, Confirm-C stay locked; DEV' is used for signals and label behaviour only",
+    "a family that cannot reach the required sample is reported INCONCLUSIVE, never promoted"
+  ],
+  "k_budget": {
+    "primary_hypotheses": 3,
+    "exploratory_variants_allowed": 0,
+    "note": "K is counted per family; adding a variant raises K and the bootstrap bar with it"
+  },
+  "hypotheses": [
+    {
+      "id": "HB1",
+      "family": "B",
+      "statement": "After a decisive close beyond a tight 12-bar M15 box, price continues in the breakout direction farther than the box height more often than a matched control set of bars with the same ATR percentile and session.",
+      "eligibility": "core/intelligence/families.py::family_b",
+      "invalidation": "opposite side of the box",
+      "falsified_if": "the continuation share does not exceed the matched control's by the preregistered margin on VALIDATION', or net R after the cost model is not above 0",
+      "observed_opportunity_dev_sample": {"timeframe": "M15", "per_1000_bars": 20.66, "median_risk_atr": 2.82},
+      "known_issue": "median risk 2.8 ATR: a 1.5 net R:R needs a 4 ATR target, which may starve the family (geometry, not edge)",
+      "status": "NOT_TESTED"
+    },
+    {
+      "id": "HC1",
+      "family": "C",
+      "statement": "A sweep bar followed within 6 bars by a structure event in the opposite direction precedes a move in that direction more often than a matched control.",
+      "eligibility": "core/intelligence/families.py::family_c",
+      "invalidation": "the sweep extreme",
+      "falsified_if": "as HB1",
+      "observed_opportunity_dev_sample": {"timeframe": "M15", "per_1000_bars": 16.8, "median_risk_atr": 2.67},
+      "known_issue": "48% of BOS/CHoCH events lose the broken level within 3 bars on DEV' (label noise); the confirmation may be as noisy as the sweep",
+      "status": "NOT_TESTED"
+    },
+    {
+      "id": "HD1",
+      "family": "D",
+      "statement": "In a RANGE-labelled market, a wick rejection at the boundary of the last 20 bars is followed by a move back into the range more often than a matched control.",
+      "eligibility": "core/intelligence/families.py::family_d",
+      "invalidation": "the wick tip",
+      "falsified_if": "as HB1",
+      "observed_opportunity_dev_sample": {"timeframe": "M15", "per_1000_bars": 18.95, "median_risk_atr": 0.81},
+      "known_issue": "the regime label flips every ~11 bars on average (median run 5): a RANGE label is not persistent enough to carry a thesis without a persistence filter, and adding one is a new variant (K+1)",
+      "status": "NOT_TESTED"
+    }
+  ],
+  "controls": {
+    "matched_control": "bars with the same timeframe, ATR percentile bucket, session and distance-to-boundary bucket but no event; drawn with a fixed seed",
+    "cost_model": "executable-quote spread per bar, as in cand_replay (core/costs); unknown cost is never zero"
+  }
+}

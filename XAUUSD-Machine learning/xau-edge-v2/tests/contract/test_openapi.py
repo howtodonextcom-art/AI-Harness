@@ -13,6 +13,7 @@ def test_only_known_endpoints_are_published_and_only_two_write(
     spec = make_client().get("/api/v2/openapi.json").json()
     assert set(spec["paths"]) == {
         "/api/v2/health",
+        "/api/v2/intelligence",
         "/api/v2/forward/summary",
         "/api/v2/human/decision",
         "/api/v2/human/decisions",

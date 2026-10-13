@@ -13,6 +13,100 @@
         "title": "ActionCode",
         "type": "string"
       },
+      "Authorization": {
+        "additionalProperties": false,
+        "description": "The strategy's word, split into the market's reason, the safety gates and the governor.",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "candidate_active": {
+            "const": false,
+            "default": false,
+            "title": "Candidate Active",
+            "type": "boolean"
+          },
+          "chain_blocker": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GateView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chain_verdict": {
+            "title": "Chain Verdict",
+            "type": "string"
+          },
+          "evidence": {
+            "const": "UNVALIDATED",
+            "default": "UNVALIDATED",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "funnel": {
+            "items": {
+              "$ref": "#/components/schemas/FunnelStep"
+            },
+            "title": "Funnel",
+            "type": "array"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GateView"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "next_condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Condition"
+          },
+          "strategy_id": {
+            "title": "Strategy Id",
+            "type": "string"
+          },
+          "strategy_version": {
+            "title": "Strategy Version",
+            "type": "string"
+          },
+          "system_hold": {
+            "items": {
+              "$ref": "#/components/schemas/GateView"
+            },
+            "title": "System Hold",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strategy_id",
+          "strategy_version",
+          "action",
+          "chain_verdict",
+          "chain_blocker",
+          "next_condition",
+          "gates",
+          "system_hold",
+          "funnel",
+          "explanation"
+        ],
+        "title": "Authorization",
+        "type": "object"
+      },
       "Bar": {
         "additionalProperties": false,
         "properties": {
@@ -137,6 +231,31 @@
         "title": "BarsResponse",
         "type": "object"
       },
+      "ChangeView": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "text"
+        ],
+        "title": "ChangeView",
+        "type": "object"
+      },
       "DataInfo": {
         "additionalProperties": false,
         "properties": {
@@ -186,6 +305,89 @@
           "message"
         ],
         "title": "ErrorBody",
+        "type": "object"
+      },
+      "EventView": {
+        "additionalProperties": false,
+        "properties": {
+          "age_bars": {
+            "default": 0,
+            "title": "Age Bars",
+            "type": "integer"
+          },
+          "bar_open": {
+            "format": "date-time",
+            "title": "Bar Open",
+            "type": "string"
+          },
+          "invalidation": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invalidation"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "known_at": {
+            "format": "date-time",
+            "title": "Known At",
+            "type": "string"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "scope": {
+            "enum": [
+              "PRICE_ACTION",
+              "STRUCTURE",
+              "VOLATILITY"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "strength": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strength"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "timeframe": {
+            "$ref": "#/components/schemas/Timeframe"
+          }
+        },
+        "required": [
+          "scope",
+          "timeframe",
+          "kind",
+          "text",
+          "bar_open",
+          "known_at"
+        ],
+        "title": "EventView",
         "type": "object"
       },
       "EvidenceLabel": {
@@ -604,6 +806,78 @@
           "win_rate_ci95"
         ],
         "title": "ForwardTrades",
+        "type": "object"
+      },
+      "FunnelStep": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "observed": {
+            "title": "Observed",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "NOT_REACHED",
+              "NOT_APPLICABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "status",
+          "observed",
+          "required"
+        ],
+        "title": "FunnelStep",
+        "type": "object"
+      },
+      "GateView": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "DATA",
+              "COST",
+              "VOLATILITY",
+              "NEWS",
+              "GOVERNOR",
+              "STRATEGY"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "text",
+          "category"
+        ],
+        "title": "GateView",
         "type": "object"
       },
       "GovernorStatus": {
@@ -1139,6 +1413,68 @@
         "title": "JournalResponse",
         "type": "object"
       },
+      "LevelView": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmed": {
+            "default": true,
+            "title": "Confirmed",
+            "type": "boolean"
+          },
+          "distance_atr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance Atr"
+          },
+          "known_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Known At"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "timeframe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timeframe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "role",
+          "label",
+          "price"
+        ],
+        "title": "LevelView",
+        "type": "object"
+      },
       "M1Execution": {
         "additionalProperties": false,
         "description": "Is this a good MOMENT to act on an idea the higher timeframes already support? Timing only:\n``direction`` is copied from H1 and M1 can never change it.",
@@ -1292,6 +1628,140 @@
           "reason"
         ],
         "title": "M1Execution",
+        "type": "object"
+      },
+      "MarketIntelligence": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "const": "NONE",
+            "default": "NONE",
+            "title": "Authority",
+            "type": "string"
+          },
+          "authorization": {
+            "$ref": "#/components/schemas/Authorization"
+          },
+          "changes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ChangeView"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "data_state": {
+            "title": "Data State",
+            "type": "string"
+          },
+          "descriptive_only": {
+            "const": true,
+            "default": true,
+            "title": "Descriptive Only",
+            "type": "boolean"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventView"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "evidence": {
+            "const": "UNVALIDATED",
+            "default": "UNVALIDATED",
+            "title": "Evidence",
+            "type": "string"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "last_closed_m5": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Closed M5"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/LevelView"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "market_open": {
+            "title": "Market Open",
+            "type": "boolean"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "quote_age_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote Age S"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioView"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "schema_version": {
+            "default": "intel-1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "timeframes": {
+            "items": {
+              "$ref": "#/components/schemas/TimeframeView"
+            },
+            "title": "Timeframes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "generated_at",
+          "last_closed_m5",
+          "quote_age_s",
+          "data_state",
+          "market_open",
+          "price",
+          "summary",
+          "timeframes",
+          "levels",
+          "events",
+          "scenarios",
+          "authorization"
+        ],
+        "title": "MarketIntelligence",
         "type": "object"
       },
       "MarketStatus": {
@@ -2216,6 +2686,72 @@
         "title": "RiskInfo",
         "type": "object"
       },
+      "ScenarioView": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "title": "Confirm",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "UP",
+              "DOWN",
+              "NONE"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "invalidate": {
+            "title": "Invalidate",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "levels": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/LevelView"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "WATCH",
+              "CONTEXT",
+              "INACTIVE",
+              "BLOCKED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "why": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Why",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "direction",
+          "status",
+          "why",
+          "confirm",
+          "invalidate"
+        ],
+        "title": "ScenarioView",
+        "type": "object"
+      },
       "StateSnapshot": {
         "additionalProperties": false,
         "description": "The one decision surface the page renders (WAIT/BUY/SELL/HOLD/EXIT/UNAVAILABLE).",
@@ -2842,6 +3378,134 @@
         "title": "TimeframeFreshness",
         "type": "object"
       },
+      "TimeframeView": {
+        "additionalProperties": false,
+        "properties": {
+          "atr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atr"
+          },
+          "atr_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atr Ratio"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "last_closed": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Closed"
+          },
+          "last_swing_high": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LevelView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_swing_low": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LevelView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provisional_high": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LevelView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "provisional_low": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LevelView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "regime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "stale": {
+            "default": false,
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "timeframe": {
+            "$ref": "#/components/schemas/Timeframe"
+          },
+          "trend": {
+            "default": "NONE",
+            "enum": [
+              "UP",
+              "DOWN",
+              "NONE"
+            ],
+            "title": "Trend",
+            "type": "string"
+          },
+          "volatility_phase": {
+            "default": "UNKNOWN",
+            "title": "Volatility Phase",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timeframe",
+          "role",
+          "available"
+        ],
+        "title": "TimeframeView",
+        "type": "object"
+      },
       "TradePlan": {
         "additionalProperties": false,
         "description": "Entry/SL/TP of a valid plan (served from G4 on; not produced by the G2 skeleton).",
@@ -3390,6 +4054,37 @@
         "summary": "Decisions",
         "tags": [
           "human"
+        ]
+      }
+    },
+    "/api/v2/intelligence": {
+      "get": {
+        "operationId": "intelligence_api_v2_intelligence_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketIntelligence"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Intelligence",
+        "tags": [
+          "intelligence"
         ]
       }
     },

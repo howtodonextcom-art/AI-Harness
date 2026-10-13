@@ -22,7 +22,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.types import Scope
 
 from xau_edge_v2 import __version__
-from xau_edge_v2.api import forward, human, market, model, paper
+from xau_edge_v2.api import forward, human, intelligence, market, model, paper
 from xau_edge_v2.api.context import AppContext
 from xau_edge_v2.api.health import build_health
 from xau_edge_v2.api.live_socket import serve_socket
@@ -116,6 +116,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:  # noqa: PLR0915 - 
     app.include_router(model.router)
     app.include_router(forward.router)
     app.include_router(human.router)
+    app.include_router(intelligence.router)
 
     @app.exception_handler(HTTPException)
     async def _http_error(request: Request, exc: HTTPException) -> JSONResponse:

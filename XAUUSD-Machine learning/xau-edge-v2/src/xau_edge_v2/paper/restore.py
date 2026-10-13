@@ -12,7 +12,7 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
-TABLES = ("positions", "journal", "decision_log", "human_decisions", "account")
+TABLES = ("positions", "journal", "decision_log", "decision_events", "human_decisions", "account")
 
 
 class RestoreError(RuntimeError):

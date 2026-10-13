@@ -31,13 +31,14 @@ export function App() {
         <AutoPaperStrip paper={live.paper} positions={live.positions} />
         </div>
         <aside className="stack" aria-label="Hệ thống và quyết định của bạn">
-          <SystemPanel state={live.state} />
+          <SystemPanel state={live.state} intel={live.intel} />
           <HumanPanel state={live.state} onChanged={live.reload} />
         </aside>
       </main>
       <MtfStrip health={live.health} state={live.state} />
       <Drawers
         state={live.state}
+        intel={live.intel}
         health={live.health}
         paper={live.paper}
         positions={live.positions}

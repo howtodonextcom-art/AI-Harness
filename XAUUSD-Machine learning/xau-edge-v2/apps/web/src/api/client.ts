@@ -18,6 +18,10 @@ export type SystemAdvice = components["schemas"]["SystemAdvice"];
 export type M1Execution = components["schemas"]["M1Execution"];
 export type HumanRecord = components["schemas"]["HumanRecord"];
 export type HumanChoice = components["schemas"]["HumanChoice"];
+export type Intelligence = components["schemas"]["MarketIntelligence"];
+export type IntelScenario = components["schemas"]["ScenarioView"];
+export type IntelStep = components["schemas"]["FunnelStep"];
+export type IntelGate = components["schemas"]["GateView"];
 export type Readiness = State["readiness"];
 export type Action = State["action"];
 
@@ -28,6 +32,8 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 export const fetchState = (signal?: AbortSignal) => getJson<State>("/api/v2/state", signal);
+export const fetchIntelligence = (signal?: AbortSignal) =>
+  getJson<Intelligence>("/api/v2/intelligence", signal);
 export const fetchHealth = (signal?: AbortSignal) => getJson<Health>("/api/v2/health", signal);
 export const fetchForming = (signal?: AbortSignal) => getJson<Forming>("/api/v2/market/forming", signal);
 

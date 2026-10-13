@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export const DRAWERS = ["journal", "evidence", "data", "model"] as const;
+export const DRAWERS = ["market", "journal", "evidence", "data", "model"] as const;
 export type Drawer = (typeof DRAWERS)[number];
 
 const read = (): Drawer | null => {

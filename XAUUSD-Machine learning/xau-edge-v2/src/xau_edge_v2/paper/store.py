@@ -72,6 +72,15 @@ CREATE TABLE IF NOT EXISTS decision_log (
     strategy_version TEXT NOT NULL,
     setup_id TEXT
 );
+CREATE TABLE IF NOT EXISTS decision_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    at TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    text TEXT NOT NULL,
+    action TEXT NOT NULL,
+    chain_verdict TEXT NOT NULL,
+    strategy_version TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS human_decisions (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
     id TEXT NOT NULL UNIQUE,
@@ -200,6 +209,23 @@ class PaperStore:
                 tuple(row.values()),
             )
             return cur.rowcount == 1
+
+    def log_event(self, row: dict[str, Any]) -> None:
+        """Append one state transition (regime, scenario, authorization, gate): event-driven, so a
+        transition between two M5 closes is never lost."""
+        cols = ", ".join(row)
+        marks = ", ".join("?" for _ in row)
+        with self._tx() as db:
+            db.execute(
+                f"INSERT INTO decision_events ({cols}) VALUES ({marks})", tuple(row.values())
+            )
+
+    def events(self, limit: int = 200) -> list[dict[str, Any]]:
+        with self._lock:
+            rows = self._db.execute(
+                "SELECT * FROM decision_events ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(r) for r in rows]
 
     def last_logged_bar(self) -> int | None:
         with self._lock:

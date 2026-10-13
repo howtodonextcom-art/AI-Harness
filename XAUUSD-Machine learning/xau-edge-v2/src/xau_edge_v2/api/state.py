@@ -16,7 +16,7 @@ from xau_edge_v2.core.advice import advise
 from xau_edge_v2.core.decision import Decision, DecisionConfig, DecisionContext, decide
 from xau_edge_v2.core.execution import ExecutionAssessment, assess_execution
 from xau_edge_v2.core.frames import ORDER, Frame, MultiFrames
-from xau_edge_v2.core.market_state import build_market_state
+from xau_edge_v2.core.market_state import MarketState, build_market_state
 from xau_edge_v2.core.risk import SymbolSpec
 from xau_edge_v2.data.frames import frame_from_polars
 from xau_edge_v2.domain.contract import (
@@ -121,6 +121,13 @@ class Analysis:
 
     decision: Decision
     execution: ExecutionAssessment
+    frames: MultiFrames | None = None
+    state: MarketState | None = None
+    context: DecisionContext | None = None
+    config: DecisionConfig | None = None
+    at: datetime | None = None
+    quote_age_s: float | None = None
+    """What the intelligence layer needs to answer a different question from the SAME inputs."""
 
 
 def compute_decision(ctx: AppContext, at: datetime) -> Decision | None:
@@ -149,24 +156,21 @@ def compute_analysis(ctx: AppContext, at: datetime) -> Analysis | None:
     cfg = DecisionConfig()
     bid, ask = quote.bid if quote.available else None, quote.ask if quote.available else None
     refusals = ctx.desk.governor_refusals(at, cfg.risk_pct, bid, ask)
-    decision = decide(
-        state,
-        DecisionContext(
-            spec=spec,
-            equity=ctx.desk.equity(at, bid, ask),
-            feed_connected=quote.available,
-            cooldown_active="COOLDOWN" in refusals,
-            daily_limit_hit="DAILY_LIMIT" in refusals,
-            risk_limit_hit="RISK_LIMIT" in refusals,
-            market_open=status is MarketStatus.OPEN,
-            market_status=status.value,
-            data_ok=fresh or status is not MarketStatus.OPEN,
-            spec_known=spec_known,
-            bid=quote.bid if fresh else None,
-            ask=quote.ask if fresh else None,
-        ),
-        cfg,
+    dctx = DecisionContext(
+        spec=spec,
+        equity=ctx.desk.equity(at, bid, ask),
+        feed_connected=quote.available,
+        cooldown_active="COOLDOWN" in refusals,
+        daily_limit_hit="DAILY_LIMIT" in refusals,
+        risk_limit_hit="RISK_LIMIT" in refusals,
+        market_open=status is MarketStatus.OPEN,
+        market_status=status.value,
+        data_ok=fresh or status is not MarketStatus.OPEN,
+        spec_known=spec_known,
+        bid=quote.bid if fresh else None,
+        ask=quote.ask if fresh else None,
     )
+    decision = decide(state, dctx, cfg)
     execution = assess_execution(
         decision,
         state,
@@ -175,7 +179,16 @@ def compute_analysis(ctx: AppContext, at: datetime) -> Analysis | None:
         bid=quote.bid if fresh else None,
         ask=quote.ask if fresh else None,
     )
-    return Analysis(decision, execution)
+    return Analysis(
+        decision,
+        execution,
+        frames=frames,
+        state=state,
+        context=dctx,
+        config=cfg,
+        at=at,
+        quote_age_s=quote.age_seconds if quote.available else None,
+    )
 
 
 def _headline(d: Decision) -> str:

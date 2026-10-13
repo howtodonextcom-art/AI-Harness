@@ -139,3 +139,29 @@ h2 { margin: 0 0 6px; font-size: 14px; letter-spacing: 0.04em; text-transform: u
 .paper-table td { vertical-align: top; }
 .meter { width: 160px; height: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
 .meter-fill { height: 100%; background: var(--hold-line); }
+
+/* market intelligence: observation / scenarios / authorization, each layer on its own */
+.gate-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.gate-chips .chip { padding: 0 8px; font-size: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.small { font-size: 12px; }
+.intel h3 { margin: 6px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.intel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.intel ul, .intel ol { margin: 0; padding: 0; list-style: none; }
+.scenario { padding: 4px 8px; margin-bottom: 4px; font-size: 13px; border: 1px solid var(--line); border-radius: 8px; }
+.scenario-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.scenario.st-watch { border: 2px solid var(--hold-line); background: var(--hold-bg); }
+.scenario.st-blocked { border: 2px solid var(--wait-line); background: var(--wait-bg); color: var(--wait-ink); }
+.scenario.st-inactive { color: var(--muted); }
+.funnel { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.funnel .step { display: grid; grid-template-columns: 16px 1fr; gap: 0 4px; padding: 2px 0; font-size: 12px; line-height: 1.3; }
+.funnel .step-obs { grid-column: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.funnel .step-fail { color: var(--sell-ink); font-weight: 700; }
+.funnel .step-pass .step-mark { color: var(--buy-line); }
+.funnel .step-not_reached { color: var(--muted); }
+.levels li { padding: 1px 0; }
+.intel-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; border-top: 1px solid var(--line); padding-top: 6px; }
+.intel-foot ul { max-height: 130px; overflow: auto; }
+@media (max-width: 1100px) { .intel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.intel-grid > div { min-width: 0; }

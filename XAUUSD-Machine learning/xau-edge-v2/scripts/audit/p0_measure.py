@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import itertools
 import json
 import statistics
 import time
@@ -45,7 +46,14 @@ def rest(path: str, n: int) -> dict[str, float | int]:
         ms.append(t)
         size = len(b)
         time.sleep(0.05)
-    return {"n": n, "p50_ms": pct(ms, 0.5), "p95_ms": pct(ms, 0.95), "p99_ms": pct(ms, 0.99), "max_ms": round(max(ms), 2), "bytes": size}
+    return {
+        "n": n,
+        "p50_ms": pct(ms, 0.5),
+        "p95_ms": pct(ms, 0.95),
+        "p99_ms": pct(ms, 0.99),
+        "max_ms": round(max(ms), 2),
+        "bytes": size,
+    }
 
 
 async def ws_listen(seconds: float) -> dict[str, object]:
@@ -60,15 +68,35 @@ async def ws_listen(seconds: float) -> dict[str, object]:
             now = datetime.now(UTC)
             e = json.loads(raw)
             ts = datetime.fromisoformat(e["ts"].replace("Z", "+00:00"))
-            events.append({"type": e["type"], "seq": e["seq"], "lag_ms": (now - ts).total_seconds() * 1000, "t": time.time()})
+            events.append(
+                {
+                    "type": e["type"],
+                    "seq": e["seq"],
+                    "lag_ms": (now - ts).total_seconds() * 1000,
+                    "t": time.time(),
+                }
+            )
     seqs = [int(e["seq"]) for e in events]  # type: ignore[call-overload]
-    gaps = sum(1 for a, b in zip(seqs, seqs[1:], strict=False) if b != a + 1)
+    gaps = sum(1 for a, b in itertools.pairwise(seqs) if b != a + 1)
     by: dict[str, list[float]] = {}
     for e in events:
         by.setdefault(str(e["type"]), []).append(float(e["t"]))  # type: ignore[arg-type]
     lag = [float(e["lag_ms"]) for e in events]  # type: ignore[arg-type]
-    inter = {k: round(statistics.median([b - a for a, b in zip(v, v[1:], strict=False)]), 3) if len(v) > 1 else None for k, v in by.items()}
-    return {"events": len(events), "by_type": {k: len(v) for k, v in by.items()}, "seq_gaps": gaps, "median_interarrival_s": inter, "delivery_lag_ms": {"p50": pct(lag, 0.5), "p95": pct(lag, 0.95), "max": round(max(lag), 2)} if lag else None}
+    inter = {
+        k: round(statistics.median([b - a for a, b in itertools.pairwise(v)]), 3)
+        if len(v) > 1
+        else None
+        for k, v in by.items()
+    }
+    return {
+        "events": len(events),
+        "by_type": {k: len(v) for k, v in by.items()},
+        "seq_gaps": gaps,
+        "median_interarrival_s": inter,
+        "delivery_lag_ms": {"p50": pct(lag, 0.5), "p95": pct(lag, 0.95), "max": round(max(lag), 2)}
+        if lag
+        else None,
+    }
 
 
 def quote_series(seconds: float, hz: float = 8.0) -> list[dict[str, float]]:
@@ -78,7 +106,15 @@ def quote_series(seconds: float, hz: float = 8.0) -> list[dict[str, float]]:
         t0 = time.time()
         _, body = get("/api/v2/market/quote")
         q = json.loads(body)
-        out.append({"t": t0, "bid": q["bid"], "ask": q["ask"], "age": q["age_seconds"], "collector_age": q.get("collector_age_seconds") or -1})
+        out.append(
+            {
+                "t": t0,
+                "bid": q["bid"],
+                "ask": q["ask"],
+                "age": q["age_seconds"],
+                "collector_age": q.get("collector_age_seconds") or -1,
+            }
+        )
         time.sleep(max(0.0, 1 / hz - (time.time() - t0)))
     return out
 
@@ -99,7 +135,9 @@ def propagation(v2: list[dict[str, float]], mt5: list[dict[str, float]]) -> dict
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--mt5", required=True, help="output of mt5_tick_sampler.py (run at the same time)")
+    ap.add_argument(
+        "--mt5", required=True, help="output of mt5_tick_sampler.py (run at the same time)"
+    )
     ap.add_argument("--out", required=True)
     ap.add_argument("--seconds", type=float, default=60)
     ap.add_argument("--only-quote", action="store_true")
@@ -114,14 +152,33 @@ def main() -> None:
     else:
         Path(a.mt5).unlink(missing_ok=True)
     mt5 = json.loads(Path(a.mt5).read_text(encoding="utf-8")) if Path(a.mt5).exists() else []
-    out["quote_age_s"] = {"p50": pct([s["age"] for s in series], 0.5), "p95": pct([s["age"] for s in series], 0.95), "max": round(max(s["age"] for s in series), 2)}
-    out["collector_age_s"] = {"p50": pct([s["collector_age"] for s in series], 0.5), "p95": pct([s["collector_age"] for s in series], 0.95)}
-    out["propagation_mt5_to_v2"] = propagation(series, mt5) if mt5 else "NOT MEASURED (no MT5 sample file)"
+    out["quote_age_s"] = {
+        "p50": pct([s["age"] for s in series], 0.5),
+        "p95": pct([s["age"] for s in series], 0.95),
+        "max": round(max(s["age"] for s in series), 2),
+    }
+    out["collector_age_s"] = {
+        "p50": pct([s["collector_age"] for s in series], 0.5),
+        "p95": pct([s["collector_age"] for s in series], 0.95),
+    }
+    out["propagation_mt5_to_v2"] = (
+        propagation(series, mt5) if mt5 else "NOT MEASURED (no MT5 sample file)"
+    )
     if a.only_quote:
         Path(a.out).write_text(json.dumps(out, indent=1), encoding="utf-8")
         print(json.dumps(out, indent=1))
         return
-    out["rest"] = {p: rest(p, 150) for p in ("/api/v2/state", "/api/v2/market/quote", "/api/v2/market/forming", "/api/v2/health", "/api/v2/market/bars?timeframe=M5&limit=500", "/api/v2/paper/summary")}
+    out["rest"] = {
+        p: rest(p, 150)
+        for p in (
+            "/api/v2/state",
+            "/api/v2/market/quote",
+            "/api/v2/market/forming",
+            "/api/v2/health",
+            "/api/v2/market/bars?timeframe=M5&limit=500",
+            "/api/v2/paper/summary",
+        )
+    }
     out["websocket"] = asyncio.run(ws_listen(45))
     Path(a.out).write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(json.dumps(out, indent=1))

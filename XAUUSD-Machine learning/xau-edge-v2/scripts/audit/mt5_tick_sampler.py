@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from pathlib import Path
 
 import MetaTrader5 as mt5  # noqa: N813
 
@@ -29,10 +30,12 @@ def main() -> None:
         t0 = time.time()
         k = mt5.symbol_info_tick("XAUUSD")
         if k is not None:
-            rows.append({"t": t0, "bid": float(k.bid), "ask": float(k.ask), "tick_ms": int(k.time_msc)})
+            rows.append(
+                {"t": t0, "bid": float(k.bid), "ask": float(k.ask), "tick_ms": int(k.time_msc)}
+            )
         time.sleep(max(0.0, 1 / a.hz - (time.time() - t0)))
     mt5.shutdown()
-    json.dump(rows, open(a.out, "w"))
+    Path(a.out).write_text(json.dumps(rows), encoding="utf-8")
     print(len(rows), "samples")
 
 

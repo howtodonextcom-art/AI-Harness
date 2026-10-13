@@ -1,0 +1,168 @@
+{
+  "purpose": "label behaviour on approved development data; NOT an outcome, NOT edge",
+  "window": "DEV' 2016-01..2018-12 (clean store, PASS months only)",
+  "manifest_sha256": "997d73f8025c113d10e1d48ac5a1fb8479f6e6c73439b0f459ac3dfe7e2fbb61",
+  "protected_windows_read": [],
+  "outcomes_read": false,
+  "seed": 20261013,
+  "timeframes": [
+    {
+      "family_eligibility_no_outcomes": {
+        "B": {
+          "eligible_per_1000_bars": 21.62,
+          "n": 381,
+          "buy_side": 186,
+          "sell_side": 195,
+          "median_risk_atr": 2.83,
+          "p90_risk_atr": 4.19
+        },
+        "C": {
+          "eligible_per_1000_bars": 18.78,
+          "n": 331,
+          "buy_side": 154,
+          "sell_side": 177,
+          "median_risk_atr": 2.66,
+          "p90_risk_atr": 3.89
+        },
+        "D": {
+          "eligible_per_1000_bars": 14.81,
+          "n": 261,
+          "buy_side": 137,
+          "sell_side": 124,
+          "median_risk_atr": 0.79,
+          "p90_risk_atr": 1.4
+        }
+      },
+      "timeframe": "H1",
+      "bars_scored": 17623,
+      "price_action_per_1000_bars": {
+        "UPPER_WICK_REJECTION": 65.82,
+        "LOWER_WICK_REJECTION": 72.69,
+        "BULL_ENGULFING": 64.46,
+        "BEAR_ENGULFING": 62.48,
+        "INSIDE_BAR": 182.89,
+        "OUTSIDE_BAR": 104.69,
+        "BULL_DISPLACEMENT": 33.48,
+        "BEAR_DISPLACEMENT": 32.57,
+        "FAILED_BREAKOUT_UP": 82.73,
+        "FAILED_BREAKOUT_DOWN": 77.23
+      },
+      "structure_events": {
+        "BOS_UP": 443,
+        "FAILED_BREAK_UP": 294,
+        "CHOCH_DOWN": 191,
+        "FAILED_BREAK_DOWN": 335,
+        "CHOCH_UP": 195,
+        "BOS_DOWN": 481
+      },
+      "structure_failure_share": 0.4802,
+      "swing_confirmation_lag_bars": [
+        3
+      ],
+      "repaint_mismatches_in_random_cuts": 0,
+      "random_cuts_tested": 25,
+      "regime_occupancy": {
+        "HIGH_VOLATILITY": 0.0378,
+        "LOW_VOLATILITY": 0.0083,
+        "RANGE": 0.4562,
+        "SHOCK": 0.0173,
+        "TREND_DOWN": 0.2452,
+        "TREND_UP": 0.2352
+      },
+      "regime_persistence": {
+        "mean_run_bars": 11.450942170240415,
+        "median_run_bars": 5.0,
+        "switches_per_1000_bars": 87.27231458888951
+      },
+      "volatility_phase_sample": {
+        "NORMAL": 0.8111,
+        "EXPANSION": 0.1682,
+        "COMPRESSION": 0.0207
+      },
+      "volatility_phase_sample_size": 434,
+      "box_breakout_samples": {
+        "up": 6,
+        "down": 5
+      }
+    },
+    {
+      "family_eligibility_no_outcomes": {
+        "B": {
+          "eligible_per_1000_bars": 20.66,
+          "n": 1456,
+          "buy_side": 745,
+          "sell_side": 711,
+          "median_risk_atr": 2.82,
+          "p90_risk_atr": 4.05
+        },
+        "C": {
+          "eligible_per_1000_bars": 16.8,
+          "n": 1184,
+          "buy_side": 583,
+          "sell_side": 601,
+          "median_risk_atr": 2.67,
+          "p90_risk_atr": 3.89
+        },
+        "D": {
+          "eligible_per_1000_bars": 18.95,
+          "n": 1335,
+          "buy_side": 682,
+          "sell_side": 653,
+          "median_risk_atr": 0.81,
+          "p90_risk_atr": 1.34
+        }
+      },
+      "timeframe": "M15",
+      "bars_scored": 70466,
+      "price_action_per_1000_bars": {
+        "UPPER_WICK_REJECTION": 74.48,
+        "LOWER_WICK_REJECTION": 78.49,
+        "BULL_ENGULFING": 68.54,
+        "BEAR_ENGULFING": 66.98,
+        "INSIDE_BAR": 167.39,
+        "OUTSIDE_BAR": 95.04,
+        "BULL_DISPLACEMENT": 31.89,
+        "BEAR_DISPLACEMENT": 31.76,
+        "FAILED_BREAKOUT_UP": 77.48,
+        "FAILED_BREAKOUT_DOWN": 72.55
+      },
+      "structure_events": {
+        "BOS_UP": 1926,
+        "FAILED_BREAK_UP": 1266,
+        "BOS_DOWN": 1757,
+        "FAILED_BREAK_DOWN": 1169,
+        "CHOCH_DOWN": 723,
+        "CHOCH_UP": 669
+      },
+      "structure_failure_share": 0.4798,
+      "swing_confirmation_lag_bars": [
+        3
+      ],
+      "repaint_mismatches_in_random_cuts": 0,
+      "random_cuts_tested": 25,
+      "regime_occupancy": {
+        "HIGH_VOLATILITY": 0.0923,
+        "LOW_VOLATILITY": 0.026,
+        "RANGE": 0.4826,
+        "SHOCK": 0.015,
+        "TREND_DOWN": 0.2043,
+        "TREND_UP": 0.1798
+      },
+      "regime_persistence": {
+        "mean_run_bars": 11.411497975708501,
+        "median_run_bars": 5.0,
+        "switches_per_1000_bars": 87.61672295858996
+      },
+      "volatility_phase_sample": {
+        "NORMAL": 0.6689,
+        "EXPANSION": 0.2803,
+        "COMPRESSION": 0.0507
+      },
+      "volatility_phase_sample_size": 1755,
+      "box_breakout_samples": {
+        "up": 24,
+        "down": 22
+      }
+    }
+  ]
+}

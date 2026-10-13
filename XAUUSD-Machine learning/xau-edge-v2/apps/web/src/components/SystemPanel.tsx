@@ -1,4 +1,5 @@
-import type { M1Execution, State } from "../api/client";
+import type { Intelligence, M1Execution, State } from "../api/client";
+import { GateChips } from "./IntelligencePanel";
 
 /** Everything the SYSTEM says is advice. These are the words the page uses for it. */
 export const RECOMMENDATION: Record<string, { icon: string; label: string; tone: string }> = {
@@ -51,7 +52,7 @@ function M1Line({ m1 }: { m1: M1Execution }) {
 const money = (v: number | null | undefined, d = 2) => (v == null ? "—" : v.toFixed(d));
 
 /** The SYSTEM layer: measurements and an advisory recommendation. It decides nothing. */
-export function SystemPanel({ state }: { state: State | null }) {
+export function SystemPanel({ state, intel = null }: { state: State | null; intel?: Intelligence | null }) {
   if (!state) {
     return (
       <section className="card system" aria-busy="true" aria-label="Hệ thống">
@@ -74,10 +75,36 @@ export function SystemPanel({ state }: { state: State | null }) {
         <span className="action-icon" aria-hidden="true">{view.icon}</span>
         <span className="action-label">{view.label}</span>
       </div>
-      <p className="headline" data-testid="headline">
-        {sys?.reasons[0] ?? state.headline}
-      </p>
+      {(candidate || !intel) && (
+        <p className="headline" data-testid="headline">
+          {sys?.reasons[0] ?? state.headline}
+        </p>
+      )}
       <dl className="rows">
+        <Row id="blocker" label="Thị trường chặn">
+          {!candidate && intel?.authorization.chain_blocker ? (
+            <span data-testid="why-market" data-chain={intel.authorization.chain_verdict}>
+              {intel.authorization.chain_blocker.text}
+              {intel.authorization.next_condition && (
+                <span className="muted small"> · cần: {intel.authorization.next_condition}</span>
+              )}
+            </span>
+          ) : (
+            (sys?.blocker_text ?? state.blocker ?? (candidate ? "— không có" : "—"))
+          )}
+        </Row>
+        <Row id="secondary" label="Cổng / tài khoản">
+          {intel && !candidate ? (
+            <span data-testid="why-gates">
+              <GateChips gates={intel.authorization.gates} none="cổng: không chặn" />{" "}
+              <GateChips gates={intel.authorization.system_hold} none="tài khoản: không giữ" prefix="TK: " />
+            </span>
+          ) : sys && sys.secondary_text.length > 0 ? (
+            sys.secondary_text.join(" · ")
+          ) : (
+            "—"
+          )}
+        </Row>
         <Row id="sys-bias" label="Thiên hướng">
           <strong>{BIAS_VI[sys?.bias ?? state.bias]}</strong> <span className="muted small">(H4/H1)</span>
         </Row>
@@ -89,12 +116,6 @@ export function SystemPanel({ state }: { state: State | null }) {
         </Row>
         <Row id="sys-m1" label="M1 thực thi">
           {sys ? <M1Line m1={sys.m1} /> : <span className="muted">—</span>}
-        </Row>
-        <Row id="blocker" label="Chặn chính">
-          {sys?.blocker_text ?? state.blocker ?? (candidate ? "— không có" : "—")}
-        </Row>
-        <Row id="secondary" label="Điều kiện phụ">
-          {sys && sys.secondary_text.length > 0 ? sys.secondary_text.join(" · ") : "—"}
         </Row>
         <Row id="plan" label="Entry / SL / TP">
           {plan && candidate ? (
