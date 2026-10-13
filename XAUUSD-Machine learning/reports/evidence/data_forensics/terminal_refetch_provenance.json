@@ -1,0 +1,20 @@
+{
+ "taken_at": "2026-10-13 (dump_meta.json)",
+ "tool": "scripts/research/terminal_dump.py (read-only copy_rates_range)",
+ "terminal": {
+  "company": "MetaQuotes Ltd.",
+  "path": "C:\\Program Files\\MetaTrader 5",
+  "build": 6258,
+  "maxbars": 100000
+ },
+ "server_folder_names_in_its_data_folder": [
+  "MetaQuotes-Demo"
+ ],
+ "provider": "MetaQuotes-Demo (NOT the FTMO server that fed the store)",
+ "evidence": "its data folder holds only the MetaQuotes-Demo base; the FTMO terminal is C:\\Program Files\\FTMO Global Markets MT5 Terminal (bases FTMO-Demo, FTMO-Server3)",
+ "server_clock": "follows EU DST (UTC+2 winter, UTC+3 summer, switching on the last Sunday of March/October); FTMO follows US DST",
+ "ftmo_terminal_probe": {
+  "file": "reports/evidence/data_forensics/ftmo_terminal_now.json.gz",
+  "finding": "FTMO terminal today serves H1/H4 bars IDENTICAL to the store, pseudo-bars included (97/97 H1, 25/25 H4 for 2013-05 and 2019-05): the defect is in FTMO's own history, not in the store pipeline"
+ }
+}

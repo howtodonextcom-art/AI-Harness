@@ -2,6 +2,8 @@
 
 Ngày: 2026-10-13 · Không phương án nào được thực hiện. Raw store, `research_history`, `raw` **không bị sửa hay xóa**. Mọi bản dữ liệu sạch sẽ là **bản dẫn xuất ở thư mục riêng** có băm và nhật ký.
 
+> **ĐÍNH CHÍNH (Gate B3):** nguồn "sạch" là máy chủ **MetaQuotes-Demo**, không phải FTMO; terminal FTMO hôm nay vẫn có bar giả. Phương án B đã được thực hiện (kho sạch, H4 khôi phục từ MetaQuotes-Demo). Phương án A1 đã được trả lời một phần bằng thăm dò chỉ-đọc terminal FTMO; phần còn lại cần terminal portable sạch (xem `V2_A1_PROVENANCE_REPORT.md`).
+
 ## Dữ kiện nền
 - Lỗi: một pseudo-bar mỗi ngày, 2012-06-26 → 2021-01-20, nhìn trước tới 24 giờ (báo cáo pháp y).
 - Tải lại hôm nay từ terminal (H1 từ 2009-09, H4 từ 2004-06, D1): **không có pseudo-bar**, và phần còn lại **giống hệt** kho. Terminal đang `maxbars = 100000`, nên M1/M5/M15/M30 cũ không tải lại được (M1 từ 2026-06, M5 từ 2025-05, M15 từ 2022-07, M30 từ 2018-05).

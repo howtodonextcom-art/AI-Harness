@@ -121,6 +121,41 @@
       "effect": "disclosed; the explanation turned out to be the pseudo-bar, and the earlier 'noise' diagnosis was wrong"
     },
     {
+      "date": "2026-10-13",
+      "window": "DEV' 2005-06..2018-12, VALIDATION' 2019-01..2021-01, RESERVED 2021-10..12",
+      "kind": "Gate B3: clean-store build and verification (prices only)",
+      "outcome_class": "NONE",
+      "effect": "190 PASS months, 9 quarantined; no strategy evaluated"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "DEV' 2011-03..2011-04",
+      "kind": "candidate replay restart tests (signals only, every variant, no outcome): continuous x2 and interrupted+resumed",
+      "outcome_class": "NONE (signals; no price outcome simulated)",
+      "effect": "reproducibility evidence only; the signals of these two months were counted (4) but not simulated"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "2021-11..2022-05 ticks and bars; all H1 2009-09..2026-10",
+      "kind": "2022-Q1 investigation and cross-provider H1 check (MetaQuotes-Demo)",
+      "outcome_class": "NONE (prices and ticks only)",
+      "effect": "2022-01-04..03-21 TICKS defective, BARS fine; Test-H prices were read for integrity only, never a signal or outcome"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "FTMO terminal (read-only API) 2013-05, 2016-05, 2019-05 weeks",
+      "kind": "A1-lite read-only probe of the live FTMO terminal (copy_rates_range M1..H4, D1)",
+      "outcome_class": "NONE",
+      "effect": "FTMO serves the pseudo-bars today in every timeframe; collector untouched (read-only, no setting changed)"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "n/a",
+      "kind": "correction: the 'broker re-fetch' of the Gate B report came from the MetaQuotes-Demo terminal, not from FTMO",
+      "outcome_class": "NONE",
+      "effect": "re-fetch evidence is from a DIFFERENT provider; reports and manifest corrected"
+    },
+    {
       "window": "Test-H 2022-01..2025-04",
       "kind": "not opened",
       "effect": "LOCKED, no authority"

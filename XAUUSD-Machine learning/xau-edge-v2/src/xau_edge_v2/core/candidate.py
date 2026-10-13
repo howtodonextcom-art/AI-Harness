@@ -40,6 +40,7 @@ SPIKE_PERCENTILE = 0.99
 COST_CODE = "COST_TOO_HIGH"
 SPIKE_CODE = "SPREAD_SPIKE"
 SHOCK_CODE = "SHOCK_GUARD"
+RESTORE_CODE = "RESTORE_PENDING"
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,15 @@ class Memory:
     arm_bar: int = -1
     last_armed_bar: int = -1
     planned_stop: float | None = None
+    cold: bool = False
+    """True after a restart that could NOT restore the checkpoint: the arm bar of a setup that is already
+    armed is unknown, so C1 decisions are WAIT until the setup has been off for ``memory_bars + 1`` bars."""
+    quiet: int = 0
+    """Consecutive bars without the armed condition while ``cold``."""
+
+    @staticmethod
+    def cold_start() -> Memory:
+        return Memory(cold=True)
 
 
 @dataclass(frozen=True)
@@ -175,11 +185,17 @@ def _invalidation(  # noqa: PLR0911 - one return per invalidation reason
     return None
 
 
-def advance_memory(
+def advance_memory(  # noqa: PLR0911 - one return per lifecycle state
     mem: Memory, state: MarketState, obs: Observation, bar: int, cfg: CandidateConfig
 ) -> tuple[Memory, str, str | None]:
     """The lifecycle after this closed M5 bar: (memory, lifecycle label, invalidated_by)."""
     side = side_of(state)
+    if mem.cold:
+        # the state of an already armed setup is unknown: wait until any memory would have expired anyway
+        quiet = 0 if armed_now(state) else mem.quiet + 1
+        if quiet > cfg.memory_bars:
+            return Memory(), "IDLE", None
+        return Memory(cold=True, quiet=quiet), "RESTORE_PENDING", None
     invalid: str | None = None
     if mem.side is not None:
         invalid = _invalidation(state, mem, obs)
@@ -304,6 +320,9 @@ def candidate_step(
                 guard = COST_CODE
         if guard is not None:
             d = _veto(d, guard)
+    if cfg.c1 and new_mem.cold and d.action != "WAIT":
+        guard = RESTORE_CODE  # the checkpoint could not be restored: never act on a state that may differ from a continuous run
+        d = _veto(d, guard)
     # the decision must carry the RAW state (what the market said), never the labels C1 substituted
     d = replace(d, state=state)
     if substituted:
@@ -311,8 +330,9 @@ def candidate_step(
             d,
             reasons=(
                 *d.reasons,
-                f"C1: setup remembered (armed at bar {new_mem.arm_bar}, last armed at bar "
-                f"{new_mem.last_armed_bar}); M15 labels substituted, raw M15 {state.m15_structure}/{state.m15_pullback}",
+                f"C1: setup remembered (armed {bar - new_mem.arm_bar} bars ago, last armed "
+                f"{bar - new_mem.last_armed_bar} bars ago); M15 labels substituted, raw M15 "
+                f"{state.m15_structure}/{state.m15_pullback}",
             ),
         )
     if not cfg.c1:

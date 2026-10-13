@@ -1,0 +1,385 @@
+{
+  "spec_id": "cand-v2-core",
+  "spec_version": "1.1.0",
+  "frozen_on": "2026-10-13",
+  "status": "PROPOSED",
+  "approved_by": "project owner, Gate A review 2026-10-13 (CONDITIONAL APPROVAL): C1+C2 priority, C3a/C3b with safety guards, C4-C7 exploratory, K_V2_CAND_ML approved, one-shot Validation and Confirm-C after freeze, Test-H and Holdout stay locked",
+  "amendment_rule": "A frozen spec is never edited in place. A change is a new spec_version with an owner-approved reason; the guard hash in cand_v2_spec.sha256 is replaced in the same commit. No amendment may follow a look at Validation, Confirm-C, Test-H or Holdout outcomes.",
+  "control": {
+    "id": "CONTROL_V1_COMPAT",
+    "strategy_id": "xau_mtf_baseline",
+    "strategy_version": "1.1.0",
+    "rule": "Immutable. The control is core/decision.py:decide with DecisionConfig() defaults, pinned by tests/unit/test_strategy_lock.py. The candidate never edits it; the candidate calls it."
+  },
+  "candidate": {
+    "strategy_id": "xau_mtf_cv2",
+    "strategy_version": "2.0.0-cand.1",
+    "construction": "A thin layer around the control's decide(): the chain labels, stop, targets, net R:R and sizing are the control's code, unchanged. With every flag off the candidate is identical to the control (parity test). Differences are limited to: setup memory (C1), the cost gate (C2), the volatility gates (C3a, C3b) and the guards named below.",
+    "honest_scope": "CAND-CORE changes lifecycle and gating, not the labels that generate direction, setup or trigger (C4, C5, C6 are exploratory and NOT implemented in this freeze). It is therefore not claimed to be a new brain; whether it is one is a finding, not an assumption."
+  },
+  "invariants": {
+    "MIN_NET_RR": 1.5,
+    "R_MULTIPLE": 2.0,
+    "TP2_R_MULTIPLE": 3.0,
+    "ATR_K": 1.25,
+    "MAX_STOP_ATR": 3.0,
+    "risk_pct_per_trade": 0.25,
+    "broker_stop_constraints": "SymbolSpec.min_stop_distance, volume step/min/max, unchanged",
+    "daily_loss_governor": "core.paper.GovernorConfig defaults (stop 2.0%, flatten 3.5%, 1 open position, 2/hour, 3/session, 6/day, cooldowns), unchanged",
+    "mode": "PAPER only",
+    "authority": "Human is the final decision authority; the strategy and the ML shadow only advise",
+    "unchanged_files": [
+      "core/decision.py",
+      "core/risk.py",
+      "core/market_state.py",
+      "core/structure.py",
+      "core/indicators.py",
+      "core/frames.py",
+      "core/costs.py"
+    ]
+  },
+  "definitions": {
+    "price_space": "All levels live in the broker's BID chart (MT5 bars are bid). BUY enters at the ask (bid + spread), SELL at the bid. BUY exits at the bid, SELL exits at the ask (bar high/low + the bar's spread).",
+    "cost_accounting": {
+      "planning_gate_net_rr": "net_rr = (reward - spread) / (risk + spread) is the control's planning gate. It is KEPT unchanged (MIN_NET_RR is invariant) and is NOT a charge.",
+      "outcome_charges": "Outcomes are realised by the PAPER fill rules only: entry quote plus 3 points adverse slippage, stops fill with 3 points adverse slippage, targets fill exactly at their level, SELL exits and BUY entries pay the spread through the ask/bid mechanics, swap ASSUMED per core.costs. NOTHING further is deducted from outcomes, so spread and slippage are charged exactly once.",
+      "cost_gate_C2": "cost_R = (spread_price + 2 * slippage_price) / risk_dist, spread_price from the EXECUTABLE quote (ask - bid) when the context has one, else from the state; a SCREEN, not a deduction",
+      "why_not_double_counting": "net_rr (planning), cost_R (screen) and the realised PnL (accounting) answer three different questions. Only the realised PnL is summed into the endpoint; the realised decomposition (gross price move, realised spread, realised slippage, swap) is reported per trade so any residual double count is visible.",
+      "known_conservatism": "For BUY the control's net_rr deducts the spread although the entry is already at the ask; this makes the planning gate conservative for BUY. It is documented, not corrected (the invariant stands)."
+    },
+    "episode": "A maximal run of emitted signal bars of the same side whose consecutive gaps are <= 60 minutes.",
+    "episode_to_trade": "One trade is attempted per episode, at its FIRST signal bar, subject to the V1 governor and to no open position. A refused episode is lost; later bars of the same episode never open a trade. The same rule applies to every variant including the control.",
+    "execution_timing": "Signals are evaluated at each closed M5 bar. The executable quote is the last closed M1 bar of that minute: bid = its close, ask = close + that bar's spread. The position is managed on closed M1 bars that open at or after the fill minute (V1 paper rule). A missing M1 bar means no signal for that bar.",
+    "management": "Stop first when a bar reaches both levels (pessimistic). No time stop; the simulation horizon is 10 calendar days after entry, then the position is closed at the market quote and flagged HORIZON.",
+    "shock": "Reuse the existing constant SHOCK_RANGE_ATR = 3.0 (core/structure.py): a closed bar whose range >= 3.0 x the previous bar's ATR(14). SHOCK is true when ANY of: the last 2 closed M15 bars include one; the last closed H1 bar is one; the H4 regime is SHOCK; the M1 micro state is ABNORMAL. No new numeric constant is introduced.",
+    "spike_guard": "spread_percentile >= 0.99 (percentile within the last 300 M5 spreads) blocks. 0.99 only removes true spikes; the control's 0.90 removes 10% of time by construction.",
+    "lifecycle": {
+      "states": [
+        "IDLE",
+        "BIASED",
+        "ARMED",
+        "TRIGGERED",
+        "EXECUTABLE",
+        "EXPIRED",
+        "INVALIDATED"
+      ],
+      "armed_condition": "the control's setup condition at the closed M5 bar: H1 bias = side AND H4 does not veto AND M15 structure = with-trend AND M15 pullback = the matching pullback label",
+      "memory_bars": 6,
+      "memory_rule": "While the armed condition is true the memory is refreshed. When it turns false the setup stays ARMED for at most 6 further closed M5 bars. A trigger inside the window is evaluated with the setup labels substituted by their armed values; every other input is the current bar's.",
+      "planned_invalidation_level": "stop price computed by compute_stop at the bar the setup armed (BUY below, SELL above)",
+      "invalidated_when_any": [
+        "H1 bias changes from the side (flip or neutral) at any M5 close",
+        "H4 veto becomes true",
+        "an M5 close beyond the planned invalidation level",
+        "M15 structure turns against the side (UP/DOWN opposite, or REVERSAL opposite)",
+        "SHOCK",
+        "data stale, market closed, or feed missing"
+      ],
+      "one_candidate_per_setup": "enforced by the episode rule above",
+      "planned_stop_rule": "FIXED at the bar where the setup formed; never refreshed",
+      "replay": "One continuous replay of the run window. Month boundaries reset nothing.",
+      "checkpoint": "after each month: spec sha, code version, clean-store manifest sha, variants, bar index, last bar, bar-history hash chain, memories, self hash; atomic write, previous one kept",
+      "restart": "restore only if every field and the bar history match; else COLD: C1 decisions are WAIT (RESTORE_PENDING) until the armed condition has been off for memory_bars + 1 bars"
+    },
+    "simulation_notes": {
+      "equity": "R-based and non-compounding: nominal equity 10000, 0.25% = 25 USD per R; sizing rounding and the minimum-lot refusal are not modelled (negligible at this equity).",
+      "governor": "core.paper.governor_check with GovernorConfig defaults. The day is the UTC date; the day's loss uses closed trades of that day; flatten at 3.5% is unreachable (it would need at least 14 R lost in a day with at most 6 trades) and is not simulated.",
+      "stop_gaps": "The desk's rule fills a stop at the stop level (plus 3 points). A bar that OPENS beyond the stop is flagged 'gap_through_stop' and counted as a safety finding; the fill is not changed.",
+      "signals_sizing": "Stage A runs with equity None (no sizing); lots are not needed for R.",
+      "warmup": "Indicators use history from before the window start (including, for Confirm-C, the last weeks of the locked Test-H window as PRICE CONTEXT only; no signal and no outcome of a locked window is ever produced).",
+      "data": "M1 bars from the shared store; a missing M1 bar at the decision minute means no signal and resets every lifecycle memory."
+    }
+  },
+  "changes": {
+    "C1": {
+      "tier": "CORE",
+      "name": "stateful lifecycle",
+      "parameters": {
+        "memory_bars": 6
+      },
+      "hypothesis": "setup and trigger are sequential events; requiring the same bar discards valid setups",
+      "outcome_test": "incremental trades of A_C1 over CTRL"
+    },
+    "C2": {
+      "tier": "CORE",
+      "name": "cost-per-risk gate",
+      "parameters": {
+        "cost_R_cap": 0.15
+      },
+      "guard": "spike_guard",
+      "replaces": "SPREAD_TOO_WIDE from execution_quality POOR (spread percentile >= 0.9 or spread/ATR5 > 0.15); an UNKNOWN spread still refuses; M1 ABNORMAL still blocks through the control's M1 chain",
+      "hypothesis": "cost must be measured against the trade's risk, not against 5-minute noise"
+    },
+    "C3a": {
+      "tier": "CORE",
+      "name": "drop the LOW volatility percentile gate",
+      "parameters": {},
+      "hypothesis": "with C2 the economic cost of thin markets is priced directly; the rank-based gate blocks ~20% of time by construction"
+    },
+    "C3b": {
+      "tier": "CORE",
+      "name": "HIGH volatility percentile gate and H4 HIGH_VOLATILITY block replaced by SHOCK guard",
+      "parameters": {
+        "blocked_regimes_h4": [
+          "SHOCK"
+        ]
+      },
+      "guard": "shock",
+      "hypothesis": "trend continuation lives in expanding volatility; the ATR is already in the stop size"
+    },
+    "C7": {
+      "tier": "EXPLORATORY",
+      "name": "opposing structure from higher timeframes",
+      "parameters": {
+        "levels": [
+          "H1 resistance/support (nearest unbroken swing)",
+          "previous broker-day high/low"
+        ]
+      },
+      "hypothesis": "minor M15 swings are noise obstacles for pullback continuation; MIN_NET_RR stays 1.5",
+      "status": "Dev-only research; cannot enter the frozen candidate"
+    },
+    "C4": {
+      "tier": "EXPLORATORY",
+      "status": "NOT IMPLEMENTED in this freeze"
+    },
+    "C5": {
+      "tier": "EXPLORATORY",
+      "status": "NOT IMPLEMENTED in this freeze"
+    },
+    "C6": {
+      "tier": "EXPLORATORY",
+      "status": "NOT IMPLEMENTED in this freeze (G10 advice stays advisory)"
+    }
+  },
+  "variants": {
+    "CTRL": [],
+    "A_C1": [
+      "C1"
+    ],
+    "A_C2": [
+      "C2"
+    ],
+    "A_C3a": [
+      "C3a"
+    ],
+    "A_C3b": [
+      "C3b"
+    ],
+    "B_C1C2": [
+      "C1",
+      "C2"
+    ],
+    "B_C2C3a": [
+      "C2",
+      "C3a"
+    ],
+    "CORE": [
+      "C1",
+      "C2",
+      "C3a",
+      "C3b"
+    ],
+    "LOO_noC1": [
+      "C2",
+      "C3a",
+      "C3b"
+    ],
+    "LOO_noC2": [
+      "C1",
+      "C3a",
+      "C3b"
+    ],
+    "LOO_noC3a": [
+      "C1",
+      "C2",
+      "C3b"
+    ],
+    "LOO_noC3b": [
+      "C1",
+      "C2",
+      "C3a"
+    ],
+    "X_C7": [
+      "C7"
+    ],
+    "X_CORE_C7": [
+      "C1",
+      "C2",
+      "C3a",
+      "C3b",
+      "C7"
+    ],
+    "_note": "The list is closed. Variants are never added after outcomes are seen. Only CORE-tier variants can become the frozen candidate; X_* are exploratory."
+  },
+  "windows": {
+    "DEV'": {
+      "range": "2005-06..2018-12",
+      "store": "clean",
+      "use": "design, ablation, every selection",
+      "state": "OPEN, Class D; only PASS months; effective first decision date 2005-11 because the indicators need about 150 days of history and the clean store starts at 2005-06"
+    },
+    "VALIDATION'": {
+      "range": "2019-01..2021-01",
+      "store": "clean",
+      "use": "ONE confirmation of the frozen candidate",
+      "state": "OPEN, outcomes unseen; 2021-01 is QUARANTINED (the source history changed on 2021-01-21), so 24 months"
+    },
+    "QUARANTINE": {
+      "range": "2021-02..2021-09",
+      "state": "EXCLUDED from every outcome until the owner releases it (cross-provider evidence exists, see provider_crosscheck.json)"
+    },
+    "RESERVED": {
+      "range": "2021-10..2021-12",
+      "state": "kept apart, PASS in the clean store, not used for design or confirmation until the owner assigns it"
+    },
+    "CONFIRM_C": {
+      "range": "2025-05-01..2026-04-30",
+      "use": "ONE confirmation of the frozen candidate",
+      "state": "OPEN, outcomes unseen"
+    },
+    "TEST_H": {
+      "range": "2022-01-01..2025-04-30",
+      "state": "LOCKED, no authority to open"
+    },
+    "HOLDOUT": {
+      "range": "2026-05-01..2026-10-07",
+      "state": "LOCKED, no authority to open"
+    },
+    "FORWARD": {
+      "range": "2026-10-08..",
+      "state": "PAPER evidence, protocol FORWARD_EVIDENCE_PROTOCOL"
+    },
+    "contamination": "docs/research/contamination_ledger.json",
+    "no_retuning_rule": "Validation and Confirm-C never change a parameter, a variant list or a selection. A failed confirmation is reported as failed."
+  },
+  "statistics": {
+    "primary_endpoint": "E = mean realised net R per executed PAPER trade (all PAPER charges, swap included). R = realised PnL / |entry quote - planned stop| (the quote before slippage). Months for the bootstrap are the calendar month of the trade's CLOSE.",
+    "secondary_endpoints": [
+      "max drawdown in R",
+      "worst calendar month in R",
+      "false-positive rate = share of trades stopped out within 6 M5 bars",
+      "episodes per year",
+      "executed trades per year",
+      "BUY/SELL symmetry",
+      "session and year stability"
+    ],
+    "uncertainty": "one-sided 97.5% bound of E by a calendar-month block bootstrap (B = 10000, seed 7); the same for incremental trades.",
+    "N_min": {
+      "executed_trades": 30,
+      "distinct_months_with_trades": 12,
+      "rule": "Below either, every outcome inference is INCONCLUSIVE whatever the point estimate."
+    },
+    "power": {
+      "assumed_sd_R": 1.5,
+      "design_effect": 1.5,
+      "alpha_one_sided": 0.025,
+      "power": 0.8,
+      "formula": "n = DEFF * ((z_alpha + z_beta) * sd / delta)^2 for a one-sample mean against a margin delta (z_alpha = 1.96, z_beta = 0.8416)",
+      "table": {
+        "delta_0.30R": 295,
+        "delta_0.20R": 663,
+        "delta_0.15R": 1178,
+        "delta_0.10R": 2649
+      },
+      "verification": "scripts/research/power.py (analytic + Monte Carlo) and tests/unit/test_power.py",
+      "supersedes": "the Gate A report figure (about 250 per arm at sd 1.2, 385 at sd 1.5), which omitted the power term and the design effect (about 50% power); Monte Carlo confirms 0.80 power at the table sizes"
+    },
+    "statuses": {
+      "REFUTED_HARM": "N >= N_min and the one-sided 97.5% UPPER bound of E < 0",
+      "SUPPORTED": "N >= N_req(delta = 0.20R) and the 97.5% LOWER bound of E > 0",
+      "INCONCLUSIVE": "everything else, including N < N_min"
+    },
+    "control_comparison": "The control has too few trades for a difference test. Candidate-versus-control is reported (a) as incremental trades (trades present in the variant and absent in its parent) with the statuses above, and (b) as a paired monthly-block difference only when BOTH arms have N >= N_min, otherwise INCONCLUSIVE. Safety caps are absolute (below), never relative to the control."
+  },
+  "safety": {
+    "absolute_caps": {
+      "max_drawdown_R": 20,
+      "worst_month_R": -8,
+      "rationale": "20R = 5% of equity and 8R = 2% of equity at 0.25% per R, the scale of the daily loss stop"
+    },
+    "violations_counted_as_failures": [
+      "a signal with net_rr < 1.5, stop > 3 ATR, risk != 0.25%, or an uncapped target != 2R",
+      "a C2 signal with cost_R > 0.15",
+      "a signal during SHOCK or the spike guard",
+      "a trade opened against the governor",
+      "a realised loss worse than 1R plus 3 points of slippage plus a bar gap beyond the stop (counted and listed, not hidden)"
+    ]
+  },
+  "selection_rule": {
+    "primary": "A CORE change Ci enters the frozen candidate iff (S) structural: reachability (episodes per year) is not lower than its parent variant, AND (V) zero safety violations, AND (O) the outcome status of its incremental trades and of the whole variant is not REFUTED_HARM, AND the absolute safety caps hold on DEV.",
+    "inconclusive_policy": "INCONCLUSIVE is allowed to enter for C1 and C2 (owner priority). For C3a and C3b INCONCLUSIVE enters only as 'research, flagged'. No change is ever included because its point estimate looks good.",
+    "tie_break": "fewest changes; then the variant with the lower episode frequency.",
+    "never": [
+      "automatic union of all seven changes",
+      "use of Validation, Confirm-C, Test-H or Holdout to choose",
+      "adding a variant after outcomes"
+    ],
+    "frozen_candidate_is": "the CORE-tier variant selected by this rule on DEV, written to docs/research/cand_v2_frozen.json with the code git sha, before any confirmation run.",
+    "closed_list_fallback": "The frozen candidate must be a variant of the closed list. Let I be the set of CORE changes that pass the rule. If a listed variant has exactly the change set I, it is the candidate. Otherwise it is the listed CORE-tier variant with the largest change set contained in I (ties: lower episode frequency). If I is empty the candidate is CTRL, i.e. NO candidate is frozen and the report says so.",
+    "structural_test": "S holds for Ci when episodes(A_Ci) >= episodes(CTRL) AND episodes(CORE) >= episodes(LOO_noCi) on DEV.",
+    "outcome_test": "O holds for Ci when the status of the incremental trades of A_Ci over CTRL, the status of the incremental trades of CORE over LOO_noCi, and the status of E of the variant that contains Ci (CORE) are none of them REFUTED_HARM.",
+    "caps_test": "The absolute safety caps hold for every variant that contains Ci.",
+    "safety_verification": "V is verified on every emitted signal: net_rr >= 1.5, stop distance <= 3 ATR, risk 0.25%, C2 variants cost_R <= 0.15 and spread percentile < 0.99, C3b variants never on a SHOCK bar (bars table), plus the property tests."
+  },
+  "k_accounting": {
+    "family_deterministic": {
+      "name": "K_V2_CAND_DET",
+      "k": 1,
+      "note": "one frozen candidate is confirmed, on two windows, success needs BOTH (intersection-union, no multiplicity correction). Dev ablation variants consume no K because Dev is Class D and nothing on it is a confirmatory claim."
+    },
+    "family_ml": {
+      "name": "K_V2_CAND_ML",
+      "k": 2,
+      "candidates": [
+        "logistic_regression",
+        "lightgbm_classifier"
+      ],
+      "alpha_family": 0.05,
+      "alpha_per_comparison": 0.025,
+      "authority": "NONE"
+    },
+    "exploratory": "X_* variants and C4-C7 consume no K because they cannot be confirmed under this freeze; confirming any of them needs a new spec, a new freeze and a new family."
+  },
+  "reporting": [
+    "structural reachability",
+    "episode frequency",
+    "executed PAPER trade count",
+    "expectancy after costs",
+    "statistical uncertainty",
+    "safety violations",
+    "candidate versus control",
+    "INCONCLUSIVE findings"
+  ],
+  "compute": {
+    "workers": 4,
+    "priority": "BELOW_NORMAL",
+    "cpu_target_percent": 60,
+    "checkpoint": "one output file per month, resume skips existing",
+    "protect_paper": "never touch the service on :8200, the paper database or the collector"
+  },
+  "status_note": "NOT frozen: no hash is recorded and the evaluation gate does not accept it. It becomes FROZEN only after the owner approves the Gate B3 report and the manifest hash below is final.",
+  "amends": {
+    "from": "1.0.0",
+    "reason": "Gate B2 decisions: clean data store (ADR-V2-019), deterministic replay with checkpoints (F6, ADR-V2-020), new windows, executable-quote cost screen and raw-state audit trail (Gate B code review F1/F2)",
+    "list": [
+      "windows: DEV' 2005-06..2018-12 and VALIDATION' 2019-01..2021-01 on the CLEAN store, only months with status PASS; 2021-02..09 QUARANTINE; 2021-10..12 RESERVED; Confirm-C, Test-H, Holdout unchanged and locked",
+      "data: all research reads the clean store through CleanBarStore; the raw store is never read by research pipelines",
+      "lifecycle: the planned stop stays at the bar where the setup formed (unchanged); a run is ONE continuous replay across month boundaries; checkpoint persistence; a restart equals the continuous run or the engine goes COLD and C1 decisions are WAIT until the state is provably equal",
+      "cost screen: cost_R uses the spread of the executable quote (ask - bid) when the quote exists",
+      "Decision.state is the raw market state; substituted C1 labels are listed in the reasons"
+    ]
+  },
+  "data": {
+    "clean_store": "data/clean_store (derived, rebuilt by scripts/research/build_clean_store.py)",
+    "manifest": "docs/research/clean_store_manifest.json",
+    "manifest_sha256_at_proposal": "997d73f8025c113d10e1d48ac5a1fb8479f6e6c73439b0f459ac3dfe7e2fbb61",
+    "pass_months": 190,
+    "dropped_m1_pseudo_bars": 2216,
+    "refetch_provider": "MetaQuotes-Demo server (a different provider than the FTMO feed of the store)",
+    "known_source_defects": {
+      "ftmo_pseudo_bars": "FTMO history (bars as served today) holds one pseudo-bar per day 2012-06-26..2021-01-20; the re-fetch comes from MetaQuotes-Demo, which does not",
+      "ftmo_ticks_2022-01-04_to_2022-03-21": "the stored FTMO TICKS of these days deviate from the bars and from MetaQuotes-Demo by up to 12 dollars; the BARS agree with MetaQuotes-Demo. Never use ticks of that window (spread or cost modelling) without re-checking"
+    }
+  }
+}

@@ -2,6 +2,9 @@
 
 Ngày: 2026-10-13 · Phạm vi: chỉ dữ liệu giá (không có outcome chiến lược nào được xem) · Bằng chứng: `reports/evidence/data_forensics/`
 
+> **ĐÍNH CHÍNH (Gate B3, 2026-10-13):** lần "tải lại từ broker" trong báo cáo này đã đi qua **terminal MetaQuotes mặc định** (`C:\Program Files\MetaTrader 5`, máy chủ **MetaQuotes-Demo**), **không phải terminal FTMO** đã cấp dữ liệu cho kho. Hệ quả: (1) nguồn đối chiếu là một **nhà cung cấp khác** (mạnh hơn "cùng broker"); (2) kết luận "terminal hôm nay không còn phục vụ bar giả" **chỉ đúng với MetaQuotes**. Terminal FTMO hôm nay **vẫn phục vụ đúng các bar giả** ở M1, M5, M15, M30, H1, H4 (giống kho 100%, kiểm tra 3 tuần mẫu: `docs/research/ftmo_terminal_probe.json`). Vậy nguồn gốc là **lịch sử trên máy chủ FTMO**, không phải V1 và không phải nhập liệu. Xem `V2_A1_PROVENANCE_REPORT.md`. Số bar giả là **2.216** (không phải 2.205): thêm 11 bar ngày lễ/ngày đóng cửa có volume thấp.
+
+
 ## 0. Kết luận (và thu hồi chẩn đoán trước)
 1. **Chẩn đoán trước của em là SAI.** Em đã kết luận "lỗi nguồn cấp, nhiễu làm tự tương quan −0,33" và đề xuất luật |autocorr| ≤ 0,10. Đó chỉ là triệu chứng, không phải nguyên nhân. Chủ dự án đã cảnh báo đúng. ADR-V2-018 bị **rút lại**.
 2. **Nguyên nhân thật, đã chứng minh:** từ **2012-06-26 21:00 UTC đến 2021-01-20 22:00 UTC**, mỗi ngày giao dịch có **một "pseudo-bar"** đóng dấu đúng phút rollover (21:00 UTC mùa hè, 22:00 mùa đông), `spread = 0`, tick volume cỡ cả ngày (36.000–190.000, bình thường 15–2.000), và **mang OHLC của PHIÊN GIAO DỊCH KẾ TIẾP**. Cùng một bar có mặt trong M1, M5, M15, M30, H1 và bị **gộp** vào bar H4 chứa nó. Tổng cộng **2.205 bar** trong **104 tháng**.
@@ -31,7 +34,7 @@ Ngày: 2026-10-13 · Phạm vi: chỉ dữ liệu giá (không có outcome chi�
 | Triệu chứng | tự tương quan lag-1 **toàn chuỗi** −0,29…−0,38 ở M1/M5/H1; **khi chỉ xét cặp trong cùng phiên** ≈ −0,02 (bình thường); **99–100% hiệp phương sai âm đến từ các cặp sát khoảng nghỉ**; bỏ pseudo-bar ⇒ −0,03…+0,02 trên mọi tháng thử (2012-06, 2013-05, 2016-05, 2019-05, 2020-12, 2021-01) |
 | Tác động lên trạng thái | trên bar quyết định 22:00–04:00 UTC: **82–87%** trạng thái đổi nhãn khi bỏ pseudo-bar (M15 structure 55–62%, vol regime 49–55%, H1 trend 12–24%); ATR15 phình trung vị ×1,4–1,5 |
 
-## 3. Tái tải độc lập từ broker (hôm nay, 2026-10-13)
+## 3. Tái tải từ MetaQuotes-Demo (nhà cung cấp KHÁC FTMO; hôm nay, 2026-10-13)
 `scripts/research/terminal_dump.py` (chỉ `copy_rates_range`, không hàm giao dịch, không thông tin tài khoản) tải H1 (từ 2009-09), H4 (từ 2004-06), D1.
 - **H1, 2009-09 → 2020-12: 100% bar giống hệt kho** (OHLC ≤ $0,005), kể cả 2012-06→2020-12; kho chỉ **thừa đúng các pseudo-bar**.
 - **H4, 2004-06 → 2012-05: 100% giống;** 2012-06 → 2020: 83,3% (5/6 bar giống; bar 21:00 UTC khác do bị gộp).

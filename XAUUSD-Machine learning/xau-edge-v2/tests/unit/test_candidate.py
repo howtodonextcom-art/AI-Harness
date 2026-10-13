@@ -402,34 +402,7 @@ def test_parity_holds_for_every_context_shape_and_with_memory_carried(ctx: Decis
         assert mem == Memory()  # nothing is remembered when C1 is off
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="OPEN DEFECT (needs a spec amendment, not applied): the planned invalidation level is computed at the "
-    "ARM bar, so it depends on how far back the replay starts. A restart that replays only 40 bars arms later and "
-    "gets another level. Fix options are in V2_CANDIDATE_CODE_REVIEW.md.",
-)
-def test_open_defect_planned_stop_depends_on_the_replay_start() -> None:
-    def bars(n: int) -> list[MarketState]:
-        out = []
-        for i in range(n):
-            snap = buy_state().snapshots["M5"]
-            moved = replace(
-                snap, last_swing_low=1996.0 + 0.05 * i
-            )  # the M5 swing keeps rising while the setup holds
-            out.append(buy_state(snapshots={"M5": moved}, m5_momentum="FLAT"))
-        return out
-
-    stream = bars(120)
-
-    def final_memory(first: int) -> Memory:
-        mem = Memory()
-        for i in range(first, len(stream)):
-            _, mem, _ = candidate_step(mem, stream[i], CTX, config_for("A_C1"), OBS, i)
-        return mem
-
-    continuous = final_memory(0)
-    restarted = final_memory(len(stream) - 40)  # a restart replays 40 bars
-    assert continuous.planned_stop == restarted.planned_stop
+# F6 (planned stop vs replay start) is closed by research/replay.py: see tests/unit/test_replay.py
 
 
 def test_a_restart_that_replays_more_than_the_memory_window_is_identical_when_the_setup_is_not_armed() -> (

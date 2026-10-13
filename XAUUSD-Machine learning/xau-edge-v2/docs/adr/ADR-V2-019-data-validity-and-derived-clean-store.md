@@ -1,6 +1,10 @@
 # ADR-V2-019: data validity classes and a derived clean store (PROPOSED, awaiting the owner)
 
-Status: proposed 2026-10-13 (Gate B). Not approved, not applied. Supersedes the withdrawn ADR-V2-018.
+Status: **ACCEPTED WITH CONDITIONS by the owner (Gate B2, 2026-10-13)**; implemented at Gate B3. Supersedes the withdrawn ADR-V2-018.
+
+Conditions set by the owner, and how each is met: RAW data stays untouched (the build hashes the raw files before and after and aborts on any change); a separate clean store (`data/clean_store`, rebuilt by `scripts/research/build_clean_store.py`); the pseudo-bars are dropped (2,216 M1 bars; the earlier count of 2,205 missed thin-volume holiday bars); H4 restored from a verified source; a manifest with sha256 of every file, of every raw input and of the manifest; M1/M5/M15/M30/H1/H4 synchronisation checks; defective data cannot reach a backtest (`CleanBarStore` refuses anything that is not a PASS month and every file whose hash differs from the manifest; the research pipelines also refuse months with pseudo-bars).
+
+Correction of the evidence: the re-fetch used for identity checks and for the H4 restoration came from the **MetaQuotes-Demo** server (terminal `C:\Program Files\MetaTrader 5`), a different provider than the FTMO feed of the store. The FTMO terminal itself serves the pseudo-bars today in every timeframe (see ADR-V2-020 evidence and `docs/research/ftmo_terminal_probe.json`).
 
 ## Context
 Forensics (`reports/V2_DATA_PROVENANCE_FORENSIC_REPORT.md`) found one daily pseudo-bar from 2012-06-26 to 2021-01-20 (2,205 bars in M1/M5/M15/M30/H1, merged into H4). It carries the OHLC of the NEXT session, so any consumer looks up to 24 hours ahead. Everything else in those months is identical to a fresh broker re-fetch.

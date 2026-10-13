@@ -1,0 +1,74 @@
+{
+ "M1-2013-05": {
+  "ftmo_now": 5483,
+  "identical_to_store": 5483,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M1-2016-05": {
+  "ftmo_now": 5466,
+  "identical_to_store": 5466,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M1-2019-05": {
+  "ftmo_now": 5484,
+  "identical_to_store": 5484,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M5-2013-05": {
+  "ftmo_now": 1101,
+  "identical_to_store": 1101,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M5-2016-05": {
+  "ftmo_now": 1101,
+  "identical_to_store": 1101,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M5-2019-05": {
+  "ftmo_now": 1101,
+  "identical_to_store": 1101,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M15-2013-05": {
+  "ftmo_now": 373,
+  "identical_to_store": 373,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M15-2016-05": {
+  "ftmo_now": 373,
+  "identical_to_store": 373,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M15-2019-05": {
+  "ftmo_now": 373,
+  "identical_to_store": 373,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M30-2013-05": {
+  "ftmo_now": 189,
+  "identical_to_store": 189,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M30-2016-05": {
+  "ftmo_now": 189,
+  "identical_to_store": 189,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ },
+ "M30-2019-05": {
+  "ftmo_now": 189,
+  "identical_to_store": 189,
+  "identical_share": 1.0,
+  "pseudo_like_in_ftmo_now": 5
+ }
+}

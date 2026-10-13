@@ -15,25 +15,41 @@ A normal first bar after the daily break also has spread 0 but a few thousand ti
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 import numpy as np
 import polars as pl
+
+ERA_START = datetime(2012, 6, 26, tzinfo=UTC)
+ERA_END = datetime(2021, 1, 21, tzinfo=UTC)
+"""The pseudo-bar era found by the forensic audit: first bar 2012-06-26 21:00, last bar 2021-01-20 22:00 UTC.
+Inside it EVERY bar at the rollover minute with spread 0 is a pseudo-bar, whatever its volume: on thin days
+(holidays, a closed Saturday) the next session is almost empty and the volume floor alone misses it."""
 
 ROLLOVER_HOURS = (21, 22)
 MIN_TICK_VOLUME = 20_000.0
 MEDIAN_MULTIPLE = 20.0
 
 
-def pseudo_bar_mask(frame: pl.DataFrame) -> np.ndarray:
-    """True for the pseudo-bars of ``frame`` (columns: timestamp, spread, tick_volume)."""
+def pseudo_bar_mask(frame: pl.DataFrame, *, era_rule: bool = True) -> np.ndarray:
+    """True for the pseudo-bars of ``frame`` (columns: timestamp, spread, tick_volume).
+
+    Tier 1 (any date): rollover minute, spread 0 and a day-sized volume. Tier 2 (inside the forensic era
+    only, ``era_rule=True``): rollover minute and spread 0. Tier 2 is for M1, where a bar stamped at the
+    rollover minute is exactly one minute; a coarse bar stamped there may hold real bars whose spread field
+    is 0 (unrecorded), so coarse bars are matched to their M1 twin instead (``clean_store``).
+    """
     if frame.height == 0:
         return np.zeros(0, dtype=bool)
     vol = frame["tick_volume"].to_numpy()
     floor = max(MIN_TICK_VOLUME, MEDIAN_MULTIPLE * max(float(np.median(vol)), 1.0))
-    hour = frame["timestamp"].dt.hour().to_numpy()
-    minute = frame["timestamp"].dt.minute().to_numpy()
+    ts = frame["timestamp"]
+    hour = ts.dt.hour().to_numpy()
+    minute = ts.dt.minute().to_numpy()
     spread = frame["spread"].to_numpy()
-    mask = np.isin(hour, ROLLOVER_HOURS) & (minute == 0) & (spread == 0) & (vol >= floor)
-    return np.asarray(mask, dtype=bool)
+    base = np.isin(hour, ROLLOVER_HOURS) & (minute == 0) & (spread == 0)
+    in_era = ((ts >= ERA_START) & (ts < ERA_END)).to_numpy()
+    return np.asarray(base & ((vol >= floor) | (in_era & era_rule)), dtype=bool)
 
 
 def strip_pseudo_bars(frame: pl.DataFrame) -> tuple[pl.DataFrame, int]:

@@ -28,9 +28,15 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--symbol", default="XAUUSD")
+    ap.add_argument(
+        "--terminal-path",
+        default="",
+        help="attach to THIS terminal (default: the default one, which may be MetaQuotes-Demo, not FTMO)",
+    )
     ap.add_argument("--from-year", type=int, default=2004)
     a = ap.parse_args()
-    if not mt5.initialize():
+    ok = mt5.initialize(path=a.terminal_path) if a.terminal_path else mt5.initialize()
+    if not ok:
         sys.exit(f"terminal not reachable: {mt5.last_error()}")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -55,7 +61,18 @@ def main() -> None:
             "first": rows[0][0] if rows else 0,
             "last": rows[-1][0] if rows else 0,
         }
+    info = mt5.terminal_info()._asdict()
+    bases = Path(info["data_path"]) / "bases"
+    provenance = {
+        "terminal": {k: info[k] for k in ("company", "path", "build", "maxbars")},
+        "server_folders": sorted(
+            p.name
+            for p in bases.iterdir()
+            if p.is_dir() and p.name not in ("Custom", "Default", "signals")
+        ),
+    }
     mt5.shutdown()
+    (out / "provenance.json").write_text(json.dumps(provenance, indent=1), encoding="utf-8")
     (out / "dump_meta.json").write_text(
         json.dumps({"taken_at": now.isoformat(), "symbol": a.symbol, "summary": summary}, indent=1),
         encoding="utf-8",

@@ -208,7 +208,16 @@ def main() -> None:
     p.add_argument("--jobs", type=int, default=4)
     p.add_argument("--months", default="", help="comma list YYYY-MM (overrides the window)")
     p.add_argument("--confirm", action="store_true", help="allowed only after the freeze gate")
+    p.add_argument(
+        "--allow-chunked",
+        action="store_true",
+        help="month-parallel runs are NOT restart-safe for C1 (ADR-V2-020)",
+    )
     a = p.parse_args()
+    if not a.allow_chunked:
+        sys.exit(
+            "cand_signals.py is month-chunked and NOT restart-safe for C1 (ADR-V2-020): use cand_replay.py, or pass --allow-chunked for a diagnostic"
+        )
     if a.window != "DEV" and not a.confirm:
         sys.exit("Validation / Confirm-C need --confirm (freeze gate): refusing")
     pairs = (
