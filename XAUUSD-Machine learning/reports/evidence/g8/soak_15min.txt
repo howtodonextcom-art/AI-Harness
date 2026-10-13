@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "Z:\Coding\Projects\AI-Harness\XAUUSD-Machine learning\xau-edge-v2\scripts\soak.py", line 166, in <module>
+    main()
+    ~~~~^^
+  File "Z:\Coding\Projects\AI-Harness\XAUUSD-Machine learning\xau-edge-v2\scripts\soak.py", line 160, in main
+    print(text)
+    ~~~~~^^^^^^
+  File "C:\Users\Kieu Oanh\AppData\Roaming\uv\python\cpython-3.13-windows-x86_64-none\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ebf' in position 1471: character maps to <undefined>

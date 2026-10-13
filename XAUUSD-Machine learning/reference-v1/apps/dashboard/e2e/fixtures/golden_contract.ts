@@ -1,0 +1,68 @@
+/**
+ * Compile-time half of the backend <-> frontend contract. Each golden is a REAL serialization from
+ * the backend (see `scripts/generate_trade_goldens.py`); `satisfies` fails `tsc` when a field that
+ * `lib/trade.ts` requires is missing from it (a renamed or dropped backend field). The Python test
+ * `tests/unit/trading/test_contract_goldens.py` covers the other direction (backend vs golden).
+ */
+
+import type { JournalResponse, MarkersResponse, SetupHistoryResponse, SignalHistoryResponse, TradeView } from "@/lib/trade";
+import buyWatch from "./golden/buy_watch.json";
+import buyArmed from "./golden/buy_armed.json";
+import sellWatch from "./golden/sell_watch.json";
+import sellArmed from "./golden/sell_armed.json";
+import sellInvalidated from "./golden/sell_invalidated.json";
+import buy from "./golden/buy.json";
+import closedPaper from "./golden/closed_paper.json";
+import closedSl from "./golden/closed_sl.json";
+import closedTime from "./golden/closed_time.json";
+import expired from "./golden/expired.json";
+import journalClosed from "./golden/journal_closed.json";
+import marketClosed from "./golden/market_closed.json";
+import markersClosed from "./golden/markers_closed.json";
+import openPaper from "./golden/open_paper.json";
+import paperCorrupt from "./golden/paper_corrupt.json";
+import sell from "./golden/sell.json";
+import setupsHistory from "./golden/setups_history.json";
+import signalsHistory from "./golden/signals_history.json";
+import stale from "./golden/stale.json";
+import wait from "./golden/wait.json";
+import writerConflict from "./golden/writer_conflict.json";
+
+/** What JSON can say about T: string unions become string, everything else keeps its shape. */
+type Json<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends boolean
+      ? boolean
+      : T extends null | undefined
+        ? T
+        : T extends readonly (infer U)[]
+          ? Json<U>[]
+          : T extends object
+            ? { [K in keyof T]: Json<T[K]> }
+            : T;
+
+export const GOLDEN_VIEWS = {
+  buyWatch: buyWatch satisfies Json<TradeView>,
+  buyArmed: buyArmed satisfies Json<TradeView>,
+  sellWatch: sellWatch satisfies Json<TradeView>,
+  sellArmed: sellArmed satisfies Json<TradeView>,
+  sellInvalidated: sellInvalidated satisfies Json<TradeView>,
+  wait: wait satisfies Json<TradeView>,
+  buy: buy satisfies Json<TradeView>,
+  sell: sell satisfies Json<TradeView>,
+  openPaper: openPaper satisfies Json<TradeView>,
+  closedPaper: closedPaper satisfies Json<TradeView>,
+  closedSl: closedSl satisfies Json<TradeView>,
+  closedTime: closedTime satisfies Json<TradeView>,
+  stale: stale satisfies Json<TradeView>,
+  expired: expired satisfies Json<TradeView>,
+  marketClosed: marketClosed satisfies Json<TradeView>,
+  paperCorrupt: paperCorrupt satisfies Json<TradeView>,
+  writerConflict: writerConflict satisfies Json<TradeView>,
+};
+export const GOLDEN_JOURNAL = journalClosed satisfies Json<JournalResponse>;
+export const GOLDEN_MARKERS = markersClosed satisfies Json<MarkersResponse>;
+export const GOLDEN_SIGNALS = signalsHistory satisfies Json<SignalHistoryResponse>;
+export const GOLDEN_SETUPS = setupsHistory satisfies Json<SetupHistoryResponse>;

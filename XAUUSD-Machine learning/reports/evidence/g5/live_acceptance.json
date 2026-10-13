@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8200/",
+  "seconds": 120,
+  "firstPaintMs": 312,
+  "socketEvents": 134,
+  "byType": {
+    "hello": 1,
+    "live": 108,
+    "heartbeat": 23,
+    "state": 2
+  },
+  "seqGaps": 0,
+  "distinctQuotesSeen": 46,
+  "actions": [
+    "WAIT"
+  ],
+  "wsStates": [
+    "open"
+  ],
+  "tfCounts": {
+    "M1": 500,
+    "M5": 500,
+    "M30": 500,
+    "H1": 500,
+    "H4": 500,
+    "M15": 500
+  },
+  "apiCalls": {
+    "/api/v2/market/bars": 9,
+    "/api/v2/health": 12,
+    "/api/v2/state": 12,
+    "/api/v2/market/forming": 12
+  },
+  "pageOverflowPx": 0,
+  "problems": []
+}

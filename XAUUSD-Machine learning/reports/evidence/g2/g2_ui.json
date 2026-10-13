@@ -1,0 +1,38 @@
+{
+ "loadMs": 60,
+ "actionMs": 142,
+ "wsOpenMs": 155,
+ "nav": {
+  "dcl": 55.599999997764826,
+  "load": 55.69999999925494,
+  "fcp": 120,
+  "lcp": 120,
+  "jsCount": 1,
+  "jsEncoded": 71867,
+  "jsDecoded": 230478,
+  "cssCount": 1,
+  "cssEncoded": 1397,
+  "totalRes": 6,
+  "longtasks": 0,
+  "longtaskMax": 0
+ },
+ "idle30s": {
+  "requests": 4,
+  "byPath": {
+   "/api/v2/state": 2,
+   "/api/v2/health": 2
+  },
+  "httpBytes": 4356,
+  "wsFrames": 6,
+  "wsBytes": 696,
+  "seconds": 38
+ },
+ "heapUsedMB": 2.8,
+ "domNodes": 203,
+ "listeners": 178,
+ "idleFrame": {
+  "p50": 16.7,
+  "p95": 18,
+  "max": 30.8
+ }
+}

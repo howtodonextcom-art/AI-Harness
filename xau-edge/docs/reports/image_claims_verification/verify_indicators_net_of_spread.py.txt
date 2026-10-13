@@ -1,0 +1,65 @@
+import glob, math, numpy as np, polars as pl
+fs=sorted(glob.glob("Z:/Coding/Projects/AI-Harness/xau-edge/data/market/XAUUSD/H1/*.parquet"))
+df=pl.concat([pl.read_parquet(f) for f in fs]).sort("timestamp").unique(subset=["timestamp"],keep="last",maintain_order=True)
+o,h,l,c=[df[k].to_numpy().astype(float) for k in("open","high","low","close")]
+yr=df["timestamp"].dt.year().to_numpy(); n=len(c)
+pc=np.r_[c[0],c[:-1]]; tr=np.maximum(h-l,np.maximum(abs(h-pc),abs(l-pc)))
+cs=np.cumsum(np.r_[0.,tr]); atr=np.full(n,np.nan); atr[13:]=(cs[14:]-cs[:-14])/14
+def ema(x,s):
+    a=2/(s+1); r=np.empty_like(x); r[0]=x[0]
+    for i in range(1,len(x)): r[i]=r[i-1]+a*(x[i]-r[i-1])
+    return r
+def wilder(x,p):
+    r=np.full(len(x),np.nan); r[p]=x[1:p+1].mean()
+    for i in range(p+1,len(x)): r[i]=(r[i-1]*(p-1)+x[i])/p
+    return r
+d=np.diff(c,prepend=c[0]); rsi=100-100/(1+wilder(np.maximum(d,0),14)/np.maximum(wilder(np.maximum(-d,0),14),1e-9))
+e={k:ema(c,k) for k in (12,20,26,50,100,200)}
+macd=e[12]-e[26]; sig=ema(macd,9); hist=macd-sig
+sma=np.convolve(c,np.ones(20)/20,"full")[:n]; sma[:19]=np.nan
+sd=np.array([c[max(0,i-19):i+1].std() if i>=19 else np.nan for i in range(n)])
+up_b=sma+2*sd; lo_b=sma-2*sd; bw=(up_b-lo_b)/sma
+warm=np.arange(n)>400
+def fw(k):
+    r=np.full(n,np.nan); r[:n-k]=(c[k:]-c[:n-k])/atr[:n-k]; return r
+FW={k:fw(k) for k in (12,24)}
+def thin(m,gap):
+    idx=np.flatnonzero(m); keep=[]; last=-10**9
+    for i in idx:
+        if i-last>=gap: keep.append(i); last=i
+    return np.array(keep,int)
+def ev(name,mask,sign=+1,base=None,ks=(12,24)):
+    base=warm if base is None else base
+    out=[]
+    for k in ks:
+        f=FW[k]*sign; ok=np.isfinite(f)
+        b=f[base&ok]; bm,bs=b.mean(),b.std()
+        cells=[]
+        for tag,ys in (("all",np.ones(n,bool)),("dev",yr<2019),("val",yr>=2019)):
+            idx=thin(mask&ok&ys&warm,k)
+            if len(idx)<15: cells.append("n/a"); continue
+            bb=f[base&ok&ys]; m=f[idx].mean()-bb.mean(); z=m/(bb.std()/math.sqrt(len(idx)))
+            cells.append(f"{m:+.3f}(z{z:+.1f},n{len(idx)})")
+        out.append(f"h{k}: "+" ".join(cells))
+    print(f"{name:44s} | "+" | ".join(out))
+spread=df["spread"].to_numpy().astype(float)/100.0   # USD (points/100)
+def sim(name,mask,sign,hold=12):
+    idx=thin(mask&warm&np.isfinite(atr),hold)
+    idx=idx[idx<n-hold-1]
+    gross=sign*(c[idx+hold]-c[idx]); cost=spread[idx]+0.0
+    net=gross-cost
+    for tag,ys in (("all",np.ones(len(idx),bool)),("dev",yr[idx]<2019),("val",yr[idx]>=2019),("2025+",yr[idx]>=2025)):
+        g=gross[ys]; nn=net[ys]; a=atr[idx][ys]
+        if len(g)<15: continue
+        se=nn.std()/math.sqrt(len(nn))
+        print(f"{name:34s} {tag:5s} n={len(g):5d} gross={g.mean():+.3f}USD net={nn.mean():+.3f}USD (z={nn.mean()/se:+.1f}) net/ATR={np.mean(nn/a):+.3f} hit={np.mean(nn>0):.3f} avgSpread={cost[ys].mean():.2f}")
+x70=(rsi>70)&(np.r_[False,rsi[:-1]<=70]); x30=(rsi<30)&(np.r_[False,rsi[:-1]>=30])
+sim("RSI cross>70 SELL 12 bars",x70,-1); sim("RSI cross<30 BUY 12 bars",x30,+1)
+sim("BB close>upper SELL 12 bars",(c>up_b),-1); sim("BB close<lower BUY 12 bars",(c<lo_b),+1)
+# raw volatility check for squeeze
+rr=np.full(n,np.nan)
+for i in range(240,n-24): rr[i]=(h[i+1:i+25].max()-l[i+1:i+25].min())/c[i]
+bwp=np.full(n,np.nan)
+for i in range(240,n): bwp[i]=(bw[i-120:i]<bw[i]).mean()
+okk=np.isfinite(rr)&np.isfinite(bwp)
+print(f"raw next-24 range %: squeeze={np.nanmean(rr[okk&(bwp<=0.1)])*100:.3f} all={np.nanmean(rr[okk])*100:.3f} wide={np.nanmean(rr[okk&(bwp>=0.9)])*100:.3f}")

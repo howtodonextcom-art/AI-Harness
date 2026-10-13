@@ -1,0 +1,28 @@
+"""API latency: V2 (state, health) and V1 (decision) sampled in the same session."""
+import statistics as st
+import time
+import urllib.request
+
+
+def sample(url: str, n: int = 60) -> tuple[float, float, float, int]:
+    ts: list[float] = []
+    size = 0
+    for _ in range(n):
+        t = time.perf_counter()
+        body = urllib.request.urlopen(url, timeout=30).read()
+        ts.append((time.perf_counter() - t) * 1000)
+        size = len(body)
+    ts.sort()
+    return st.median(ts), ts[int(0.95 * len(ts)) - 1], ts[-1], size
+
+
+rows = [
+    ("V2 /api/v2/state", "http://127.0.0.1:8200/api/v2/state"),
+    ("V2 /api/v2/health", "http://127.0.0.1:8200/api/v2/health"),
+    ("V1 /trade/decision", "http://127.0.0.1:8000/trade/decision"),
+    ("V1 /md/status", "http://127.0.0.1:8000/md/status"),
+]
+print("endpoint | p50 ms | p95 ms | max ms | bytes")
+for name, url in rows:
+    p50, p95, mx, size = sample(url)
+    print(f"{name:22s} {p50:7.1f} {p95:7.1f} {mx:7.1f} {size}")

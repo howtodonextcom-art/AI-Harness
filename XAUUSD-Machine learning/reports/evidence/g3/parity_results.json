@@ -1,0 +1,98 @@
+{
+ "generated_at": "2026-10-12T16:51:19+00:00",
+ "seed": 20261012,
+ "quick": false,
+ "seconds": 335.6,
+ "sections": [
+  {
+   "name": "bars: every monthly file, full content digest (public read paths)",
+   "checks": 1614,
+   "mismatches": 0,
+   "examples": [],
+   "notes": [
+    "rows compared per timeframe: {'M1': 7065794, 'M5': 1500300, 'M15': 515725, 'M30': 260771, 'H1': 132255, 'H4': 34239}"
+   ]
+  },
+  {
+   "name": "bars: random tail(limit, before) windows",
+   "checks": 240,
+   "mismatches": 0,
+   "examples": [],
+   "notes": []
+  },
+  {
+   "name": "bars: random [start,end) windows",
+   "checks": 240,
+   "mismatches": 0,
+   "examples": [],
+   "notes": []
+  },
+  {
+   "name": "bars: HTTP parity, V2 /api/v2/market/bars vs V1 /md/XAUUSD/bars",
+   "checks": 72,
+   "mismatches": 0,
+   "examples": [],
+   "notes": []
+  },
+  {
+   "name": "ticks: random [start,end) windows, V2 TickStore vs V1 TickLedger",
+   "checks": 151,
+   "mismatches": 0,
+   "examples": [],
+   "notes": [
+    "stored tick days: 1565 (2021-10-01 .. 2026-10-12)",
+    "tick rows compared: 172830"
+   ]
+  },
+  {
+   "name": "calendar: market status (OPEN/CLOSED/ROLLOVER) at random instants + every DST boundary",
+   "checks": 66716,
+   "mismatches": 0,
+   "examples": [],
+   "notes": [
+    "instants: 66716 (incl. 6716 around DST changes)"
+   ]
+  },
+  {
+   "name": "broker clock NY+7: UTC -> server wall at the same instants",
+   "checks": 66716,
+   "mismatches": 0,
+   "examples": [],
+   "notes": []
+  },
+  {
+   "name": "broker clock NY+7: server wall -> UTC (strict=False, DST gaps/folds -> null)",
+   "checks": 66716,
+   "mismatches": 0,
+   "examples": [],
+   "notes": [
+    "null (gap/fold) results: 42 (identical in both)"
+   ]
+  },
+  {
+   "name": "symbol spec: V2 LiveFeed.symbol_info vs V1 spec_from_broker (same live.json)",
+   "checks": 10,
+   "mismatches": 0,
+   "examples": [],
+   "notes": [
+    "fields compared: ['contract_size', 'digits', 'freeze_level_points', 'point', 'stops_level_points', 'tick_size', 'tick_value', 'volume_max', 'volume_min', 'volume_step']"
+   ]
+  },
+  {
+   "name": "config: V2 JSON copy vs V1 YAML profile + session exceptions",
+   "checks": 7,
+   "mismatches": 0,
+   "examples": [],
+   "notes": []
+  },
+  {
+   "name": "quote: V2 /api/v2/market/quote vs V1 /md/XAUUSD/quote (same live file)",
+   "checks": 60,
+   "mismatches": 0,
+   "examples": [],
+   "notes": []
+  }
+ ],
+ "total_checks": 202542,
+ "total_mismatches": 0
+}

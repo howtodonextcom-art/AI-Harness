@@ -1,0 +1,113 @@
+import glob, math, numpy as np, polars as pl
+fs=sorted(glob.glob("Z:/Coding/Projects/AI-Harness/xau-edge/data/market/XAUUSD/H1/*.parquet"))
+df=pl.concat([pl.read_parquet(f) for f in fs]).sort("timestamp").unique(subset=["timestamp"],keep="last",maintain_order=True)
+o,h,l,c=[df[k].to_numpy().astype(float) for k in("open","high","low","close")]
+yr=df["timestamp"].dt.year().to_numpy(); n=len(c)
+pc=np.r_[c[0],c[:-1]]; tr=np.maximum(h-l,np.maximum(abs(h-pc),abs(l-pc)))
+cs=np.cumsum(np.r_[0.,tr]); atr=np.full(n,np.nan); atr[13:]=(cs[14:]-cs[:-14])/14
+def ema(x,s):
+    a=2/(s+1); r=np.empty_like(x); r[0]=x[0]
+    for i in range(1,len(x)): r[i]=r[i-1]+a*(x[i]-r[i-1])
+    return r
+def wilder(x,p):
+    r=np.full(len(x),np.nan); r[p]=x[1:p+1].mean()
+    for i in range(p+1,len(x)): r[i]=(r[i-1]*(p-1)+x[i])/p
+    return r
+d=np.diff(c,prepend=c[0]); rsi=100-100/(1+wilder(np.maximum(d,0),14)/np.maximum(wilder(np.maximum(-d,0),14),1e-9))
+e={k:ema(c,k) for k in (12,20,26,50,100,200)}
+macd=e[12]-e[26]; sig=ema(macd,9); hist=macd-sig
+sma=np.convolve(c,np.ones(20)/20,"full")[:n]; sma[:19]=np.nan
+sd=np.array([c[max(0,i-19):i+1].std() if i>=19 else np.nan for i in range(n)])
+up_b=sma+2*sd; lo_b=sma-2*sd; bw=(up_b-lo_b)/sma
+warm=np.arange(n)>400
+def fw(k):
+    r=np.full(n,np.nan); r[:n-k]=(c[k:]-c[:n-k])/atr[:n-k]; return r
+FW={k:fw(k) for k in (12,24)}
+def thin(m,gap):
+    idx=np.flatnonzero(m); keep=[]; last=-10**9
+    for i in idx:
+        if i-last>=gap: keep.append(i); last=i
+    return np.array(keep,int)
+def ev(name,mask,sign=+1,base=None,ks=(12,24)):
+    base=warm if base is None else base
+    out=[]
+    for k in ks:
+        f=FW[k]*sign; ok=np.isfinite(f)
+        b=f[base&ok]; bm,bs=b.mean(),b.std()
+        cells=[]
+        for tag,ys in (("all",np.ones(n,bool)),("dev",yr<2019),("val",yr>=2019)):
+            idx=thin(mask&ok&ys&warm,k)
+            if len(idx)<15: cells.append("n/a"); continue
+            bb=f[base&ok&ys]; m=f[idx].mean()-bb.mean(); z=m/(bb.std()/math.sqrt(len(idx)))
+            cells.append(f"{m:+.3f}(z{z:+.1f},n{len(idx)})")
+        out.append(f"h{k}: "+" ".join(cells))
+    print(f"{name:44s} | "+" | ".join(out))
+print("Delta = mean fwd ret (ATR, signed by claimed direction) minus baseline; cells = all dev val; events thinned to >=h bars apart")
+upt=(c>e[200])&(e[50]>sh if False else True)
+slope50=e[50]-np.r_[np.full(5,np.nan),e[50][:-5]]
+uptr=warm&(c>e[50])&(slope50>0); dntr=warm&(c<e[50])&(slope50<0)
+print("--- RSI (Bai 63,64)")
+x70=(rsi>70)&(np.r_[False,rsi[:-1]<=70]); x30=(rsi<30)&(np.r_[False,rsi[:-1]>=30])
+ev("RSI cross>70 => SELL (all)",x70,-1); ev("RSI cross>70 => SELL (in uptrend)",x70&uptr,-1,base=uptr)
+ev("RSI cross<30 => BUY (all)",x30,+1); ev("RSI cross<30 => BUY (in downtrend)",x30&dntr,+1,base=dntr)
+ev("RSI>70 state: CONTINUE up (in uptrend)",(rsi>70)&uptr,+1,base=uptr)
+r4050=(rsi<=50)&(rsi>=40)&np.r_[False,rsi[:-1]<40]*0==0
+pb=np.zeros(n,bool); pb[1:]=(rsi[1:]>=40)&(rsi[:-1]<40)  # RSI crosses back above 40 (Bai 63 pullback)
+ev("Uptrend + RSI crosses back >40 => BUY",pb&uptr,+1,base=uptr)
+print("--- MACD (Bai 65)")
+cu=np.zeros(n,bool); cd=np.zeros(n,bool); cu[1:]=(macd[1:]>sig[1:])&(macd[:-1]<=sig[:-1]); cd[1:]=(macd[1:]<sig[1:])&(macd[:-1]>=sig[:-1])
+ev("MACD cross up => BUY",cu,+1); ev("MACD cross down => SELL",cd,-1)
+ev("MACD cross up while MACD>0 => BUY",cu&(macd>0),+1,base=macd>0); ev("MACD cross down while MACD<0 => SELL",cd&(macd<0),-1,base=macd<0)
+ev("MACD>0 state => long bias",(macd>0)&warm,+1); ev("MACD<0 state => short bias",(macd<0)&warm,-1)
+print("--- Bollinger (Bai 67)")
+ev("close>upper => SELL (range)",(c>up_b)&warm,-1); ev("close<lower => BUY (range)",(c<lo_b)&warm,+1)
+ev("close>upper => CONTINUE up",(c>up_b)&warm,+1); ev("close<lower => CONTINUE down",(c<lo_b)&warm,-1)
+bwp=np.full(n,np.nan)
+for i in range(240,n): 
+    w=bw[i-120:i]; bwp[i]=(w<bw[i]).mean()
+sq=(bwp<=0.1)
+rng24=np.full(n,np.nan); 
+for k in (24,): rng24[:n-k]=np.array([ (h[i+1:i+1+k].max()-l[i+1:i+1+k].min()) for i in range(n-k)])/atr[:n-k]
+okm=np.isfinite(rng24)&warm&np.isfinite(bwp)
+print(f"Squeeze(bw pct<=10%) => next-24 bar range/ATR: squeeze={np.nanmean(rng24[sq&okm]):.2f} (n={int((sq&okm).sum())}) vs all={np.nanmean(rng24[okm]):.2f}; wide(bw pct>=90)={np.nanmean(rng24[(bwp>=0.9)&okm]):.2f}")
+brk=sq&np.r_[False,sq[:-1]]&((c>up_b)|(c<lo_b))
+dirc=np.where(c>up_b,1,-1)
+print("--- ATR (Bai 66)")
+vol_now=atr/c; vq=np.full(n,np.nan); 
+for i in range(240,n): vq[i]=(vol_now[i-240:i]<vol_now[i]).mean()
+real=np.full(n,np.nan); real[:n-24]=np.abs(c[24:]-c[:n-24])/c[:n-24]
+ok=np.isfinite(vq)&np.isfinite(real)
+hi=ok&(vq>=0.8); lo=ok&(vq<=0.2)
+print(f"ATR high pct => next-24 |ret|: {real[hi].mean()*100:.3f}% vs low {real[lo].mean()*100:.3f}% (ratio {real[hi].mean()/real[lo].mean():.2f})")
+ar=np.full(n,np.nan); ar[5:]=atr[5:]/atr[:-5]-1
+ev("ATR rising 20%+ => BUY (claimed no direction)",(ar>0.2)&warm,+1); ev("ATR rising 20%+ => SELL",(ar>0.2)&warm,-1)
+# SL=2ATR TP=3ATR random entries (Bai 66)
+w=0;t=0
+rng=np.random.default_rng(1)
+for i in rng.choice(np.arange(500,n-3000),6000,replace=False):
+    for dd in (1,-1):
+        sl=c[i]-dd*2*atr[i]; tp=c[i]+dd*3*atr[i]
+        hs=(l[i+1:i+2001]<=sl) if dd>0 else (h[i+1:i+2001]>=sl); ts=(h[i+1:i+2001]>=tp) if dd>0 else (l[i+1:i+2001]<=tp)
+        si=int(np.argmax(hs)) if hs.any() else 10**9; ti=int(np.argmax(ts)) if ts.any() else 10**9
+        if si==10**9 and ti==10**9: continue
+        w+= ti<si; t+=1
+print(f"SL=2ATR,TP=3ATR random entry: win {w/t:.3f} (N={t}); random-walk null 0.400; E[R(of SL)] = {(w/t)*1.5-(1-w/t):+.3f}")
+print("--- Liquidity sweep (Bai 58)")
+hh20=np.full(n,np.nan); ll20=np.full(n,np.nan)
+for i in range(20,n): hh20[i]=h[i-20:i].max(); ll20[i]=l[i-20:i].min()
+sweep_hi=(h>hh20)&(c<hh20); sweep_lo=(l<ll20)&(c>ll20)
+true_hi=(c>hh20+0.2*atr); true_lo=(c<ll20-0.2*atr)
+ev("sweep high, close back inside => SELL",sweep_hi,-1); ev("sweep low, close back inside => BUY",sweep_lo,+1)
+ev("true breakout up (close>hi+0.2ATR) => BUY",true_hi,+1); ev("true breakout down => SELL",true_lo,-1)
+sw2=sweep_hi&(c<o)&((h-np.maximum(o,c))>=(np.abs(c-o))); sw3=sweep_lo&(c>o)&((np.minimum(o,c)-l)>=(np.abs(c-o)))
+ev("sweep high + bearish bar w/ long wick => SELL",sw2,-1); ev("sweep low + bullish bar w/ long wick => BUY",sw3,+1)
+print("--- EMA stack (Bai 62)")
+sl20=e[20]-np.r_[np.full(5,np.nan),e[20][:-5]]; sl200=e[200]-np.r_[np.full(5,np.nan),e[200][:-5]]
+stk_u=warm&(c>e[20])&(e[20]>e[50])&(e[50]>e[100])&(e[100]>e[200])&(sl20>0)&(sl200>0)
+stk_d=warm&(c<e[20])&(e[20]<e[50])&(e[50]<e[100])&(e[100]<e[200])&(sl20<0)&(sl200<0)
+ev("Full bull stack => long",stk_u,+1); ev("Full bear stack => short",stk_d,-1)
+er=np.full(n,np.nan); cc=np.abs(c[20:]-c[:-20]); pth=np.convolve(np.abs(np.diff(c)),np.ones(20),"valid"); er[20:]=cc/np.maximum(pth[:len(cc)],1e-9)
+q=np.nanpercentile(er[warm],[33.3,66.7])
+x2050u=np.zeros(n,bool); x2050d=np.zeros(n,bool); x2050u[1:]=(e[20][1:]>e[50][1:])&(e[20][:-1]<=e[50][:-1]); x2050d[1:]=(e[20][1:]<e[50][1:])&(e[20][:-1]>=e[50][:-1])
+ev("EMA20/50 cross up in LOW ER (sideways)",x2050u&(er<=q[0]),+1); ev("EMA20/50 cross up in HIGH ER (trend)",x2050u&(er>=q[1]),+1)
+ev("EMA20/50 cross down in LOW ER (sideways)",x2050d&(er<=q[0]),-1); ev("EMA20/50 cross down in HIGH ER (trend)",x2050d&(er>=q[1]),-1)

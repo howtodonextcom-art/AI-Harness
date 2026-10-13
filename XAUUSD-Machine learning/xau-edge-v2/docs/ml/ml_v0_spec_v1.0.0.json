@@ -1,0 +1,80 @@
+{
+  "spec_id": "ml-v0-rng24",
+  "spec_version": "1.0.0",
+  "frozen_on": "2026-10-12",
+  "status": "FROZEN",
+  "approved_by": "project owner (message of 2026-10-12: ML V0 = volatility/range, frozen before G6)",
+  "role": "A",
+  "authority": "NONE: information only. The model cannot create, cancel or modify a BUY/SELL/WAIT decision.",
+  "task": {
+    "name": "future_log_range",
+    "label_version": "rng24.v1",
+    "definition": "y[t] = ln( (max(High[t+1..t+24]) - min(Low[t+1..t+24])) / Close[t] )",
+    "timeframe": "H1",
+    "horizon_bars": 24,
+    "decision_time": "close of H1 bar t (features use bars <= t only)",
+    "label_available_at": "close of H1 bar t+24",
+    "embargo_bars": 25,
+    "unit": "natural log of a price ratio (dimensionless)"
+  },
+  "features": [
+    {"name": "lATR14", "version": "1", "unit": "ln ratio", "source_timeframe": "H1", "lookback": 14, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "ln(SMA(TrueRange,14)[t] / Close[t]); SMA of true range, not Wilder", "live_availability": "yes", "rationale": "current volatility level"},
+    {"name": "lATR50", "version": "1", "unit": "ln ratio", "source_timeframe": "H1", "lookback": 50, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "ln(SMA(TrueRange,50)[t] / Close[t])", "live_availability": "yes", "rationale": "medium-term volatility (HAR component)"},
+    {"name": "lATR200", "version": "1", "unit": "ln ratio", "source_timeframe": "H1", "lookback": 200, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "ln(SMA(TrueRange,200)[t] / Close[t])", "live_availability": "yes", "rationale": "long-term volatility baseline (HAR component)"},
+    {"name": "lR24", "version": "1", "unit": "ln ratio", "source_timeframe": "H1", "lookback": 24, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "ln((max(High[t-23..t]) - min(Low[t-23..t])) / Close[t])", "live_availability": "yes", "rationale": "realised one-day range"},
+    {"name": "lR5", "version": "1", "unit": "ln ratio", "source_timeframe": "H1", "lookback": 5, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "ln((max(High[t-4..t]) - min(Low[t-4..t])) / Close[t])", "live_availability": "yes", "rationale": "short-term range"},
+    {"name": "lRV24", "version": "1", "unit": "ln of log-return std", "source_timeframe": "H1", "lookback": 24, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "ln(std(ln(Close[k]/Close[k-1]), k=t-23..t) + 1e-12)", "live_availability": "yes", "rationale": "realised volatility"},
+    {"name": "ar1", "version": "1", "unit": "abs log return", "source_timeframe": "H1", "lookback": 1, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "abs(ln(Close[t]/Close[t-1]))", "live_availability": "yes", "rationale": "latest shock"},
+    {"name": "ar5", "version": "1", "unit": "abs simple return", "source_timeframe": "H1", "lookback": 5, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "abs(Close[t]/Close[t-5] - 1)", "live_availability": "yes", "rationale": "recent move size"},
+    {"name": "lBBW", "version": "1", "unit": "ln ratio", "source_timeframe": "H1", "lookback": 20, "available_at": "close of bar t", "missing_rule": "row excluded until lookback is complete; no imputation", "normalization": "ln(4*std(Close[t-19..t]) / SMA(Close,20)[t] + 1e-12)", "live_availability": "yes", "rationale": "band width as a volatility state (descriptive; the squeeze-expansion claim was rejected)"},
+    {"name": "hour_sin", "version": "1", "unit": "dimensionless", "source_timeframe": "H1", "lookback": 0, "available_at": "bar open time", "missing_rule": "never missing", "normalization": "sin(2*pi*hour_utc/24)", "live_availability": "yes", "rationale": "intraday seasonality of volatility"},
+    {"name": "hour_cos", "version": "1", "unit": "dimensionless", "source_timeframe": "H1", "lookback": 0, "available_at": "bar open time", "missing_rule": "never missing", "normalization": "cos(2*pi*hour_utc/24)", "live_availability": "yes", "rationale": "intraday seasonality of volatility"},
+    {"name": "dow_sin", "version": "1", "unit": "dimensionless", "source_timeframe": "H1", "lookback": 0, "available_at": "bar open time", "missing_rule": "never missing", "normalization": "sin(2*pi*weekday_utc/7)", "live_availability": "yes", "rationale": "weekly seasonality"},
+    {"name": "dow_cos", "version": "1", "unit": "dimensionless", "source_timeframe": "H1", "lookback": 0, "available_at": "bar open time", "missing_rule": "never missing", "normalization": "cos(2*pi*weekday_utc/7)", "live_availability": "yes", "rationale": "weekly seasonality"}
+  ],
+  "warmup_rows": 250,
+  "models": {
+    "default": {"id": "har_ridge", "algorithm": "StandardScaler + Ridge", "alpha": 10.0},
+    "challenger": {"id": "lightgbm_regressor", "n_estimators": 200, "num_leaves": 8, "learning_rate": 0.05, "subsample": 0.8, "subsample_freq": 1, "colsample_bytree": 0.8, "min_child_samples": 50, "random_state": 7},
+    "promotion_of_challenger": "only if the 95% block-bootstrap CI of (MSE_default - MSE_challenger) is above 0 on Validation AND on Test-H"
+  },
+  "baselines": [
+    {"id": "mean_expanding", "definition": "expanding mean of the training label"},
+    {"id": "atr14_one_feature", "definition": "OLS of the label on lATR14 only, refit per fold"},
+    {"id": "rule_state_atr_percentile", "definition": "label mean by 5 buckets of the 250-bar ATR14 percentile, refit per fold"}
+  ],
+  "splits": {
+    "scheme": "chronological only; random shuffling is forbidden",
+    "train": "all rows with decision time <= start_of_fold - embargo (expanding window; first test year 2012)",
+    "validation": "2019-01-01 .. 2021-12-31",
+    "calibration": "the most recent 25% of each fold's training rows, separated from the fit rows by the embargo",
+    "test_h": {"window": "2022-01-01 .. 2025-04-30", "state": "LOCKED", "runs_allowed": 1},
+    "holdout": {"window": "2026-05-01 .. 2026-10-07", "state": "LOCKED", "runs_allowed": 1},
+    "note": "Development 2011-2018 and Validation 2019-2021 are burned for descriptive measurements (Class D); the official V0 run re-executes this frozen spec."
+  },
+  "walk_forward": {"scheme": "expanding", "step": "calendar year", "min_train_rows": 3000, "refit": "per fold"},
+  "metrics": {
+    "primary": "MSE of ln range (out of sample)",
+    "secondary": ["QLIKE on range level", "empirical coverage of the 80% interval", "R2 versus mean_expanding"],
+    "trading_pnl_in_model_selection": false
+  },
+  "promotion_criteria": {
+    "RESEARCH_to_VALIDATED_OFFLINE": [
+      "MSE improvement versus atr14_one_feature >= 5% with the lower bound of the 95% monthly block-bootstrap CI > 0 on Validation",
+      "the same on Test-H (one run)",
+      "80% interval coverage within 75%..85% on Validation and Test-H",
+      "improvement positive in >= 75% of test years",
+      "replay/live feature parity test passes"
+    ]
+  },
+  "interval": {"method": "empirical quantiles of out-of-fold residuals from the calibration window", "level": 0.8, "hide_if_coverage_outside": [0.75, 0.85]},
+  "display": {
+    "show": "expected next-24h range in USD and the 80% interval, only when model status >= SHADOW and the model is healthy",
+    "never_show": ["AI confidence", "win probability", "direction"],
+    "v0_uses": ["context for SL/TP sanity", "hint that expected range is small versus cost (stand-aside hint)", "sizing context"],
+    "v0_authority": "none: no use may cancel or authorise a trade"
+  },
+  "forbidden": ["directional prediction as a signal", "online learning", "tuning hyper-parameters on Validation or Test-H", "random train/test shuffling", "using Test-H or Holdout before the owner approves the K policy and the run"],
+  "k_accounting": {"consumes_k": false, "reason": "forecast evaluation, no trading claim; the K policy is still open (ADR-V2-007)"},
+  "amendment_rule": "A frozen spec is never edited in place. A change is a new spec_version with an owner-approved reason, and the guard hash in ml_v0_spec.sha256 is replaced in the same commit."
+}

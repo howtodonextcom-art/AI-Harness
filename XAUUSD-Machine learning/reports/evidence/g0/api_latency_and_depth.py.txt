@@ -1,0 +1,27 @@
+import json, time, urllib.request, statistics as st
+B="http://127.0.0.1:8000"
+def get(p):
+    t=time.perf_counter(); r=urllib.request.urlopen(B+p,timeout=30); b=r.read(); return (time.perf_counter()-t)*1000,len(b),b
+q=json.loads(get("/md/XAUUSD/quality")[2])
+print("history_depth:",json.dumps(q["history_depth"]))
+print("disk:",q["disk"],"tick:",q["tick_store"])
+eps=["/trade/decision","/md/status","/md/XAUUSD/quote","/md/XAUUSD/bars?timeframe=M5&limit=400&include_forming=true",
+     "/md/XAUUSD/bars?timeframe=M15&limit=400&include_forming=true","/md/XAUUSD/bars?timeframe=H1&limit=500&include_forming=true",
+     "/md/XAUUSD/bars?timeframe=M1&limit=400&include_forming=true","/md/XAUUSD/bars?timeframe=M1&limit=5000",
+     "/md/XAUUSD/bars?timeframe=H1&limit=5000","/md/XAUUSD/bars?timeframe=H4&limit=5000","/trade/journal","/research/overview"]
+print("endpoint | n | p50 ms | p95 ms | max | bytes")
+for e in eps:
+    ts=[];sz=0;ok=0
+    for i in range(40):
+        try:
+            ms,n,_=get(e); ts.append(ms); sz=n; ok+=1
+        except Exception as ex:
+            err=str(ex)[:40]
+    if ts:
+        ts.sort(); print(f"{e[:72]:72s} {ok:3d} {st.median(ts):7.1f} {ts[int(0.95*len(ts))-1]:7.1f} {ts[-1]:7.1f} {sz}")
+    else: print(e,"FAILED",err)
+# oldest accessible via 'before'
+d=json.loads(get("/md/XAUUSD/bars?timeframe=H1&limit=5&before=2005-01-01T00:00:00Z")[2])
+print("H1 before 2005-01-01 ->",[b["time"] for b in d["bars"]])
+d=json.loads(get("/md/XAUUSD/bars?timeframe=M1&limit=3&before=2010-01-01T00:00:00Z")[2])
+print("M1 before 2010-01-01 ->",[b["time"] for b in d["bars"]])

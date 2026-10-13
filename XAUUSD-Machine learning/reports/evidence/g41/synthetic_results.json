@@ -1,0 +1,199 @@
+{
+  "groups": {
+    "C decision: action": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: refusals": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: reasons chain": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: warnings": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: m1_execution_state": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: decision_id (signal_id)": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: atr": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "G4.1 readiness: READY iff BUY/SELL": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "G4.1 readiness: gate caps at 5": {
+      "checks": 150000,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: entry_price": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: stop_loss": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: take_profit": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: take_profit_2": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: risk_reward": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: required_win_rate": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: risk_amount": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: position_size": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: stop_model": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: expiry": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: entry_quality": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: setup_id": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: gross_rr": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: capped_by_structure": {
+      "checks": 5074,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    }
+  },
+  "reach": {
+    "action:WAIT": 144926,
+    "refusal:TIMEFRAME_CONFLICT": 7886,
+    "m1:GOOD": 103780,
+    "refusal:NEWS_UNKNOWN": 14779,
+    "m1:STALE": 15238,
+    "action:BUY": 2587,
+    "entry_quality:ACCEPTABLE": 3172,
+    "stop_model:HYBRID": 5074,
+    "capped:False": 4606,
+    "tp2:set": 4606,
+    "sized:sized": 4082,
+    "warnings:1": 3625,
+    "refusal:NO_DIRECTION": 4761,
+    "refusal:NO_SETUP": 18518,
+    "m1:VOLATILE": 6698,
+    "refusal:NEWS_WINDOW": 8503,
+    "refusal:UNKNOWN_STATE": 17514,
+    "refusal:VOLATILITY_TOO_HIGH": 24323,
+    "refusal:STALE_DATA": 12742,
+    "refusal:COOLDOWN": 4311,
+    "refusal:SPREAD_TOO_WIDE": 14304,
+    "m1:SPREAD_WIDE": 13564,
+    "refusal:VOLATILITY_TOO_LOW": 9876,
+    "refusal:MARKET_CLOSED": 7613,
+    "action:SELL": 2487,
+    "refusal:BROKER_DISCONNECTED": 4254,
+    "refusal:RR_TOO_LOW": 3836,
+    "m1:QUIET": 10720,
+    "warnings:0": 1449,
+    "refusal:RISK_LIMIT": 8699,
+    "refusal:NO_TRIGGER": 7312,
+    "m1:NOISY (chain refusal)": 2110,
+    "refusal:DAILY_LIMIT": 2829,
+    "refusal:TOO_CLOSE_TO_SUPPORT": 952,
+    "refusal:VOLUME_TOO_LOW": 1732,
+    "sized:no_equity": 992,
+    "entry_quality:STRONG": 1902,
+    "capped:True": 468,
+    "tp2:none": 468,
+    "refusal:INVALID_STOP_DISTANCE": 1049,
+    "refusal:TOO_CLOSE_TO_RESISTANCE": 965
+  },
+  "levels": {
+    "1": 49383,
+    "4": 30951,
+    "6": 5074,
+    "0": 12118,
+    "2": 15965,
+    "5": 23415,
+    "3": 13094
+  },
+  "missing": [],
+  "total": 1421036,
+  "mismatches": 0,
+  "cases": 150000,
+  "seed": 20261014
+}

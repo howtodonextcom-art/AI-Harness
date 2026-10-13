@@ -1,0 +1,112 @@
+{
+  "minutes": 12.0,
+  "pid": 6008,
+  "requests": 2366,
+  "errors": {},
+  "latency_ms": {
+    "/api/v2/health": {
+      "n": 338,
+      "p50": 39.3,
+      "p95": 62.6,
+      "max": 120.7
+    },
+    "/api/v2/state": {
+      "n": 338,
+      "p50": 21.9,
+      "p95": 60.4,
+      "max": 139.6
+    },
+    "/api/v2/paper/summary": {
+      "n": 338,
+      "p50": 3.2,
+      "p95": 26.2,
+      "max": 29.4
+    },
+    "/api/v2/forward/summary": {
+      "n": 338,
+      "p50": 7.7,
+      "p95": 31.1,
+      "max": 106.6
+    },
+    "/api/v2/model": {
+      "n": 338,
+      "p50": 4.6,
+      "p95": 30.2,
+      "max": 39.4
+    },
+    "/api/v2/market/bars": {
+      "n": 338,
+      "p50": 14.8,
+      "p95": 38.2,
+      "max": 61.8
+    },
+    "/api/v2/market/quote": {
+      "n": 338,
+      "p50": 4.1,
+      "p95": 26.8,
+      "max": 36.2
+    }
+  },
+  "rss_mb": {
+    "start": 187.7,
+    "end": 191.7,
+    "min": 185.1,
+    "max": 200.0,
+    "slope_mb_per_hour": -8.91,
+    "samples": 48
+  },
+  "cpu_percent_mean": 10.44,
+  "threads": 72,
+  "socket": {
+    "events": 809,
+    "by_type": {
+      "hello": 1,
+      "live": 645,
+      "heartbeat": 140,
+      "state": 23
+    },
+    "seq_gaps": 0
+  },
+  "health": {
+    "status": "DEGRADED",
+    "checks": {
+      "store": [
+        "OK",
+        "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\data\\market"
+      ],
+      "freshness": [
+        "OK",
+        "nến M1 đóng cách đây 71s"
+      ],
+      "live": [
+        "OK",
+        "last tick is recent"
+      ],
+      "disk": [
+        "OK",
+        "còn 74.9 GB"
+      ],
+      "engine": [
+        "OK",
+        "baseline v1.1.0 (UNVALIDATED, PAPER), khớp V1 theo golden test"
+      ],
+      "engine_loop": [
+        "OK",
+        "748 lượt, 0 lỗi, lượt cuối 12 ms"
+      ],
+      "paper_db": [
+        "OK",
+        "toàn vẹn, sao lưu 2026-10-13 01:26Z, 8 nến M5 đã ghi"
+      ],
+      "paper": [
+        "OK",
+        "tự động BẬT, 0 lệnh đang mở"
+      ],
+      "model": [
+        "NOT_DEPLOYED",
+        "V0 bị loại tại Kiểm định (RETIRED): không hiển thị dự báo, không thẩm quyền"
+      ]
+    }
+  },
+  "paper_db_bytes": 32768
+}

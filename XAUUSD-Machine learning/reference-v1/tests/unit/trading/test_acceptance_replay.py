@@ -1,0 +1,218 @@
+"""The acceptance worlds: the real desk wiring over burned bars (needs ``data/market``).
+
+These tests are the explicit reachability proof (a real BUY and a real SELL come out of the real
+label functions and the real decision, nothing is hand-built), the live-cadence parity check and the
+end-to-end paper lifecycle. They skip when the burned market data is not in the checkout.
+"""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from xau_edge.trading.acceptance import SCENARIOS, AcceptanceWorld, m1_parity
+from xau_edge.trading.namespace import NamespaceError, claim_root
+from xau_edge.trading.paper_recovery import recover
+
+MARKET = Path(__file__).resolve().parents[3] / "data" / "market"
+pytestmark = pytest.mark.skipif(not MARKET.exists(), reason="burned market data is not here")
+
+
+def tf_states(view: dict[str, Any]) -> dict[str, str]:
+    return {row["timeframe"]: row["state"] for row in view["timeframes"]}
+
+
+def test_a_real_buy_is_reachable_through_the_real_label_functions(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["buy_tp"])
+    view = world.engine.view()
+    states = tf_states(view)
+    assert states["H1"] == "BULLISH"  # H1 direction
+    assert states["M15"].startswith("TRIGGERED (UP")  # M15 UP structure with a pullback setup
+    assert states["M5"] == "TRIGGERED (UP)"  # M5 trigger
+    assert view["hero"]["state"] == "BUY_READY"
+    assert view["decision"]["decision"] == "BUY"
+    plan = view["trade_plan"]
+    assert plan["complete"] is True
+    assert plan["sl"] < plan["planned_entry"] < plan["tp1"]
+    assert view["source_mode"] == "ACCEPTANCE_REPLAY"
+    world.close()
+
+
+def test_a_real_sell_is_reachable_through_the_real_label_functions(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["sell_ready"])
+    view = world.engine.view()
+    states = tf_states(view)
+    assert states["H1"] == "BEARISH"
+    assert states["M15"].startswith("TRIGGERED (DOWN")
+    assert states["M5"] == "TRIGGERED (DOWN)"
+    assert view["hero"]["state"] == "SELL_READY"
+    plan = view["trade_plan"]
+    assert plan["tp1"] < plan["planned_entry"] < plan["sl"]
+    world.close()
+
+
+@pytest.mark.parametrize(
+    ("name", "state"),
+    [
+        ("wait", "WAIT"),
+        ("market_closed", "MARKET_CLOSED"),
+        ("stale", "STALE"),
+        ("collector_down", "STALE"),
+        ("no_spec", "UNAVAILABLE"),
+        ("writer_conflict", "UNAVAILABLE"),
+        ("expired", "EXPIRED_SETUP"),
+    ],
+)
+def test_every_failure_has_its_own_hero_state_never_a_plain_wait(
+    tmp_path: Path, name: str, state: str
+) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS[name])
+    assert world.engine.view()["hero"]["state"] == state
+    world.close()
+
+
+def test_a_corrupt_paper_state_fails_closed(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["paper_corrupt"])
+    view = world.engine.view()
+    assert "PAPER_STATE_ERROR" in {b["code"] for b in view["entry_blockers"]}
+    assert view["desk"]["can_open"] is False
+    assert view["hero"]["state"] == "UNAVAILABLE"  # never a green BUY READY over a faulted desk
+    world.close()
+
+
+def test_the_closure_policy_blocks_a_new_entry_near_the_daily_close(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["buy_closure_near"])
+    view = world.engine.view()
+    assert view["hero"]["state"] == "BUY_READY"
+    assert "CLOSURE_NEAR" in {b["code"] for b in view["entry_blockers"]}
+    world.close()
+
+
+def test_the_full_lifecycle_matches_the_recorded_acceptance_replay(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["buy_tp"])
+    setup = world.engine.view()["decision"]["setup_id"]
+    opened = world.engine.paper_open(setup_id=setup, risk_pct=0.25)
+    assert opened["status"] == "OPEN"
+    assert opened["source_mode"] == "ACCEPTANCE_REPLAY"
+    world.advance_minutes(60)
+    closed = world.engine.desk.closed_trades()
+    assert len(closed) == 1
+    assert closed[0]["exit_reason"] == "TAKE_PROFIT"
+    assert closed[0]["r_multiple"] == pytest.approx(1.987, abs=0.01)  # PAPER_LIFECYCLE_ACCEPTANCE
+    # the journal agrees with the state: a recovery dry run finds nothing to change
+    report = recover(world.root, initial_capital=10_000.0, apply=False)
+    assert report.ok
+    assert report.differences == []
+    world.close()
+
+
+def test_a_replay_root_can_never_be_claimed_as_live(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["wait"])
+    with pytest.raises(NamespaceError):
+        claim_root(world.root, "LIVE")
+    world.close()
+
+
+def test_live_cadence_matches_m5_cadence_and_plain_evaluate(tmp_path: Path) -> None:
+    report = m1_parity(
+        MARKET,
+        tmp_path,
+        "1.2.1",
+        datetime(2025, 12, 5, 14, 20, tzinfo=UTC),
+        datetime(2025, 12, 5, 14, 55, tzinfo=UTC),
+    )
+    assert report.m5_compared == 7
+    assert report.actionable_at_m5 >= 1  # the real BUY at 14:45 is inside the window
+    assert report.mismatches == []
+    assert report.duplicate_alerts == []
+
+
+def test_the_documented_acceptance_replay_script_still_runs(tmp_path: Path) -> None:
+    """The script behind the acceptance reports must keep working against the current engine."""
+    root = Path(__file__).resolve().parents[3]
+    done = subprocess.run(  # noqa: S603 - our own script, fixed arguments
+        [
+            sys.executable,
+            str(root / "scripts" / "trade_acceptance_replay.py"),
+            "--start", "2025-12-05T14:00",
+            "--end", "2025-12-05T15:40",
+            "--version", "1.2.1",
+            "--root", str(MARKET),
+            "--out", str(tmp_path),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=root,
+        timeout=600,
+        check=False,
+    )  # fmt: skip
+    assert done.returncode == 0, done.stderr[-800:]
+    journals = list(tmp_path.glob("*/paper_journal.jsonl"))
+    assert journals
+    assert '"paper.close"' in journals[0].read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("buy_watch", ("WAIT", "WATCHING", "BUY", "SETUP")),
+        ("buy_armed", ("WAIT", "ARMED", "BUY", "TRIGGER")),
+        ("sell_watch", ("WAIT", "WATCHING", "SELL", "SETUP")),
+        ("sell_armed", ("WAIT", "ARMED", "SELL", "TRIGGER")),
+        ("sell_invalidated", ("WAIT", "INVALIDATED", None, None)),
+        ("buy_tp", ("BUY", "READY", "BUY", None)),
+        ("sell_ready", ("SELL", "READY", "SELL", None)),
+        ("market_closed", ("WAIT", "CLOSED", None, None)),
+        ("stale", ("UNAVAILABLE", "STALE", None, None)),
+    ],
+)
+def test_each_lifecycle_state_is_reachable_with_its_action(
+    tmp_path: Path, name: str, expected: tuple[str, str, str | None, str | None]
+) -> None:
+    """A lean of the market is a bias, never the primary action: only BUY/SELL are permission."""
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS[name])
+    action = world.engine.view()["hero"]["action"]
+    assert (action["code"], action["stage"], action["bias"], action["missing"]) == expected
+    world.close()
+
+
+def test_open_position_is_hold_and_the_exit_is_exit(tmp_path: Path) -> None:
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["buy_tp"])
+    world.engine.paper_open(setup_id=world.engine.view()["decision"]["setup_id"], risk_pct=0.25)
+    world.advance_minutes(10)
+    hold = world.engine.view()["hero"]["action"]
+    assert (hold["code"], hold["stage"], hold["side"]) == ("HOLD", "OPEN", "BUY")
+    world.advance_minutes(50)
+    assert world.engine.view()["hero"]["action"]["code"] == "EXIT"
+    world.close()
+
+
+def test_the_time_exit_banner_lasts_thirty_replay_minutes_so_a_long_jump_cannot_show_it(
+    tmp_path: Path,
+) -> None:
+    """TRADE-07 flake root cause: EXIT is a 30-minute banner, replay steps one M5 close at a time.
+
+    Jumping past ``max_hold + 30 min`` in one go leaves the exit already in the past (WAIT); a
+    browser test could only have seen EXITED by a poll landing mid catch-up. The product is right;
+    the test must stay inside the window.
+    """
+    world = AcceptanceWorld(MARKET, tmp_path, SCENARIOS["buy_time"])
+    world.engine.paper_open(setup_id=world.engine.view()["decision"]["setup_id"], risk_pct=0.25)
+    world.advance_minutes(110)
+    assert world.engine.view()["hero"]["action"]["code"] == "HOLD"  # 10 minutes of hold left
+    world.advance_minutes(15)  # past the 120-minute hold, 5 minutes after the exit
+    exited = world.engine.view()
+    assert exited["hero"]["action"]["code"] == "EXIT"
+    assert exited["desk"]["last_exit"]["exit_reason"] == "TIME_EXIT"
+    world.advance_minutes(
+        60
+    )  # 60 minutes later the banner is gone, the exit stays in the journal and last_exit
+    later = world.engine.view()
+    assert later["hero"]["action"]["code"] != "EXIT"
+    assert later["desk"]["last_exit"]["exit_reason"] == "TIME_EXIT"
+    world.close()

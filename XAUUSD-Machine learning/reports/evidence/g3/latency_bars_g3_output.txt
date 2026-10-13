@@ -1,0 +1,29 @@
+case | p50 ms | p95 ms | max ms | bytes
+V2 latest   M1  limit 400                             8.0     25.1     39.6 57201
+V1 latest   M1  limit 400                            11.1     31.7     33.3 57720
+V2 latest   M1  limit 5000                           36.2     61.0     98.7 712505
+V1 latest   M1  limit 5000                           36.5     53.6     78.7 717624
+V2 deep page M1  limit 1000 (random year)            15.2     37.0     41.3 140751
+V1 deep page M1  limit 1000 (random year)            18.4     36.6     46.3 142664
+V2 latest   M15 limit 400                             6.8     22.2     25.2 57630
+V1 latest   M15 limit 400                             9.3     26.5     34.2 58149
+V2 latest   M15 limit 5000                           47.2     71.2    111.7 717960
+V1 latest   M15 limit 5000                           42.0     62.6     68.4 723079
+V2 deep page M15 limit 1000 (random year)            14.3     34.7     35.1 132830
+V1 deep page M15 limit 1000 (random year)            16.5     37.4     39.0 134994
+V2 latest   H1  limit 400                             7.8     28.5     31.9 57887
+V1 latest   H1  limit 400                            10.7     32.9     35.5 58406
+V2 latest   H1  limit 5000                           59.7     84.3    114.2 720879
+V1 latest   H1  limit 5000                           51.7     91.7    171.7 725998
+V2 deep page H1  limit 1000 (random year)            14.9     34.2     36.3 143832
+V1 deep page H1  limit 1000 (random year)            29.9     37.4     50.1 135409
+V2 latest   H4  limit 400                             9.7     34.4     36.7 58038
+V1 latest   H4  limit 400                            13.8     35.7     38.7 58557
+V2 latest   H4  limit 5000                           90.4    108.0    114.3 721364
+V1 latest   H4  limit 5000                           90.2    111.5    112.4 726483
+V2 deep page H4  limit 1000 (random year)            23.3     43.1     44.6 144692
+V1 deep page H4  limit 1000 (random year)            32.4     50.7     51.7 143734
+V2 /api/v2/state                                      1.6     21.2     23.0 661
+V2 /api/v2/health                                     2.8     26.3     30.7 1860
+V2 /api/v2/market/quote                               1.4     17.7     26.8 297
+V1 /md/XAUUSD/quote                                   8.6     32.3     32.5 453

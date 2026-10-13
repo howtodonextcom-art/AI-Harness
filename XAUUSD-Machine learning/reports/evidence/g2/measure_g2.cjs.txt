@@ -1,0 +1,75 @@
+// G2 gate measurement for V2 (same method as the V1 probe in evidence/g0).
+// usage: node measure_g2.cjs <out_dir> <chromium_exe> <base_url>
+const { createRequire } = require("module");
+const req = createRequire("Z:/Coding/Projects/AI-Harness/XAUUSD-Machine learning/xau-edge-v2/apps/web/package.json");
+const { chromium } = req("@playwright/test");
+const fs = require("fs");
+const [out, exe, base] = process.argv.slice(2);
+(async () => {
+  const browser = await chromium.launch({ executablePath: exe, headless: true });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Performance.enable");
+  await cdp.send("Network.enable");
+  const reqs = [];
+  const wsFrames = [];
+  cdp.on("Network.webSocketFrameReceived", (e) => wsFrames.push({ t: Date.now(), bytes: Buffer.byteLength(e.response.payloadData) }));
+  page.on("request", (r) => reqs.push({ t: Date.now(), url: r.url(), type: r.resourceType() }));
+  const respBytes = [];
+  page.on("response", async (r) => {
+    try { respBytes.push({ t: Date.now(), url: r.url(), bytes: (await r.body()).length, enc: r.headers()["content-encoding"] || "" }); } catch (e) {}
+  });
+  await page.addInitScript(() => {
+    window.__lt = []; window.__lcp = 0;
+    try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__lt.push(e.duration); }).observe({ entryTypes: ["longtask"] }); } catch (e) {}
+    try { new PerformanceObserver((l) => { const e = l.getEntries(); window.__lcp = e[e.length - 1].startTime; }).observe({ type: "largest-contentful-paint", buffered: true }); } catch (e) {}
+  });
+  const t0 = Date.now();
+  await page.goto(base + "/", { waitUntil: "load" });
+  const loadMs = Date.now() - t0;
+  await page.waitForSelector("[data-testid=action]");
+  const actionMs = Date.now() - t0;
+  await page.waitForSelector("[data-testid=ws-status][data-state=open]", { timeout: 8000 });
+  const wsOpenMs = Date.now() - t0;
+  await page.waitForTimeout(2000);
+  const nav = await page.evaluate(() => {
+    const n = performance.getEntriesByType("navigation")[0];
+    const fcp = performance.getEntriesByName("first-contentful-paint")[0];
+    const res = performance.getEntriesByType("resource");
+    const js = res.filter((r) => r.name.endsWith(".js"));
+    const css = res.filter((r) => r.name.endsWith(".css"));
+    const sum = (a, k) => a.reduce((s, r) => s + (r[k] || 0), 0);
+    return {
+      dcl: n.domContentLoadedEventEnd, load: n.loadEventEnd, fcp: fcp ? fcp.startTime : null, lcp: window.__lcp,
+      jsCount: js.length, jsEncoded: sum(js, "encodedBodySize"), jsDecoded: sum(js, "decodedBodySize"),
+      cssCount: css.length, cssEncoded: sum(css, "encodedBodySize"), totalRes: res.length,
+      longtasks: window.__lt.length, longtaskMax: Math.max(0, ...window.__lt),
+    };
+  });
+  // idle traffic for 30 s
+  const i0 = Date.now(); const r0 = reqs.length; const w0 = wsFrames.length; const b0 = respBytes.length;
+  await page.waitForTimeout(30000);
+  const idleReqs = reqs.slice(r0); const idleResp = respBytes.slice(b0); const idleWs = wsFrames.slice(w0);
+  const byPath = {};
+  for (const r of idleReqs) { const p = new URL(r.url).pathname; byPath[p] = (byPath[p] || 0) + 1; }
+  const idleHttpBytes = idleResp.reduce((s, r) => s + r.bytes, 0);
+  const idleWsBytes = idleWs.reduce((s, r) => s + r.bytes, 0);
+  const frames = await page.evaluate(() => new Promise((res) => { const f = []; let last = performance.now(); let n = 0; function loop() { const now = performance.now(); f.push(now - last); last = now; n++; if (n < 400) requestAnimationFrame(loop); else res(f); } requestAnimationFrame(loop); }));
+  frames.sort((a, b) => a - b);
+  const m = Object.fromEntries((await cdp.send("Performance.getMetrics")).metrics.map((x) => [x.name, x.value]));
+  await page.screenshot({ path: `${out}/v2-1440x900.png` });
+  for (const [w, h] of [[1920, 1080], [960, 720], [390, 844]]) { await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(300); await page.screenshot({ path: `${out}/v2-${w}x${h}.png` }); }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(base + "/#data"); await page.waitForSelector("[data-testid=health-status]");
+  await page.screenshot({ path: `${out}/v2-1440x900-drawer-data.png` });
+  const res = {
+    loadMs, actionMs, wsOpenMs, nav,
+    idle30s: { requests: idleReqs.length, byPath, httpBytes: idleHttpBytes, wsFrames: idleWs.length, wsBytes: idleWsBytes, seconds: Math.round((Date.now() - i0) / 1000) },
+    heapUsedMB: +(m.JSHeapUsedSize / 1048576).toFixed(1), domNodes: m.Nodes, listeners: m.JSEventListeners,
+    idleFrame: { p50: +frames[Math.floor(frames.length * 0.5)].toFixed(1), p95: +frames[Math.floor(frames.length * 0.95)].toFixed(1), max: +frames[frames.length - 1].toFixed(1) },
+  };
+  fs.writeFileSync(`${out}/g2_ui.json`, JSON.stringify(res, null, 1));
+  console.log(JSON.stringify(res));
+  await browser.close();
+})().catch((e) => { console.error("FATAL", e); process.exit(1); });

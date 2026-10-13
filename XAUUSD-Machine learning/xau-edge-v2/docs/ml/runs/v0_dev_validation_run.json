@@ -1,0 +1,398 @@
+{
+  "run": "ml-v0-rng24 development + validation (Test-H and Holdout NOT touched)",
+  "generated_at": "2026-10-13T01:16:11.193230+00:00",
+  "identities": {
+    "spec_hash": "ede09f4d450e18b2b3bad5e657039a72c03eee346e3780c8941d9dd63af42261",
+    "spec_version": "1.1.0",
+    "feature_schema_hash": "7633415139ab8298807358cc9866063f97a54f0f643c396a2b81b62738708b15",
+    "label_version": "rng24.v1",
+    "dataset_hash": "f0bef61bdc4116491f20f704be5dd31b9193bd0c0855bb1d32db48d079bae965",
+    "git_sha": "0891aed2e40af67f62ec565348f2e5e105357f63",
+    "bars": 103996,
+    "first_bar": "2004-06-11T04:00:00+00:00",
+    "last_bar": "2021-12-31T21:00:00+00:00",
+    "usable_rows": 103710,
+    "python": "3.13.13",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "numpy": "2.5.4",
+    "lightgbm": "4.7.0",
+    "artifact_sha256": "db4d8db2f96e5be8d71507090f0448bc48bec63ccc3868497345c94393a82b4e"
+  },
+  "k_accounting": {
+    "family": "K_V2_VOL_V0",
+    "k": 2,
+    "alpha": 0.05,
+    "adjusted_level": 0.975,
+    "adjusted_kind": "one-sided lower bound, Bonferroni alpha/K",
+    "note": "Validation is Class D (burned); K is consumed only by the Test-H confirmatory run."
+  },
+  "embargo_bars": 25,
+  "folds": [
+    {
+      "year": 2012,
+      "train": 42746,
+      "fit": 32035,
+      "cal": 10687,
+      "test": 5981
+    },
+    {
+      "year": 2013,
+      "train": 48727,
+      "fit": 36521,
+      "cal": 12182,
+      "test": 6137
+    },
+    {
+      "year": 2014,
+      "train": 54864,
+      "fit": 41124,
+      "cal": 13716,
+      "test": 6130
+    },
+    {
+      "year": 2015,
+      "train": 60994,
+      "fit": 45721,
+      "cal": 15249,
+      "test": 6101
+    },
+    {
+      "year": 2016,
+      "train": 67095,
+      "fit": 50297,
+      "cal": 16774,
+      "test": 6146
+    },
+    {
+      "year": 2017,
+      "train": 73241,
+      "fit": 54906,
+      "cal": 18311,
+      "test": 6118
+    },
+    {
+      "year": 2018,
+      "train": 79359,
+      "fit": 59495,
+      "cal": 19840,
+      "test": 6131
+    },
+    {
+      "year": 2019,
+      "train": 85490,
+      "fit": 64093,
+      "cal": 21373,
+      "test": 6129
+    },
+    {
+      "year": 2020,
+      "train": 91619,
+      "fit": 68690,
+      "cal": 22905,
+      "test": 6159
+    },
+    {
+      "year": 2021,
+      "train": 97778,
+      "fit": 73309,
+      "cal": 24445,
+      "test": 5908
+    }
+  ],
+  "development_diagnostic_2012_2018": {
+    "metrics": {
+      "n": 42744,
+      "mse": {
+        "mean_expanding": 0.2222933775083165,
+        "atr14_one_feature": 0.16455972253459059,
+        "rule_state_atr_percentile": 0.21403784382904284,
+        "har_ridge": 0.150417418646033,
+        "lightgbm_regressor": 0.15133722915190237
+      },
+      "r2_vs_mean_expanding": {
+        "mean_expanding": 0.0,
+        "atr14_one_feature": 0.259718285901549,
+        "rule_state_atr_percentile": 0.03713801001095851,
+        "har_ridge": 0.32333828235433804,
+        "lightgbm_regressor": 0.3192004600036251
+      },
+      "skill_vs_atr14": {
+        "mean_expanding": -0.3508370947914685,
+        "atr14_one_feature": 0.0,
+        "rule_state_atr_percentile": -0.3006696932419286,
+        "har_ridge": 0.085940251178929,
+        "lightgbm_regressor": 0.08035072725592884
+      },
+      "qlike": {
+        "mean_expanding": 0.11239006895894,
+        "atr14_one_feature": 0.0842226898713375,
+        "rule_state_atr_percentile": 0.10793522970243558,
+        "har_ridge": 0.07803980484958137,
+        "lightgbm_regressor": 0.0786491376390247
+      },
+      "coverage_80": {
+        "har_ridge": 0.8280226464533034,
+        "lightgbm_regressor": 0.8290052405015909
+      },
+      "per_year": {
+        "2012": {
+          "n": 5981,
+          "mse_atr14": 0.19588920219987122,
+          "skill_har_ridge": 0.07399122338683461,
+          "skill_lightgbm": 0.05663638713081731
+        },
+        "2013": {
+          "n": 6137,
+          "mse_atr14": 0.18363574796846843,
+          "skill_har_ridge": 0.045956871148274736,
+          "skill_lightgbm": 0.00798733535213958
+        },
+        "2014": {
+          "n": 6130,
+          "mse_atr14": 0.1765776208203478,
+          "skill_har_ridge": 0.07056766207771337,
+          "skill_lightgbm": 0.07915056872967918
+        },
+        "2015": {
+          "n": 6101,
+          "mse_atr14": 0.14180581501060435,
+          "skill_har_ridge": 0.0333627389619382,
+          "skill_lightgbm": 0.01969545264370387
+        },
+        "2016": {
+          "n": 6146,
+          "mse_atr14": 0.16213975911589878,
+          "skill_har_ridge": 0.03925061607117686,
+          "skill_lightgbm": 0.04696729528031596
+        },
+        "2017": {
+          "n": 6118,
+          "mse_atr14": 0.1419207768889538,
+          "skill_har_ridge": 0.18012777517447454,
+          "skill_lightgbm": 0.17509158583832307
+        },
+        "2018": {
+          "n": 6131,
+          "mse_atr14": 0.15054550821028503,
+          "skill_har_ridge": 0.17904334980211178,
+          "skill_lightgbm": 0.20398874374145692
+        }
+      },
+      "ci_har_ridge_vs_atr14": {
+        "mean": 0.014142303888557584,
+        "months": 84.0,
+        "ci95": [
+          0.010018752065312523,
+          0.01818706273089271
+        ],
+        "lower97.5_one_sided": 0.010018752065312523
+      },
+      "ci_lightgbm_vs_atr14": {
+        "mean": 0.0132224933826882,
+        "months": 84.0,
+        "ci95": [
+          0.008084295240901183,
+          0.017963607492760797
+        ],
+        "lower97.5_one_sided": 0.008084295240901183
+      },
+      "ci_lightgbm_vs_har_ridge": {
+        "mean": -0.0009198105058693837,
+        "months": 84.0,
+        "ci95": [
+          -0.0028715573167890657,
+          0.0008006471970993032
+        ],
+        "lower97.5_one_sided": -0.0028715573167890657
+      }
+    },
+    "criteria": {
+      "skill_vs_atr14": 0.085940251178929,
+      "skill_at_least_5pct": true,
+      "ci95_lower_above_0": true,
+      "k_adjusted_one_sided_lower_above_0": true,
+      "coverage_80": 0.8280226464533034,
+      "coverage_within_75_85": true,
+      "share_of_years_positive": 1.0,
+      "years_positive_at_least_75pct": true,
+      "lightgbm_beats_ridge_95ci": false
+    }
+  },
+  "validation_2019_2021": {
+    "metrics": {
+      "n": 18196,
+      "mse": {
+        "mean_expanding": 0.2708053906610178,
+        "atr14_one_feature": 0.17253333939993068,
+        "rule_state_atr_percentile": 0.25906746092853866,
+        "har_ridge": 0.15593818135360946,
+        "lightgbm_regressor": 0.15388665215552144
+      },
+      "r2_vs_mean_expanding": {
+        "mean_expanding": 0.0,
+        "atr14_one_feature": 0.36288809104283937,
+        "rule_state_atr_percentile": 0.04334452022475477,
+        "har_ridge": 0.4241688432679467,
+        "lightgbm_regressor": 0.4317445019100452
+      },
+      "skill_vs_atr14": {
+        "mean_expanding": -0.569582966416093,
+        "atr14_one_feature": 0.0,
+        "rule_state_atr_percentile": -0.50155014578384,
+        "har_ridge": 0.09618522486169356,
+        "lightgbm_regressor": 0.10807584962571426
+      },
+      "qlike": {
+        "mean_expanding": 0.14409702262842755,
+        "atr14_one_feature": 0.08857791663802397,
+        "rule_state_atr_percentile": 0.13645780379160047,
+        "har_ridge": 0.08192769738584864,
+        "lightgbm_regressor": 0.07975957873183026
+      },
+      "coverage_80": {
+        "har_ridge": 0.7694548252363157,
+        "lightgbm_regressor": 0.7746207957792921
+      },
+      "per_year": {
+        "2019": {
+          "n": 6129,
+          "mse_atr14": 0.1655588725466052,
+          "skill_har_ridge": 0.14289542901470842,
+          "skill_lightgbm": 0.10018397747148022
+        },
+        "2020": {
+          "n": 6159,
+          "mse_atr14": 0.15888414308476842,
+          "skill_har_ridge": -0.01643471571669819,
+          "skill_lightgbm": 0.017253551576611792
+        },
+        "2021": {
+          "n": 5908,
+          "mse_atr14": 0.19399777871088472,
+          "skill_har_ridge": 0.15098563452772495,
+          "skill_lightgbm": 0.19260636300463208
+        }
+      },
+      "ci_har_ridge_vs_atr14": {
+        "mean": 0.01659515804632124,
+        "months": 36.0,
+        "ci95": [
+          0.008175062338528025,
+          0.024917040379628053
+        ],
+        "lower97.5_one_sided": 0.008175062338528025
+      },
+      "ci_lightgbm_vs_atr14": {
+        "mean": 0.018646687244409252,
+        "months": 36.0,
+        "ci95": [
+          0.010064972828411872,
+          0.027388386288959808
+        ],
+        "lower97.5_one_sided": 0.010064972828411872
+      },
+      "ci_lightgbm_vs_har_ridge": {
+        "mean": 0.0020515291980880094,
+        "months": 36.0,
+        "ci95": [
+          -0.0015294642999264128,
+          0.005490456252636105
+        ],
+        "lower97.5_one_sided": -0.0015294642999264128
+      }
+    },
+    "criteria": {
+      "skill_vs_atr14": 0.09618522486169356,
+      "skill_at_least_5pct": true,
+      "ci95_lower_above_0": true,
+      "k_adjusted_one_sided_lower_above_0": true,
+      "coverage_80": 0.7694548252363157,
+      "coverage_within_75_85": true,
+      "share_of_years_positive": 0.6666666666666666,
+      "years_positive_at_least_75pct": false,
+      "lightgbm_beats_ridge_95ci": false
+    }
+  },
+  "models": {
+    "baselines": [
+      "mean_expanding",
+      "atr14_one_feature",
+      "rule_state_atr_percentile"
+    ],
+    "candidates": [
+      "har_ridge",
+      "lightgbm_regressor"
+    ]
+  },
+  "artifact": {
+    "model_id": "har_ridge",
+    "version": "0.1.0",
+    "spec_hash": "ede09f4d450e18b2b3bad5e657039a72c03eee346e3780c8941d9dd63af42261",
+    "feature_names": [
+      "lATR14",
+      "lATR50",
+      "lATR200",
+      "lR24",
+      "lR5",
+      "lRV24",
+      "ar1",
+      "ar5",
+      "lBBW",
+      "hour_sin",
+      "hour_cos",
+      "dow_sin",
+      "dow_cos"
+    ],
+    "feature_schema_hash": "7633415139ab8298807358cc9866063f97a54f0f643c396a2b81b62738708b15",
+    "label_version": "rng24.v1",
+    "trained_rows": 103710,
+    "trained_through": "2021-12-30T20:00:00+00:00",
+    "alpha": 10.0,
+    "mean": [
+      -5.840467159450604,
+      -5.810912999264305,
+      -5.799467971096658,
+      -4.170351071431745,
+      -5.091610482256036,
+      -6.146774585561381,
+      0.0016397563974555871,
+      0.003442370319929576,
+      -4.489594508171783,
+      0.02364255787015026,
+      -0.024659702125146662,
+      0.3530077214407888,
+      -0.049955904969178934
+    ],
+    "scale": [
+      0.4374572678900749,
+      0.36433688093735417,
+      0.3340431507691927,
+      0.5002283334511853,
+      0.6570117095937932,
+      0.5180013727044385,
+      0.002497324142741215,
+      0.0041703018128338805,
+      0.6209775377197987,
+      0.7062776296874321,
+      0.7071102024097385,
+      0.5240381596791636,
+      0.7734817149497858
+    ],
+    "coef": [
+      0.10348903383103507,
+      0.058960589949722,
+      0.12830795371572318,
+      0.08321698633204655,
+      0.007533672670384665,
+      -0.003696705360798955,
+      0.031185322075434705,
+      0.0020793885575773685,
+      -0.06851513675043622,
+      0.0559577393815358,
+      0.0007814896646516416,
+      0.03095275287183828,
+      -0.024389991583792167
+    ],
+    "intercept": -4.170129022940303
+  }
+}

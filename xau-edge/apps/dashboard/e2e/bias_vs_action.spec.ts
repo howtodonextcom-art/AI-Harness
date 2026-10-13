@@ -67,6 +67,8 @@ for (const [name, vp] of [["desktop 1440x900", { width: 1440, height: 900 }], ["
       await mock(page, waitWith(diag()));
       await page.goto("/trade");
       await expect(page.getByTestId("bias-side")).toHaveText(/MUA/);
+      await expect(page.getByTestId("bias-value")).toContainText("MUA");
+      await expect(page.getByTestId("bias-value")).not.toContainText("TRUNG TÍNH");
       await expect(page.getByTestId("action-card")).toContainText("CHỜ");
       await expect(page.getByTestId("bias-note")).toContainText("không phải quyền vào lệnh");
       await expect(page.getByTestId("primary-blocker")).toContainText("Spread M1 quá rộng");

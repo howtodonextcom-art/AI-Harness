@@ -1,0 +1,18 @@
+[OK ]    1614 checks    0 mismatches  bars: every monthly file, full content digest (public read paths)
+        note: rows compared per timeframe: {'M1': 7065794, 'M5': 1500300, 'M15': 515725, 'M30': 260771, 'H1': 132255, 'H4': 34239}
+[OK ]     240 checks    0 mismatches  bars: random tail(limit, before) windows
+[OK ]     240 checks    0 mismatches  bars: random [start,end) windows
+[OK ]      72 checks    0 mismatches  bars: HTTP parity, V2 /api/v2/market/bars vs V1 /md/XAUUSD/bars
+[OK ]     151 checks    0 mismatches  ticks: random [start,end) windows, V2 TickStore vs V1 TickLedger
+        note: stored tick days: 1565 (2021-10-01 .. 2026-10-12)
+        note: tick rows compared: 172830
+[OK ]   66716 checks    0 mismatches  calendar: market status (OPEN/CLOSED/ROLLOVER) at random instants + every DST boundary
+        note: instants: 66716 (incl. 6716 around DST changes)
+[OK ]   66716 checks    0 mismatches  broker clock NY+7: UTC -> server wall at the same instants
+[OK ]   66716 checks    0 mismatches  broker clock NY+7: server wall -> UTC (strict=False, DST gaps/folds -> null)
+        note: null (gap/fold) results: 42 (identical in both)
+[OK ]      10 checks    0 mismatches  symbol spec: V2 LiveFeed.symbol_info vs V1 spec_from_broker (same live.json)
+        note: fields compared: ['contract_size', 'digits', 'freeze_level_points', 'point', 'stops_level_points', 'tick_size', 'tick_value', 'volume_max', 'volume_min', 'volume_step']
+[OK ]       7 checks    0 mismatches  config: V2 JSON copy vs V1 YAML profile + session exceptions
+[OK ]      60 checks    0 mismatches  quote: V2 /api/v2/market/quote vs V1 /md/XAUUSD/quote (same live file)
+total 202542 checks, 0 mismatches, 335.6 s

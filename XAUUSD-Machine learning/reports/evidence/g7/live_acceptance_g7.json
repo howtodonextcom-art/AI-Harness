@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8200/",
+  "seconds": 90,
+  "firstPaintMs": 278,
+  "socketEvents": 108,
+  "byType": {
+    "hello": 1,
+    "live": 84,
+    "heartbeat": 17,
+    "state": 6
+  },
+  "seqGaps": 0,
+  "distinctQuotesSeen": 39,
+  "actions": [
+    "WAIT"
+  ],
+  "wsStates": [
+    "open"
+  ],
+  "tfCounts": {
+    "M1": 500,
+    "M5": 500,
+    "M30": 500,
+    "H1": 500,
+    "H4": 500,
+    "M15": 500
+  },
+  "apiCalls": {
+    "/api/v2/market/bars": 8,
+    "/api/v2/state": 14,
+    "/api/v2/health": 14,
+    "/api/v2/paper/positions": 14,
+    "/api/v2/market/forming": 14,
+    "/api/v2/paper/summary": 14
+  },
+  "pageOverflowPx": 0,
+  "problems": []
+}

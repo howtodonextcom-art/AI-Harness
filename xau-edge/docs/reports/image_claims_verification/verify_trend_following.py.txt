@@ -1,0 +1,68 @@
+import glob, math, json, numpy as np, polars as pl
+fs=sorted(glob.glob("Z:/Coding/Projects/AI-Harness/xau-edge/data/market/XAUUSD/H1/*.parquet"))
+df=pl.concat([pl.read_parquet(f) for f in fs]).sort("timestamp").unique(subset=["timestamp"],keep="last",maintain_order=True)
+o,h,l,c=[df[k].to_numpy().astype(float) for k in("open","high","low","close")]
+yr=df["timestamp"].dt.year().to_numpy(); n=len(c)
+pc=np.r_[c[0],c[:-1]]; tr=np.maximum(h-l,np.maximum(abs(h-pc),abs(l-pc)))
+cs=np.cumsum(np.r_[0.,tr]); atr=np.full(n,np.nan); atr[13:]=(cs[14:]-cs[:-14])/14
+def ema(x,s):
+    a=2/(s+1); o_=np.empty_like(x); o_[0]=x[0]
+    for i in range(1,len(x)): o_[i]=o_[i-1]+a*(x[i]-o_[i-1])
+    return o_
+e50=ema(c,50); e200=ema(c,200)
+def sh(x,k): r=np.full(n,np.nan); r[k:]=x[:-k]; return r
+slope=(e50-sh(e50,5))/atr
+warm=np.arange(n)>400
+up=warm&(c>e50)&(slope>0); dn=warm&(c<e50)&(slope<0)
+body=abs(c-o); rng=h-l
+pin_b=(np.minimum(o,c)-l>=2*body)&(h-np.maximum(o,c)<=0.3*rng)&(rng>0.5*atr)
+pin_s=(h-np.maximum(o,c)>=2*body)&(np.minimum(o,c)-l<=0.3*rng)&(rng>0.5*atr)
+eng_b=(sh(c,1)<sh(o,1))&(c>o)&(o<=sh(c,1))&(c>=sh(o,1))
+eng_s=(sh(c,1)>sh(o,1))&(c<o)&(o>=sh(c,1))&(c<=sh(o,1))
+touch_b=(l<=e50+0.3*atr)&(c>e50); touch_s=(h>=e50-0.3*atr)&(c<e50)
+def fw(k):
+    r=np.full(n,np.nan); r[:n-k]=(c[k:]-c[:n-k])/atr[:n-k]; return r
+def tt(a,b,k):
+    if len(a)<5: return float('nan')
+    return (a.mean()-b.mean())/math.sqrt(a.var(ddof=1)/len(a)+b.var(ddof=1)/len(b))/math.sqrt(k)
+res={}
+tests={
+ "trend_filter_long (c>EMA50 & slope>0)":(up,+1,warm),
+ "trend_filter_short (c<EMA50 & slope<0)":(dn,-1,warm),
+ "bài74 long: uptrend+pullback EMA50+pin/engulf":(up&touch_b&(pin_b|eng_b),+1,up),
+ "bài74 short: downtrend+pullback EMA50+pin/engulf":(dn&touch_s&(pin_s|eng_s),-1,dn),
+}
+for nm,(m,d,base) in tests.items():
+    for k in (12,24,120):
+        f=fw(k)*d; ok=np.isfinite(f)
+        for tag,ys in (("all",np.ones(n,bool)),("dev",yr<2019),("val",yr>=2019)):
+            a=f[m&ok&ys]
+            b=f[(warm if "filter" in nm else base)&~m&ok&ys] if "filter" not in nm else f[warm&~m&ok&ys]
+            if len(a)>=5: res[f"{nm}|h{k}|{tag}"]=dict(N=int(len(a)),mean=round(float(a.mean()),3),base=round(float(b.mean()),3),diff=round(float(a.mean()-b.mean()),3),t=round(tt(a,b,k),2))
+# R:R test for bài74 setup: SL below signal low (long) , TP=2R, vs random-walk
+def trade(m,d):
+    out=[]
+    for i in np.flatnonzero(m&np.isfinite(atr)):
+        if i+1>=n-1: continue
+        e=c[i]; sl=(l[i]-0.1*atr[i]) if d>0 else (h[i]+0.1*atr[i]); r=abs(e-sl)
+        if r<=0.3*atr[i] or r>5*atr[i]: continue
+        tp=e+d*2*r
+        hs=(l[i+1:i+1+2000]<=sl) if d>0 else (h[i+1:i+1+2000]>=sl)
+        ts=(h[i+1:i+1+2000]>=tp) if d>0 else (l[i+1:i+1+2000]<=tp)
+        si=int(np.argmax(hs)) if hs.any() else 10**9; ti=int(np.argmax(ts)) if ts.any() else 10**9
+        if si==10**9 and ti==10**9: continue
+        out.append((1 if ti<si else 0,int(yr[i])))
+    return out
+for nm,m,d in (("long",tests["bài74 long: uptrend+pullback EMA50+pin/engulf"][0],+1),("short",tests["bài74 short: downtrend+pullback EMA50+pin/engulf"][0],-1)):
+    t=trade(m,d)
+    for tag,sel in (("all",lambda y:True),("dev",lambda y:y<2019),("val",lambda y:y>=2019)):
+        rr=[w for w,y in t if sel(y)]
+        if rr:
+            p=sum(rr)/len(rr); z=(p-1/3)/math.sqrt((1/3)*(2/3)/len(rr))
+            res[f"RR2 {nm}|{tag}"]=dict(N=len(rr),win=round(p,3),null=0.333,z=round(z,2),expR=round(3*p-1,3))
+json.dump(res,open("results_v2.json","w"),ensure_ascii=False,indent=1)
+for k,v in res.items(): print(k,v)
+# lot arithmetic
+print("1 lot=100oz: 10USD move =",10*100,"USD/lot; lots for 10USD risk =",10/1000)
+dd=df.with_columns(pl.col("timestamp").dt.date().alias("d")).group_by("d").agg(pl.col("high").max().alias("H"),pl.col("low").min().alias("L")).sort("d")
+print("gold 2.435 level last seen:", dd.filter((pl.col("L")<=2435)&(pl.col("H")>=2435))["d"].max())

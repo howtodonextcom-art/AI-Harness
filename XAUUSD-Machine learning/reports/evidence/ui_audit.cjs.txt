@@ -1,0 +1,42 @@
+const { createRequire } = require("module");
+const req = createRequire("Z:/Coding/Projects/AI-Harness/xau-edge/apps/dashboard/package.json");
+const { chromium } = req("@playwright/test");
+const fs = require("fs");
+const out = process.argv[2];
+const exe = process.argv[3];
+(async () => {
+  const browser = await chromium.launch({ executablePath: exe, headless: true });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const results = [];
+  for (const [name, path] of [["trade", "/trade"], ["market", "/market"], ["journal", "/journal"], ["research", "/research"], ["control", "/control"], ["legacy", "/legacy"]]) {
+    const page = await ctx.newPage();
+    const errors = [];
+    const failed = [];
+    page.on("console", (m) => { if (m.type() === "error") errors.push(m.text().slice(0, 200)); });
+    page.on("requestfailed", (r) => failed.push(r.url().slice(0, 120)));
+    page.on("response", (r) => { if (r.status() >= 400) failed.push(r.status() + " " + r.url().slice(0, 120)); });
+    const t0 = Date.now();
+    let status = null;
+    try {
+      const resp = await page.goto("http://127.0.0.1:3000" + path, { waitUntil: "networkidle", timeout: 30000 });
+      status = resp ? resp.status() : null;
+    } catch (e) { errors.push("goto: " + String(e).slice(0, 200)); }
+    await page.waitForTimeout(2500);
+    const loadMs = Date.now() - t0;
+    const info = await page.evaluate(() => ({
+      title: document.title,
+      h1: Array.from(document.querySelectorAll("h1,h2")).slice(0, 8).map((e) => e.textContent.trim().slice(0, 80)),
+      textHead: document.body.innerText.slice(0, 1800),
+      hasHorizontalScroll: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      height: document.documentElement.scrollHeight,
+      buttons: Array.from(document.querySelectorAll("button")).slice(0, 25).map((b) => b.textContent.trim().slice(0, 40)),
+    }));
+    await page.screenshot({ path: `${out}/${name}-1440.png`, fullPage: false });
+    await page.screenshot({ path: `${out}/${name}-1440-full.png`, fullPage: true });
+    results.push({ name, path, status, loadMs, errors, failed: failed.slice(0, 10), ...info });
+    await page.close();
+  }
+  fs.writeFileSync(`${out}/ui_audit.json`, JSON.stringify(results, null, 1));
+  await browser.close();
+  console.log("done", results.map((r) => `${r.name}:${r.status}:${r.errors.length}err:${r.failed.length}fail:${r.loadMs}ms`).join(" | "));
+})().catch((e) => { console.error("FATAL", e); process.exit(1); });

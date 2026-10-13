@@ -1,0 +1,43 @@
+{
+ "paper_trades": [
+  {
+   "duration_minutes": 48.0,
+   "entry_price": 4236.499999999999,
+   "entry_time": "2025-12-05T14:45:00+00:00",
+   "exit_price": 4250.514965139165,
+   "exit_reason": "TAKE_PROFIT",
+   "exit_time": "2025-12-05T15:33:00+00:00",
+   "initial_sl": 4229.447517430416,
+   "net_pnl": 42.044895417497166,
+   "r_multiple": 1.987,
+   "side": "BUY",
+   "sl": 4229.447517430416,
+   "status": "CLOSED",
+   "strategy_version": "1.2.1",
+   "tp": 4250.514965139165,
+   "trade_id": "T00001"
+  }
+ ],
+ "signals": [
+  {
+   "at": "2025-12-05T14:45:00+00:00",
+   "bar_time": "2025-12-05T14:40:00+00:00",
+   "decision_id": "1dd1a54ecc2d6ccf59a2",
+   "entry": 4236.469999999999,
+   "expires_at": "2025-12-05T14:50:00+00:00",
+   "lots": 0.03,
+   "price": 4236.469999999999,
+   "rr": 1.900860347257074,
+   "setup_id": "ade8bf4c07b2b1153240",
+   "side": "BUY",
+   "sl": 4229.447517430416,
+   "source_mode": "ACCEPTANCE_REPLAY",
+   "strategy_version": "1.2.1",
+   "taken": true,
+   "tp1": 4250.514965139165,
+   "tp2": 4257.537447708748
+  }
+ ],
+ "simulated": true,
+ "source_mode": "ACCEPTANCE_REPLAY"
+}

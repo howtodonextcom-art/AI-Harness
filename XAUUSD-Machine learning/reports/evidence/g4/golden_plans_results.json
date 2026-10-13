@@ -1,0 +1,493 @@
+{
+  "groups": {
+    "B state: h4_regime": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: h1_trend": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: m30_structure": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: m15_structure": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: m15_pullback": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: m5_momentum": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: m1_micro_state": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: session": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: bos_state": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: choch_state": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: volatility_regime": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: data_quality": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: news_state": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: execution_quality": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: spread_state": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: volume_state": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: volume_type": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: market_open": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: available_timeframes": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: stale_timeframes": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: atr_m5": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: atr_m15": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: volume_zscore_m1": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: spread": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: spread_percentile": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: spread_to_atr_m5": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: price": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: distance_to_support": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: distance_to_resistance": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: recent_swing_high": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: recent_swing_low": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: pdh": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: pdl": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B state: snapshot keys": {
+      "checks": 343,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: close": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: atr": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: atr_percentile": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: ema_fast": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: ema_slow": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: price_vs_ema_atr": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: rsi": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: roc": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: last_swing_high": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: last_swing_low": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: support": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: resistance": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: volume_zscore": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: tick_volume": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: structure_trend": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: bos_recent": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: choch_recent": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: regime": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: bars_used": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: bar_open": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: bar_closed": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: pattern strong_body": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "B snapshot: pattern range_expansion": {
+      "checks": 2058,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: action": {
+      "checks": 2401,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: refusals": {
+      "checks": 2401,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: reasons chain": {
+      "checks": 2401,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: warnings": {
+      "checks": 2401,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: m1_execution_state": {
+      "checks": 2401,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: decision_id (signal_id)": {
+      "checks": 2401,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: atr": {
+      "checks": 2401,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: entry_price": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: stop_loss": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: take_profit": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: take_profit_2": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: risk_reward": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: required_win_rate": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: risk_amount": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: position_size": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: stop_model": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: expiry": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: entry_quality": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: setup_id": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: gross_rr": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    },
+    "C decision: capped_by_structure": {
+      "checks": 53,
+      "mismatches": 0,
+      "max_abs_diff": 0.0,
+      "samples": []
+    }
+  },
+  "stats": {
+    "months": [
+      "2009-10",
+      "2010-09",
+      "2012-01",
+      "2013-07",
+      "2014-05",
+      "2014-10",
+      "2017-09",
+      "2017-11",
+      "2018-10",
+      "2025-08"
+    ],
+    "instants": 343,
+    "actionable_found": 243,
+    "actionable_compared": 53
+  },
+  "total": 76545,
+  "mismatches": 0,
+  "seed": 20261013,
+  "elapsed_s": 776.4185388088226
+}

@@ -1,0 +1,465 @@
+"""Kiem chung cac khang dinh trong 104 anh bang du lieu XAUUSD H1 cua du an.
+
+Quy uoc: moi thong ke deu so voi baseline phu hop (random-walk hoac context-matched),
+tach dev (<2019) / val (>=2019), va dung nguong Bonferroni cho da so phep thu.
+"""
+import glob
+import json
+import math
+import sys
+
+import numpy as np
+import polars as pl
+from numpy.lib.stride_tricks import sliding_window_view as swv
+
+ROOT = "Z:/Coding/Projects/AI-Harness/xau-edge/data/market/XAUUSD"
+OUT = sys.argv[1]
+SPLIT_YEAR = 2019
+
+
+def load(tf):
+    fs = sorted(glob.glob(f"{ROOT}/{tf}/*.parquet"))
+    df = pl.concat([pl.read_parquet(f) for f in fs]).sort("timestamp")
+    return df.unique(subset=["timestamp"], keep="last", maintain_order=True)
+
+
+df = load("H1")
+ts = df["timestamp"]
+year = ts.dt.year().to_numpy()
+o = df["open"].to_numpy().astype(float)
+h = df["high"].to_numpy().astype(float)
+l = df["low"].to_numpy().astype(float)
+c = df["close"].to_numpy().astype(float)
+spread = df["spread"].to_numpy().astype(float)
+n = len(c)
+
+pc = np.r_[c[0], c[:-1]]
+tr = np.maximum(h - l, np.maximum(np.abs(h - pc), np.abs(l - pc)))
+atr = np.full(n, np.nan)
+cs = np.cumsum(np.r_[0.0, tr])
+atr[13:] = (cs[14:] - cs[:-14]) / 14.0
+
+R = {"meta": {"bars": int(n), "first": str(ts[0]), "last": str(ts[-1]),
+              "median_atr14_h1_all": float(np.nanmedian(atr))}}
+
+
+def ema(x, span):
+    a = 2.0 / (span + 1.0)
+    out = np.empty_like(x)
+    out[0] = x[0]
+    for i in range(1, len(x)):
+        out[i] = out[i - 1] + a * (x[i] - out[i - 1])
+    return out
+
+
+# ----------------------------------------------------------------------------
+# T1. Fibonacci retracement: P(retest swing before breaking swing) vs 1-r
+# ----------------------------------------------------------------------------
+def pivots(hh, ll, k):
+    m = len(hh)
+    wh, wl = swv(hh, 2 * k + 1), swv(ll, 2 * k + 1)
+    ph = np.zeros(m, bool)
+    pl_ = np.zeros(m, bool)
+    ph[k:m - k] = (wh[:, k] >= wh.max(1)) & (wh[:, k] > wh[:, :k].max(1))
+    pl_[k:m - k] = (wl[:, k] <= wl.min(1)) & (wl[:, k] < wl[:, :k].min(1))
+    both = ph & pl_
+    ph &= ~both
+    pl_ &= ~both
+    seq = [(i, "H", hh[i]) for i in np.flatnonzero(ph)] + [(i, "L", ll[i]) for i in np.flatnonzero(pl_)]
+    seq.sort()
+    merged = []
+    for it in seq:
+        if merged and merged[-1][1] == it[1]:
+            p = merged[-1]
+            if (it[1] == "H" and it[2] > p[2]) or (it[1] == "L" and it[2] < p[2]):
+                merged[-1] = it
+        else:
+            merged.append(it)
+    return merged
+
+
+LEVELS = (0.382, 0.5, 0.618, 0.786, 0.886)
+
+
+def fib_events(hh, ll, cl, atrv, yr, k=5, min_atr=2.0, wait=500, maxfwd=3000):
+    """Entry = first touch AFTER the pivot is confirmed (no look-ahead). Levels already
+    breached inside the k-bar confirmation window are not tradable. Entry price = level,
+    or the open if the bar gaps through the level."""
+    rows = []
+    seq = pivots(hh, ll, k)
+    for (ia, ta, pa), (ib, tb, pb) in zip(seq[:-1], seq[1:]):
+        if not (ta == "L" and tb == "H"):
+            continue
+        A, B = pa, pb
+        H = B - A
+        if not np.isfinite(atrv[ib]) or H < min_atr * atrv[ib]:
+            continue
+        cidx = ib + k
+        if cidx + 2 >= len(hh):
+            continue
+        wmin = ll[ib + 1:cidx + 1].min()
+        todo = {r: B - r * H for r in LEVELS if wmin > B - r * H}
+        if wmin <= A:
+            continue
+        j = cidx + 1
+        end = min(len(hh), cidx + 1 + wait)
+        while j < end and todo:
+            if hh[j] > B:
+                break
+            for r in list(todo):
+                lvl = todo[r]
+                if ll[j] <= lvl:
+                    todo.pop(r)
+                    entry = cl[j]
+                    if entry - A <= 1e-9 or B - entry <= 1e-9 or ll[j] <= A:
+                        continue
+                    if True:
+                        ls = ll[j + 1:j + 1 + maxfwd] <= A
+                        hs = hh[j + 1:j + 1 + maxfwd] >= B
+                        si = int(np.argmax(ls)) if ls.any() else 10 ** 9
+                        ti = int(np.argmax(hs)) if hs.any() else 10 ** 9
+                        if si == 10 ** 9 and ti == 10 ** 9:
+                            res = -1
+                        elif si <= ti:
+                            res = 0
+                        else:
+                            res = 1
+                    if res >= 0:
+                        rows.append((r, res, int(yr[j]), (entry - A) / H, 1 if cl[j] >= lvl else 0))
+            if ll[j] < A:
+                break
+            j += 1
+    return rows
+
+
+rows = fib_events(h, l, c, atr, year) + fib_events(-l, -h, -c, atr, year)
+fib = {}
+for r in LEVELS:
+  for grp, gsel in (("touch", lambda x: True), ("reject", lambda x: x[4] == 1)):
+    for name, sel in (("all", lambda y: True), ("dev", lambda y: y < SPLIT_YEAR), ("val", lambda y: y >= SPLIT_YEAR)):
+        rr = [x for x in rows if x[0] == r and sel(x[2]) and gsel(x)]
+        N = len(rr)
+        if N == 0:
+            continue
+        w = sum(x[1] for x in rr)
+        pn = np.array([x[3] for x in rr])
+        exp_w = pn.sum()
+        z = (w - exp_w) / math.sqrt((pn * (1 - pn)).sum())
+        expR = float(np.mean([x[1] * (1 - x[3]) / x[3] - (1 - x[1]) for x in rr]))
+        fib[f"{r}|{grp}|{name}"] = dict(N=N, wins=w, P=round(w / N, 4), P_null=round(exp_w / N, 4),
+                                  z=round(z, 2), expR=round(expR, 3))
+R["fib"] = fib
+
+# ----------------------------------------------------------------------------
+# T2. Candlestick patterns: signed forward return in ATR vs context-matched baseline
+# ----------------------------------------------------------------------------
+body = np.abs(c - o)
+rng_ = h - l
+upw = h - np.maximum(o, c)
+dnw = np.minimum(o, c) - l
+bull = c > o
+bear = c < o
+
+
+def sh(x, k):
+    out = np.full_like(x, np.nan, dtype=float)
+    if k > 0:
+        out[k:] = x[:-k]
+    return out
+
+
+def shb(x, k):
+    out = np.zeros(len(x), bool)
+    if k > 0:
+        out[k:] = x[:-k]
+    return out
+
+
+def ctx(shift, direction):
+    """prior 5-bar move in ATR ending `shift` bars before bar i; direction=-1 => downtrend"""
+    mv = (sh(c, shift) - sh(c, shift + 5)) / atr
+    return (mv <= -0.5) if direction < 0 else (mv >= 0.5)
+
+
+pats = {}
+ctx_dn1, ctx_up1 = ctx(1, -1), ctx(1, +1)
+ctx_dn2, ctx_up2 = ctx(2, -1), ctx(2, +1)
+
+bullE = shb(bear, 1) & bull & (o <= sh(c, 1)) & (c >= sh(o, 1)) & ctx_dn1
+bearE = shb(bull, 1) & bear & (o >= sh(c, 1)) & (c <= sh(o, 1)) & ctx_up1
+small_hammer = (dnw >= 2 * body) & (upw <= 0.25 * rng_) & (body > 0) & (rng_ > 0.5 * atr)
+small_star = (upw >= 2 * body) & (dnw <= 0.25 * rng_) & (body > 0) & (rng_ > 0.5 * atr)
+pats["bullish_engulfing(+1)"] = (bullE, +1, "dn1")
+pats["bearish_engulfing(-1)"] = (bearE, -1, "up1")
+pats["hammer(+1)"] = (small_hammer & ctx_dn1, +1, "dn0")
+pats["hanging_man(-1)"] = (small_hammer & ctx_up1, -1, "up0")
+pats["inverted_hammer(+1)"] = (small_star & ctx_dn1, +1, "dn0")
+pats["shooting_star(-1)"] = (small_star & ctx_up1, -1, "up0")
+b2 = sh(body, 2)
+morning = shb(bear, 2) & (b2 >= 0.6 * atr) & (sh(body, 1) <= 0.3 * b2) & bull & \
+    (c > (sh(o, 2) + sh(c, 2)) / 2) & ctx_dn2
+evening = shb(bull, 2) & (b2 >= 0.6 * atr) & (sh(body, 1) <= 0.3 * b2) & bear & \
+    (c < (sh(o, 2) + sh(c, 2)) / 2) & ctx_up2
+pats["morning_star(+1)"] = (morning, +1, "dn0")
+pats["evening_star(-1)"] = (evening, -1, "up0")
+soldiers = bull & shb(bull, 1) & shb(bull, 2) & (c > sh(c, 1)) & (sh(c, 1) > sh(c, 2)) & \
+    (o > sh(o, 1)) & (o < sh(c, 1)) & (sh(o, 1) > sh(o, 2)) & (sh(o, 1) < sh(c, 2))
+crows = bear & shb(bear, 1) & shb(bear, 2) & (c < sh(c, 1)) & (sh(c, 1) < sh(c, 2)) & \
+    (o < sh(o, 1)) & (o > sh(c, 1)) & (sh(o, 1) < sh(o, 2)) & (sh(o, 1) > sh(c, 2))
+pats["three_white_soldiers(+1, claimed continuation)"] = (soldiers, +1, "all")
+pats["three_black_crows(-1, claimed continuation)"] = (crows, -1, "all")
+piercing = shb(bear, 1) & bull & (o < sh(l, 1)) & (c > (sh(o, 1) + sh(c, 1)) / 2) & (c < sh(o, 1)) & ctx_dn1
+darkcloud = shb(bull, 1) & bear & (o > sh(h, 1)) & (c < (sh(o, 1) + sh(c, 1)) / 2) & (c > sh(o, 1)) & ctx_up1
+pats["piercing_line(+1)"] = (piercing, +1, "dn1")
+pats["dark_cloud_cover(-1)"] = (darkcloud, -1, "up1")
+bh = shb(bear, 1) & bull & (sh(body, 1) >= 0.6 * atr) & (body <= 0.5 * sh(body, 1)) & \
+    (np.maximum(o, c) <= sh(o, 1)) & (np.minimum(o, c) >= sh(c, 1)) & ctx_dn1
+brh = shb(bull, 1) & bear & (sh(body, 1) >= 0.6 * atr) & (body <= 0.5 * sh(body, 1)) & \
+    (np.maximum(o, c) <= sh(c, 1)) & (np.minimum(o, c) >= sh(o, 1)) & ctx_up1
+pats["bullish_harami(+1)"] = (bh, +1, "dn1")
+pats["bearish_harami(-1)"] = (brh, -1, "up1")
+tb = shb(bear, 1) & bull & (np.abs(l - sh(l, 1)) <= 0.05 * atr) & ctx_dn1
+tt = shb(bull, 1) & bear & (np.abs(h - sh(h, 1)) <= 0.05 * atr) & ctx_up1
+pats["tweezer_bottom(+1)"] = (tb, +1, "dn1")
+pats["tweezer_top(-1)"] = (tt, -1, "up1")
+
+HOR = (1, 4, 12)
+valid_base = np.isfinite(atr)
+
+
+def fwd(hh):
+    out = np.full(n, np.nan)
+    out[:n - hh] = (c[hh:] - c[:n - hh]) / atr[:n - hh]
+    return out
+
+
+FW = {hh: fwd(hh) for hh in HOR}
+
+
+def welch(a, b):
+    if len(a) < 5 or len(b) < 5:
+        return float("nan")
+    va, vb = a.var(ddof=1) / len(a), b.var(ddof=1) / len(b)
+    return (a.mean() - b.mean()) / math.sqrt(va + vb)
+
+
+candle = {}
+for name, (mask, d, bctx) in pats.items():
+    if bctx == "all":
+        basemask = valid_base.copy()
+    elif bctx in ("dn1", "dn0"):
+        basemask = ctx_dn1.copy()
+    else:
+        basemask = ctx_up1.copy()
+    mask = mask & valid_base
+    basemask = basemask & valid_base & ~mask
+    for hh in HOR:
+        f = FW[hh] * d
+        ok = np.isfinite(f)
+        for tag, ysel in (("all", np.ones(n, bool)), ("dev", year < SPLIT_YEAR), ("val", year >= SPLIT_YEAR)):
+            a = f[mask & ok & ysel]
+            b = f[basemask & ok & ysel]
+            if len(a) < 5:
+                continue
+            t = welch(a, b) / math.sqrt(hh)
+            candle[f"{name}|h{hh}|{tag}"] = dict(N=int(len(a)), mean_atr=round(float(a.mean()), 4),
+                                                  base_atr=round(float(b.mean()), 4),
+                                                  diff=round(float(a.mean() - b.mean()), 4),
+                                                  hit=round(float((a > 0).mean()), 3), t_adj=round(t, 2))
+R["candles"] = candle
+
+# ----------------------------------------------------------------------------
+# T3. EMA claims
+# ----------------------------------------------------------------------------
+e = {s: ema(c, s) for s in (8, 9, 14, 20, 21, 50, 200)}
+HOR2 = (12, 24, 120)
+FW2 = {}
+for hh in HOR2:
+    out = np.full(n, np.nan)
+    out[:n - hh] = (c[hh:] - c[:n - hh]) / atr[:n - hh]
+    FW2[hh] = out
+warm = np.arange(n) > 400
+ema_res = {}
+
+# (a) EMA200 side as trend filter
+for hh in HOR2:
+    f = FW2[hh]
+    ok = np.isfinite(f) & warm
+    for tag, ysel in (("all", np.ones(n, bool)), ("dev", year < SPLIT_YEAR), ("val", year >= SPLIT_YEAR)):
+        up = f[ok & ysel & (c > e[200])]
+        dn = f[ok & ysel & (c < e[200])]
+        ema_res[f"EMA200_side|h{hh}|{tag}"] = dict(
+            N_above=int(len(up)), mean_above=round(float(up.mean()), 4), N_below=int(len(dn)),
+            mean_below=round(float(dn.mean()), 4), diff=round(float(up.mean() - dn.mean()), 4),
+            t_adj=round(welch(up, dn) / math.sqrt(hh), 2))
+
+# (b) pullback to EMA50 in a trend (long) / mirror (short)
+reg_up = (c > e[200]) & (e[50] > e[200]) & warm
+reg_dn = (c < e[200]) & (e[50] < e[200]) & warm
+pb_long = reg_up & (l <= e[50]) & (c > e[50])
+pb_short = reg_dn & (h >= e[50]) & (c < e[50])
+for nm, mask, base, d in (("EMA50_pullback_long", pb_long, reg_up, +1), ("EMA50_pullback_short", pb_short, reg_dn, -1)):
+    for hh in HOR2:
+        f = FW2[hh] * d
+        ok = np.isfinite(f)
+        for tag, ysel in (("all", np.ones(n, bool)), ("dev", year < SPLIT_YEAR), ("val", year >= SPLIT_YEAR)):
+            a = f[mask & ok & ysel]
+            b = f[base & ~mask & ok & ysel]
+            if len(a) < 5:
+                continue
+            ema_res[f"{nm}|h{hh}|{tag}"] = dict(N=int(len(a)), mean=round(float(a.mean()), 4),
+                                                 base=round(float(b.mean()), 4),
+                                                 diff=round(float(a.mean() - b.mean()), 4),
+                                                 t_adj=round(welch(a, b) / math.sqrt(hh), 2))
+
+# (c) crosses
+for fa, sl in ((8, 14), (9, 21), (20, 50), (50, 200)):
+    fe, se_ = e[fa], e[sl]
+    up_x = warm & (fe > se_) & (sh(fe, 1) <= sh(se_, 1))
+    dn_x = warm & (fe < se_) & (sh(fe, 1) >= sh(se_, 1))
+    for nm, mask, d in ((f"cross_{fa}_{sl}_up", up_x, +1), (f"cross_{fa}_{sl}_down", dn_x, -1)):
+        for hh in HOR2:
+            f = FW2[hh] * d
+            ok = np.isfinite(f) & warm
+            for tag, ysel in (("all", np.ones(n, bool)), ("dev", year < SPLIT_YEAR), ("val", year >= SPLIT_YEAR)):
+                a = f[mask & ok & ysel]
+                b = f[ok & ysel & ~mask]
+                if len(a) < 5:
+                    continue
+                ema_res[f"{nm}|h{hh}|{tag}"] = dict(N=int(len(a)), mean=round(float(a.mean()), 4),
+                                                     base=round(float(b.mean()), 4),
+                                                     diff=round(float(a.mean() - b.mean()), 4),
+                                                     t_adj=round(welch(a, b) / math.sqrt(hh), 2))
+R["ema"] = ema_res
+
+# ----------------------------------------------------------------------------
+# T4. Double top / double bottom -> measured-move trade, vs random-walk null
+# ----------------------------------------------------------------------------
+def double_top(hh, ll, cc, atrv, yr, k=5, tol=0.5, gmin=8, gmax=60, depth=1.5, wait=40, maxfwd=3000):
+    seq = pivots(hh, ll, k)
+    out = []
+    for q in range(len(seq) - 2):
+        (i1, t1, p1), (im, tm, pm), (i2, t2, p2) = seq[q], seq[q + 1], seq[q + 2]
+        if not (t1 == "H" and tm == "L" and t2 == "H"):
+            continue
+        a = atrv[i2]
+        if not np.isfinite(a) or abs(p1 - p2) > tol * a or not (gmin <= i2 - i1 <= gmax):
+            continue
+        top = max(p1, p2)
+        neck = pm
+        if top - neck < depth * a:
+            continue
+        cidx = i2 + k
+        if cc[i2:cidx + 1].min() < neck:
+            continue
+        j = cidx + 1
+        end = min(len(cc) - 1, cidx + wait)
+        while j <= end:
+            if hh[j] > top:
+                break
+            if cc[j] < neck:
+                entry = cc[j]
+                sl = top
+                tp = neck - (top - neck)
+                risk, rew = sl - entry, entry - tp
+                if risk <= 0 or rew <= 0:
+                    break
+                hs = hh[j + 1:j + 1 + maxfwd] >= sl
+                ls = ll[j + 1:j + 1 + maxfwd] <= tp
+                si = int(np.argmax(hs)) if hs.any() else 10 ** 9
+                ti = int(np.argmax(ls)) if ls.any() else 10 ** 9
+                if si == 10 ** 9 and ti == 10 ** 9:
+                    break
+                win = 1 if ti < si else 0
+                out.append((win, risk, rew, int(yr[j])))
+                break
+            j += 1
+    return out
+
+
+dt = double_top(h, l, c, atr, year) + double_top(-l, -h, -c, atr, year)
+dtres = {}
+for tag, sel in (("all", lambda y: True), ("dev", lambda y: y < SPLIT_YEAR), ("val", lambda y: y >= SPLIT_YEAR)):
+    rr = [x for x in dt if sel(x[3])]
+    if not rr:
+        continue
+    N = len(rr)
+    w = sum(x[0] for x in rr)
+    pn = np.array([x[1] / (x[1] + x[2]) for x in rr])
+    exp_w = pn.sum()
+    z = (w - exp_w) / math.sqrt((pn * (1 - pn)).sum())
+    ER = float(np.mean([x[0] * x[2] / x[1] - (1 - x[0]) for x in rr]))
+    dtres[tag] = dict(N=N, wins=w, win_rate=round(w / N, 3), null_win_rate=round(exp_w / N, 3),
+                      z=round(z, 2), expR=round(ER, 3), median_RR=round(float(np.median([x[2] / x[1] for x in rr])), 2))
+R["double_top_bottom"] = dtres
+
+# ----------------------------------------------------------------------------
+# T5. Fixed-R win rates under random entry (recent regime) + cost
+# ----------------------------------------------------------------------------
+rec = year >= 2025
+idx = np.flatnonzero(rec)
+SLP = 34.54
+rr_stats = {}
+for kmult in (1, 2, 3):
+    wins_l = wins_s = tot = 0
+    for i in idx[:-1]:
+        entry = c[i]
+        for dirn in (+1, -1):
+            sl = entry - dirn * SLP
+            tp = entry + dirn * SLP * kmult
+            hs = (h[i + 1:i + 1 + 3000] >= sl) if dirn < 0 else (l[i + 1:i + 1 + 3000] <= sl)
+            ts_ = (h[i + 1:i + 1 + 3000] >= tp) if dirn > 0 else (l[i + 1:i + 1 + 3000] <= tp)
+            si = int(np.argmax(hs)) if hs.any() else 10 ** 9
+            ti = int(np.argmax(ts_)) if ts_.any() else 10 ** 9
+            if si == 10 ** 9 and ti == 10 ** 9:
+                continue
+            w = 1 if ti < si else 0
+            if dirn > 0:
+                wins_l += w
+            else:
+                wins_s += w
+        tot += 1
+    rr_stats[f"TP={kmult}R"] = dict(entries=tot, P_long=round(wins_l / tot, 3), P_short=round(wins_s / tot, 3),
+                                    P_null=round(1 / (1 + kmult), 3))
+R["fixedR_random_entry_2025plus"] = rr_stats
+R["cost"] = dict(median_spread_points_2025plus=float(np.median(spread[rec])),
+                 mean_spread_points_2025plus=float(np.mean(spread[rec])),
+                 median_close_2025plus=float(np.median(c[rec])))
+
+# ----------------------------------------------------------------------------
+# T6. Daily range vs lot-size table
+# ----------------------------------------------------------------------------
+d = (df.with_columns(pl.col("timestamp").dt.date().alias("d"))
+       .group_by("d").agg(pl.col("high").max().alias("H"), pl.col("low").min().alias("L"),
+                          pl.col("close").last().alias("C")).sort("d"))
+dr = (d["H"] - d["L"]).to_numpy()
+dy = d["d"].dt.year().to_numpy()
+last = dr[-250:]
+R["daily_range_last250d"] = dict(mean=round(float(last.mean()), 1), median=round(float(np.median(last)), 1),
+                                 p90=round(float(np.percentile(last, 90)), 1), p10=round(float(np.percentile(last, 10)), 1),
+                                 mean_2015=round(float(dr[dy == 2015].mean()), 1),
+                                 mean_2019=round(float(dr[dy == 2019].mean()), 1),
+                                 mean_2024=round(float(dr[dy == 2024].mean()), 1))
+atr_h1_last = float(np.nanmean(atr[-24 * 250:]))
+R["atr_h1_last250d"] = round(atr_h1_last, 2)
+# loss % for table lot (1 lot per 10k) at various stop distances
+R["table_lot_loss_pct"] = {f"stop_{s}": round(s * 100 * 1.0 / 10000 * 100, 1) for s in (5, 10, 20, 34.54, 60)}
+R["lots_for_1pct_risk_per_10k"] = {f"stop_{s}": round(100.0 / (s * 100), 3) for s in (5, 10, 20, 34.54, 60)}
+
+# ----------------------------------------------------------------------------
+# T7. Backtest sample size arithmetic
+# ----------------------------------------------------------------------------
+def ci_halfwidth(nn, p=0.5):
+    return 1.96 * math.sqrt(p * (1 - p) / nn)
+
+
+R["sample_size"] = dict(ci_half_n50=round(ci_halfwidth(50), 3), ci_half_n100=round(ci_halfwidth(100), 3),
+                        ci_half_n200=round(ci_halfwidth(200), 3),
+                        n_to_detect_55_vs_50=int(((1.96 + 0.84) ** 2 * 0.25) / 0.05 ** 2))
+R["streaks"] = {"p_10_losses_in_row_at_50pct": round(0.5 ** 10, 5),
+                "loss_after_10_losses_at_1pct_risk": round(1 - 0.99 ** 10, 4),
+                "loss_after_10_losses_at_10pct_risk": round(1 - 0.9 ** 10, 4)}
+
+with open(OUT, "w", encoding="utf-8") as fh:
+    json.dump(R, fh, indent=1, ensure_ascii=False)
+print("done", len(rows), "fib rows", len(dt), "dt trades")

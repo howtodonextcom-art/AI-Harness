@@ -1,0 +1,13 @@
+import glob, numpy as np, polars as pl
+fs=sorted(glob.glob("Z:/Coding/Projects/AI-Harness/xau-edge/data/market/XAUUSD/H1/*.parquet"))
+df=pl.concat([pl.read_parquet(f) for f in fs]).sort("timestamp").unique(subset=["timestamp"],keep="last",maintain_order=True)
+h,l,c=[df[k].to_numpy().astype(float) for k in("high","low","close")]
+pc=np.r_[c[0],c[:-1]]; tr=np.maximum(h-l,np.maximum(abs(h-pc),abs(l-pc)))
+cs=np.cumsum(np.r_[0.,tr]); atr=np.full(len(c),np.nan); atr[13:]=(cs[14:]-cs[:-14])/14
+yr=df["timestamp"].dt.year().to_numpy(); sp=df["spread"].to_numpy().astype(float)/100
+print("year  medATR_H1(USD)  medSpread(USD)  roundtrip_cost(spread+2*3pts slip)/ATR   price")
+for y in range(2011,2027):
+    m=(yr==y)&np.isfinite(atr)
+    if m.sum()<500: continue
+    a=np.median(atr[m]); s=np.median(sp[m]); rt=s+0.06
+    print(y, f"{a:6.2f} {s:6.2f}   {rt/a:5.3f}   {np.median(c[m]):7.0f}")

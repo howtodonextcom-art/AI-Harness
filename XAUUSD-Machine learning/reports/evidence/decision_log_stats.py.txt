@@ -1,0 +1,16 @@
+import json,glob,collections
+rows=[]
+for f in sorted(glob.glob("decisions-*.jsonl")):
+    for l in open(f,encoding="utf-8"):
+        try: rows.append(json.loads(l))
+        except: pass
+print("rows",len(rows)); 
+print("keys",list(rows[0].keys())[:30])
+dk=[k for k in rows[0] if "decision" in k.lower()]
+print(dk)
+c=collections.Counter(r.get("decision") for r in rows); print(c)
+rc=collections.Counter()
+for r in rows:
+    for x in (r.get("refusal_reasons") or r.get("refusals") or []): rc[x]+=1
+print(rc.most_common(12))
+print("first/last",rows[0].get("timestamp"),rows[-1].get("timestamp"))

@@ -1,0 +1,23 @@
+import json, os, shutil, hashlib, sys
+root = "Z:/Coding/Projects/AI-Harness/XAUUSD-Machine learning/Image"
+trash = "Z:/Coding/Projects/AI-Harness/XAUUSD-Machine learning/Image_trash_2026-10-12"
+plan = json.load(open(sys.argv[1], encoding="utf-8"))
+books = {"618691","618698","618705","618712","618719","618726","618732","618739","618746","618752"}
+todo = [p for p in plan if p["decision"] == "D" or p["id"] in books]
+print("to delete:", len(todo))
+os.makedirs(trash, exist_ok=True)
+manifest = []
+for p in todo:
+    src = os.path.join(root, p["rel"]); dst = os.path.join(trash, p["rel"].replace("/", "__"))
+    assert os.path.exists(src), src
+    h = hashlib.md5(open(src, "rb").read()).hexdigest()
+    assert h[:8] == p["md5"], (src, h)
+    shutil.copy2(src, dst)
+    assert hashlib.md5(open(dst, "rb").read()).hexdigest() == h
+    manifest.append((p["rel"], h, p["decision"], p["id"]))
+with open(os.path.join(trash, "MANIFEST.txt"), "w", encoding="utf-8") as f:
+    for m in manifest: f.write("\t".join(m) + "\n")
+print("backed up", len(manifest))
+for rel, h, d, i in manifest:
+    os.remove(os.path.join(root, rel))
+print("deleted", len(manifest))

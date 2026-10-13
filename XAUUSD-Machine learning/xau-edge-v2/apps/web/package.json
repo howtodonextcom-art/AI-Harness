@@ -1,0 +1,29 @@
+{
+  "name": "xau-edge-v2-web",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "types": "openapi-typescript ../../docs/openapi.json -o src/api/schema.d.ts",
+    "test:e2e": "playwright test",
+    "test:unit": "node --test src/chart/bars.test.ts"
+  },
+  "dependencies": {
+    "lightweight-charts": "5.2.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.64.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~5.9.0",
+    "vite": "^8.3.4"
+  }
+}

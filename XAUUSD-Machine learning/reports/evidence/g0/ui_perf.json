@@ -1,0 +1,43 @@
+{
+ "loadMs": 340,
+ "chartMs": 725,
+ "nav": {
+  "dcl": 96.69999999925494,
+  "load": 332.69999999925494,
+  "fcp": 324,
+  "lcp": 776,
+  "jsCount": 13,
+  "jsEncoded": 291221,
+  "jsDecoded": 943680,
+  "cssCount": 1,
+  "cssEncoded": 11303,
+  "totalRes": 38,
+  "longtasks": 2,
+  "longtaskMax": 97
+ },
+ "barsRequestsAtLoad": 2,
+ "idle30s": {
+  "total": 40,
+  "byPath": {
+   "/trade/decision": 10,
+   "/md/XAUUSD/bars": 10,
+   "/trade/markers": 5,
+   "/trade/signals": 5,
+   "/trade/journal": 5,
+   "/trade/setups": 5
+  }
+ },
+ "dragBarsRequests": 4,
+ "requestsWithBefore": 0,
+ "heapUsedMB": 8.9,
+ "domNodes": 956,
+ "listeners": 566,
+ "idleFrame": {
+  "p50": 16.7,
+  "p95": 17.2,
+  "max": 18.2
+ },
+ "axisTextAfterDrag": [
+  "10-12 22:55"
+ ]
+}

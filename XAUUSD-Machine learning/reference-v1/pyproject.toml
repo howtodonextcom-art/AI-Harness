@@ -1,0 +1,149 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xau-edge"
+version = "0.14.0"
+description = "Probabilistic decision-support and research platform for XAUUSD (research only, no live trading)."
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = { text = "Proprietary" }
+dependencies = [
+    "duckdb>=1.5,<2",
+    "numpy>=2.0,<3",
+    "polars>=2.0,<3",
+    "pyarrow>=25,<26",
+    "pydantic>=2.13,<3",
+    "pydantic-settings>=2.10,<3",
+    "pyyaml>=6.0,<7",
+    "tzdata>=2024.1; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+# MetaTrader5 ships Windows-only wheels and talks to a locally running terminal.
+mt5 = ["MetaTrader5>=5.0.45; sys_platform == 'win32'"]
+ml = [
+    "lightgbm>=4.5",
+    "scikit-learn>=1.5",
+    "xgboost>=2.1",
+]
+video = [
+    "faster-whisper>=1.0",
+    "imageio-ffmpeg>=0.5",
+    "pillow>=10.0",
+    "yt-dlp>=2026.1.1",
+]
+api = [
+    "fastapi>=0.115",
+    "httpx2>=2.13.1",
+    "uvicorn>=0.32",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.100",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "types-PyYAML>=6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xau_edge"]
+
+# Ship source, tests, docs, configs and the lock file; never tool config (.claude), data, or env files.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/configs",
+    "/scripts",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/AGENTS.md",
+    "/Makefile",
+    "/pyproject.toml",
+    "/uv.lock",
+]
+# The folders above are included wholesale, so secret-looking files inside them are excluded explicitly.
+exclude = [
+    "**/.env",
+    "**/.env.*",
+    "**/*.env",
+    "**/env.*",
+    "**/.envrc",
+    "**/id_rsa*",
+    "**/id_ed25519*",
+    "**/*.pem",
+    "**/*.key",
+    "**/*.pfx",
+    "**/*.p12",
+    "**/*.crt",
+    "**/secrets.*",
+    "**/credentials*.json",
+]
+
+[tool.ruff]
+extend-exclude = [".claude", "data", "experiments/runs"]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "UP", "B", "SIM", "N", "RUF", "C4", "PT", "PL", "S", "DTZ", "T20", "PTH",
+]
+ignore = [
+    "PLR0913",  # keyword-only config-style signatures are fine
+    "PLR2004",  # magic values are common in numeric domain code
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "S105", "S106", "PT018"]
+# Operator scripts print results and are long procedural flows by nature.
+"scripts/**" = ["T201", "E501", "PLR0915", "PLR0912"]
+"src/xau_edge/execution/cli.py" = ["T201"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+module = ["MetaTrader5", "MetaTrader5.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# optional "ml" extra: scikit-learn, xgboost and lightgbm ship no complete type information
+module = ["sklearn", "sklearn.*", "xgboost", "xgboost.*", "lightgbm", "lightgbm.*", "joblib"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# optional "video" extra: no complete type information
+module = ["faster_whisper", "faster_whisper.*", "imageio_ffmpeg", "PIL", "PIL.*", "yt_dlp", "yt_dlp.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "unit: fast isolated tests",
+    "integration: multi-module pipeline tests (no network, no MT5)",
+    "statistical: leakage / calibration / walk-forward checks",
+    "regression: pinned known results",
+    "mt5: requires a running MetaTrader 5 terminal (never run in CI)",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["src/xau_edge"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

@@ -77,6 +77,35 @@ def test_the_sell_side_is_symmetric() -> None:
     assert s.take_profit < s.entry_price < s.stop_loss
 
 
+def test_mirrored_buy_and_sell_fixtures_both_reach_terminal_decisions() -> None:
+    buy = decide(aligned_state(), CTX)
+    sell = decide(
+        aligned_state(
+            h4_regime="TREND_DOWN",
+            h1_trend="BEARISH",
+            m30_structure="DOWN",
+            m15_structure="DOWN",
+            m15_pullback="PULLBACK_IN_DOWNTREND",
+            m5_momentum="DOWN",
+            m1_micro_state="ACTIVE_DOWN",
+            distance_to_support=20.0,
+            distance_to_resistance=20.0,
+            snapshots={"M5": snap(last_swing_high=2003.0, last_swing_low=1990.0)},
+        ),
+        CTX,
+    )
+
+    assert buy.decision is TradeDecision.BUY
+    assert sell.decision is TradeDecision.SELL
+    assert buy.stop_loss is not None and buy.entry_price is not None and buy.take_profit is not None
+    assert (
+        sell.take_profit is not None and sell.entry_price is not None and sell.stop_loss is not None
+    )
+    assert buy.stop_loss < buy.entry_price < buy.take_profit
+    assert sell.take_profit < sell.entry_price < sell.stop_loss
+    assert buy.setup_id and sell.setup_id and buy.setup_id != sell.setup_id
+
+
 @pytest.mark.parametrize(
     ("over", "expected"),
     [

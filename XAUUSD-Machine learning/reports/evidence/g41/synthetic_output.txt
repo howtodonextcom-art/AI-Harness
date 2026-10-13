@@ -1,0 +1,69 @@
+reachability (decisions reaching each branch):
+  action:BUY                                    2587
+  action:SELL                                   2487
+  action:WAIT                                 144926
+  capped:False                                  4606
+  capped:True                                    468
+  entry_quality:ACCEPTABLE                      3172
+  entry_quality:STRONG                          1902
+  m1:GOOD                                     103780
+  m1:NOISY (chain refusal)                      2110
+  m1:QUIET                                     10720
+  m1:SPREAD_WIDE                               13564
+  m1:STALE                                     15238
+  m1:VOLATILE                                   6698
+  refusal:BROKER_DISCONNECTED                   4254
+  refusal:COOLDOWN                              4311
+  refusal:DAILY_LIMIT                           2829
+  refusal:INVALID_STOP_DISTANCE                 1049
+  refusal:MARKET_CLOSED                         7613
+  refusal:NEWS_UNKNOWN                         14779
+  refusal:NEWS_WINDOW                           8503
+  refusal:NO_DIRECTION                          4761
+  refusal:NO_SETUP                             18518
+  refusal:NO_TRIGGER                            7312
+  refusal:RISK_LIMIT                            8699
+  refusal:RR_TOO_LOW                            3836
+  refusal:SPREAD_TOO_WIDE                      14304
+  refusal:STALE_DATA                           12742
+  refusal:TIMEFRAME_CONFLICT                    7886
+  refusal:TOO_CLOSE_TO_RESISTANCE                965
+  refusal:TOO_CLOSE_TO_SUPPORT                   952
+  refusal:UNKNOWN_STATE                        17514
+  refusal:VOLATILITY_TOO_HIGH                  24323
+  refusal:VOLATILITY_TOO_LOW                    9876
+  refusal:VOLUME_TOO_LOW                        1732
+  sized:no_equity                                992
+  sized:sized                                   4082
+  stop_model:HYBRID                             5074
+  tp2:none                                       468
+  tp2:set                                       4606
+  warnings:0                                    1449
+  warnings:1                                    3625
+readiness levels: {0: 12118, 1: 49383, 2: 15965, 3: 13094, 4: 30951, 5: 23415, 6: 5074}
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  C decision: action
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  C decision: refusals
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  C decision: reasons chain
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  C decision: warnings
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  C decision: m1_execution_state
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  C decision: decision_id (signal_id)
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  C decision: atr
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  G4.1 readiness: READY iff BUY/SELL
+[OK ]  150000 checks    0 mismatches  max|d|=0.00e+00  G4.1 readiness: gate caps at 5
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: entry_price
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: stop_loss
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: take_profit
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: take_profit_2
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: risk_reward
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: required_win_rate
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: risk_amount
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: position_size
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: stop_model
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: expiry
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: entry_quality
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: setup_id
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: gross_rr
+[OK ]    5074 checks    0 mismatches  max|d|=0.00e+00  C decision: capped_by_structure
+unreached required branches: none
+total 1421036 checks, 0 mismatches, 150000 cases, 22s
+wrote 976 synthetic fixtures to tests\golden\core_golden_synthetic.json

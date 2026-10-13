@@ -1,0 +1,97 @@
+{
+  "models": [
+    {
+      "version": "0.1.0",
+      "feature_schema_hash": "7633415139ab8298807358cc9866063f97a54f0f643c396a2b81b62738708b15",
+      "label_version": "rng24.v1",
+      "train_window": "2004-06-11T04:00:00+00:00 .. 2021-12-30T20:00:00+00:00 (walk-forward, expanding)",
+      "validation_window": "2019-01-01 .. 2021-12-31",
+      "calibration_window": "the most recent 25% of each fold's training rows (embargo 25 bars)",
+      "git_sha": "0891aed2e40af67f62ec565348f2e5e105357f63",
+      "dataset_hash": "f0bef61bdc4116491f20f704be5dd31b9193bd0c0855bb1d32db48d079bae965",
+      "spec_hash": "ede09f4d450e18b2b3bad5e657039a72c03eee346e3780c8941d9dd63af42261",
+      "spec_version": "1.1.0",
+      "status": "RETIRED",
+      "authority": "NONE",
+      "run": "docs/ml/runs/v0_dev_validation_run.json",
+      "model_id": "har_ridge",
+      "algorithm": "StandardScaler + Ridge(alpha=10), intercept unpenalised (NumPy)",
+      "metrics": {
+        "validation_2019_2021": {
+          "mse": 0.15593818135360946,
+          "skill_vs_atr14": 0.09618522486169356,
+          "qlike": 0.08192769738584864
+        },
+        "development_2012_2018": {
+          "mse": 0.150417418646033,
+          "skill_vs_atr14": 0.085940251178929
+        }
+      },
+      "calibration_metrics": {
+        "coverage_80_validation": 0.7694548252363157,
+        "coverage_80_development": 0.8280226464533034
+      },
+      "artifact": {
+        "path": "docs/ml/artifacts/har_ridge_0.1.0.json",
+        "sha256": "db4d8db2f96e5be8d71507090f0448bc48bec63ccc3868497345c94393a82b4e"
+      },
+      "role": "default",
+      "history": [
+        {
+          "to": "RETIRED",
+          "at": "2026-10-13T01:16:22.342150+00:00",
+          "evidence": {
+            "owner_approval": "project owner message 2026-10-13: 'Mo Test-H? KHONG. Giu nguyen preregistered criterion va reject V0 tai Validation.'",
+            "reason": "V0 rejected at Validation: pre-registered criterion 'improvement positive in >= 75% of years' not met (2 of 3 years). Criteria kept unchanged; Test-H NOT opened (owner decision 2026-10-13).",
+            "confirmatory_run": null
+          }
+        }
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "feature_schema_hash": "7633415139ab8298807358cc9866063f97a54f0f643c396a2b81b62738708b15",
+      "label_version": "rng24.v1",
+      "train_window": "2004-06-11T04:00:00+00:00 .. 2021-12-30T20:00:00+00:00 (walk-forward, expanding)",
+      "validation_window": "2019-01-01 .. 2021-12-31",
+      "calibration_window": "the most recent 25% of each fold's training rows (embargo 25 bars)",
+      "git_sha": "0891aed2e40af67f62ec565348f2e5e105357f63",
+      "dataset_hash": "f0bef61bdc4116491f20f704be5dd31b9193bd0c0855bb1d32db48d079bae965",
+      "spec_hash": "ede09f4d450e18b2b3bad5e657039a72c03eee346e3780c8941d9dd63af42261",
+      "spec_version": "1.1.0",
+      "status": "RETIRED",
+      "authority": "NONE",
+      "run": "docs/ml/runs/v0_dev_validation_run.json",
+      "model_id": "lightgbm_regressor",
+      "algorithm": "LightGBM regressor (200 trees, 8 leaves, lr 0.05, seed 7)",
+      "metrics": {
+        "validation_2019_2021": {
+          "mse": 0.15388665215552144,
+          "skill_vs_atr14": 0.10807584962571426,
+          "qlike": 0.07975957873183026
+        },
+        "development_2012_2018": {
+          "mse": 0.15133722915190237,
+          "skill_vs_atr14": 0.08035072725592884
+        }
+      },
+      "calibration_metrics": {
+        "coverage_80_validation": 0.7746207957792921,
+        "coverage_80_development": 0.8290052405015909
+      },
+      "artifact": null,
+      "role": "challenger",
+      "history": [
+        {
+          "to": "RETIRED",
+          "at": "2026-10-13T01:16:22.350592+00:00",
+          "evidence": {
+            "owner_approval": "project owner message 2026-10-13: 'Mo Test-H? KHONG. Giu nguyen preregistered criterion va reject V0 tai Validation.'",
+            "reason": "V0 rejected at Validation: pre-registered criterion 'improvement positive in >= 75% of years' not met (2 of 3 years). Criteria kept unchanged; Test-H NOT opened (owner decision 2026-10-13).",
+            "confirmatory_run": null
+          }
+        }
+      ]
+    }
+  ]
+}

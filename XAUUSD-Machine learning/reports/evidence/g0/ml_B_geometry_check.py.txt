@@ -1,0 +1,187 @@
+"""G0 ML V0 task-selection slice (EXPLORATORY, not alpha evidence).
+
+Protected windows are NOT touched: all data is cut at 2021-12-31 (Test-H starts 2022-01-01, Holdout 2026-05).
+Walk-forward by calendar year: fit on years < Y (with a label-horizon embargo), predict year Y.
+Dev = 2015..2018 predictions, Val = 2019..2021 predictions. Hyperparameters fixed a priori, never tuned.
+
+Task A: next-24-H1-bar log range (volatility). Task B: setup quality (win 2R before 1R) for a rule-generated setup.
+"""
+import glob, math, sys, json
+import numpy as np
+import polars as pl
+import lightgbm as lgb
+from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.metrics import roc_auc_score, log_loss
+
+CUT = np.datetime64("2022-01-01")
+fs = sorted(glob.glob("Z:/Coding/Projects/AI-Harness/xau-edge/data/market/XAUUSD/H1/*.parquet"))
+df = pl.concat([pl.read_parquet(f) for f in fs]).sort("timestamp").unique(subset=["timestamp"], keep="last", maintain_order=True)
+df = df.filter(pl.col("timestamp") < pl.datetime(2022, 1, 1, time_zone="UTC"))
+o, h, l, c = [df[k].to_numpy().astype(float) for k in ("open", "high", "low", "close")]
+ts = df["timestamp"]
+yr = ts.dt.year().to_numpy(); mo = (ts.dt.year().to_numpy() * 12 + ts.dt.month().to_numpy())
+hour = ts.dt.hour().to_numpy(); dow = ts.dt.weekday().to_numpy()
+n = len(c)
+print("bars used (<=2021-12-31):", n)
+
+pc = np.r_[c[0], c[:-1]]
+tr = np.maximum(h - l, np.maximum(abs(h - pc), abs(l - pc)))
+def sma(x, k):
+    cs = np.cumsum(np.r_[0., x]); out = np.full(len(x), np.nan); out[k - 1:] = (cs[k:] - cs[:-k]) / k; return out
+atr14, atr50, atr200 = sma(tr, 14), sma(tr, 50), sma(tr, 200)
+lr = np.r_[0, np.diff(np.log(c))]
+def rolling(fn, x, k):
+    out = np.full(len(x), np.nan)
+    for i in range(k - 1, len(x)): out[i] = fn(x[i - k + 1:i + 1])
+    return out
+rng24 = np.full(n, np.nan); rng5 = np.full(n, np.nan)
+for i in range(23, n): rng24[i] = h[i - 23:i + 1].max() - l[i - 23:i + 1].min()
+for i in range(4, n): rng5[i] = h[i - 4:i + 1].max() - l[i - 4:i + 1].min()
+rv24 = np.full(n, np.nan)
+for i in range(23, n): rv24[i] = lr[i - 23:i + 1].std()
+sma20 = sma(c, 20); sd20 = np.full(n, np.nan)
+for i in range(19, n): sd20[i] = c[i - 19:i + 1].std()
+bbw = (4 * sd20) / sma20
+eps = 1e-12
+feat = {
+    "lATR14": np.log(atr14 / c + eps), "lATR50": np.log(atr50 / c + eps), "lATR200": np.log(atr200 / c + eps),
+    "lR24": np.log(rng24 / c + eps), "lR5": np.log(rng5 / c + eps), "lRV24": np.log(rv24 + eps),
+    "ar1": np.abs(lr), "ar5": np.abs(np.r_[np.zeros(5), c[5:] / c[:-5] - 1]) , "lBBW": np.log(bbw + eps),
+    "hs": np.sin(2 * np.pi * hour / 24), "hc": np.cos(2 * np.pi * hour / 24),
+    "ds": np.sin(2 * np.pi * dow / 7), "dc": np.cos(2 * np.pi * dow / 7),
+}
+FN = list(feat)
+X = np.column_stack([feat[k] for k in FN])
+
+# -------------------------------------------------------------------- Task A
+H = 24
+fut = np.full(n, np.nan)
+for i in range(n - H): fut[i] = h[i + 1:i + 1 + H].max() - l[i + 1:i + 1 + H].min()
+yA = np.log(fut / c + eps)
+okA = np.isfinite(X).all(1) & np.isfinite(yA) & (np.arange(n) > 250)
+
+def wf_predict(model_fns, X, y, ok, years, horizon):
+    preds = {k: np.full(n, np.nan) for k in model_fns}
+    for Y in years:
+        te = np.flatnonzero(ok & (yr == Y))
+        if te.size == 0: continue
+        first = te[0]
+        tr_idx = np.flatnonzero(ok & (np.arange(n) <= first - horizon - 1))
+        if tr_idx.size < 3000: continue
+        for k, fn in model_fns.items():
+            m = fn(); m.fit(X[tr_idx], y[tr_idx]); preds[k][te] = m.predict(X[te])
+    return preds
+
+class Mean:
+    def fit(self, X, y): self.m = y.mean(); return self
+    def predict(self, X): return np.full(len(X), self.m)
+class OneFeat:
+    def __init__(self, j): self.j = j
+    def fit(self, X, y):
+        A = np.c_[np.ones(len(X)), X[:, self.j]]; self.b = np.linalg.lstsq(A, y, rcond=None)[0]; return self
+    def predict(self, X): return self.b[0] + self.b[1] * X[:, self.j]
+class Har:
+    def fit(self, X, y): self.m = make_pipeline(StandardScaler(), Ridge(alpha=10.0)).fit(X, y); return self
+    def predict(self, X): return self.m.predict(X)
+class Lgbm:
+    def fit(self, X, y):
+        self.m = lgb.LGBMRegressor(n_estimators=200, num_leaves=8, learning_rate=0.05, subsample=0.8, subsample_freq=1,
+                                   colsample_bytree=0.8, min_child_samples=50, random_state=7, n_jobs=1, verbose=-1).fit(X, y); return self
+    def predict(self, X): return self.m.predict(X)
+
+j14 = FN.index("lATR14")
+modelsA = {"B0_mean": Mean, "B1_ATR14_1feat": lambda: OneFeat(j14), "B2_HAR_ridge": Har, "M_LightGBM": Lgbm}
+predA={}
+
+
+def ema(x, s):
+    a = 2 / (s + 1); r = np.empty_like(x); r[0] = x[0]
+    for i in range(1, len(x)): r[i] = r[i - 1] + a * (x[i] - r[i - 1])
+    return r
+e50, e200 = ema(c, 50), ema(c, 200)
+slope = e50 - np.r_[np.full(5, np.nan), e50[:-5]]
+body = np.abs(c - o); rg = h - l
+pin_b = (np.minimum(o, c) - l >= 2 * body) & (h - np.maximum(o, c) <= 0.3 * rg) & (rg > 0.5 * atr14)
+pin_s = (h - np.maximum(o, c) >= 2 * body) & (np.minimum(o, c) - l <= 0.3 * rg) & (rg > 0.5 * atr14)
+def sh(x, k): r = np.full(n, np.nan); r[k:] = x[:-k]; return r
+eng_b = (sh(c, 1) < sh(o, 1)) & (c > o) & (o <= sh(c, 1)) & (c >= sh(o, 1))
+eng_s = (sh(c, 1) > sh(o, 1)) & (c < o) & (o >= sh(c, 1)) & (c <= sh(o, 1))
+touch_b = (l <= e50 + 0.3 * atr14) & (c > e50); touch_s = (h >= e50 - 0.3 * atr14) & (c < e50)
+up = (np.arange(n) > 400) & (c > e50) & (slope > 0); dn = (np.arange(n) > 400) & (c < e50) & (slope < 0)
+sig_l = up & touch_b & (pin_b | eng_b); sig_s = dn & touch_s & (pin_s | eng_s)
+ev = []
+for side, m in ((1, sig_l), (-1, sig_s)):
+    for i in np.flatnonzero(m & np.isfinite(atr14)):
+        if i + 2000 >= n: continue
+        e = c[i]; sl = (l[i - 4:i + 1].min() - 0.1 * atr14[i]) if side > 0 else (h[i - 4:i + 1].max() + 0.1 * atr14[i]); r = abs(e - sl)
+        if r <= 0.3 * atr14[i] or r > 5 * atr14[i]: continue
+        tp = e + side * 2 * r
+        hs = (l[i + 1:i + 2001] <= sl) if side > 0 else (h[i + 1:i + 2001] >= sl)
+        ts_ = (h[i + 1:i + 2001] >= tp) if side > 0 else (l[i + 1:i + 2001] <= tp)
+        si = int(np.argmax(hs)) if hs.any() else 10 ** 9; ti = int(np.argmax(ts_)) if ts_.any() else 10 ** 9
+        if si == 10 ** 9 and ti == 10 ** 9: continue
+        end_bars = min(si, ti)
+        ev.append((i, side, 1 if ti < si else 0, end_bars))
+ev = np.array(ev)
+idxB = ev[:, 0].astype(int); side = ev[:, 1]; yB = ev[:, 2]; dur = ev[:, 3]
+er = np.full(n, np.nan); cc = np.abs(c[20:] - c[:-20]); pth = np.convolve(np.abs(np.diff(c)), np.ones(20), "valid"); er[20:] = cc / np.maximum(pth[:len(cc)], 1e-9)
+atrp = np.full(n, np.nan)
+for i in range(300, n): atrp[i] = (atr14[i - 250:i] < atr14[i]).mean()
+hi50 = np.array([h[max(0, i - 49):i + 1].max() for i in range(n)]); lo50 = np.array([l[max(0, i - 49):i + 1].min() for i in range(n)])
+pos50 = (c - lo50) / np.maximum(hi50 - lo50, 1e-9)
+rsi_d = np.diff(c, prepend=c[0]);
+def wil(x, p):
+    r = np.full(len(x), np.nan); r[p] = x[1:p + 1].mean()
+    for i in range(p + 1, len(x)): r[i] = (r[i - 1] * (p - 1) + x[i]) / p
+    return r
+rsi = 100 - 100 / (1 + wil(np.maximum(rsi_d, 0), 14) / np.maximum(wil(np.maximum(-rsi_d, 0), 14), 1e-9))
+FB = np.column_stack([
+    side, side * (c[idxB] - e50[idxB]) / atr14[idxB], side * slope[idxB] / atr14[idxB], side * (c[idxB] - e200[idxB]) / atr14[idxB],
+    er[idxB], atrp[idxB], feat["lATR14"][idxB], side * (pos50[idxB] - 0.5), rsi[idxB], feat["hs"][idxB], feat["hc"][idxB], feat["ds"][idxB], feat["dc"][idxB],
+    side * ((c[idxB] - o[idxB]) / atr14[idxB]),
+])
+okB = np.isfinite(FB).all(1)
+yrB = yr[idxB]
+resB = {}
+class LogR:
+    def fit(self, X, y): self.m = make_pipeline(StandardScaler(), LogisticRegression(C=0.1, max_iter=500)).fit(X, y); return self
+    def predict_proba1(self, X): return self.m.predict_proba(X)[:, 1]
+class LgbC:
+    def fit(self, X, y):
+        self.m = lgb.LGBMClassifier(n_estimators=150, num_leaves=6, learning_rate=0.05, subsample=0.8, subsample_freq=1, colsample_bytree=0.8,
+                                    min_child_samples=60, random_state=7, n_jobs=1, verbose=-1).fit(X, y); return self
+    def predict_proba1(self, X): return self.m.predict_proba(X)[:, 1]
+
+sys.argv=[sys.argv[0],'x']
+
+
+rows=[]
+for sd, m in ((1, sig_l), (-1, sig_s)):
+    for i in np.flatnonzero(m & np.isfinite(atr14)):
+        if i + 2001 >= n: continue
+        e = c[i]; sl = (l[i - 4:i + 1].min() - 0.1 * atr14[i]) if sd > 0 else (h[i - 4:i + 1].max() + 0.1 * atr14[i]); r = abs(e - sl)
+        if r <= 0.3 * atr14[i] or r > 5 * atr14[i]: continue
+        tp = e + sd * 2 * r
+        hs = (l[i + 1:i + 2001] <= sl) if sd > 0 else (h[i + 1:i + 2001] >= sl)
+        ts_ = (h[i + 1:i + 2001] >= tp) if sd > 0 else (l[i + 1:i + 2001] <= tp)
+        si = int(np.argmax(hs)) if hs.any() else 10**9; ti = int(np.argmax(ts_)) if ts_.any() else 10**9
+        if si == 10**9 and ti == 10**9: continue
+        rows.append((i, sd, r/atr14[i], 1 if ti < si else 0, 1 if ti == si else 0, min(si, ti), int(yr[i])))
+A = np.array(rows)
+ra = A[:,2]; w = A[:,3]; tie = A[:,4]; dur = A[:,5]
+print("events", len(A), "win", w.mean(), "ties", tie.mean(), "first-bar resolution share", (dur==0).mean())
+qs = np.quantile(ra,[0,.2,.4,.6,.8,1.0])
+print("r/ATR quintile | n | win | tie share | resolved within 3 bars | meanR")
+for a,b in zip(qs[:-1],qs[1:]):
+    m=(ra>=a)&(ra<=b); R=np.where(w[m]==1,2.0,-1.0)
+    print(f"{a:5.2f}-{b:5.2f} {m.sum():5d} {w[m].mean():.3f} {tie[m].mean():.3f} {(dur[m]<=2).mean():.3f} {R.mean():+.3f}")
+# win rate excluding events resolved within 3 bars (removes bar-level geometry)
+m=dur>3
+print("exclude resolved<=3 bars: n",m.sum(),"win",w[m].mean(),"meanR",np.where(w[m]==1,2.0,-1.0).mean())
+# single-feature AUC of r/ATR (pure geometry)
+from sklearn.metrics import roc_auc_score
+print("AUC of r/ATR alone (all years, in-sample, no model):", roc_auc_score(w, ra))
+for yrs,lab in ((range(2015,2019),"2015-18"),(range(2019,2022),"2019-21")):
+    mm=np.isin(A[:,6],list(yrs)); print(lab,"AUC r/ATR alone:",roc_auc_score(w[mm],ra[mm]),"n",mm.sum())

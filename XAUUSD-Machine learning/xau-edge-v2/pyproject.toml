@@ -1,0 +1,71 @@
+[project]
+name = "xau-edge-v2"
+version = "0.0.1"
+description = "XAU EDGE v2: one-page XAUUSD decision terminal (PAPER only)"
+requires-python = ">=3.12,<3.15"
+license = { text = "Proprietary" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+    "websockets>=13",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.6",
+    "polars>=1.0",
+    "pyarrow>=17",
+    "numpy>=2.0",
+    "tzdata>=2024.1; sys_platform == 'win32'",
+]
+
+[dependency-groups]
+ml = [
+    "lightgbm>=4.5",
+    "scikit-learn>=1.5",
+]
+dev = [
+    "pytest>=8",
+    "httpx2>=2.13",
+    "ruff>=0.7",
+    "mypy>=1.13",
+    "hypothesis>=6.100",
+    "psutil>=7.2.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xau_edge_v2"]
+
+[project.scripts]
+xau-edge-v2 = "xau_edge_v2.__main__:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "PL", "RUF"]
+ignore = ["PLR2004", "E501"]  # the formatter wraps code; long Vietnamese strings/docstrings are fine
+
+[tool.ruff.lint.per-file-ignores]
+"src/xau_edge_v2/core/*" = ["PLR0913", "PLR0917"]
+"src/xau_edge_v2/ml/*" = ["PLR0913", "PLR0917", "E501"]  # numeric/statistics code with explicit inputs
+"src/xau_edge_v2/api/model.py" = ["E501", "RUF001"]  # Vietnamese copy with en dashes in ranges
+"tests/unit/test_ml_v0.py" = ["E501", "PLC0415", "RUF059"]  # numeric kernels take their arrays by name
+"scripts/*.py" = ["E501", "RUF100", "PLR0913", "PLR0917"]  # one-off tooling with long literal text
+"scripts/parity/golden_*.py" = ["E402", "E501", "I001", "RUF100", "PLR0913", "PLR0915", "PLR0917", "B007"]  # tooling
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+packages = ["xau_edge_v2"]
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.uv]
+default-groups = ["dev", "ml"]

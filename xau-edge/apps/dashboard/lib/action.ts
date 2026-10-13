@@ -58,8 +58,10 @@ export function actionText(view: TradeView, secondsLeft: number | null, expiredN
   const plan = view.trade_plan ?? null;
   const side = a.side;
   const SIDE = sideWord(side);
-  const bias: BiasText = a.bias
-    ? { side: a.bias, word: sideWord(a.bias), note: "thiên hướng theo xu hướng H1, chưa phải tín hiệu vào lệnh" }
+  const diagnosticBias = view.why_wait?.diagnostic?.bias?.side;
+  const displayBias = a.bias ?? (diagnosticBias === "BUY" || diagnosticBias === "SELL" ? diagnosticBias : null);
+  const bias: BiasText = displayBias
+    ? { side: displayBias, word: sideWord(displayBias), note: "thiên hướng theo xu hướng H1, chưa phải tín hiệu vào lệnh" }
     : { side: null, word: "TRUNG TÍNH", note: "chưa có hướng ưu tiên rõ ràng" };
   const phase = view.setup?.phase ?? null;
   const n = view.setup?.bars_since_armed ?? null;

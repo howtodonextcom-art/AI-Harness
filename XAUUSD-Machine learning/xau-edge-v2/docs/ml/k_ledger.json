@@ -1,0 +1,51 @@
+{
+  "families": {
+    "K_V2_VOL_V0": {
+      "k": 2,
+      "candidates": [
+        "har_ridge",
+        "lightgbm_regressor"
+      ],
+      "alpha_family": 0.05,
+      "alpha_per_comparison": 0.025,
+      "spec_version": "1.1.0",
+      "spec_hash": "ede09f4d450e18b2b3bad5e657039a72c03eee346e3780c8941d9dd63af42261",
+      "adr": "ADR-V2-007",
+      "registered_at": "2026-10-13T00:45:54.270105+00:00",
+      "status": "CLOSED",
+      "closed_reason": "V0 rejected at Validation: pre-registered criterion 'improvement positive in >= 75% of years' not met (2 of 3 years). Criteria kept unchanged; Test-H NOT opened (owner decision 2026-10-13)."
+    }
+  },
+  "events": [
+    {
+      "ts": "2026-10-13T00:45:54.270131+00:00",
+      "kind": "FAMILY_REGISTERED",
+      "detail": {
+        "family": "K_V2_VOL_V0",
+        "spec_hash": "ede09f4d450e18b2b3bad5e657039a72c03eee346e3780c8941d9dd63af42261",
+        "candidates": [
+          "har_ridge",
+          "lightgbm_regressor"
+        ]
+      }
+    },
+    {
+      "ts": "2026-10-13T01:16:22.351647+00:00",
+      "kind": "POLICY_CLARIFICATION",
+      "detail": {
+        "family": "K_V2_VOL_V0",
+        "text": "K=2 with family alpha 0.05 (Bonferroni): per-comparison alpha 0.025. For the claim 'improvement > 0' the criterion is a 97.5% ONE-sided lower bound (the 2.5th bootstrap percentile), not a two-sided 97.5% interval. Spec 1.1.0's wording 'two-sided 97.5%' is superseded for future families; no result depended on it.",
+        "decided_by": "project owner 2026-10-13"
+      }
+    },
+    {
+      "ts": "2026-10-13T01:16:22.360203+00:00",
+      "kind": "FAMILY_CLOSED",
+      "detail": {
+        "family": "K_V2_VOL_V0",
+        "reason": "V0 rejected at Validation: pre-registered criterion 'improvement positive in >= 75% of years' not met (2 of 3 years). Criteria kept unchanged; Test-H NOT opened (owner decision 2026-10-13).",
+        "confirmatory_looks": 0
+      }
+    }
+  ]
+}

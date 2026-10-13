@@ -1,0 +1,24 @@
+{
+  "provenance": {
+    "source": "Z:\\Coding\\Projects\\AI-Harness\\xau-edge\\configs\\brokers\\ftmo_demo.yaml",
+    "sha256": "da8472416d6badd65bc818fbe59887359d67c0b69848a888e686993f9da330fa",
+    "imported_at": "2026-10-12T16:38:09+00:00",
+    "note": "values measured on the FTMO demo terminal 2026-10-08 (V1 report)"
+  },
+  "name": "ftmo-demo",
+  "clock": "NY+7",
+  "instrument": {
+    "symbol": "XAUUSD",
+    "digits": 2,
+    "point": 0.01,
+    "contract_size": 100.0,
+    "quote_currency": "USD"
+  },
+  "calendar": {
+    "timezone": "America/New_York",
+    "weekend_close_minute": 1010,
+    "weekend_open_minute": 1085,
+    "daily_break_start_minute": 1010,
+    "daily_break_end_minute": 1085
+  }
+}

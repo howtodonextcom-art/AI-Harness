@@ -1,0 +1,170 @@
+[
+ {
+  "name": "trade",
+  "path": "/trade",
+  "status": 200,
+  "loadMs": 3389,
+  "errors": [],
+  "failed": [],
+  "title": "XAU EDGE — Terminal giao dịch PAPER (XAUUSD)",
+  "h1": [
+   "XAUUSD",
+   "Hoạt động thị trường",
+   "Mức giá",
+   "Công cụ của tôi"
+  ],
+  "textHead": "XAU EDGE\nTrade\nDữ liệu\nJournal\nResearch\nVận hành\nXAUUSD\nDỮ LIỆU LIVE\nThị trường MỞ\nPAPER · không gửi lệnh thật\nBid (giá bán ra)\n4168.79\n▼\n4168.79\nAsk 4169.20\nSpread 41 điểm (0.41)\nHôm nay\n-26.30 (-0.63%)\nCao / Thấp\n4217.03 / 4154.51\nBiên ngày\n62.52\nLondon + New York\n22:14:10\nGiờ Việt Nam (GMT+7)\nUTC\nGiờ broker (NY+7)\nGiờ máy tôi\nNến M5 đóng sau 00:49\ndữ liệu: 58s\nM1\nM5\nM15\nM30\nH1\nH4\n⤢\n⇥\n⟳\n Theo nến\n BẬT\n⛶\n📏 Đo\n— Đường\n✎ Vẽ\n☷ Nét vẽ (0)\n🔔 Báo giá\n☰ Lớp phủ\n⌨\n\t\n\t\n\n\n\n\t\n\t\n\n\t\n\t\n10-12 22:10\nO 4166.59\nH 4169.43\nL 4166.19\nC 4168.79\n+2.20 (+0.05%)\nbiên 3.24\nvol 777\nH4\nchế độ\nĐI NGANG\nCHẶN\nH1\nhướng\nTRUNG TÍNH\nQUYẾT ĐỊNH\nM30\nbối cảnh\n▼ ↓ GIẢM\nBỐI CẢNH\nM15\nsetup\n▼ DOWN / NONE\nSETUP\nM5\nkích hoạt\nĐỨNG\nTRIGGER\nM1\nthực thi\nTỐT\nTHỰC THI\nBẠN NÊN LÀM GÌ BÂY GIỜ?\n⏸\nCHỜ\nKHÔNG VÀO LỆNH\nUNVALIDATED · CHƯA KIỂM CHỨNG · PHỦ 76.7% / 95%\n\nBaseline vận hành. Chưa có bằng chứng kỳ vọng dương.\n\nđộ phủ 76.7% < cổng 95% — “chưa thấy setup” chưa chứng minh được gì\n\nENTRY\n—\nSL\n—\nTP\n—\nR:R\n—\n\nChưa được vào lệnh: H1 chưa có hướng rõ\n\nThiên hướng\n→ TRUNG TÍNH — chưa có hướng ưu tiên rõ\nSetup\nChưa có\n\nHiện chưa có setup. Nhãn HỒI (pullback: giá hồi ngược xu hướng chính) trên M15 là vai trò khung (chỗ tìm setup), không phải setup đã hình thành.\n\nCần xảy ra: H1 xác lập hướng tăng hoặc giảm rõ ràng. Chưa làm gì cho tới lúc đó; khi mọi điều kiện đạt, hành động mới chuyển thành MUA hoặc BÁN PAPER.\n\n● Thiên hướng\n→○ Setup\n→○ Trigger\n→○ Sẵn sàng\n→○ Mở PAPER\n→○ Giữ\n→○ Thoát\n\nTIN: Chưa vào cửa sổ tin mạnh\n\nTHIÊN HƯỚNG\n— TRUNG TÍNH\nH1 chưa rõ hướng\nHÀNH ĐỘNG\n⏸ CHỜ\nChưa được vào lệnh\n\nH1 chưa có hướng rõ.\n\n⚠ BLOCKER CHÍNH H1 chưa có hướng\n\nTIẾP THEO Chờ H1 xác lập hướng tăng hoặc giảm rõ ràng\n\nEXECUTION\n✓ Spread: 41 điểm · TỐT\nphân vị 82.7% (giới hạn 90.0%) · spread/ATR M5 0.105 (giới hạn 0.15)\n✓ Biến động: BÌNH THƯỜ",
+  "hasHorizontalScroll": false,
+  "height": 2132,
+  "buttons": [
+   "Bid (giá bán ra)",
+   "Ask",
+   "Spread",
+   "Chi tiết thị trường ▾",
+   "M1",
+   "M5",
+   "M15",
+   "M30",
+   "H1",
+   "H4",
+   "⤢",
+   "⇥",
+   "⟳ Theo nến BẬT",
+   "⛶",
+   "📏 Đo",
+   "— Đường",
+   "✎ Vẽ",
+   "☷ Nét vẽ (0)",
+   "🔔 Báo giá",
+   "☰ Lớp phủ",
+   "⌨",
+   "⋯",
+   "H4chế độĐI NGANGCHẶN",
+   "H1hướngTRUNG TÍNHQUYẾT ĐỊNH",
+   "M30bối cảnh▼ ↓ GIẢMBỐI CẢNH"
+  ]
+ },
+ {
+  "name": "market",
+  "path": "/market",
+  "status": 200,
+  "loadMs": 3281,
+  "errors": [],
+  "failed": [],
+  "title": "XAU EDGE — Market (FTMO MT5)",
+  "h1": [
+   "XAUUSD · FTMO MT5",
+   "Độ mới của từng khung (nến đã đóng)"
+  ],
+  "textHead": "XAU EDGE\nTrade\nDữ liệu\nJournal\nResearch\nVận hành\n← Dashboard chính\nXAUUSD · FTMO MT5\nMúi giờ hiển thị\nGiờ Việt Nam (GMT+7)\nUTC\nGiờ broker (NY+7)\nGiờ máy tôi\nMT5\nĐÃ KẾT NỐI\nCollector\nĐANG CHẠY\nAPI\nĐÃ KẾT NỐI\nThị trường\nMỞ\nBáo giá\nMỚI\nNến\nMỚI\n\nNguồn: terminal FTMO MetaTrader 5 (tài khoản DEMO, chỉ đọc dữ liệu thị trường). Khối lượng là tick volume (số lần giá đổi), không phải khối lượng thật. Giờ hiển thị: UTC.\n\nBid\n4168.99\nAsk\n4169.40\nMid\n4169.19\nSpread (điểm)\n41\nTuổi tick\n1s\n\nTick cuối: 2026-10-12 15:14:13 · last tick is recent\n\n⚠ drive C: has only 11.3 GB free\nM1\nM5\nM15\nM30\nH1\nH4\nHiện nến đang hình thành\n\t\n\t\n\n\n\n\t\n\t\n\n\n\n\t\n\t\n\n\t\n\t\n\nNến mờ viền đậm = đang hình thành (chưa đóng, không dùng cho nghiên cứu). Các nến còn lại đã đóng.\n\nĐộ mới của từng khung (nến đã đóng)\nNến đóng gần nhất và độ mới theo từng khung\nKhung\tNến đóng gần nhất (mở lúc)\tĐóng lúc\tCách đây\tTrạng thái\nM1\t2026-10-12 15:12:00\t2026-10-12 15:13:00\t75s\t\nMỚI\nM5\t2026-10-12 15:05:00\t2026-10-12 15:10:00\t4 phút\t\nMỚI\nM15\t2026-10-12 14:45:00\t2026-10-12 15:00:00\t14 phút\t\nMỚI\nM30\t2026-10-12 14:30:00\t2026-10-12 15:00:00\t14 phút\t\nMỚI\nH1\t2026-10-12 14:00:00\t2026-10-12 15:00:00\t14 phút\t\nMỚI\nH4\t2026-10-12 09:00:00\t2026-10-12 13:00:00\t2.2 giờ\t\nMỚI\nChất lượng dữ liệu · collector GOOD",
+  "hasHorizontalScroll": false,
+  "height": 1332,
+  "buttons": [
+   "M1",
+   "M5",
+   "M15",
+   "M30",
+   "H1",
+   "H4"
+  ]
+ },
+ {
+  "name": "journal",
+  "path": "/journal",
+  "status": 200,
+  "loadMs": 3153,
+  "errors": [],
+  "failed": [],
+  "title": "XAU EDGE — Journal (PAPER)",
+  "h1": [
+   "Journal · lệnh PAPER (giả lập)",
+   "Theo lý do thoát",
+   "Theo tuần (thứ Hai, UTC)"
+  ],
+  "textHead": "XAU EDGE\nTrade\nDữ liệu\nJournal\nResearch\nVận hành\nJournal · lệnh PAPER (giả lập)\nMúi giờ hiển thị\nGiờ Việt Nam (GMT+7)\nUTC\nGiờ broker (NY+7)\nGiờ máy tôi\n\nMọi lệnh ở đây là mô phỏng. Chưa có bằng chứng thống kê rằng baseline này có lợi thế — số liệu nhỏ không chứng minh gì.\n\nLệnh đã đóng\n0\nThắng\n0\nP&L ròng (paper)\n$0.00\nTổng R\n0.00\nTỷ lệ thắng\n—\nR trung bình / lệnh\n—\nĐường R tích lũy\ncần ít nhất 2 lệnh đã đóng\nTất cả\nThắng\nThua\nMUA\nBÁN\nXuất CSV\nTHEO LÝ DO THOÁT\n\nChưa có lệnh đã đóng.\n\nTHEO TUẦN (THỨ HAI, UTC)\n\nChưa có lệnh đã đóng.\n\nSetup\tHướng\tMở lúc (UTC)\tVào\tThoát\tSL / TP\tLot\tLý do thoát\tR\tP&L\tMFE / MAE (R)\tPhút\tBản\t\nChưa có lệnh paper nào. Khi bạn mở một lệnh từ trang Trade, nó sẽ hiện ở đây.",
+  "hasHorizontalScroll": false,
+  "height": 900,
+  "buttons": [
+   "Tất cả",
+   "Thắng",
+   "Thua",
+   "MUA",
+   "BÁN",
+   "Xuất CSV"
+  ]
+ },
+ {
+  "name": "research",
+  "path": "/research",
+  "status": 200,
+  "loadMs": 3701,
+  "errors": [],
+  "failed": [],
+  "title": "XAU EDGE — Research Console",
+  "h1": [
+   "Research Console: chúng ta đang ở đâu?",
+   "Kết luận chương trình trước",
+   "Chương trình V1",
+   "Chương trình V2",
+   "Điều kiện dừng đã đạt",
+   "Quyết định chủ dự án đang chờ (D-1..D-5)"
+  ],
+  "textHead": "XAU EDGE\nTrade\nDữ liệu\nJournal\nResearch\nVận hành\nResearch Console: chúng ta đang ở đâu?\nXAU EDGE\n\nTrạng thái chương trình nghiên cứu edge, K, ngân sách và quyết định đang chờ.\n\n← Dashboard chính\nTổng quan\nLedger & K\nGiả thuyết\nBằng chứng\nỨng viên\nDữ liệu & khóa\nLineage\nForward & vòng đời\nVận hành\n\nConsole chỉ đọc: không có nút chạy thực nghiệm, mở dữ liệu khóa, bật giao dịch thật hay sửa ledger. Thao tác duy nhất là hạ trạng thái chiến lược (trang Forward).\n\nTải lại\nKhông có edge được kiểm định.\n\nChưa chiến lược nào ở trạng thái VALIDATED hay FUNDED; bot sẽ WAIT.\n\nKẾT LUẬN CHƯƠNG TRÌNH TRƯỚC\n\n(B) NO EDGE WITHIN BUDGET\n\nNhãn bằng chứng: UNVALIDATED (không có ứng viên qua cả hai giai đoạn).\n\nnguồn: docs/research/edge-program/final-verdict.md\n\nCHƯƠNG TRÌNH V1\nK đã dùng / trần\n21 / 21\nNgân sách giả thuyết\n6 / 6\n\nalpha hiệu chỉnh = 0,05 / K = 0.002381 · 36 lần chạy ghi trong ledger\n\nnguồn: docs/research/edge-program/ledger.md\n\nCHƯƠNG TRÌNH V2\nK đã dùng / trần\n20 / 24\nNgân sách giả thuyết\n4 / 8\n\nnguồn: docs/research/edge-program-v2/STATE.json\n\nĐIỀU KIỆN DỪNG ĐÃ ĐẠT\nV1: đã dùng hết ngân sách giả thuyết\nV1: K chạm trần\n\nnguồn: docs/research/edge-program/ledger.md, docs/research/edge-program-v2/STATE.json\n\nQUYẾT ĐỊNH CHỦ DỰ ÁN ĐANG CHỜ (D-1..D-5)\nD-1\nAUTHORIZED FOR BATCH A ONLY BY THE OWNER PROMPT OF 2026-10-09 (NOT FOR BATCH B, NOT FOR TEST-H OR HOLDOUT)\nApprove Edge Program V2: budget (<= 8 hypotheses, Batch A = H07-H10, <= 48 variants), two-stage inference (Stage 1 Holm screening is additive, the seven criteria unchanged), Test-H as the sole confirmatory set, Dev-2/Val-2 labelled burned, Class D rule (đề xuất: Yes)\nD-2\nAUTHORIZED FOR READ-ONLY PROBES BY THE OWNER PROMPT OF 2026-10-09 (DONE, SEE MT5-PROBE.JSON)\nApprove read-only MT5 probes: M1 and tick depth, symbol list (no o",
+  "hasHorizontalScroll": false,
+  "height": 1186,
+  "buttons": [
+   "Tải lại"
+  ]
+ },
+ {
+  "name": "control",
+  "path": "/control",
+  "status": 200,
+  "loadMs": 3213,
+  "errors": [
+   "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+   "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+   "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "failed": [
+   "503 http://127.0.0.1:3000/api/control/status",
+   "503 http://127.0.0.1:3000/api/control/preflight?probe=true",
+   "503 http://127.0.0.1:3000/api/control/journal"
+  ],
+  "title": "XAU EDGE — Điều khiển",
+  "h1": [
+   "Điều khiển bot"
+  ],
+  "textHead": "XAU EDGE\nTrade\nDữ liệu\nJournal\nResearch\nVận hành\nĐiều khiển bot\n← Về dashboard\n\nCONTROL DISABLED · điều khiển web đang tắt\n\nAPI đang chạy không có điều khiển web (XAU_EDGE_WEB_CONTROL chưa bật), nên trang này không có gì để điều khiển và đã dừng hỏi máy chủ. Đây không phải lỗi: bàn PAPER và /trade vẫn hoạt động bình thường.\n\nKiểm tra lại",
+  "hasHorizontalScroll": false,
+  "height": 900,
+  "buttons": [
+   "Kiểm tra lại"
+  ]
+ },
+ {
+  "name": "legacy",
+  "path": "/legacy",
+  "status": 200,
+  "loadMs": 14663,
+  "errors": [],
+  "failed": [],
+  "title": "XAU EDGE — Legacy research dashboard (deprecated)",
+  "h1": [
+   "XAU EDGE",
+   "Demo bot",
+   "Decision",
+   "Probabilities and value",
+   "Market context",
+   "Price, M15 (last 200 bars)",
+   "Current pattern vs top historical analogues",
+   "Explanation"
+  ],
+  "textHead": "XAU EDGE\nTrade\nDữ liệu\nJournal\nResearch\nVận hành\nLEGACY / NOT ACTIVE — trang cũ (deprecated): bot DEMO cũ bị KHÓA, dữ liệu lấy từ kho nghiên cứu data/raw, có thể đã cũ nhiều tháng. Đừng dùng để giao dịch — hãy dùng /trade.\nXAU EDGE\n\nXAUUSD probabilistic decision support. Research only: no orders can be placed.\n\nThị trường MT5\nResearch\nĐiều khiển\nDecision time Thu, 08 Oct 2026 13:15:00 GMT\nRefresh\n\nData as of Thu, 08 Oct 2026 13:15:00 GMT (98 h old). This dataset is not live.\n\nDEMO BOT\nMode: DRY-RUN\nEvidence: NONE\nLive trading: always off\nKill switch: unknown\nHEARTBEAT STALE: no cycle for 5879 minutes\nNEWS UNKNOWN: no economic calendar: signals stay WAIT\nTerminal\nconnected\nAccount\nDEMO\nBalance\n9494.58\nEquity\n9494.58\nStatus updated\n98.0 h ago\nNews status\nUnknown (no calendar)\nLast decision bar\n08 Oct 2026 13:15\nLast signal\nWAIT\nOrder intent\nnone\nData age\n0 min\nReconciliation\nclean\nWhy no trade (last cycle)\n\nno validated edge; htf bias conflict; news unknown\n\nPROP ACCOUNT\nStrategy\n—\nRollout\n—\nDaily floor distance\n—\nMax floor distance\n—\nRequests today\n—\nTrading days\n—\nKill switch (state)\nunknown\nOPEN DEMO POSITIONS\n\nNo open positions.\n\nRECENT DECISIONS\n10-08 13:15\nWAIT\nno validated edge; htf bias conflict; news unknown\n10-08 13:00\nWAIT\nno validated edge; edge insufficient; news unknown\n10-08 12:45\nWAIT\nno validated edge; htf bias conflict; entry quality poor; news unknown\n10-08 12:30\nWAIT\nno validated edge; edge insufficient; news unknown\n10-08 12:30\nWAIT\nno validated edge; edge insufficient; news unknown\n10-08 12:15\nWAIT\nno validated edge; edge insufficient; news unknown\n10-08 12:15\nWAIT\nno validated edge; edge insufficient; news unknown\n10-08 12:00\nWAIT\nno validated edge; htf bias conflict; news unknown\nEXECUTION JOURNAL\n10-08 13:15:20\nreconcile.result\n10-08 13:00:20\nreco",
+  "hasHorizontalScroll": false,
+  "height": 1946,
+  "buttons": [
+   "Refresh"
+  ]
+ }
+]

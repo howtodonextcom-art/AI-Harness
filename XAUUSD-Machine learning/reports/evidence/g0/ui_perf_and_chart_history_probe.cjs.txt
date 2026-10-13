@@ -1,0 +1,79 @@
+const { createRequire } = require("module");
+const req = createRequire("Z:/Coding/Projects/AI-Harness/xau-edge/apps/dashboard/package.json");
+const { chromium } = req("@playwright/test");
+const fs = require("fs");
+const out = process.argv[2];
+const exe = process.argv[3];
+(async () => {
+  const browser = await chromium.launch({ executablePath: exe, headless: true });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Performance.enable");
+  const reqs = [];
+  page.on("request", (r) => reqs.push({ t: Date.now(), url: r.url(), type: r.resourceType() }));
+  await page.addInitScript(() => {
+    window.__lt = [];
+    window.__lcp = 0;
+    try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__lt.push(e.duration); }).observe({ entryTypes: ["longtask"] }); } catch (e) {}
+    try { new PerformanceObserver((l) => { const e = l.getEntries(); window.__lcp = e[e.length - 1].startTime; }).observe({ type: "largest-contentful-paint", buffered: true }); } catch (e) {}
+  });
+  const t0 = Date.now();
+  await page.goto("http://127.0.0.1:3000/trade", { waitUntil: "load" });
+  const loadMs = Date.now() - t0;
+  await page.waitForSelector("canvas", { timeout: 20000 });
+  const chartMs = Date.now() - t0;
+  await page.waitForTimeout(3000);
+  const nav = await page.evaluate(() => {
+    const n = performance.getEntriesByType("navigation")[0];
+    const fcp = performance.getEntriesByName("first-contentful-paint")[0];
+    const res = performance.getEntriesByType("resource");
+    const js = res.filter((r) => r.name.endsWith(".js") || r.initiatorType === "script");
+    const css = res.filter((r) => r.name.endsWith(".css"));
+    const sum = (a, k) => a.reduce((s, r) => s + (r[k] || 0), 0);
+    return {
+      dcl: n.domContentLoadedEventEnd, load: n.loadEventEnd, fcp: fcp ? fcp.startTime : null, lcp: window.__lcp,
+      jsCount: js.length, jsEncoded: sum(js, "encodedBodySize"), jsDecoded: sum(js, "decodedBodySize"),
+      cssCount: css.length, cssEncoded: sum(css, "encodedBodySize"),
+      totalRes: res.length, longtasks: window.__lt.length, longtaskMax: Math.max(0, ...window.__lt),
+    };
+  });
+  const barsBefore = reqs.filter((r) => r.url.includes("/bars")).length;
+  // idle polling: count requests during 30 s
+  const idleStart = reqs.length;
+  const tIdle = Date.now();
+  await page.waitForTimeout(30000);
+  const idleReqs = reqs.slice(idleStart);
+  const idleByPath = {};
+  for (const r of idleReqs) { const p = new URL(r.url).pathname; idleByPath[p] = (idleByPath[p] || 0) + 1; }
+  // drag the chart to the left many times; record whether any `before=` request appears
+  const canvas = await page.$("canvas");
+  const box = await canvas.boundingBox();
+  const preDrag = reqs.length;
+  const frames = await page.evaluate(() => new Promise((res) => { const f = []; let last = performance.now(); let n = 0; function loop() { const now = performance.now(); f.push(now - last); last = now; n++; if (n < 400) requestAnimationFrame(loop); else res(f); } window.__frameProbe = true; requestAnimationFrame(loop); }));
+  // (frame probe above measures idle frame pacing; now drag)
+  for (let i = 0; i < 25; i++) {
+    await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.4);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.4, { steps: 12 });
+    await page.mouse.up();
+  }
+  await page.waitForTimeout(2500);
+  const dragReqs = reqs.slice(preDrag).filter((r) => r.url.includes("/bars"));
+  const beforeReqs = reqs.filter((r) => r.url.includes("before="));
+  const axisText = await page.evaluate(() => document.body.innerText.match(/\d{2}-\d{2} \d{2}:\d{2}/g)?.slice(0, 3) || []);
+  const metrics = await cdp.send("Performance.getMetrics");
+  const m = Object.fromEntries(metrics.metrics.map((x) => [x.name, x.value]));
+  frames.sort((a, b) => a - b);
+  const res = {
+    loadMs, chartMs, nav, barsRequestsAtLoad: barsBefore, idle30s: { total: idleReqs.length, byPath: idleByPath },
+    dragBarsRequests: dragReqs.length, requestsWithBefore: beforeReqs.length,
+    heapUsedMB: +(m.JSHeapUsedSize / 1048576).toFixed(1), domNodes: m.Nodes, listeners: m.JSEventListeners,
+    idleFrame: { p50: +frames[Math.floor(frames.length * 0.5)].toFixed(1), p95: +frames[Math.floor(frames.length * 0.95)].toFixed(1), max: +frames[frames.length - 1].toFixed(1) },
+    axisTextAfterDrag: axisText,
+  };
+  await page.screenshot({ path: `${out}/trade-after-drag.png` });
+  fs.writeFileSync(`${out}/ui_perf.json`, JSON.stringify(res, null, 1));
+  console.log(JSON.stringify(res));
+  await browser.close();
+})().catch((e) => { console.error("FATAL", e); process.exit(1); });
