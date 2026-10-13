@@ -1,0 +1,23 @@
+{
+ "taken_at": "2026-10-13T10:54:54.606338+00:00",
+ "quote_age_s": {
+  "p50": 0.95,
+  "p95": 3.38,
+  "max": 4.92
+ },
+ "collector_age_s": {
+  "p50": 0.7,
+  "p95": 1.36
+ },
+ "propagation_mt5_to_v2": {
+  "mt5_distinct_quotes": 75,
+  "matched_in_v2": 40,
+  "never_shown_in_v2": 35,
+  "lag_s": {
+   "p50": 0.47,
+   "p95": 3.78,
+   "p99": 10.9,
+   "max": 10.9
+  }
+ }
+}

@@ -1,0 +1,84 @@
+{
+ "taken_at": "2026-10-13T10:50:41.444597+00:00",
+ "quote_age_s": {
+  "p50": 0.86,
+  "p95": 2.67,
+  "max": 4.45
+ },
+ "collector_age_s": {
+  "p50": 0.64,
+  "p95": 1.19
+ },
+ "propagation_mt5_to_v2": "NOT MEASURED (no MT5 sample file)",
+ "rest": {
+  "/api/v2/state": {
+   "n": 150,
+   "p50_ms": 8.82,
+   "p95_ms": 63.5,
+   "p99_ms": 90.09,
+   "max_ms": 91.23,
+   "bytes": 2156
+  },
+  "/api/v2/market/quote": {
+   "n": 150,
+   "p50_ms": 7.96,
+   "p95_ms": 32.02,
+   "p99_ms": 34.62,
+   "max_ms": 36.85,
+   "bytes": 297
+  },
+  "/api/v2/market/forming": {
+   "n": 150,
+   "p50_ms": 10.5,
+   "p95_ms": 31.97,
+   "p99_ms": 37.91,
+   "max_ms": 110.21,
+   "bytes": 1071
+  },
+  "/api/v2/health": {
+   "n": 150,
+   "p50_ms": 21.35,
+   "p95_ms": 46.07,
+   "p99_ms": 66.73,
+   "max_ms": 68.07,
+   "bytes": 2850
+  },
+  "/api/v2/market/bars?timeframe=M5&limit=500": {
+   "n": 150,
+   "p50_ms": 21.67,
+   "p95_ms": 42.22,
+   "p99_ms": 48.62,
+   "max_ms": 48.94,
+   "bytes": 71581
+  },
+  "/api/v2/paper/summary": {
+   "n": 150,
+   "p50_ms": 10.46,
+   "p95_ms": 32.14,
+   "p99_ms": 42.06,
+   "max_ms": 48.18,
+   "bytes": 996
+  }
+ },
+ "websocket": {
+  "events": 53,
+  "by_type": {
+   "hello": 1,
+   "live": 43,
+   "heartbeat": 8,
+   "state": 1
+  },
+  "seq_gaps": 0,
+  "median_interarrival_s": {
+   "hello": null,
+   "live": 1.031,
+   "heartbeat": 5.217,
+   "state": null
+  },
+  "delivery_lag_ms": {
+   "p50": 0.45,
+   "p95": 0.54,
+   "max": 0.64
+  }
+ }
+}
