@@ -1,0 +1,378 @@
+{
+ "bars": 145241,
+ "months": 25,
+ "real_action": {
+  "SELL": 1,
+  "WAIT": 145240
+ },
+ "chain_action_without_gates": {
+  "WAIT": 145052,
+  "BUY": 92,
+  "SELL": 97
+ },
+ "chain_signals_BUY": 92,
+ "final_signals_BUY": 0,
+ "chain_signals_SELL": 97,
+ "final_signals_SELL": 1,
+ "funnel": {
+  "BUY": [
+   [
+    "H1 bias = side",
+    56724,
+    100.0
+   ],
+   [
+    "H4 does not veto",
+    51560,
+    90.896
+   ],
+   [
+    "M15 not against",
+    42577,
+    75.06
+   ],
+   [
+    "M15 structure with trend",
+    15704,
+    27.685
+   ],
+   [
+    "M15 pullback band (SETUP_ARMED)",
+    5803,
+    10.23
+   ],
+   [
+    "M5 momentum with trend (TRIGGER)",
+    720,
+    1.269
+   ],
+   [
+    "M1 execution ok",
+    714,
+    1.259
+   ],
+   [
+    "room >= 1 ATR to opposing swing",
+    357,
+    0.629
+   ],
+   [
+    "stop valid (<= 3 ATR)",
+    346,
+    0.61
+   ],
+   [
+    "net R:R >= 1.5 (geometry)",
+    92,
+    0.162
+   ],
+   [
+    "no hard gate (spread/vol/data...)",
+    0,
+    0.0
+   ]
+  ],
+  "SELL": [
+   [
+    "H1 bias = side",
+    48260,
+    100.0
+   ],
+   [
+    "H4 does not veto",
+    46241,
+    95.816
+   ],
+   [
+    "M15 not against",
+    37535,
+    77.777
+   ],
+   [
+    "M15 structure with trend",
+    13620,
+    28.222
+   ],
+   [
+    "M15 pullback band (SETUP_ARMED)",
+    4789,
+    9.923
+   ],
+   [
+    "M5 momentum with trend (TRIGGER)",
+    642,
+    1.33
+   ],
+   [
+    "M1 execution ok",
+    635,
+    1.316
+   ],
+   [
+    "room >= 1 ATR to opposing swing",
+    388,
+    0.804
+   ],
+   [
+    "stop valid (<= 3 ATR)",
+    369,
+    0.765
+   ],
+   [
+    "net R:R >= 1.5 (geometry)",
+    97,
+    0.201
+   ],
+   [
+    "no hard gate (spread/vol/data...)",
+    1,
+    0.002
+   ]
+  ]
+ },
+ "hard_gate_bars": {
+  "SPREAD_TOO_WIDE": [
+   135607,
+   93.367
+  ],
+  "VOLATILITY_TOO_HIGH": [
+   34046,
+   23.441
+  ],
+  "VOLATILITY_TOO_LOW": [
+   31399,
+   21.619
+  ]
+ },
+ "any_hard_gate": [
+  141672,
+  97.543
+ ],
+ "vol_regime_share": {
+  "HIGH": 19.209,
+  "LOW": 21.619,
+  "NORMAL": 59.173
+ },
+ "h1_share": {
+  "NEUTRAL": 27.717,
+  "BEARISH": 33.228,
+  "BULLISH": 39.055
+ },
+ "h4_share": {
+  "LOW_VOLATILITY": 1.0,
+  "SHOCK": 2.731,
+  "HIGH_VOLATILITY": 3.432,
+  "RANGE": 24.899,
+  "TREND_UP": 30.594,
+  "TREND_DOWN": 37.343
+ },
+ "m15_share": {
+  "REVERSAL_UP": 5.697,
+  "RANGE": 40.477,
+  "REVERSAL_DOWN": 5.77,
+  "DOWN": 23.603,
+  "UP": 24.454
+ },
+ "pullback_share": {
+  "PULLBACK_IN_UPTREND": 10.438,
+  "NONE": 79.299,
+  "PULLBACK_IN_DOWNTREND": 10.264
+ },
+ "m5_share": {
+  "DOWN": 17.79,
+  "FLAT": 64.301,
+  "UP": 17.908
+ },
+ "m1exec_share": {
+  "STALE": 0.314,
+  "QUIET": 1.223,
+  "SPREAD_WIDE": 93.055,
+  "GOOD": 5.408
+ },
+ "execq_share": {
+  "GOOD": 6.633,
+  "POOR": 93.367
+ },
+ "readiness_depth": {
+  "0": [
+   40257,
+   27.717
+  ],
+  "1": [
+   75660,
+   52.093
+  ],
+  "2": [
+   18732,
+   12.897
+  ],
+  "3": [
+   9230,
+   6.355
+  ],
+  "4": [
+   1173,
+   0.808
+  ],
+  "6": [
+   189,
+   0.13
+  ]
+ },
+ "per_year": [
+  {
+   "year": 2011,
+   "bars": 17027,
+   "chain_signals": 6,
+   "final_signals": 0,
+   "chain_buy": 1,
+   "chain_sell": 5
+  },
+  {
+   "year": 2012,
+   "bars": 17749,
+   "chain_signals": 9,
+   "final_signals": 0,
+   "chain_buy": 9,
+   "chain_sell": 0
+  },
+  {
+   "year": 2013,
+   "bars": 17267,
+   "chain_signals": 31,
+   "final_signals": 0,
+   "chain_buy": 7,
+   "chain_sell": 24
+  },
+  {
+   "year": 2014,
+   "bars": 17520,
+   "chain_signals": 21,
+   "final_signals": 0,
+   "chain_buy": 19,
+   "chain_sell": 2
+  },
+  {
+   "year": 2015,
+   "bars": 17457,
+   "chain_signals": 13,
+   "final_signals": 0,
+   "chain_buy": 0,
+   "chain_sell": 13
+  },
+  {
+   "year": 2016,
+   "bars": 17561,
+   "chain_signals": 39,
+   "final_signals": 0,
+   "chain_buy": 29,
+   "chain_sell": 10
+  },
+  {
+   "year": 2017,
+   "bars": 17529,
+   "chain_signals": 43,
+   "final_signals": 0,
+   "chain_buy": 23,
+   "chain_sell": 20
+  },
+  {
+   "year": 2018,
+   "bars": 23131,
+   "chain_signals": 27,
+   "final_signals": 1,
+   "chain_buy": 4,
+   "chain_sell": 23
+  }
+ ],
+ "chain_signal_by_session": {
+  "NEW_YORK": 12,
+  "LONDON": 4,
+  "OFF_HOURS": 37,
+  "ASIA": 127,
+  "LONDON_NY_OVERLAP": 9
+ },
+ "first_failure": [
+  {
+   "h1": "NEUTRAL",
+   "r": "NO_DIRECTION",
+   "len": 40257
+  },
+  {
+   "h1": "BULLISH",
+   "r": "NO_SETUP",
+   "len": 36774
+  },
+  {
+   "h1": "BEARISH",
+   "r": "NO_SETUP",
+   "len": 32746
+  },
+  {
+   "h1": "BULLISH",
+   "r": "TIMEFRAME_CONFLICT",
+   "len": 14147
+  },
+  {
+   "h1": "BEARISH",
+   "r": "TIMEFRAME_CONFLICT",
+   "len": 10725
+  },
+  {
+   "h1": "BULLISH",
+   "r": "NO_TRIGGER",
+   "len": 5085
+  },
+  {
+   "h1": "BEARISH",
+   "r": "NO_TRIGGER",
+   "len": 4150
+  },
+  {
+   "h1": "BULLISH",
+   "r": "TOO_CLOSE_TO_RESISTANCE",
+   "len": 357
+  },
+  {
+   "h1": "BEARISH",
+   "r": "RR_TOO_LOW",
+   "len": 272
+  },
+  {
+   "h1": "BULLISH",
+   "r": "RR_TOO_LOW",
+   "len": 254
+  },
+  {
+   "h1": "BEARISH",
+   "r": "TOO_CLOSE_TO_SUPPORT",
+   "len": 247
+  },
+  {
+   "h1": "BEARISH",
+   "r": "INVALID_STOP_DISTANCE",
+   "len": 19
+  },
+  {
+   "h1": "BULLISH",
+   "r": "INVALID_STOP_DISTANCE",
+   "len": 11
+  },
+  {
+   "h1": "BULLISH",
+   "r": "VOLUME_TOO_LOW",
+   "len": 4
+  },
+  {
+   "h1": "BEARISH",
+   "r": "VOLUME_TOO_LOW",
+   "len": 4
+  }
+ ],
+ "geometry_failures": {
+  "TOO_CLOSE_TO_RESISTANCE": 357,
+  "RR_TOO_LOW": 526,
+  "TOO_CLOSE_TO_SUPPORT": 247,
+  "INVALID_STOP_DISTANCE": 30
+ }
+}
