@@ -51,6 +51,7 @@ ignore = ["PLR2004", "E501"]  # the formatter wraps code; long Vietnamese string
 
 [tool.ruff.lint.per-file-ignores]
 "src/xau_edge_v2/core/*" = ["PLR0913", "PLR0917"]
+"src/xau_edge_v2/research/*" = ["PLR0913", "PLR0917", "E501"]  # research kernels take explicit inputs
 "src/xau_edge_v2/ml/*" = ["PLR0913", "PLR0917", "E501"]  # numeric/statistics code with explicit inputs
 "src/xau_edge_v2/api/model.py" = ["E501", "RUF001"]  # Vietnamese copy with en dashes in ranges
 "tests/unit/test_ml_v0.py" = ["E501", "PLC0415", "RUF059"]  # numeric kernels take their arrays by name

@@ -1,0 +1,99 @@
+{
+  "purpose": "Every look at a window, outcome or not, so later claims can be discounted honestly. Append-only; no edits.",
+  "events": [
+    {
+      "date": "2026-10-12",
+      "window": "development 2011-2018 and validation 2019-2021",
+      "kind": "ML V0 (volatility/range) runs",
+      "outcome_class": "volatility label, not strategy outcome",
+      "effect": "Dev and Validation are Class D (burned for description) in docs/ml/ml_v0_spec.json"
+    },
+    {
+      "date": "2026-10-12",
+      "window": "2025-05..2026-04 and development months",
+      "kind": "G4 golden parity sampling",
+      "outcome_class": "state and decision equality V1 vs V2, no performance",
+      "effect": "none on outcomes"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Dev 2011-2018 (25 sampled months)",
+      "kind": "funnel audit counts (bars passing each gate)",
+      "outcome_class": "NONE (no price-outcome looked at)",
+      "effect": "design decisions C1-C7 were informed by these counts; Dev is the design window"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Validation 2019-2021 (9 sampled months)",
+      "kind": "funnel audit counts",
+      "outcome_class": "NONE",
+      "effect": "counts seen; reported in the Gate A report as a stability check. Not used to choose a change, but the author saw them: Validation is NOT a clean blind window for structural conclusions, only for outcomes"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "2025-05..2026-04 (12 months)",
+      "kind": "funnel audit counts",
+      "outcome_class": "NONE",
+      "effect": "same as Validation. The finding 'spread gate matters less in modern data' came from this window and Validation; it motivated keeping C3 as research"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Dev (25 sampled months)",
+      "kind": "cost_R = (spread + 2 slippage)/risk computed on chain signal bars",
+      "outcome_class": "NONE (planning geometry only)",
+      "effect": "0.15 was written in the Gate A report BEFORE this computation (it showed 72% of Dev chain signals at or below 0.15). The cap is not changed after seeing it"
+    },
+    {
+      "date": "2026-10-09..2026-10-13",
+      "window": "forward V1 decisions and V2 decision_log",
+      "kind": "gate counts only",
+      "outcome_class": "NONE",
+      "effect": "no trade has occurred"
+    },
+    {
+      "date": "before 2026-10",
+      "window": "development and validation",
+      "kind": "V1 research programme (edge_program, baselines A/B/C, H01.. families) in xau-edge/data/backtests",
+      "outcome_class": "STRATEGY OUTCOMES of other V1 hypotheses",
+      "effect": "possible unrecorded knowledge of how Dev/Validation behaved; disclosed, not quantifiable. Claims from Dev/Validation must be discounted accordingly"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Validation 2019-02",
+      "kind": "one Stage A signal-emission run used as a smoke test by mistake (--confirm)",
+      "outcome_class": "NONE (signals only, no price outcome, output deleted)",
+      "effect": "no outcome seen; recorded for completeness. Stage A refuses Validation / Confirm-C without --confirm and Stage B refuses them without the frozen file"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Confirm-C 2025-05 and Validation 2022-01 boundary",
+      "kind": "indicator warm-up history",
+      "outcome_class": "NONE",
+      "effect": "the first days of Confirm-C use the last weeks of Test-H as price history for indicators. This opens no Test-H outcome, but it is price context from a locked window; stated"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Dev 2011-2018 (96 months), all variants",
+      "kind": "Stage B OUTCOME simulation (frozen spec f9bb929e..., code 130277d)",
+      "outcome_class": "STRATEGY OUTCOMES on Dev, and a split of CORE/A_C2/B_C1C2/X_CORE_C7/CTRL by clean (<2012-06) versus defective months",
+      "effect": "Dev is now burned for strategy outcomes. The results are INVALID (feed defect, ADR-V2-018) and were not used for selection. The clean/defective split was looked at to diagnose the artefact; any later amendment of the design window was therefore decided AFTER seeing Dev outcomes, which is disclosed here"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "all months 2004-2026",
+      "kind": "data-integrity scan (lag-1 autocorrelation)",
+      "outcome_class": "NONE (price data only)",
+      "effect": "identifies 119 invalid XAUUSD months (2004-06..2005-08, 2006-03, 2012-06..2021-01, 2021-08)"
+    },
+    {
+      "window": "Test-H 2022-01..2025-04",
+      "kind": "not opened",
+      "effect": "LOCKED, no authority"
+    },
+    {
+      "window": "Holdout 2026-05-01..2026-10-07",
+      "kind": "not opened",
+      "effect": "LOCKED, no authority"
+    }
+  ]
+}

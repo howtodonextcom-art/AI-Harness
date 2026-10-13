@@ -1,0 +1,1379 @@
+{
+ "window": "DEV",
+ "spec_sha256": "f9bb929e6dda0c496a5c76ee2e21ac4903f6957a5266e01d4cd5afdc31b1db1d",
+ "git_sha": "130277dae0611d7f6668b974fdc4211d3ef74146",
+ "generated_at": "2026-10-13T07:16:51.528722+00:00",
+ "years": 8.0,
+ "armed_episodes": 4069,
+ "bars": 549025,
+ "power": {
+  "sd": 1.5,
+  "deff": 1.5,
+  "n_min": 30,
+  "n_required": {
+   "0.3": 295,
+   "0.2": 663,
+   "0.15": 1178,
+   "0.1": 2649
+  }
+ },
+ "variants": {
+  "CTRL": {
+   "variant": "CTRL",
+   "changes": [],
+   "signal_rows": 13,
+   "episodes": 7,
+   "episodes_per_year": 0.88,
+   "attempted": 7,
+   "refused": {
+    "RISK_LIMIT": 1
+   },
+   "unresolved": 0,
+   "executed": 6,
+   "executed_per_year": 0.75,
+   "buy": 3,
+   "sell": 3,
+   "E": -0.5991,
+   "E_lower": -1.0321,
+   "E_upper": 0.5143,
+   "months_with_trades": 5,
+   "status": "INCONCLUSIVE",
+   "status_reason": "N=6, months=5 below N_min=30/12",
+   "win_rate": 0.167,
+   "false_positive_rate": 0.0,
+   "mdd_R": 5.13,
+   "worst_month_R": -2.07,
+   "caps_hold": true,
+   "gap_through_stop": 0,
+   "ambiguous_bars": 1,
+   "horizon_exits": 0,
+   "mean_r_price": -0.5962,
+   "mean_r_swap": -0.0029,
+   "mean_r_slip_plan": 0.0208,
+   "mean_r_spread_plan": 0.0219,
+   "sessions": {
+    "ASIA": 1,
+    "LONDON_NY_OVERLAP": 4,
+    "NEW_YORK": 1
+   },
+   "by_year": {
+    "2011": {
+     "n": 1,
+     "E": 1.537
+    },
+    "2012": {
+     "n": 1,
+     "E": -1.02
+    },
+    "2013": {
+     "n": 1,
+     "E": -1.019
+    },
+    "2014": {
+     "n": 2,
+     "E": -1.036
+    },
+    "2018": {
+     "n": 1,
+     "E": -1.021
+    }
+   }
+  },
+  "A_C1": {
+   "variant": "A_C1",
+   "changes": [
+    "C1"
+   ],
+   "signal_rows": 24,
+   "episodes": 8,
+   "episodes_per_year": 1.0,
+   "attempted": 8,
+   "refused": {},
+   "unresolved": 0,
+   "executed": 8,
+   "executed_per_year": 1.0,
+   "buy": 4,
+   "sell": 4,
+   "E": 0.0493,
+   "E_lower": -1.028,
+   "E_upper": 1.2739,
+   "months_with_trades": 6,
+   "status": "INCONCLUSIVE",
+   "status_reason": "N=8, months=6 below N_min=30/12",
+   "win_rate": 0.375,
+   "false_positive_rate": 0.0,
+   "mdd_R": 4.11,
+   "worst_month_R": -2.07,
+   "caps_hold": true,
+   "gap_through_stop": 0,
+   "ambiguous_bars": 1,
+   "horizon_exits": 0,
+   "mean_r_price": 0.0515,
+   "mean_r_swap": -0.0022,
+   "mean_r_slip_plan": 0.0169,
+   "mean_r_spread_plan": 0.0284,
+   "sessions": {
+    "ASIA": 1,
+    "LONDON_NY_OVERLAP": 6,
+    "NEW_YORK": 1
+   },
+   "by_year": {
+    "2011": {
+     "n": 1,
+     "E": 1.537
+    },
+    "2012": {
+     "n": 1,
+     "E": -1.02
+    },
+    "2013": {
+     "n": 1,
+     "E": -1.019
+    },
+    "2014": {
+     "n": 2,
+     "E": -1.036
+    },
+    "2016": {
+     "n": 2,
+     "E": 1.995
+    },
+    "2018": {
+     "n": 1,
+     "E": -1.021
+    }
+   }
+  },
+  "A_C2": {
+   "variant": "A_C2",
+   "changes": [
+    "C2"
+   ],
+   "signal_rows": 125,
+   "episodes": 69,
+   "episodes_per_year": 8.62,
+   "attempted": 69,
+   "refused": {
+    "RISK_LIMIT": 2
+   },
+   "unresolved": 0,
+   "executed": 67,
+   "executed_per_year": 8.38,
+   "buy": 35,
+   "sell": 32,
+   "E": 0.2399,
+   "E_lower": -0.1067,
+   "E_upper": 0.6068,
+   "months_with_trades": 42,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [-0.107, 0.607]R, N=67 (N_req(0.20R)=663)",
+   "win_rate": 0.433,
+   "false_positive_rate": 0.03,
+   "mdd_R": 8.49,
+   "worst_month_R": -2.41,
+   "caps_hold": true,
+   "gap_through_stop": 1,
+   "ambiguous_bars": 2,
+   "horizon_exits": 0,
+   "mean_r_price": 0.2701,
+   "mean_r_swap": -0.0302,
+   "mean_r_slip_plan": 0.0175,
+   "mean_r_spread_plan": 0.1008,
+   "sessions": {
+    "ASIA": 38,
+    "LONDON": 5,
+    "LONDON_NY_OVERLAP": 6,
+    "NEW_YORK": 10,
+    "OFF_HOURS": 8
+   },
+   "by_year": {
+    "2011": {
+     "n": 3,
+     "E": 0.842
+    },
+    "2012": {
+     "n": 7,
+     "E": 0.699
+    },
+    "2013": {
+     "n": 13,
+     "E": -0.093
+    },
+    "2014": {
+     "n": 3,
+     "E": -0.028
+    },
+    "2015": {
+     "n": 5,
+     "E": 0.126
+    },
+    "2016": {
+     "n": 11,
+     "E": 0.826
+    },
+    "2017": {
+     "n": 10,
+     "E": -0.122
+    },
+    "2018": {
+     "n": 15,
+     "E": 0.096
+    }
+   }
+  },
+  "A_C3a": {
+   "variant": "A_C3a",
+   "changes": [
+    "C3a"
+   ],
+   "signal_rows": 17,
+   "episodes": 10,
+   "episodes_per_year": 1.25,
+   "attempted": 10,
+   "refused": {
+    "RISK_LIMIT": 1
+   },
+   "unresolved": 0,
+   "executed": 9,
+   "executed_per_year": 1.12,
+   "buy": 6,
+   "sell": 3,
+   "E": -0.4425,
+   "E_lower": -1.0293,
+   "E_upper": 0.2729,
+   "months_with_trades": 5,
+   "status": "INCONCLUSIVE",
+   "status_reason": "N=9, months=5 below N_min=30/12",
+   "win_rate": 0.222,
+   "false_positive_rate": 0.0,
+   "mdd_R": 5.52,
+   "worst_month_R": -2.07,
+   "caps_hold": true,
+   "gap_through_stop": 0,
+   "ambiguous_bars": 1,
+   "horizon_exits": 0,
+   "mean_r_price": -0.4406,
+   "mean_r_swap": -0.002,
+   "mean_r_slip_plan": 0.0228,
+   "mean_r_spread_plan": 0.0146,
+   "sessions": {
+    "ASIA": 3,
+    "LONDON": 1,
+    "LONDON_NY_OVERLAP": 4,
+    "NEW_YORK": 1
+   },
+   "by_year": {
+    "2011": {
+     "n": 1,
+     "E": 1.537
+    },
+    "2012": {
+     "n": 4,
+     "E": -0.352
+    },
+    "2013": {
+     "n": 1,
+     "E": -1.019
+    },
+    "2014": {
+     "n": 2,
+     "E": -1.036
+    },
+    "2018": {
+     "n": 1,
+     "E": -1.021
+    }
+   }
+  },
+  "A_C3b": {
+   "variant": "A_C3b",
+   "changes": [
+    "C3b"
+   ],
+   "signal_rows": 25,
+   "episodes": 14,
+   "episodes_per_year": 1.75,
+   "attempted": 14,
+   "refused": {
+    "RISK_LIMIT": 1
+   },
+   "unresolved": 0,
+   "executed": 13,
+   "executed_per_year": 1.62,
+   "buy": 7,
+   "sell": 6,
+   "E": 0.0991,
+   "E_lower": -0.631,
+   "E_upper": 1.0903,
+   "months_with_trades": 11,
+   "status": "INCONCLUSIVE",
+   "status_reason": "N=13, months=11 below N_min=30/12",
+   "win_rate": 0.385,
+   "false_positive_rate": 0.0,
+   "mdd_R": 7.21,
+   "worst_month_R": -3.1,
+   "caps_hold": true,
+   "gap_through_stop": 0,
+   "ambiguous_bars": 2,
+   "horizon_exits": 0,
+   "mean_r_price": 0.1049,
+   "mean_r_swap": -0.0059,
+   "mean_r_slip_plan": 0.0141,
+   "mean_r_spread_plan": 0.0246,
+   "sessions": {
+    "ASIA": 3,
+    "LONDON_NY_OVERLAP": 7,
+    "NEW_YORK": 1,
+    "OFF_HOURS": 2
+   },
+   "by_year": {
+    "2011": {
+     "n": 3,
+     "E": -0.175
+    },
+    "2012": {
+     "n": 1,
+     "E": -1.02
+    },
+    "2013": {
+     "n": 1,
+     "E": -1.019
+    },
+    "2014": {
+     "n": 3,
+     "E": -1.035
+    },
+    "2016": {
+     "n": 2,
+     "E": 1.996
+    },
+    "2017": {
+     "n": 1,
+     "E": 1.993
+    },
+    "2018": {
+     "n": 2,
+     "E": 0.486
+    }
+   }
+  },
+  "B_C1C2": {
+   "variant": "B_C1C2",
+   "changes": [
+    "C1",
+    "C2"
+   ],
+   "signal_rows": 286,
+   "episodes": 126,
+   "episodes_per_year": 15.75,
+   "attempted": 126,
+   "refused": {
+    "RISK_LIMIT": 6
+   },
+   "unresolved": 0,
+   "executed": 120,
+   "executed_per_year": 15.0,
+   "buy": 60,
+   "sell": 60,
+   "E": 0.6814,
+   "E_lower": 0.3901,
+   "E_upper": 0.9741,
+   "months_with_trades": 61,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [0.390, 0.974]R, N=120 (N_req(0.20R)=663)",
+   "win_rate": 0.575,
+   "false_positive_rate": 0.042,
+   "mdd_R": 8.14,
+   "worst_month_R": -3.08,
+   "caps_hold": true,
+   "gap_through_stop": 1,
+   "ambiguous_bars": 3,
+   "horizon_exits": 0,
+   "mean_r_price": 0.6994,
+   "mean_r_swap": -0.018,
+   "mean_r_slip_plan": 0.0154,
+   "mean_r_spread_plan": 0.1004,
+   "sessions": {
+    "ASIA": 61,
+    "LONDON": 29,
+    "LONDON_NY_OVERLAP": 11,
+    "NEW_YORK": 11,
+    "OFF_HOURS": 8
+   },
+   "by_year": {
+    "2011": {
+     "n": 6,
+     "E": 0.417
+    },
+    "2012": {
+     "n": 12,
+     "E": 0.73
+    },
+    "2013": {
+     "n": 17,
+     "E": 0.043
+    },
+    "2014": {
+     "n": 5,
+     "E": 0.779
+    },
+    "2015": {
+     "n": 13,
+     "E": 1.274
+    },
+    "2016": {
+     "n": 20,
+     "E": 1.35
+    },
+    "2017": {
+     "n": 17,
+     "E": 0.367
+    },
+    "2018": {
+     "n": 30,
+     "E": 0.536
+    }
+   }
+  },
+  "B_C2C3a": {
+   "variant": "B_C2C3a",
+   "changes": [
+    "C2",
+    "C3a"
+   ],
+   "signal_rows": 134,
+   "episodes": 77,
+   "episodes_per_year": 9.62,
+   "attempted": 77,
+   "refused": {
+    "RISK_LIMIT": 2
+   },
+   "unresolved": 0,
+   "executed": 75,
+   "executed_per_year": 9.38,
+   "buy": 39,
+   "sell": 36,
+   "E": 0.2211,
+   "E_lower": -0.1052,
+   "E_upper": 0.5756,
+   "months_with_trades": 43,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [-0.105, 0.576]R, N=75 (N_req(0.20R)=663)",
+   "win_rate": 0.427,
+   "false_positive_rate": 0.027,
+   "mdd_R": 9.25,
+   "worst_month_R": -3.06,
+   "caps_hold": true,
+   "gap_through_stop": 1,
+   "ambiguous_bars": 2,
+   "horizon_exits": 0,
+   "mean_r_price": 0.2481,
+   "mean_r_swap": -0.027,
+   "mean_r_slip_plan": 0.0181,
+   "mean_r_spread_plan": 0.098,
+   "sessions": {
+    "ASIA": 44,
+    "LONDON": 7,
+    "LONDON_NY_OVERLAP": 6,
+    "NEW_YORK": 10,
+    "OFF_HOURS": 8
+   },
+   "by_year": {
+    "2011": {
+     "n": 3,
+     "E": 0.842
+    },
+    "2012": {
+     "n": 10,
+     "E": 0.451
+    },
+    "2013": {
+     "n": 15,
+     "E": -0.217
+    },
+    "2014": {
+     "n": 3,
+     "E": -0.028
+    },
+    "2015": {
+     "n": 5,
+     "E": 0.126
+    },
+    "2016": {
+     "n": 12,
+     "E": 0.672
+    },
+    "2017": {
+     "n": 10,
+     "E": -0.122
+    },
+    "2018": {
+     "n": 17,
+     "E": 0.318
+    }
+   }
+  },
+  "CORE": {
+   "variant": "CORE",
+   "changes": [
+    "C1",
+    "C2",
+    "C3a",
+    "C3b"
+   ],
+   "signal_rows": 621,
+   "episodes": 248,
+   "episodes_per_year": 31.0,
+   "attempted": 248,
+   "refused": {
+    "COOLDOWN": 1,
+    "RISK_LIMIT": 18
+   },
+   "unresolved": 0,
+   "executed": 229,
+   "executed_per_year": 28.62,
+   "buy": 117,
+   "sell": 112,
+   "E": 0.6799,
+   "E_lower": 0.4616,
+   "E_upper": 0.9116,
+   "months_with_trades": 77,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [0.462, 0.912]R, N=229 (N_req(0.20R)=663)",
+   "win_rate": 0.572,
+   "false_positive_rate": 0.044,
+   "mdd_R": 10.17,
+   "worst_month_R": -3.15,
+   "caps_hold": true,
+   "gap_through_stop": 3,
+   "ambiguous_bars": 7,
+   "horizon_exits": 0,
+   "mean_r_price": 0.6931,
+   "mean_r_swap": -0.0132,
+   "mean_r_slip_plan": 0.0139,
+   "mean_r_spread_plan": 0.0973,
+   "sessions": {
+    "ASIA": 117,
+    "LONDON": 36,
+    "LONDON_NY_OVERLAP": 27,
+    "NEW_YORK": 16,
+    "OFF_HOURS": 33
+   },
+   "by_year": {
+    "2011": {
+     "n": 18,
+     "E": 0.104
+    },
+    "2012": {
+     "n": 20,
+     "E": 0.617
+    },
+    "2013": {
+     "n": 38,
+     "E": 0.16
+    },
+    "2014": {
+     "n": 16,
+     "E": 1.029
+    },
+    "2015": {
+     "n": 15,
+     "E": 1.189
+    },
+    "2016": {
+     "n": 51,
+     "E": 0.849
+    },
+    "2017": {
+     "n": 30,
+     "E": 0.97
+    },
+    "2018": {
+     "n": 41,
+     "E": 0.7
+    }
+   }
+  },
+  "LOO_noC1": {
+   "variant": "LOO_noC1",
+   "changes": [
+    "C2",
+    "C3a",
+    "C3b"
+   ],
+   "signal_rows": 339,
+   "episodes": 145,
+   "episodes_per_year": 18.12,
+   "attempted": 145,
+   "refused": {
+    "RISK_LIMIT": 4
+   },
+   "unresolved": 0,
+   "executed": 141,
+   "executed_per_year": 17.62,
+   "buy": 74,
+   "sell": 67,
+   "E": 0.4724,
+   "E_lower": 0.221,
+   "E_upper": 0.7362,
+   "months_with_trades": 64,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [0.221, 0.736]R, N=141 (N_req(0.20R)=663)",
+   "win_rate": 0.504,
+   "false_positive_rate": 0.043,
+   "mdd_R": 10.22,
+   "worst_month_R": -3.09,
+   "caps_hold": true,
+   "gap_through_stop": 2,
+   "ambiguous_bars": 5,
+   "horizon_exits": 0,
+   "mean_r_price": 0.4884,
+   "mean_r_swap": -0.016,
+   "mean_r_slip_plan": 0.0149,
+   "mean_r_spread_plan": 0.0968,
+   "sessions": {
+    "ASIA": 78,
+    "LONDON": 7,
+    "LONDON_NY_OVERLAP": 14,
+    "NEW_YORK": 13,
+    "OFF_HOURS": 29
+   },
+   "by_year": {
+    "2011": {
+     "n": 8,
+     "E": 0.056
+    },
+    "2012": {
+     "n": 11,
+     "E": 0.591
+    },
+    "2013": {
+     "n": 27,
+     "E": 0.097
+    },
+    "2014": {
+     "n": 9,
+     "E": 0.628
+    },
+    "2015": {
+     "n": 8,
+     "E": 0.487
+    },
+    "2016": {
+     "n": 34,
+     "E": 0.633
+    },
+    "2017": {
+     "n": 17,
+     "E": 0.748
+    },
+    "2018": {
+     "n": 27,
+     "E": 0.491
+    }
+   }
+  },
+  "LOO_noC2": {
+   "variant": "LOO_noC2",
+   "changes": [
+    "C1",
+    "C3a",
+    "C3b"
+   ],
+   "signal_rows": 57,
+   "episodes": 24,
+   "episodes_per_year": 3.0,
+   "attempted": 24,
+   "refused": {
+    "RISK_LIMIT": 1
+   },
+   "unresolved": 0,
+   "executed": 23,
+   "executed_per_year": 2.88,
+   "buy": 13,
+   "sell": 10,
+   "E": 0.3701,
+   "E_lower": -0.188,
+   "E_upper": 1.157,
+   "months_with_trades": 15,
+   "status": "INCONCLUSIVE",
+   "status_reason": "N=23, months=15 below N_min=30/12",
+   "win_rate": 0.478,
+   "false_positive_rate": 0.043,
+   "mdd_R": 5.49,
+   "worst_month_R": -2.03,
+   "caps_hold": true,
+   "gap_through_stop": 0,
+   "ambiguous_bars": 2,
+   "horizon_exits": 0,
+   "mean_r_price": 0.3734,
+   "mean_r_swap": -0.0033,
+   "mean_r_slip_plan": 0.0131,
+   "mean_r_spread_plan": 0.0227,
+   "sessions": {
+    "ASIA": 7,
+    "LONDON": 1,
+    "LONDON_NY_OVERLAP": 11,
+    "NEW_YORK": 1,
+    "OFF_HOURS": 3
+   },
+   "by_year": {
+    "2011": {
+     "n": 4,
+     "E": -0.386
+    },
+    "2012": {
+     "n": 4,
+     "E": -0.348
+    },
+    "2013": {
+     "n": 2,
+     "E": 0.31
+    },
+    "2014": {
+     "n": 4,
+     "E": -0.277
+    },
+    "2016": {
+     "n": 6,
+     "E": 1.495
+    },
+    "2017": {
+     "n": 1,
+     "E": 1.993
+    },
+    "2018": {
+     "n": 2,
+     "E": 0.486
+    }
+   }
+  },
+  "LOO_noC3a": {
+   "variant": "LOO_noC3a",
+   "changes": [
+    "C1",
+    "C2",
+    "C3b"
+   ],
+   "signal_rows": 563,
+   "episodes": 213,
+   "episodes_per_year": 26.62,
+   "attempted": 213,
+   "refused": {
+    "COOLDOWN": 1,
+    "RISK_LIMIT": 14
+   },
+   "unresolved": 0,
+   "executed": 198,
+   "executed_per_year": 24.75,
+   "buy": 102,
+   "sell": 96,
+   "E": 0.7522,
+   "E_lower": 0.5277,
+   "E_upper": 0.9722,
+   "months_with_trades": 74,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [0.528, 0.972]R, N=198 (N_req(0.20R)=663)",
+   "win_rate": 0.596,
+   "false_positive_rate": 0.04,
+   "mdd_R": 9.14,
+   "worst_month_R": -2.41,
+   "caps_hold": true,
+   "gap_through_stop": 3,
+   "ambiguous_bars": 7,
+   "horizon_exits": 0,
+   "mean_r_price": 0.7661,
+   "mean_r_swap": -0.0139,
+   "mean_r_slip_plan": 0.0134,
+   "mean_r_spread_plan": 0.0982,
+   "sessions": {
+    "ASIA": 98,
+    "LONDON": 28,
+    "LONDON_NY_OVERLAP": 25,
+    "NEW_YORK": 15,
+    "OFF_HOURS": 32
+   },
+   "by_year": {
+    "2011": {
+     "n": 15,
+     "E": 0.127
+    },
+    "2012": {
+     "n": 13,
+     "E": 0.827
+    },
+    "2013": {
+     "n": 30,
+     "E": 0.275
+    },
+    "2014": {
+     "n": 16,
+     "E": 1.029
+    },
+    "2015": {
+     "n": 15,
+     "E": 1.189
+    },
+    "2016": {
+     "n": 44,
+     "E": 1.016
+    },
+    "2017": {
+     "n": 27,
+     "E": 0.968
+    },
+    "2018": {
+     "n": 38,
+     "E": 0.602
+    }
+   }
+  },
+  "LOO_noC3b": {
+   "variant": "LOO_noC3b",
+   "changes": [
+    "C1",
+    "C2",
+    "C3a"
+   ],
+   "signal_rows": 336,
+   "episodes": 159,
+   "episodes_per_year": 19.88,
+   "attempted": 159,
+   "refused": {
+    "RISK_LIMIT": 9
+   },
+   "unresolved": 0,
+   "executed": 150,
+   "executed_per_year": 18.75,
+   "buy": 74,
+   "sell": 76,
+   "E": 0.5987,
+   "E_lower": 0.34,
+   "E_upper": 0.8689,
+   "months_with_trades": 66,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [0.340, 0.869]R, N=150 (N_req(0.20R)=663)",
+   "win_rate": 0.547,
+   "false_positive_rate": 0.04,
+   "mdd_R": 9.17,
+   "worst_month_R": -3.08,
+   "caps_hold": true,
+   "gap_through_stop": 1,
+   "ambiguous_bars": 3,
+   "horizon_exits": 0,
+   "mean_r_price": 0.6131,
+   "mean_r_swap": -0.0144,
+   "mean_r_slip_plan": 0.0157,
+   "mean_r_spread_plan": 0.0985,
+   "sessions": {
+    "ASIA": 80,
+    "LONDON": 37,
+    "LONDON_NY_OVERLAP": 13,
+    "NEW_YORK": 11,
+    "OFF_HOURS": 9
+   },
+   "by_year": {
+    "2011": {
+     "n": 9,
+     "E": 0.275
+    },
+    "2012": {
+     "n": 19,
+     "E": 0.544
+    },
+    "2013": {
+     "n": 25,
+     "E": -0.057
+    },
+    "2014": {
+     "n": 5,
+     "E": 0.779
+    },
+    "2015": {
+     "n": 13,
+     "E": 1.274
+    },
+    "2016": {
+     "n": 25,
+     "E": 1.116
+    },
+    "2017": {
+     "n": 20,
+     "E": 0.459
+    },
+    "2018": {
+     "n": 34,
+     "E": 0.613
+    }
+   }
+  },
+  "X_C7": {
+   "variant": "X_C7",
+   "changes": [
+    "C7"
+   ],
+   "signal_rows": 23,
+   "episodes": 17,
+   "episodes_per_year": 2.12,
+   "attempted": 17,
+   "refused": {},
+   "unresolved": 0,
+   "executed": 17,
+   "executed_per_year": 2.12,
+   "buy": 7,
+   "sell": 10,
+   "E": -0.5176,
+   "E_lower": -1.0242,
+   "E_upper": -0.0333,
+   "months_with_trades": 12,
+   "status": "INCONCLUSIVE",
+   "status_reason": "N=17, months=12 below N_min=30/12",
+   "win_rate": 0.176,
+   "false_positive_rate": 0.059,
+   "mdd_R": 12.78,
+   "worst_month_R": -3.1,
+   "caps_hold": true,
+   "gap_through_stop": 0,
+   "ambiguous_bars": 2,
+   "horizon_exits": 0,
+   "mean_r_price": -0.4998,
+   "mean_r_swap": -0.0178,
+   "mean_r_slip_plan": 0.0176,
+   "mean_r_spread_plan": 0.0367,
+   "sessions": {
+    "ASIA": 4,
+    "LONDON": 3,
+    "LONDON_NY_OVERLAP": 8,
+    "NEW_YORK": 2
+   },
+   "by_year": {
+    "2011": {
+     "n": 3,
+     "E": 0.984
+    },
+    "2012": {
+     "n": 1,
+     "E": -1.02
+    },
+    "2013": {
+     "n": 8,
+     "E": -0.698
+    },
+    "2014": {
+     "n": 4,
+     "E": -1.028
+    },
+    "2018": {
+     "n": 1,
+     "E": -1.033
+    }
+   }
+  },
+  "X_CORE_C7": {
+   "variant": "X_CORE_C7",
+   "changes": [
+    "C1",
+    "C2",
+    "C3a",
+    "C3b",
+    "C7"
+   ],
+   "signal_rows": 940,
+   "episodes": 470,
+   "episodes_per_year": 58.75,
+   "attempted": 470,
+   "refused": {
+    "RISK_LIMIT": 60,
+    "COOLDOWN": 3
+   },
+   "unresolved": 0,
+   "executed": 407,
+   "executed_per_year": 50.88,
+   "buy": 199,
+   "sell": 208,
+   "E": 0.2714,
+   "E_lower": 0.1099,
+   "E_upper": 0.443,
+   "months_with_trades": 89,
+   "status": "INCONCLUSIVE",
+   "status_reason": "bounds [0.110, 0.443]R, N=407 (N_req(0.20R)=663)",
+   "win_rate": 0.437,
+   "false_positive_rate": 0.071,
+   "mdd_R": 25.88,
+   "worst_month_R": -10.24,
+   "caps_hold": false,
+   "gap_through_stop": 9,
+   "ambiguous_bars": 10,
+   "horizon_exits": 0,
+   "mean_r_price": 0.2896,
+   "mean_r_swap": -0.0182,
+   "mean_r_slip_plan": 0.0146,
+   "mean_r_spread_plan": 0.0958,
+   "sessions": {
+    "ASIA": 138,
+    "LONDON": 114,
+    "LONDON_NY_OVERLAP": 84,
+    "NEW_YORK": 53,
+    "OFF_HOURS": 18
+   },
+   "by_year": {
+    "2011": {
+     "n": 56,
+     "E": 0.176
+    },
+    "2012": {
+     "n": 64,
+     "E": -0.184
+    },
+    "2013": {
+     "n": 83,
+     "E": 0.199
+    },
+    "2014": {
+     "n": 22,
+     "E": 0.055
+    },
+    "2015": {
+     "n": 21,
+     "E": 0.687
+    },
+    "2016": {
+     "n": 59,
+     "E": 0.731
+    },
+    "2017": {
+     "n": 44,
+     "E": 0.528
+    },
+    "2018": {
+     "n": 58,
+     "E": 0.239
+    }
+   }
+  }
+ },
+ "violations": {
+  "CTRL": {
+   "signals": 13,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "A_C1": {
+   "signals": 24,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "A_C2": {
+   "signals": 125,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "A_C3a": {
+   "signals": 17,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "A_C3b": {
+   "signals": 25,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "B_C1C2": {
+   "signals": 286,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "B_C2C3a": {
+   "signals": 134,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "CORE": {
+   "signals": 621,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "LOO_noC1": {
+   "signals": 339,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "LOO_noC2": {
+   "signals": 57,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "LOO_noC3a": {
+   "signals": 563,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "LOO_noC3b": {
+   "signals": 336,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "X_C7": {
+   "signals": 23,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  },
+  "X_CORE_C7": {
+   "signals": 940,
+   "net_rr_below_1_5": 0,
+   "stop_above_3_atr": 0,
+   "risk_not_0_25": 0,
+   "cost_r_above_cap": 0,
+   "spread_spike": 0,
+   "on_shock_bar": 0
+  }
+ },
+ "incremental": {
+  "A_C1|CTRL": {
+   "variant": "A_C1",
+   "parent": "CTRL",
+   "n": 2,
+   "E": 1.9946,
+   "lower": 1.9946,
+   "upper": 1.9946,
+   "status": "INCONCLUSIVE",
+   "reason": "N=2, months=1 below N_min=30/12"
+  },
+  "A_C2|CTRL": {
+   "variant": "A_C2",
+   "parent": "CTRL",
+   "n": 62,
+   "E": 0.3008,
+   "lower": -0.0576,
+   "upper": 0.6829,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [-0.058, 0.683]R, N=62 (N_req(0.20R)=663)"
+  },
+  "A_C3a|CTRL": {
+   "variant": "A_C3a",
+   "parent": "CTRL",
+   "n": 3,
+   "E": -0.1294,
+   "lower": -0.1294,
+   "upper": -0.1294,
+   "status": "INCONCLUSIVE",
+   "reason": "N=3, months=1 below N_min=30/12"
+  },
+  "A_C3b|CTRL": {
+   "variant": "A_C3b",
+   "parent": "CTRL",
+   "n": 7,
+   "E": 0.6975,
+   "lower": -0.5888,
+   "upper": 1.5654,
+   "status": "INCONCLUSIVE",
+   "reason": "N=7, months=7 below N_min=30/12"
+  },
+  "B_C1C2|A_C2": {
+   "variant": "B_C1C2",
+   "parent": "A_C2",
+   "n": 57,
+   "E": 1.1335,
+   "lower": 0.724,
+   "upper": 1.5043,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [0.724, 1.504]R, N=57 (N_req(0.20R)=663)"
+  },
+  "B_C2C3a|A_C2": {
+   "variant": "B_C2C3a",
+   "parent": "A_C2",
+   "n": 8,
+   "E": 0.0639,
+   "lower": -0.6885,
+   "upper": 0.9834,
+   "status": "INCONCLUSIVE",
+   "reason": "N=8, months=6 below N_min=30/12"
+  },
+  "LOO_noC1|B_C2C3a": {
+   "variant": "LOO_noC1",
+   "parent": "B_C2C3a",
+   "n": 79,
+   "E": 0.7278,
+   "lower": 0.3655,
+   "upper": 1.0981,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [0.365, 1.098]R, N=79 (N_req(0.20R)=663)"
+  },
+  "X_C7|CTRL": {
+   "variant": "X_C7",
+   "parent": "CTRL",
+   "n": 12,
+   "E": -0.5564,
+   "lower": -1.0382,
+   "upper": -0.0461,
+   "status": "INCONCLUSIVE",
+   "reason": "N=12, months=10 below N_min=30/12"
+  },
+  "X_CORE_C7|CORE": {
+   "variant": "X_CORE_C7",
+   "parent": "CORE",
+   "n": 312,
+   "E": 0.184,
+   "lower": -0.01,
+   "upper": 0.389,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [-0.010, 0.389]R, N=312 (N_req(0.20R)=663)"
+  },
+  "CORE|LOO_noC1": {
+   "variant": "CORE",
+   "parent": "LOO_noC1",
+   "n": 94,
+   "E": 0.9145,
+   "lower": 0.5961,
+   "upper": 1.2195,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [0.596, 1.220]R, N=94 (N_req(0.20R)=663)"
+  },
+  "CORE|LOO_noC2": {
+   "variant": "CORE",
+   "parent": "LOO_noC2",
+   "n": 208,
+   "E": 0.7123,
+   "lower": 0.4887,
+   "upper": 0.9424,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [0.489, 0.942]R, N=208 (N_req(0.20R)=663)"
+  },
+  "CORE|LOO_noC3a": {
+   "variant": "CORE",
+   "parent": "LOO_noC3a",
+   "n": 31,
+   "E": 0.2183,
+   "lower": -0.245,
+   "upper": 0.7474,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [-0.245, 0.747]R, N=31 (N_req(0.20R)=663)"
+  },
+  "CORE|LOO_noC3b": {
+   "variant": "CORE",
+   "parent": "LOO_noC3b",
+   "n": 99,
+   "E": 0.7596,
+   "lower": 0.4362,
+   "upper": 1.0854,
+   "status": "INCONCLUSIVE",
+   "reason": "bounds [0.436, 1.085]R, N=99 (N_req(0.20R)=663)"
+  }
+ },
+ "selection": {
+  "changes": {
+   "C1": {
+    "S_structural": true,
+    "V_safety": true,
+    "O_not_refuted": true,
+    "caps": true,
+    "statuses": [
+     "INCONCLUSIVE",
+     "INCONCLUSIVE",
+     "INCONCLUSIVE"
+    ],
+    "enters": true,
+    "flag": "owner priority"
+   },
+   "C2": {
+    "S_structural": true,
+    "V_safety": true,
+    "O_not_refuted": true,
+    "caps": true,
+    "statuses": [
+     "INCONCLUSIVE",
+     "INCONCLUSIVE",
+     "INCONCLUSIVE"
+    ],
+    "enters": true,
+    "flag": "owner priority"
+   },
+   "C3a": {
+    "S_structural": true,
+    "V_safety": true,
+    "O_not_refuted": true,
+    "caps": true,
+    "statuses": [
+     "INCONCLUSIVE",
+     "INCONCLUSIVE",
+     "INCONCLUSIVE"
+    ],
+    "enters": true,
+    "flag": "research, flagged"
+   },
+   "C3b": {
+    "S_structural": true,
+    "V_safety": true,
+    "O_not_refuted": true,
+    "caps": true,
+    "statuses": [
+     "INCONCLUSIVE",
+     "INCONCLUSIVE",
+     "INCONCLUSIVE"
+    ],
+    "enters": true,
+    "flag": "research, flagged"
+   }
+  },
+  "included": [
+   "C1",
+   "C2",
+   "C3a",
+   "C3b"
+  ],
+  "frozen_candidate": "CORE",
+  "no_candidate": false
+ }
+}
