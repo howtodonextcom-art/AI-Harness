@@ -1,0 +1,87 @@
+{
+  "spec_id": "multifamily-research",
+  "branch_id": "MULTIFAMILY_RESEARCH_0.1.0",
+  "spec_version": "0.1.0",
+  "status": "FROZEN_FOR_STAGE_A",
+  "frozen_on": "2026-10-13",
+  "frozen_before_results": "Stage A output had not been read when this file was hashed (multifamily_0.1.0.sha256)",
+  "independence": "Independent of CAND_V2_CORE_1.1.0 (cand_v2_spec.json). The two are never merged into one strategy; no variant of one is added to the other; overlap between them is only REPORTED.",
+  "authority": "NONE. Research only: no live caller, no broker order, no PAPER order, no replacement of the V1 CONTROL.",
+  "amendment_rule": "Never edited in place. A change is a new spec_version with an owner-approved reason, and none may follow a look at Validation', Confirm-C, Test-H or Holdout outcomes. No variant is added after seeing data.",
+  "windows": {
+    "DEV'": "2005-11..2018-12, clean store PASS months only: signals only, NO outcome, NO PnL",
+    "VALIDATION'": "LOCKED until the owner approves a one-shot confirmation after the Stage A review",
+    "CONFIRM_C": "LOCKED",
+    "TEST_H": "LOCKED",
+    "HOLDOUT": "LOCKED",
+    "QUARANTINE": "2021-02..2021-09 stays quarantined until ADR-V2-019 two-source evidence is approved"
+  },
+  "timeframe": "M15 (decision at the close of the signal bar; bars are the broker BID chart)",
+  "families": {
+    "B": {
+      "name": "breakout continuation",
+      "eligibility": "close beyond a tight 12-bar box (height <= 3 ATR, mean range <= 0.8 ATR) by a decisive bar (body >= 0.5 range, same colour)",
+      "invalidation": "opposite side of the box",
+      "opposing_level": "nearest unbroken M15 structure level (support for a sell, resistance for a buy)"
+    },
+    "C": {
+      "name": "reversal after a failed breakout",
+      "eligibility": "sweep of the previous 10 bars' extreme that closes back inside, then a CHoCH or BOS in the same direction within 6 bars; eligible at the confirming bar's close",
+      "invalidation": "the sweep's extreme",
+      "opposing_level": "nearest unbroken M15 structure level"
+    },
+    "D": {
+      "name": "range interaction",
+      "eligibility": "RANGE-labelled bar (the control's regime classifier) with a wick rejection whose tip is within 0.25 ATR of the 20-bar boundary",
+      "invalidation": "the wick tip",
+      "opposing_level": "the opposite boundary of the 20 bars before the signal"
+    }
+  },
+  "order_contract": {
+    "entry_quote": "BUY at the ask (close + the bar's spread), SELL at the bid (close)",
+    "stop": "core.risk.compute_stop (the control's): invalidation + 0.1 ATR buffer, floored at 1.25 ATR, REFUSED above 3 ATR (MAX_STOP_ATR) or below the broker minimum",
+    "target": "core.risk.compute_targets (the control's): R multiple 2.0 capped by the opposing level with a 0.1 ATR buffer; REFUSED when the room is gone or net R:R < 1.5 (net_rr = (reward - spread) / (risk + spread), the planning gate, not a charge)",
+    "cost": "cost_R = (spread_price + 2 * 3 points slippage) / risk_distance must be <= 0.15 (the C2 screen; a screen, never a deduction)",
+    "clearance": "the opposing level must be at least 1.0 ATR from the entry (the control's room rule)",
+    "expiry": "a signal can be acted on for 3 bars of M15 after it is known",
+    "episodes": "eligibilities of one family and side within 6 bars are ONE episode; only its first bar is a signal",
+    "overlap": "one open position per branch; a signal inside the 96-bar maximum-hold window of an earlier accepted signal of the same branch is flagged OVERLAP (reported, never hidden)",
+    "gate_order": ["EPISODE", "CLEARANCE", "STOP", "TARGET", "COST"],
+    "risk": "0.25% per trade, the account governor and every PAPER rule of the control apply unchanged when and if a family is ever run in PAPER"
+  },
+  "constants": {
+    "BOX_BARS": 12,
+    "BOX_MAX_HEIGHT_ATR": 3.0,
+    "BOX_MAX_MEAN_RANGE_ATR": 0.8,
+    "BODY_SHARE": 0.5,
+    "CONFIRM_WINDOW": 6,
+    "RANGE_LOOKBACK": 20,
+    "RANGE_TOUCH_ATR": 0.25,
+    "SWEEP_LOOKBACK": 10,
+    "SLIPPAGE_POINTS": 3.0,
+    "COST_R_MAX": 0.15,
+    "MIN_CLEAR_ATR": 1.0,
+    "EPISODE_BARS": 6,
+    "EXPIRY_BARS": 3,
+    "MAX_HOLD_BARS": 96,
+    "MIN_NET_RR": 1.5,
+    "R_MULTIPLE": 2.0,
+    "MAX_STOP_ATR": 3.0
+  },
+  "ablation": {
+    "design": "cumulative funnel RAW -> EPISODES -> CLEARANCE -> STOP -> TARGET -> COST -> (no overlap), plus the first refusing gate of every episode",
+    "to_run_after_owner_approval": [
+      "A: eligibility only",
+      "B: A + clearance + stop + target gates",
+      "C: B + cost screen",
+      "D: C + the account governor and PAPER rules",
+      "each step reports what is lost, never selects the best step by result"
+    ]
+  },
+  "research_budget": {
+    "primary_hypotheses": 3,
+    "variants_allowed": 0,
+    "k": "per family (see hypothesis_ledger.json); a variant would raise K and the bootstrap bar"
+  },
+  "outcomes": "NOT OPENED. A later confirmation on VALIDATION' needs the owner's approval after the Stage A review."
+}

@@ -82,7 +82,11 @@ export function SystemPanel({ state, intel = null }: { state: State | null; inte
       )}
       <dl className="rows">
         <Row id="blocker" label="Thị trường chặn">
-          {!candidate && intel?.authorization.chain_blocker ? (
+          {!candidate && intel && !intel.authorization.chain_evaluable ? (
+            <span className="muted" data-testid="why-market" data-chain="NOT_EVALUABLE">
+              không đánh giá được ({intel.authorization.chain_not_evaluable_reason}): dữ liệu hoặc thị trường chưa đủ tin cậy
+            </span>
+          ) : !candidate && intel?.authorization.chain_blocker ? (
             <span data-testid="why-market" data-chain={intel.authorization.chain_verdict}>
               {intel.authorization.chain_blocker.text}
               {intel.authorization.next_condition && (

@@ -1,0 +1,432 @@
+{
+  "purpose": "Stage A signal-only report for MULTIFAMILY_RESEARCH_0.1.0 (no outcome, no PnL)",
+  "window": "DEV' 2005-11..2018-12 (clean store, PASS months)",
+  "manifest_sha256": "997d73f8025c113d10e1d48ac5a1fb8479f6e6c73439b0f459ac3dfe7e2fbb61",
+  "protected_windows_read": [],
+  "outcomes_read": false,
+  "bars_scored_m15": 300922,
+  "approx_trading_years": 12.01,
+  "contract": "docs/research/multifamily_0.1.0.spec.json",
+  "families": {
+    "B": {
+      "raw_eligibility": {
+        "n": 7211,
+        "per_1000_bars": 23.96,
+        "buy": 3808,
+        "sell": 3403
+      },
+      "episodes": {
+        "n": 5763,
+        "buy": 3029,
+        "sell": 2734
+      },
+      "funnel_survivors": {
+        "RAW": 7211,
+        "EPISODES": 5763,
+        "AFTER_CLEARANCE": 3648,
+        "AFTER_STOP": 1800,
+        "AFTER_TARGET": 583,
+        "AFTER_COST": 519
+      },
+      "first_refusal_of_episodes": {
+        "TARGET": 1217,
+        "STOP": 1848,
+        "ACCEPTED": 519,
+        "CLEARANCE": 2115,
+        "COST": 64
+      },
+      "accepted_signals": {
+        "n": 519,
+        "buy": 275,
+        "sell": 244
+      },
+      "accepted_without_overlap": {
+        "n": 434,
+        "buy": 235,
+        "sell": 199,
+        "per_year": 36.12
+      },
+      "overlap_flagged": 85,
+      "regime_of_raw": {
+        "TREND_DOWN": 878,
+        "RANGE": 3350,
+        "SHOCK": 1087,
+        "TREND_UP": 870,
+        "LOW_VOLATILITY": 868,
+        "HIGH_VOLATILITY": 158
+      },
+      "regime_of_accepted": {
+        "RANGE": 192,
+        "TREND_DOWN": 119,
+        "TREND_UP": 126,
+        "SHOCK": 9,
+        "LOW_VOLATILITY": 40,
+        "HIGH_VOLATILITY": 33
+      },
+      "session_of_raw": {
+        "ASIA": 4219,
+        "LONDON": 538,
+        "OFF_HOURS": 1310,
+        "NEW_YORK": 838,
+        "LONDON_NY_OVERLAP": 306
+      },
+      "session_of_accepted": {
+        "LONDON": 27,
+        "ASIA": 266,
+        "NEW_YORK": 86,
+        "OFF_HOURS": 138,
+        "LONDON_NY_OVERLAP": 2
+      },
+      "per_year_accepted_without_overlap": {
+        "2005": 6,
+        "2006": 52,
+        "2007": 55,
+        "2008": 47,
+        "2009": 47,
+        "2010": 38,
+        "2011": 14,
+        "2012": 31,
+        "2013": 24,
+        "2014": 21,
+        "2015": 14,
+        "2016": 28,
+        "2017": 22,
+        "2018": 35
+      },
+      "geometry_feasibility": {
+        "episodes_with_valid_stop_share": 0.3123,
+        "risk_atr_of_valid_stops": {
+          "p10": 1.984,
+          "p50": 2.512,
+          "p90": 2.911,
+          "n": 1800
+        },
+        "opposing_level_distance_atr": {
+          "p10": 0.209,
+          "p50": 1.287,
+          "p90": 5.225,
+          "n": 4842
+        },
+        "with_target_share_of_valid_stops": 0.3239,
+        "net_rr_of_valid_targets": {
+          "p10": 1.612,
+          "p50": 1.858,
+          "p90": 2.0,
+          "n": 583
+        },
+        "target_capped_by_structure_share": 0.1612,
+        "cost_r_of_valid_orders": {
+          "p10": 0.016,
+          "p50": 0.048,
+          "p90": 0.154,
+          "n": 583
+        }
+      },
+      "research_power": {
+        "n_required_for_0.20R": 663,
+        "n_required_for_0.30R": 295,
+        "years_to_reach_n_for_0.20R": 18.4,
+        "years_to_reach_n_for_0.30R": 8.2,
+        "accepted_without_overlap_available": 434
+      }
+    },
+    "C": {
+      "raw_eligibility": {
+        "n": 4465,
+        "per_1000_bars": 14.84,
+        "buy": 2245,
+        "sell": 2220
+      },
+      "episodes": {
+        "n": 4438,
+        "buy": 2226,
+        "sell": 2212
+      },
+      "funnel_survivors": {
+        "RAW": 4465,
+        "EPISODES": 4438,
+        "AFTER_CLEARANCE": 2507,
+        "AFTER_STOP": 1204,
+        "AFTER_TARGET": 293,
+        "AFTER_COST": 272
+      },
+      "first_refusal_of_episodes": {
+        "TARGET": 911,
+        "STOP": 1303,
+        "CLEARANCE": 1931,
+        "ACCEPTED": 272,
+        "COST": 21
+      },
+      "accepted_signals": {
+        "n": 272,
+        "buy": 146,
+        "sell": 126
+      },
+      "accepted_without_overlap": {
+        "n": 234,
+        "buy": 125,
+        "sell": 109,
+        "per_year": 19.48
+      },
+      "overlap_flagged": 38,
+      "regime_of_raw": {
+        "RANGE": 2104,
+        "SHOCK": 785,
+        "HIGH_VOLATILITY": 340,
+        "TREND_DOWN": 504,
+        "TREND_UP": 483,
+        "LOW_VOLATILITY": 249
+      },
+      "regime_of_accepted": {
+        "SHOCK": 31,
+        "TREND_DOWN": 47,
+        "RANGE": 89,
+        "TREND_UP": 64,
+        "LOW_VOLATILITY": 10,
+        "HIGH_VOLATILITY": 31
+      },
+      "session_of_raw": {
+        "ASIA": 1521,
+        "LONDON_NY_OVERLAP": 1291,
+        "LONDON": 1033,
+        "NEW_YORK": 323,
+        "OFF_HOURS": 297
+      },
+      "session_of_accepted": {
+        "OFF_HOURS": 29,
+        "ASIA": 113,
+        "NEW_YORK": 29,
+        "LONDON_NY_OVERLAP": 55,
+        "LONDON": 46
+      },
+      "per_year_accepted_without_overlap": {
+        "2005": 3,
+        "2006": 10,
+        "2007": 20,
+        "2008": 24,
+        "2009": 28,
+        "2010": 19,
+        "2011": 9,
+        "2012": 19,
+        "2013": 19,
+        "2014": 8,
+        "2015": 12,
+        "2016": 20,
+        "2017": 17,
+        "2018": 26
+      },
+      "geometry_feasibility": {
+        "episodes_with_valid_stop_share": 0.2713,
+        "risk_atr_of_valid_stops": {
+          "p10": 1.835,
+          "p50": 2.461,
+          "p90": 2.895,
+          "n": 1204
+        },
+        "opposing_level_distance_atr": {
+          "p10": 0.148,
+          "p50": 1.036,
+          "p90": 3.691,
+          "n": 3791
+        },
+        "with_target_share_of_valid_stops": 0.2434,
+        "net_rr_of_valid_targets": {
+          "p10": 1.615,
+          "p50": 1.829,
+          "p90": 2.0,
+          "n": 293
+        },
+        "target_capped_by_structure_share": 0.2014,
+        "cost_r_of_valid_orders": {
+          "p10": 0.013,
+          "p50": 0.06,
+          "p90": 0.14,
+          "n": 293
+        }
+      },
+      "research_power": {
+        "n_required_for_0.20R": 663,
+        "n_required_for_0.30R": 295,
+        "years_to_reach_n_for_0.20R": 34.0,
+        "years_to_reach_n_for_0.30R": 15.1,
+        "accepted_without_overlap_available": 234
+      }
+    },
+    "D": {
+      "raw_eligibility": {
+        "n": 4760,
+        "per_1000_bars": 15.82,
+        "buy": 2396,
+        "sell": 2364
+      },
+      "episodes": {
+        "n": 4047,
+        "buy": 2017,
+        "sell": 2030
+      },
+      "funnel_survivors": {
+        "RAW": 4760,
+        "EPISODES": 4047,
+        "AFTER_CLEARANCE": 4017,
+        "AFTER_STOP": 4016,
+        "AFTER_TARGET": 2305,
+        "AFTER_COST": 1626
+      },
+      "first_refusal_of_episodes": {
+        "ACCEPTED": 1626,
+        "COST": 679,
+        "CLEARANCE": 30,
+        "TARGET": 1711,
+        "STOP": 1
+      },
+      "accepted_signals": {
+        "n": 1626,
+        "buy": 758,
+        "sell": 868
+      },
+      "accepted_without_overlap": {
+        "n": 849,
+        "buy": 390,
+        "sell": 459,
+        "per_year": 70.66
+      },
+      "overlap_flagged": 777,
+      "regime_of_raw": {
+        "RANGE": 4760
+      },
+      "regime_of_accepted": {
+        "RANGE": 1626
+      },
+      "session_of_raw": {
+        "ASIA": 1787,
+        "LONDON_NY_OVERLAP": 864,
+        "LONDON": 1318,
+        "OFF_HOURS": 311,
+        "NEW_YORK": 480
+      },
+      "session_of_accepted": {
+        "ASIA": 542,
+        "LONDON_NY_OVERLAP": 340,
+        "LONDON": 465,
+        "OFF_HOURS": 102,
+        "NEW_YORK": 177
+      },
+      "per_year_accepted_without_overlap": {
+        "2005": 20,
+        "2006": 107,
+        "2007": 114,
+        "2008": 120,
+        "2009": 120,
+        "2010": 101,
+        "2011": 30,
+        "2012": 32,
+        "2013": 67,
+        "2014": 7,
+        "2015": 8,
+        "2016": 59,
+        "2017": 11,
+        "2018": 53
+      },
+      "geometry_feasibility": {
+        "episodes_with_valid_stop_share": 0.9923,
+        "risk_atr_of_valid_stops": {
+          "p10": 1.25,
+          "p50": 1.25,
+          "p90": 1.619,
+          "n": 4016
+        },
+        "opposing_level_distance_atr": {
+          "p10": 2.028,
+          "p50": 3.285,
+          "p90": 4.842,
+          "n": 4047
+        },
+        "with_target_share_of_valid_stops": 0.574,
+        "net_rr_of_valid_targets": {
+          "p10": 1.551,
+          "p50": 1.807,
+          "p90": 2.0,
+          "n": 2305
+        },
+        "target_capped_by_structure_share": 0.1289,
+        "cost_r_of_valid_orders": {
+          "p10": 0.025,
+          "p50": 0.085,
+          "p90": 0.206,
+          "n": 2305
+        }
+      },
+      "research_power": {
+        "n_required_for_0.20R": 663,
+        "n_required_for_0.30R": 295,
+        "years_to_reach_n_for_0.20R": 9.4,
+        "years_to_reach_n_for_0.30R": 4.2,
+        "accepted_without_overlap_available": 849
+      }
+    }
+  },
+  "overlap_between_families": {
+    "BxC": {
+      "B_accepted": 519,
+      "same_side_within_6_bars": 67,
+      "opposite_side_within_6_bars": 7
+    },
+    "BxD": {
+      "B_accepted": 519,
+      "same_side_within_6_bars": 8,
+      "opposite_side_within_6_bars": 30
+    },
+    "CxD": {
+      "C_accepted": 272,
+      "same_side_within_6_bars": 8,
+      "opposite_side_within_6_bars": 11
+    }
+  },
+  "family_D_study": {
+    "note": "labels AFTER the signal bar are used only to describe RANGE stability; never in a signal",
+    "range_label_share": 0.4618,
+    "range_runs": {
+      "n_runs": 8335,
+      "median_bars": 11.0,
+      "p25_bars": 3.0,
+      "p75_bars": 25.0,
+      "share_of_runs_ge_12_bars": 0.477,
+      "share_of_runs_ge_24_bars": 0.266,
+      "share_of_range_bars_in_runs_ge_24": 0.6447
+    },
+    "d_episode_heads": 4047,
+    "range_age_at_signal_bars": {
+      "p10": 2.0,
+      "p50": 14.0,
+      "p90": 43.0,
+      "n": 4047
+    },
+    "range_persists_after_signal": {
+      "next_6_bars": 0.641,
+      "next_12_bars": 0.4544,
+      "next_24_bars": 0.2229
+    },
+    "boundary_causality": "top/bottom of the 20 bars BEFORE the signal bar (tested by head-cut equality)",
+    "boundary_width_atr": {
+      "p10": 2.778,
+      "p50": 3.824,
+      "p90": 5.303,
+      "n": 4047
+    },
+    "boundary_unchanged_6_bars_later_share": 0.0492,
+    "prior_touches_of_the_edge_within_0.25_atr": {
+      "p10": 1.0,
+      "p50": 2.0,
+      "p90": 4.0,
+      "n": 4047
+    },
+    "valid_order_share_of_heads": 0.4018,
+    "first_refusal_of_heads": {
+      "ACCEPTED": 1626,
+      "COST": 679,
+      "CLEARANCE": 30,
+      "TARGET": 1711,
+      "STOP": 1
+    }
+  }
+}

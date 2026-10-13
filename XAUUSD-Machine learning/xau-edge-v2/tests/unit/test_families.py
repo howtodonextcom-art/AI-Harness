@@ -64,7 +64,9 @@ def test_no_live_module_imports_the_research_families() -> None:
     offenders = [
         str(p.relative_to(src))
         for p in src.rglob("*.py")
-        if p.name != "families.py" and pattern.search(p.read_text(encoding="utf-8"))
+        if p.name != "families.py"
+        and "research" not in p.parts  # research code (multifamily) is the only allowed consumer
+        and pattern.search(p.read_text(encoding="utf-8"))
     ]
     assert offenders == []
 

@@ -35,9 +35,14 @@ import polars as pl  # noqa: E402
 from cand_signals import ShockCache  # noqa: E402
 
 from xau_edge_v2.core.candidate import VARIANTS, Observation, config_for  # noqa: E402
-from xau_edge_v2.core.decision import DecisionContext  # noqa: E402
+from xau_edge_v2.core.decision import DecisionConfig, DecisionContext  # noqa: E402
 from xau_edge_v2.core.frames import MultiFrames  # noqa: E402
-from xau_edge_v2.core.market_state import POINT, SnapshotMemo, build_market_state  # noqa: E402
+from xau_edge_v2.core.intelligence.funnel import ungated_decision  # noqa: E402
+from xau_edge_v2.core.market_state import (  # noqa: E402
+    POINT,
+    SnapshotMemo,
+    build_market_state,
+)
 from xau_edge_v2.core.risk import SymbolSpec  # noqa: E402
 from xau_edge_v2.data.frames import frame_from_polars  # noqa: E402
 from xau_edge_v2.domain.contract import Timeframe  # noqa: E402
@@ -164,6 +169,7 @@ def main() -> None:  # noqa: PLR0912, PLR0915
         memo, shock_cache = SnapshotMemo(), ShockCache()
         digest = hashlib.sha256()
         signals: list[dict[str, object]] = []
+        counters = {"bars": 0, "skipped": 0, "chain_ok_bars": 0, "gated_chain_ok_bars": 0}
         month_opens = opens[
             (opens >= int(start.timestamp() * 1e6)) & (opens < int(end.timestamp() * 1e6))
         ]
@@ -177,7 +183,9 @@ def main() -> None:  # noqa: PLR0912, PLR0915
             state = build_market_state(multi, at, broker_clock=clock, memo=memo)
             row = int(np.searchsorted(m1_open, int((at - MINUTE).timestamp() * 1e6)))
             has_m1 = row < len(m1_open) and m1_open[row] == int((at - MINUTE).timestamp() * 1e6)
+            counters["bars"] += 1
             if state.h1_trend == "UNKNOWN" or state.price is None or not has_m1:
+                counters["skipped"] += 1
                 engine.skip(int(open_us))
                 continue
             bid = float(m1_close[row])
@@ -198,6 +206,18 @@ def main() -> None:  # noqa: PLR0912, PLR0915
                 m5_close=None if m5 is None else m5.close,
             )
             res = engine.step(int(open_us), state, ctx, obs)
+            chain_ok = ungated_decision(state, ctx, DecisionConfig()).action != "WAIT"
+            counters["chain_ok_bars"] += int(chain_ok)
+            m15 = state.snapshots.get("M15")
+            context = {
+                "session": state.session,
+                "h4_regime": state.h4_regime,
+                "h1_trend": state.h1_trend,
+                "m15_regime": None if m15 is None else m15.regime,
+                "spread_points": state.spread,
+                "atr_m15": state.atr_m15,
+                "chain_ok": chain_ok,
+            }
             for name, (d, info) in res.items():
                 digest.update(decision_line(int(open_us), name, d, info).encode())
                 if d.action != "WAIT":
@@ -211,11 +231,13 @@ def main() -> None:  # noqa: PLR0912, PLR0915
                             "tp": d.take_profit,
                             "net_rr": d.net_rr,
                             "lifecycle": info.lifecycle,
+                            **context,
                         }
                     )
         pl.DataFrame(signals, infer_schema_length=None).write_parquet(
             out / f"signals_{month}.parquet"
         ) if signals else None
+        (out / f"stats_{month}.json").write_text(json.dumps(counters) + "\n", encoding="utf-8")
         (out / f"digest_{month}.txt").write_text(digest.hexdigest() + "\n", encoding="utf-8")
         save_checkpoint(cp, engine.checkpoint())
         print(

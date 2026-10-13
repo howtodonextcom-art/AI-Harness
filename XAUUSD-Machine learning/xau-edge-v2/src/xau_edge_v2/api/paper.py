@@ -20,9 +20,9 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 
 from xau_edge_v2.api.context import AppContext
-from xau_edge_v2.api.intelligence import live_intelligence
+from xau_edge_v2.api.intelligence import record_event, record_intelligence
 from xau_edge_v2.api.state import _spec, live_decision
-from xau_edge_v2.core.decision import DecisionConfig
+from xau_edge_v2.core.decision import STRATEGY_VERSION, DecisionConfig
 from xau_edge_v2.domain.contract import (
     ErrorBody,
     JournalResponse,
@@ -307,6 +307,25 @@ def maybe_backup(ctx: AppContext, moment: datetime) -> Path | None:
     return target
 
 
+def _paper_event(ctx: AppContext, moment: datetime, kind: str, position_id: str) -> None:
+    """The audit trail of a PAPER order the ENGINE opened or closed (linked by position id)."""
+    row = ctx.desk.store.position(position_id)
+    if row is None:
+        return
+    record_event(
+        ctx,
+        kind=kind,
+        text=f"{row['side']} {row['status']} {position_id}",
+        moment=moment,
+        action=str(row["side"]),
+        chain_verdict="-",
+        strategy_version=str(row.get("strategy_version") or STRATEGY_VERSION),
+        decision_id=str(row["decision_id"]),
+        setup_id=str(row["setup_id"]),
+        position_id=position_id,
+    )
+
+
 def engine_tick(ctx: AppContext, now: datetime | None = None) -> list[str]:
     """One pass: manage open positions with new bars, log the forward observation, (auto mode)
     open a valid plan. Returns the ids changed (closed or opened) so the caller can tell clients.
@@ -318,10 +337,13 @@ def engine_tick(ctx: AppContext, now: datetime | None = None) -> list[str]:
     open_rows = desk.store.positions("OPEN", 50)
     if open_rows:
         floor = min(int(r["last_bar_us"]) for r in open_rows)
-        changed += desk.manage(moment, minute_bars(ctx, floor), bid, ask)
+        closed = desk.manage(moment, minute_bars(ctx, floor), bid, ask)
+        changed += closed
+        for position_id in closed:
+            _paper_event(ctx, moment, "PAPER_CLOSE", position_id)
     if log_forward(ctx, moment):
         engine_status(ctx).logged_bars += 1
-    live_intelligence(ctx)  # records every state transition in decision_events (event-driven)
+    record_intelligence(ctx)  # the ONLY writer of decision_events (a GET never writes)
     if desk.auto and desk.open_row() is None:
         decision = live_decision(ctx)
         if (
@@ -334,6 +356,7 @@ def engine_tick(ctx: AppContext, now: datetime | None = None) -> list[str]:
             row = desk.open_position(moment, decision, spec, "AUTO")
             if row is not None:
                 changed.append(row["id"])
+                _paper_event(ctx, moment, "PAPER_OPEN", str(row["id"]))
     return changed
 
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -79,7 +80,13 @@ CREATE TABLE IF NOT EXISTS decision_events (
     text TEXT NOT NULL,
     action TEXT NOT NULL,
     chain_verdict TEXT NOT NULL,
-    strategy_version TEXT NOT NULL
+    strategy_version TEXT NOT NULL,
+    event_id TEXT,
+    event_key TEXT,
+    dataset_version TEXT,
+    decision_id TEXT,
+    setup_id TEXT,
+    paper_position_id TEXT
 );
 CREATE TABLE IF NOT EXISTS human_decisions (
     seq INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -175,6 +182,7 @@ class PaperStore:
         self._db.execute("PRAGMA journal_mode=WAL")
         self._db.execute("PRAGMA foreign_keys=ON")
         self._db.executescript(SCHEMA)
+        self._migrate_events()
 
     # ---- reliability --------------------------------------------------------------------------
     def integrity(self) -> list[str]:
@@ -210,15 +218,48 @@ class PaperStore:
             )
             return cur.rowcount == 1
 
-    def log_event(self, row: dict[str, Any]) -> None:
-        """Append one state transition (regime, scenario, authorization, gate): event-driven, so a
-        transition between two M5 closes is never lost."""
-        cols = ", ".join(row)
-        marks = ", ".join("?" for _ in row)
+    def _migrate_events(self) -> None:
+        have = {r[1] for r in self._db.execute("PRAGMA table_info(decision_events)")}
+        for col in (
+            "event_id",
+            "event_key",
+            "dataset_version",
+            "decision_id",
+            "setup_id",
+            "paper_position_id",
+        ):
+            if col not in have:
+                self._db.execute(f"ALTER TABLE decision_events ADD COLUMN {col} TEXT")
+        self._db.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_events_key ON decision_events (event_key)"
+        )
+        self._db.commit()
+
+    def log_event(self, row: dict[str, Any]) -> bool:
+        """Append one state transition (regime, scenario, authorization, gate, PAPER order).
+
+        Written ONLY by the engine (never by a GET), idempotent on ``event_key`` (the same transition
+        recorded twice is one row) and traceable: ``event_id`` is stable, and the row carries the
+        strategy version, the dataset version, the decision and the PAPER position when there is one.
+        False when the key already existed."""
+        key = str(row.get("event_key") or "")
+        full = {
+            **row,
+            "event_id": str(uuid.uuid5(uuid.NAMESPACE_URL, key or repr(sorted(row.items())))),
+        }
+        cols = ", ".join(full)
+        marks = ", ".join("?" for _ in full)
         with self._tx() as db:
-            db.execute(
-                f"INSERT INTO decision_events ({cols}) VALUES ({marks})", tuple(row.values())
+            cur = db.execute(
+                f"INSERT OR IGNORE INTO decision_events ({cols}) VALUES ({marks})",
+                tuple(full.values()),
             )
+            return cur.rowcount == 1
+
+    def event_count(self) -> int:
+        with self._lock:
+            row = self._db.execute("SELECT COUNT(*) AS n FROM decision_events").fetchone()
+        return int(row["n"])
 
     def events(self, limit: int = 200) -> list[dict[str, Any]]:
         with self._lock:

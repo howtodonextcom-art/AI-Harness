@@ -339,7 +339,20 @@ export interface components {
              * @constant
              */
             candidate_active: false;
+            /**
+             * Chain Basis
+             * @default COUNTERFACTUAL_GATES_OFF
+             * @constant
+             */
+            chain_basis: "COUNTERFACTUAL_GATES_OFF";
             chain_blocker: components["schemas"]["GateView"] | null;
+            /**
+             * Chain Evaluable
+             * @default true
+             */
+            chain_evaluable: boolean;
+            /** Chain Not Evaluable Reason */
+            chain_not_evaluable_reason?: string | null;
             /** Chain Verdict */
             chain_verdict: string;
             /**
@@ -419,6 +432,8 @@ export interface components {
              * Format: date-time
              */
             at: string;
+            /** Event Id */
+            event_id?: string | null;
             /** Kind */
             kind: string;
             /** Text */

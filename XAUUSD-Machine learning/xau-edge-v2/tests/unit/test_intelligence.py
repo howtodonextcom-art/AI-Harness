@@ -24,9 +24,9 @@ from xau_edge_v2.core.intelligence import structure_events as se
 from xau_edge_v2.core.intelligence import volatility as vol
 from xau_edge_v2.core.intelligence.funnel import (
     build_authorization,
+    counterfactual_chain,
     gate_category,
     real_gates,
-    ungated_decision,
 )
 from xau_edge_v2.core.intelligence.observe import IntelMemo, diff, observe
 from xau_edge_v2.core.market_state import build_market_state
@@ -184,7 +184,7 @@ def authorize(state, ctx=CTX):  # type: ignore[no-untyped-def]
     return decision, build_authorization(
         state,
         decision,
-        ungated_decision(state, ctx, CFG),
+        counterfactual_chain(state, ctx, CFG),
         real_gates(state, ctx, CFG),
         describe,
     )
@@ -246,7 +246,7 @@ def test_the_funnel_names_the_first_failing_link(change: dict[str, object], step
 def test_asking_the_question_does_not_change_the_answer() -> None:
     state = buy_state(h1_trend="NEUTRAL", execution_quality="POOR")
     before = decide(state, CTX, CFG)
-    ungated_decision(state, CTX, CFG)
+    counterfactual_chain(state, CTX, CFG)
     real_gates(state, CTX, CFG)
     assert decide(state, CTX, CFG) == before
 
@@ -302,7 +302,11 @@ def run(frames: MultiFrames, ctx: DecisionContext = CTX, *, quote_age: float | N
     state = build_market_state(frames, at, spread_points=25.0, market_open=True)
     decision = decide(state, ctx, CFG)
     auth = build_authorization(
-        state, decision, ungated_decision(state, ctx, CFG), real_gates(state, ctx, CFG), describe
+        state,
+        decision,
+        counterfactual_chain(state, ctx, CFG),
+        real_gates(state, ctx, CFG),
+        describe,
     )
     return (
         state,
@@ -353,7 +357,11 @@ def test_pathological_inputs_fail_safe() -> None:
     state = build_market_state(only_h1, T0 + timedelta(days=30), spread_points=None)
     decision = decide(state, CTX, CFG)
     auth = build_authorization(
-        state, decision, ungated_decision(state, CTX, CFG), real_gates(state, CTX, CFG), describe
+        state,
+        decision,
+        counterfactual_chain(state, CTX, CFG),
+        real_gates(state, CTX, CFG),
+        describe,
     )
     intel = observe(
         only_h1, T0 + timedelta(days=30), state, decision, auth, IntelMemo(), quote_age_s=None
@@ -370,7 +378,7 @@ def test_a_shock_or_a_wide_spread_marks_the_market_as_cautious() -> None:
     poor = replace(state, execution_quality="POOR")
     decision = decide(poor, CTX, CFG)
     auth = build_authorization(
-        poor, decision, ungated_decision(poor, CTX, CFG), real_gates(poor, CTX, CFG), describe
+        poor, decision, counterfactual_chain(poor, CTX, CFG), real_gates(poor, CTX, CFG), describe
     )
     intel = observe(
         frames, T0 + timedelta(days=200), poor, decision, auth, IntelMemo(), quote_age_s=2.0
@@ -391,3 +399,43 @@ def test_changes_report_what_moved_between_two_evaluations() -> None:
 
 def test_sizing_spec_is_untouched() -> None:
     assert SPEC.point == 0.01  # the shared fixture the control tests rely on
+
+
+# ---- the counterfactual is only asked when the state can support the question ---------------------
+@pytest.mark.parametrize(
+    ("state_change", "ctx_change", "reason"),
+    [
+        ({"data_quality": "STALE"}, {}, "STALE_DATA"),
+        ({"data_quality": "UNKNOWN"}, {}, "STALE_DATA"),
+        ({"stale_timeframes": ("M5",)}, {}, "STALE_DATA"),
+        ({"available_timeframes": ("M1", "M5", "M15", "M30", "H4")}, {}, "TIMEFRAMES_MISSING"),
+        ({"market_open": False}, {}, "MARKET_CLOSED"),
+        ({}, {"market_open": False, "market_status": "CLOSED"}, "MARKET_CLOSED"),
+        ({}, {"market_status": "UNKNOWN"}, "MARKET_STATUS_UNKNOWN"),
+        ({}, {"feed_connected": False}, "FEED_DISCONNECTED"),
+        ({}, {"spec_known": False}, "SYMBOL_SPEC_UNKNOWN"),
+        ({}, {"data_ok": False}, "STALE_DATA"),
+    ],
+)
+def test_the_counterfactual_says_not_evaluable_instead_of_guessing(
+    state_change: dict[str, object], ctx_change: dict[str, object], reason: str
+) -> None:
+    state = buy_state(**state_change)
+    ctx = replace(CTX, **ctx_change)
+    decision = decide(state, ctx, CFG)
+    cf = counterfactual_chain(state, ctx, CFG)
+    assert cf.evaluable is False and cf.reason == reason and cf.decision is None
+    auth = build_authorization(state, decision, cf, real_gates(state, ctx, CFG), describe)
+    assert auth.chain_verdict == "NOT_EVALUABLE" and auth.chain_evaluable is False
+    assert auth.chain_not_evaluable_reason == reason and auth.chain_blocker is None
+    assert auth.chain_basis == "COUNTERFACTUAL_GATES_OFF"
+    assert all(s.status == "NOT_APPLICABLE" for s in auth.funnel[:7])
+    assert decide(state, ctx, CFG) == decision  # the control is never touched
+
+
+def test_a_healthy_state_is_evaluable_and_marked_counterfactual() -> None:
+    state = buy_state()
+    cf = counterfactual_chain(state, CTX, CFG)
+    assert cf.evaluable and cf.reason is None and cf.decision is not None
+    _, auth = authorize(state)
+    assert auth.chain_evaluable and auth.chain_basis == "COUNTERFACTUAL_GATES_OFF"

@@ -27,6 +27,12 @@
             "title": "Candidate Active",
             "type": "boolean"
           },
+          "chain_basis": {
+            "const": "COUNTERFACTUAL_GATES_OFF",
+            "default": "COUNTERFACTUAL_GATES_OFF",
+            "title": "Chain Basis",
+            "type": "string"
+          },
           "chain_blocker": {
             "anyOf": [
               {
@@ -36,6 +42,22 @@
                 "type": "null"
               }
             ]
+          },
+          "chain_evaluable": {
+            "default": true,
+            "title": "Chain Evaluable",
+            "type": "boolean"
+          },
+          "chain_not_evaluable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain Not Evaluable Reason"
           },
           "chain_verdict": {
             "title": "Chain Verdict",
@@ -238,6 +260,17 @@
             "format": "date-time",
             "title": "At",
             "type": "string"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
           },
           "kind": {
             "title": "Kind",

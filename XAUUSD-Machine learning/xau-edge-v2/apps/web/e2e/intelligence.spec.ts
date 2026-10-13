@@ -68,3 +68,25 @@ test("the description never offers an action", async ({ page }) => {
   const buttons = await page.getByTestId("intel-panel").getByRole("button").count();
   expect(buttons).toBe(0);
 });
+
+test("an unreliable state says NOT_EVALUABLE instead of inventing a market reason", async ({ page }) => {
+  await page.route("**/api/v2/intelligence", async (route) => {
+    const real = await (await route.fetch()).json();
+    real.authorization.chain_evaluable = false;
+    real.authorization.chain_not_evaluable_reason = "STALE_DATA";
+    real.authorization.chain_verdict = "NOT_EVALUABLE";
+    real.authorization.chain_blocker = null;
+    real.authorization.next_condition = null;
+    await route.fulfill({ json: real });
+  });
+  await page.route("**/api/v2/state", async (route) => {
+    const real = await (await route.fetch()).json();
+    real.action = "WAIT";
+    if (real.system) real.system.recommendation = "WAIT";
+    await route.fulfill({ json: real });
+  });
+  await page.goto("/");
+  const why = page.getByTestId("why-market");
+  await expect(why).toContainText("không đánh giá được (STALE_DATA)");
+  await expect(why).toHaveAttribute("data-chain", "NOT_EVALUABLE");
+});

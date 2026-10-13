@@ -105,8 +105,14 @@ class Authorization(Frozen):
     candidate_active: Literal[False] = False
     """Candidate V2 is research only: it never decides in this build."""
     action: str
+    chain_basis: Literal["COUNTERFACTUAL_GATES_OFF"] = "COUNTERFACTUAL_GATES_OFF"
+    """``chain_verdict`` answers a COUNTERFACTUAL question (what would the chain say with the gates
+    and the governor switched off?). It is a diagnostic, never the strategy's decision."""
+    chain_evaluable: bool = True
+    chain_not_evaluable_reason: str | None = None
     chain_verdict: str
-    """``CHAIN_OK`` or the first link of the chain that refuses, IGNORING gates and governor."""
+    """``CHAIN_OK``, the first refusing link (counterfactual), or ``NOT_EVALUABLE`` when the data or
+    the market state cannot support the question."""
     chain_blocker: GateView | None
     next_condition: str | None
     gates: tuple[GateView, ...]
@@ -118,6 +124,7 @@ class Authorization(Frozen):
 
 
 class ChangeView(Frozen):
+    event_id: str | None = None
     at: datetime
     kind: str
     text: str

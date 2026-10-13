@@ -1,13 +1,14 @@
 {
-  "version": "intel-1",
+  "version": "intel-2",
   "created": "2026-10-13",
-  "status": "PROPOSED: nothing here is frozen, nothing has an outcome",
+  "status": "Owner CONDITIONAL APPROVAL 2026-10-13: two independent branches, no outcome opened. Specs: cand_v2_spec.json (CAND_V2_CORE_1.1.0, FROZEN) and multifamily_0.1.0.spec.json (frozen, hash recorded).",
   "rules": [
     "one primary specification per family; no parameter grid, no 'try variants and keep the best'",
     "every constant is the a-priori value in core/intelligence (frozen by the spec hash once the owner approves)",
     "outcomes are opened only on VALIDATION' once, after the spec hash is recorded and the owner approves",
     "Test-H, Holdout, Confirm-C stay locked; DEV' is used for signals and label behaviour only",
-    "a family that cannot reach the required sample is reported INCONCLUSIVE, never promoted"
+    "a family that cannot reach the required sample is reported INCONCLUSIVE, never promoted",
+    "the two branches are never merged into one strategy; overlap is only reported"
   ],
   "k_budget": {
     "primary_hypotheses": 3,
@@ -22,9 +23,28 @@
       "eligibility": "core/intelligence/families.py::family_b",
       "invalidation": "opposite side of the box",
       "falsified_if": "the continuation share does not exceed the matched control's by the preregistered margin on VALIDATION', or net R after the cost model is not above 0",
-      "observed_opportunity_dev_sample": {"timeframe": "M15", "per_1000_bars": 20.66, "median_risk_atr": 2.82},
-      "known_issue": "median risk 2.8 ATR: a 1.5 net R:R needs a 4 ATR target, which may starve the family (geometry, not edge)",
-      "status": "NOT_TESTED"
+      "observed_opportunity_dev_sample": {
+        "timeframe": "M15",
+        "window": "DEV' 2005-11..2018-12 (Stage A)",
+        "per_1000_bars_raw": 23.96
+      },
+      "known_issue": "geometry: only 31% of episodes have a stop <= 3 ATR; median risk 2.512 ATR",
+      "status": "NOT_TESTED (feasibility measured; outcome not opened)",
+      "branch": "MULTIFAMILY_RESEARCH_0.1.0",
+      "stage_a_dev": {
+        "raw": 7211,
+        "episodes": 5763,
+        "accepted": 519,
+        "accepted_without_overlap": 434,
+        "first_refusal_of_episodes": {
+          "TARGET": 1217,
+          "STOP": 1848,
+          "ACCEPTED": 519,
+          "CLEARANCE": 2115,
+          "COST": 64
+        },
+        "years_to_reach_n_for_0.20R": 18.4
+      }
     },
     {
       "id": "HC1",
@@ -33,9 +53,28 @@
       "eligibility": "core/intelligence/families.py::family_c",
       "invalidation": "the sweep extreme",
       "falsified_if": "as HB1",
-      "observed_opportunity_dev_sample": {"timeframe": "M15", "per_1000_bars": 16.8, "median_risk_atr": 2.67},
-      "known_issue": "48% of BOS/CHoCH events lose the broken level within 3 bars on DEV' (label noise); the confirmation may be as noisy as the sweep",
-      "status": "NOT_TESTED"
+      "observed_opportunity_dev_sample": {
+        "timeframe": "M15",
+        "window": "DEV' 2005-11..2018-12 (Stage A)",
+        "per_1000_bars_raw": 14.84
+      },
+      "known_issue": "geometry: only 27% of episodes have a stop <= 3 ATR; 48% of BOS/CHoCH lose the level within 3 bars (DEV')",
+      "status": "NOT_TESTED (feasibility measured; outcome not opened)",
+      "branch": "MULTIFAMILY_RESEARCH_0.1.0",
+      "stage_a_dev": {
+        "raw": 4465,
+        "episodes": 4438,
+        "accepted": 272,
+        "accepted_without_overlap": 234,
+        "first_refusal_of_episodes": {
+          "TARGET": 911,
+          "STOP": 1303,
+          "CLEARANCE": 1931,
+          "ACCEPTED": 272,
+          "COST": 21
+        },
+        "years_to_reach_n_for_0.20R": 34.0
+      }
     },
     {
       "id": "HD1",
@@ -44,13 +83,55 @@
       "eligibility": "core/intelligence/families.py::family_d",
       "invalidation": "the wick tip",
       "falsified_if": "as HB1",
-      "observed_opportunity_dev_sample": {"timeframe": "M15", "per_1000_bars": 18.95, "median_risk_atr": 0.81},
-      "known_issue": "the regime label flips every ~11 bars on average (median run 5): a RANGE label is not persistent enough to carry a thesis without a persistence filter, and adding one is a new variant (K+1)",
-      "status": "NOT_TESTED"
+      "observed_opportunity_dev_sample": {
+        "timeframe": "M15",
+        "window": "DEV' 2005-11..2018-12 (Stage A)",
+        "per_1000_bars_raw": 15.82
+      },
+      "known_issue": "RANGE label persistence: median run 11.0 bars; the label survives 24 bars after a signal in 22% of cases; the rolling boundary is unchanged 6 bars later in 4.9%",
+      "status": "NOT_TESTED (feasibility measured; outcome not opened)",
+      "branch": "MULTIFAMILY_RESEARCH_0.1.0",
+      "stage_a_dev": {
+        "raw": 4760,
+        "episodes": 4047,
+        "accepted": 1626,
+        "accepted_without_overlap": 849,
+        "first_refusal_of_episodes": {
+          "ACCEPTED": 1626,
+          "COST": 679,
+          "CLEARANCE": 30,
+          "TARGET": 1711,
+          "STOP": 1
+        },
+        "years_to_reach_n_for_0.20R": 9.4
+      }
     }
   ],
   "controls": {
     "matched_control": "bars with the same timeframe, ATR percentile bucket, session and distance-to-boundary bucket but no event; drawn with a fixed seed",
     "cost_model": "executable-quote spread per bar, as in cand_replay (core/costs); unknown cost is never zero"
+  },
+  "branches": {
+    "CAND_V2_CORE_1.1.0": {
+      "spec": "cand_v2_spec.json",
+      "hypotheses": [
+        "C1 lifecycle memory",
+        "C2 cost-per-risk gate",
+        "C3a/C3b volatility gates"
+      ],
+      "status": "NOT_TESTED (Stage A signals only, no outcome)",
+      "k": "K_V2_CAND_DET = 1"
+    },
+    "MULTIFAMILY_RESEARCH_0.1.0": {
+      "spec": "multifamily_0.1.0.spec.json",
+      "hypotheses": [
+        "HB1",
+        "HC1",
+        "HD1"
+      ],
+      "status": "NOT_TESTED (Stage A signals only, no outcome)",
+      "k": "3 primary, 0 variants",
+      "priority_note": "Family D is studied first for RANGE persistence, boundary causality and order formability. It is NOT chosen for any profit expectation. B and C stay in the ledger with independent feasibility analysis."
+    }
   }
 }

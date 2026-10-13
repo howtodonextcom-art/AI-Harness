@@ -141,7 +141,7 @@ export function IntelligencePanel({ intel }: { intel: Intelligence | null }) {
         </div>
         <div data-testid="intel-funnel">
           <h3>
-            Chiến lược v{a.strategy_version} <span className="muted small">({a.evidence}, ứng viên V2 không hoạt động)</span>
+            Chiến lược v{a.strategy_version} <span className="muted small">({a.evidence}, ứng viên V2 không hoạt động; lý do thị trường là chẩn đoán giả định tắt cổng)</span>
           </h3>
           <p className="small" data-testid="intel-explanation">
             {a.explanation}

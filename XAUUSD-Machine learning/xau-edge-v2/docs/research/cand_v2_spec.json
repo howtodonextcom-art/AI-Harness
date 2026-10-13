@@ -1,9 +1,9 @@
 {
   "spec_id": "cand-v2-core",
-  "spec_version": "1.0.0",
+  "spec_version": "1.1.0",
   "frozen_on": "2026-10-13",
   "status": "FROZEN",
-  "approved_by": "project owner, Gate A review 2026-10-13 (CONDITIONAL APPROVAL): C1+C2 priority, C3a/C3b with safety guards, C4-C7 exploratory, K_V2_CAND_ML approved, one-shot Validation and Confirm-C after freeze, Test-H and Holdout stay locked",
+  "approved_by": "project owner: Gate A review 2026-10-13 (CONDITIONAL APPROVAL) and the Owner Decision after the Market Intelligence Review 2026-10-13 (CONDITIONAL APPROVAL: Stage A signal-only on DEV', no outcome, no promotion, <= 4 low-priority workers). Content unchanged from the 1.1.0 proposal; only status and freeze date set.",
   "amendment_rule": "A frozen spec is never edited in place. A change is a new spec_version with an owner-approved reason; the guard hash in cand_v2_spec.sha256 is replaced in the same commit. No amendment may follow a look at Validation, Confirm-C, Test-H or Holdout outcomes.",
   "control": {
     "id": "CONTROL_V1_COMPAT",
@@ -43,7 +43,7 @@
     "cost_accounting": {
       "planning_gate_net_rr": "net_rr = (reward - spread) / (risk + spread) is the control's planning gate. It is KEPT unchanged (MIN_NET_RR is invariant) and is NOT a charge.",
       "outcome_charges": "Outcomes are realised by the PAPER fill rules only: entry quote plus 3 points adverse slippage, stops fill with 3 points adverse slippage, targets fill exactly at their level, SELL exits and BUY entries pay the spread through the ask/bid mechanics, swap ASSUMED per core.costs. NOTHING further is deducted from outcomes, so spread and slippage are charged exactly once.",
-      "cost_gate_C2": "cost_R = (spread_price + 2 * slippage_price) / risk_dist, with spread_price = spread_points * 0.01, slippage_price = 3 * 0.01, risk_dist = |entry_quote - stop_price|. It is a SCREEN on the planned trade (cap 0.15), not a deduction from payoff.",
+      "cost_gate_C2": "cost_R = (spread_price + 2 * slippage_price) / risk_dist, spread_price from the EXECUTABLE quote (ask - bid) when the context has one, else from the state; a SCREEN, not a deduction",
       "why_not_double_counting": "net_rr (planning), cost_R (screen) and the realised PnL (accounting) answer three different questions. Only the realised PnL is summed into the endpoint; the realised decomposition (gross price move, realised spread, realised slippage, swap) is reported per trade so any residual double count is visible.",
       "known_conservatism": "For BUY the control's net_rr deducts the spread although the entry is already at the ask; this makes the planning gate conservative for BUY. It is documented, not corrected (the invariant stands)."
     },
@@ -75,7 +75,11 @@
         "SHOCK",
         "data stale, market closed, or feed missing"
       ],
-      "one_candidate_per_setup": "enforced by the episode rule above"
+      "one_candidate_per_setup": "enforced by the episode rule above",
+      "planned_stop_rule": "FIXED at the bar where the setup formed; never refreshed",
+      "replay": "One continuous replay of the run window. Month boundaries reset nothing.",
+      "checkpoint": "after each month: spec sha, code version, clean-store manifest sha, variants, bar index, last bar, bar-history hash chain, memories, self hash; atomic write, previous one kept",
+      "restart": "restore only if every field and the bar history match; else COLD: C1 decisions are WAIT (RESTORE_PENDING) until the armed condition has been off for memory_bars + 1 bars"
     },
     "simulation_notes": {
       "equity": "R-based and non-compounding: nominal equity 10000, 0.25% = 25 USD per R; sizing rounding and the minimum-lot refusal are not modelled (negligible at this equity).",
@@ -209,15 +213,25 @@
     "_note": "The list is closed. Variants are never added after outcomes are seen. Only CORE-tier variants can become the frozen candidate; X_* are exploratory."
   },
   "windows": {
-    "DEV": {
-      "range": "2011-01-01..2018-12-31",
+    "DEV'": {
+      "range": "2005-06..2018-12",
+      "store": "clean",
       "use": "design, ablation, every selection",
-      "state": "OPEN, Class D (burned for description)"
+      "state": "OPEN, Class D; only PASS months; effective first decision date 2005-11 because the indicators need about 150 days of history and the clean store starts at 2005-06"
     },
-    "VALIDATION": {
-      "range": "2019-01-01..2021-12-31",
+    "VALIDATION'": {
+      "range": "2019-01..2021-01",
+      "store": "clean",
       "use": "ONE confirmation of the frozen candidate",
-      "state": "OPEN, outcomes unseen"
+      "state": "OPEN, outcomes unseen; 2021-01 is QUARANTINED (the source history changed on 2021-01-21), so 24 months"
+    },
+    "QUARANTINE": {
+      "range": "2021-02..2021-09",
+      "state": "EXCLUDED from every outcome until the owner releases it (cross-provider evidence exists, see provider_crosscheck.json)"
+    },
+    "RESERVED": {
+      "range": "2021-10..2021-12",
+      "state": "kept apart, PASS in the clean store, not used for design or confirmation until the owner assigns it"
     },
     "CONFIRM_C": {
       "range": "2025-05-01..2026-04-30",
@@ -343,5 +357,30 @@
     "cpu_target_percent": 60,
     "checkpoint": "one output file per month, resume skips existing",
     "protect_paper": "never touch the service on :8200, the paper database or the collector"
-  }
+  },
+  "amends": {
+    "from": "1.0.0",
+    "reason": "Gate B2 decisions: clean data store (ADR-V2-019), deterministic replay with checkpoints (F6, ADR-V2-020), new windows, executable-quote cost screen and raw-state audit trail (Gate B code review F1/F2)",
+    "list": [
+      "windows: DEV' 2005-06..2018-12 and VALIDATION' 2019-01..2021-01 on the CLEAN store, only months with status PASS; 2021-02..09 QUARANTINE; 2021-10..12 RESERVED; Confirm-C, Test-H, Holdout unchanged and locked",
+      "data: all research reads the clean store through CleanBarStore; the raw store is never read by research pipelines",
+      "lifecycle: the planned stop stays at the bar where the setup formed (unchanged); a run is ONE continuous replay across month boundaries; checkpoint persistence; a restart equals the continuous run or the engine goes COLD and C1 decisions are WAIT until the state is provably equal",
+      "cost screen: cost_R uses the spread of the executable quote (ask - bid) when the quote exists",
+      "Decision.state is the raw market state; substituted C1 labels are listed in the reasons"
+    ]
+  },
+  "data": {
+    "clean_store": "data/clean_store (derived, rebuilt by scripts/research/build_clean_store.py)",
+    "manifest": "docs/research/clean_store_manifest.json",
+    "manifest_sha256_at_proposal": "997d73f8025c113d10e1d48ac5a1fb8479f6e6c73439b0f459ac3dfe7e2fbb61",
+    "pass_months": 190,
+    "dropped_m1_pseudo_bars": 2216,
+    "refetch_provider": "MetaQuotes-Demo server (a different provider than the FTMO feed of the store)",
+    "known_source_defects": {
+      "ftmo_pseudo_bars": "FTMO history (bars as served today) holds one pseudo-bar per day 2012-06-26..2021-01-20; the re-fetch comes from MetaQuotes-Demo, which does not",
+      "ftmo_ticks_2022-01-04_to_2022-03-21": "the stored FTMO TICKS of these days deviate from the bars and from MetaQuotes-Demo by up to 12 dollars; the BARS agree with MetaQuotes-Demo. Never use ticks of that window (spread or cost modelling) without re-checking"
+    }
+  },
+  "branch_id": "CAND_V2_CORE_1.1.0",
+  "supersedes": "1.0.0 (archived as cand_v2_spec_1.0.0.json, hash cand_v2_spec_1.0.0.sha256)"
 }

@@ -1,10 +1,13 @@
-"""Why the strategy waits, split into the MARKET's reason, the safety gates and the governor.
+"""Why the strategy waits, split into the chain's reason, the safety gates and the governor.
 
 ``decide`` lets a hard gate take precedence over the chain (as V1 did), so a WAIT shown as
 SPREAD_TOO_WIDE may hide that H1 has no direction at all. Here the chain is asked again with every
-gate switched off for THAT QUESTION ONLY (the real decision is never touched, and the strategy
-code is the very same ``decide``): its first refusal is the market's reason. The gates are then
-listed from the real state, and the account governor is reported on its own line.
+gate switched off, as a COUNTERFACTUAL DIAGNOSTIC: "what would the chain say if the gates and the
+governor were off?". It is not the decision of the real market state, and it is only asked when
+the state can support the question: with stale, missing or unreliable data, a closed market or an
+unknown symbol spec the answer is NOT_EVALUABLE (never a guess). The real decision is never
+touched and the strategy code is the very same ``decide``. The gates are listed from the real
+state and the account governor is reported on its own line.
 
 Nothing here can create, size or open an order.
 """
@@ -12,7 +15,7 @@ Nothing here can create, size or open an order.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 from xau_edge_v2.core.decision import (
     Decision,
@@ -94,6 +97,42 @@ def ungated_decision(state: MarketState, ctx: DecisionContext, cfg: DecisionConf
     return decide(open_state, open_ctx, open_cfg)
 
 
+CHAIN_TIMEFRAMES = ("H4", "H1", "M15", "M5")
+
+
+@dataclass(frozen=True)
+class Counterfactual:
+    """The chain asked with gates off, or the reason it cannot be asked."""
+
+    evaluable: bool
+    reason: str | None
+    decision: Decision | None
+
+
+def counterfactual_chain(
+    state: MarketState, ctx: DecisionContext, cfg: DecisionConfig
+) -> Counterfactual:
+    """``ungated_decision`` when the state is trustworthy, else NOT_EVALUABLE with the reason."""
+    reason: str | None = None
+    if ctx.market_status == "UNKNOWN":
+        reason = "MARKET_STATUS_UNKNOWN"
+    elif not ctx.market_open or not state.market_open:
+        reason = "MARKET_CLOSED"
+    elif not ctx.feed_connected:
+        reason = "FEED_DISCONNECTED"
+    elif not ctx.spec_known:
+        reason = "SYMBOL_SPEC_UNKNOWN"
+    elif state.data_quality in ("STALE", "UNKNOWN") or not ctx.data_ok:
+        reason = "STALE_DATA"
+    elif any(tf not in state.available_timeframes for tf in ("H4", "H1")):
+        reason = "TIMEFRAMES_MISSING"
+    elif any(tf in state.stale_timeframes for tf in CHAIN_TIMEFRAMES):
+        reason = "STALE_DATA"
+    if reason is not None:
+        return Counterfactual(False, reason, None)
+    return Counterfactual(True, None, ungated_decision(state, ctx, cfg))
+
+
 def _step_index(code: str, extra: str) -> int:  # noqa: PLR0911 - one return per chain link
     if code == "NO_DIRECTION":
         return 0
@@ -137,11 +176,14 @@ def _gate(code: str, describe: Describe) -> GateView:
 def build_authorization(
     state: MarketState,
     decision: Decision,
-    ungated: Decision,
+    cf: Counterfactual,
     gate_codes: tuple[str, ...],
     describe: Describe,
 ) -> Authorization:
     """The strategy's authorization with every reason in its own layer."""
+    if not cf.evaluable or cf.decision is None:
+        return _not_evaluable(state, decision, cf.reason or "UNKNOWN", gate_codes, describe)
+    ungated = cf.decision
     gates = tuple(_gate(c, describe) for c in gate_codes if c not in GOVERNOR_CODES)
     held = tuple(_gate(c, describe) for c in gate_codes if c in GOVERNOR_CODES)
     sizing_hold = (
@@ -206,6 +248,63 @@ def build_authorization(
         system_hold=held,
         funnel=tuple(steps),
         explanation=_explain(chain_blocker, next_condition, gates, held, decision.action),
+    )
+
+
+def _not_evaluable(
+    state: MarketState,
+    decision: Decision,
+    reason: str,
+    gate_codes: tuple[str, ...],
+    describe: Describe,
+) -> Authorization:
+    gates = tuple(_gate(c, describe) for c in gate_codes if c not in GOVERNOR_CODES)
+    held = tuple(_gate(c, describe) for c in gate_codes if c in GOVERNOR_CODES)
+    steps = [
+        FunnelStep(
+            key=key,
+            label=label,
+            status="NOT_APPLICABLE",
+            observed=_observed(key, state, "-")[0] if key != "M1_TIMING" else "-",
+            required=_observed(key, state, "-")[1],
+        )
+        for key, label in _CHAIN_STEPS
+    ]
+    for key, label, cat in (
+        ("GATE_COST", "Chi phí (spread)", "COST"),
+        ("GATE_VOLATILITY", "Biến động trong dải", "VOLATILITY"),
+        ("GATE_DATA", "Dữ liệu và thị trường mở", "DATA"),
+        ("GATE_GOVERNOR", "Bộ giới hạn tài khoản (không phải thị trường)", "GOVERNOR"),
+    ):
+        hit = [g.code for g in (*gates, *held) if g.category == cat]
+        steps.append(
+            FunnelStep(
+                key=key,
+                label=label,
+                status="FAIL" if hit else "PASS",
+                observed=", ".join(hit) if hit else "-",
+                required="không chặn",
+            )
+        )
+    why = (
+        f"Chuỗi chiến lược KHÔNG đánh giá được ({reason}): dữ liệu hoặc trạng thái thị trường "
+        "không đủ tin cậy để trả lời câu hỏi giả định; không suy đoán."
+    )
+    if gates:
+        why += " Cổng đang chặn: " + "; ".join(g.text for g in gates) + "."
+    return Authorization(
+        strategy_id=decision.strategy_id,
+        strategy_version=decision.strategy_version,
+        action=decision.action,
+        chain_evaluable=False,
+        chain_not_evaluable_reason=reason,
+        chain_verdict="NOT_EVALUABLE",
+        chain_blocker=None,
+        next_condition=None,
+        gates=gates,
+        system_hold=held,
+        funnel=tuple(steps),
+        explanation=why,
     )
 
 

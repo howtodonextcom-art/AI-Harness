@@ -8,6 +8,7 @@ strategy's authorization is carried separately (``funnel``) and this module neve
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime
 
 from xau_edge_v2.core.decision import Decision
@@ -211,17 +212,19 @@ class IntelMemo:
 
     def __init__(self, limit: int = 64) -> None:
         self._data: dict[tuple[str, int, int], TfIntel] = {}
+        self._lock = threading.Lock()
         self._limit = limit
 
     def get(self, frame: Frame, state: MarketState) -> TfIntel:
         key = (frame.timeframe.value, frame.height, int(frame.open_us[-1]))
-        hit = self._data.get(key)
-        if hit is None:
-            if len(self._data) >= self._limit:
-                self._data.clear()
-            hit = TfIntel(frame, state)
-            self._data[key] = hit
-        return hit
+        with self._lock:  # the page and the engine share this memo from different threads
+            hit = self._data.get(key)
+            if hit is None:
+                if len(self._data) >= self._limit:
+                    self._data.clear()
+                hit = TfIntel(frame, state)
+                self._data[key] = hit
+            return hit
 
 
 def _summary(state: MarketState, tfs: dict[str, TfIntel]) -> str:
