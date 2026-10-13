@@ -30,8 +30,9 @@ from xau_edge_v2.core.candidate import (
     candidate_step,
     config_for,
     cost_r,
+    quote_spread_points,
 )
-from xau_edge_v2.core.decision import Decision, DecisionConfig, decide
+from xau_edge_v2.core.decision import Decision, DecisionConfig, DecisionContext, decide
 from xau_edge_v2.core.market_state import MarketState
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,6 +51,11 @@ def sell_state(**kw: object) -> MarketState:
         distance_to_resistance=10.0,
         **kw,
     )
+
+
+def quote_ctx(spread_points: float) -> DecisionContext:
+    """The control context with an executable quote of the given spread (bid 1999.9)."""
+    return replace(CTX, bid=1999.9, ask=1999.9 + spread_points * 0.01)
 
 
 def run(
@@ -138,20 +144,27 @@ WIDE_BUT_CHEAP = {"execution_quality": "POOR", "spread": 50.0, "spread_percentil
 
 def test_c2_prices_cost_against_risk_not_against_five_minute_noise() -> None:
     state = buy_state(**WIDE_BUT_CHEAP, spread_to_atr_m5=0.4)
-    control = decide(state, CTX)
-    assert control.action == "WAIT" and "SPREAD_TOO_WIDE" in control.refusals
-    d, _ = run("A_C2", state)
+    ctx = quote_ctx(50.0)
+    control = decide(state, ctx)
+    assert control.action == "WAIT"
+    assert "SPREAD_TOO_WIDE" in control.refusals
+    d, _, _ = candidate_step(Memory(), state, ctx, config_for("A_C2"), OBS, 0)
     assert d.action == "BUY"
-    ratio = cost_r(d, state.spread)
-    assert ratio is not None and ratio <= COST_R_CAP
-    assert ratio == pytest.approx((50.0 * 0.01 + 6 * 0.01) / abs(d.entry_price - d.stop_loss))  # type: ignore[operator]
+    ratio = cost_r(d, quote_spread_points(ctx, state))
+    assert ratio is not None
+    assert ratio <= COST_R_CAP
+    assert d.entry_price is not None
+    assert d.stop_loss is not None
+    assert ratio == pytest.approx((50.0 * 0.01 + 6 * 0.01) / abs(d.entry_price - d.stop_loss))
 
 
 def test_c2_refuses_when_cost_is_a_large_share_of_the_risk() -> None:
     state = buy_state(spread=80.0, execution_quality="GOOD", spread_percentile=0.5)
-    d, _ = run("A_C2", state)
-    assert d.action == "WAIT" and d.refusals == (COST_CODE,)
-    assert d.entry_price is None and d.lots is None  # no level survives a veto
+    d, _, _ = candidate_step(Memory(), state, quote_ctx(80.0), config_for("A_C2"), OBS, 0)
+    assert d.action == "WAIT"
+    assert d.refusals == (COST_CODE,)
+    assert d.entry_price is None
+    assert d.lots is None  # no level survives a veto
 
 
 def test_c2_spike_guard_and_unknown_spread_still_refuse() -> None:
@@ -303,7 +316,7 @@ def test_the_candidate_never_trades_against_the_h1_bias_or_breaks_an_invariant()
             assert d.risk_amount <= 10_000 * 0.25 / 100 + 1e-9
             assert not (cfg.c3b and obs.shock)
             if cfg.c2:
-                ratio = cost_r(d, state.spread)
+                ratio = cost_r(d, quote_spread_points(CTX, state))
                 assert ratio is not None and ratio <= COST_R_CAP + 1e-12
     assert seen > 100
 
@@ -327,3 +340,131 @@ def test_the_control_is_not_edited_by_the_candidate() -> None:
     d = decide(buy_state(), CTX)
     replace(d)  # frozen dataclass copy works; the control's output type is untouched
     assert d.strategy_version == "1.1.0"
+
+
+# ---- regressions found by the Gate B code audit (docs: V2_CANDIDATE_CODE_REVIEW.md) ----
+def test_defect_cost_screen_must_use_the_executable_quote_spread() -> None:
+    """Before the fix the screen read the state's spread (last M5 bar) and ignored the quote it trades at."""
+    calm_bar = buy_state(spread=20.0, execution_quality="GOOD", spread_percentile=0.5)
+    wide_now, _, _ = candidate_step(Memory(), calm_bar, quote_ctx(80.0), config_for("A_C2"), OBS, 0)
+    assert wide_now.action == "WAIT"  # the quote it would pay is expensive
+    assert wide_now.refusals == (COST_CODE,)
+    busy_bar = buy_state(
+        spread=60.0, execution_quality="GOOD", spread_percentile=0.5
+    )  # old rule: 0.153 R, refused
+    cheap_now, _, info = candidate_step(
+        Memory(), busy_bar, quote_ctx(20.0), config_for("A_C2"), OBS, 0
+    )
+    assert cheap_now.action == "BUY"  # the executable quote is what is paid
+    assert info.cost_r is not None
+    assert info.cost_r <= COST_R_CAP
+
+
+def test_defect_a_substituted_setup_must_not_launder_the_state_of_the_decision() -> None:
+    """Before the fix decision.state carried the substituted M15 labels, so the audit trail lied."""
+    _, mem = run("A_C1", buy_state(m5_momentum="FLAT"), bar=0)
+    raw = buy_state(**LATER)
+    d, _, info = candidate_step(mem, raw, CTX, config_for("A_C1"), OBS, 3)
+    assert d.action == "BUY"
+    assert info.substituted
+    assert d.state is raw
+    assert d.state is not None
+    assert d.state.m15_pullback == "NONE"
+    assert any(r.startswith("C1: setup remembered") and "NONE" in r for r in d.reasons)
+
+
+def test_defect_a_veto_keeps_the_raw_state_too() -> None:
+    state = buy_state(spread=80.0, execution_quality="GOOD", spread_percentile=0.5)
+    d, _, _ = candidate_step(Memory(), state, quote_ctx(80.0), config_for("A_C2"), OBS, 0)
+    assert d.action == "WAIT"
+    assert d.state is state
+
+
+def test_guard_info_only_names_a_guard_that_changed_the_decision() -> None:
+    shock = Observation(shock=True, m5_close=2000.0)
+    waiting = buy_state(m5_momentum="FLAT")  # the control waits for its own reason
+    _, _, info = candidate_step(Memory(), waiting, CTX, config_for("A_C3b"), shock, 0)
+    assert info.guard is None
+    _, _, info2 = candidate_step(Memory(), buy_state(), CTX, config_for("A_C3b"), shock, 0)
+    assert info2.guard == SHOCK_CODE
+
+
+@pytest.mark.parametrize(
+    "ctx", [CTX, DecisionContext(spec=CTX.spec), replace(CTX, equity=None), replace(CTX, ask=None)]
+)
+def test_parity_holds_for_every_context_shape_and_with_memory_carried(ctx: DecisionContext) -> None:
+    rng = random.Random(23)
+    mem = Memory()
+    for i in range(400):
+        state = _random_state(rng, sell=bool(i % 2))
+        d, mem, _ = candidate_step(mem, state, ctx, CandidateConfig(), OBS, i)
+        assert d == decide(state, ctx)
+        assert mem == Memory()  # nothing is remembered when C1 is off
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="OPEN DEFECT (needs a spec amendment, not applied): the planned invalidation level is computed at the "
+    "ARM bar, so it depends on how far back the replay starts. A restart that replays only 40 bars arms later and "
+    "gets another level. Fix options are in V2_CANDIDATE_CODE_REVIEW.md.",
+)
+def test_open_defect_planned_stop_depends_on_the_replay_start() -> None:
+    def bars(n: int) -> list[MarketState]:
+        out = []
+        for i in range(n):
+            snap = buy_state().snapshots["M5"]
+            moved = replace(
+                snap, last_swing_low=1996.0 + 0.05 * i
+            )  # the M5 swing keeps rising while the setup holds
+            out.append(buy_state(snapshots={"M5": moved}, m5_momentum="FLAT"))
+        return out
+
+    stream = bars(120)
+
+    def final_memory(first: int) -> Memory:
+        mem = Memory()
+        for i in range(first, len(stream)):
+            _, mem, _ = candidate_step(mem, stream[i], CTX, config_for("A_C1"), OBS, i)
+        return mem
+
+    continuous = final_memory(0)
+    restarted = final_memory(len(stream) - 40)  # a restart replays 40 bars
+    assert continuous.planned_stop == restarted.planned_stop
+
+
+def test_a_restart_that_replays_more_than_the_memory_window_is_identical_when_the_setup_is_not_armed() -> (
+    None
+):
+    """The part that IS deterministic: once the setup has been off for longer than the memory window, nothing remains."""
+    rng = random.Random(3)
+    off = buy_state(m15_structure="RANGE", m15_pullback="NONE")
+    stream = [_random_state(rng, sell=False) for _ in range(30)] + [off] * (MEMORY_BARS + 3)
+    a = Memory()
+    b = Memory()
+    for i, st in enumerate(stream):
+        _, a, _ = candidate_step(a, st, CTX, config_for("A_C1"), OBS, i)
+    for i, st in enumerate(stream[20:], start=20):
+        _, b, _ = candidate_step(b, st, CTX, config_for("A_C1"), OBS, i)
+    assert a == b == Memory()
+
+
+def test_research_modules_have_no_broker_network_or_process_path() -> None:
+    forbidden = {
+        "MetaTrader5",
+        "requests",
+        "httpx",
+        "socket",
+        "subprocess",
+        "urllib",
+        "ftplib",
+        "smtplib",
+    }
+    for path in (ROOT / "src" / "xau_edge_v2" / "research").glob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        names = {n.module or "" for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)} | {
+            a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names
+        }
+        assert not {m.split(".")[0] for m in names} & forbidden, path.name
+        text = path.read_text(encoding="utf-8")
+        assert "order_send" not in text
+        assert "open_position" not in text

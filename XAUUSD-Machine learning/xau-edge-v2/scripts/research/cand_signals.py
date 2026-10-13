@@ -51,6 +51,7 @@ from xau_edge_v2.data.bar_store import BarStore  # noqa: E402
 from xau_edge_v2.data.frames import frame_from_polars  # noqa: E402
 from xau_edge_v2.domain.contract import Timeframe  # noqa: E402
 from xau_edge_v2.domain.market import BrokerClock  # noqa: E402
+from xau_edge_v2.research.clean_view import require_clean  # noqa: E402
 
 SPEC = SymbolSpec()
 WINDOWS = {
@@ -114,6 +115,11 @@ def run_month(args: tuple[str, int, int, str]) -> str:  # noqa: PLR0915 - one pa
     frames = load(BarStore(Path(root), cache_seconds=0.0), start - timedelta(days=2), end)
     if Timeframe.M5 not in frames or Timeframe.M1 not in frames:
         return f"{year}-{month:02d}: missing M1/M5"
+    if (
+        os.environ.get("XAU_ALLOW_DEFECTIVE") != "1"
+    ):  # ADR-V2-018: never evaluate on the pseudo-bar months
+        for tf in (Timeframe.M1, Timeframe.M5, Timeframe.H1):
+            require_clean(frames[tf], f"{year}-{month:02d} {tf.value}")
     multi = MultiFrames({tf: f for tf, df in frames.items() if (f := frame_from_polars(tf, df))})
     m1 = frames[Timeframe.M1]
     m1_open = m1["timestamp"].dt.epoch("us").to_numpy().astype(np.int64)

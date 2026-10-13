@@ -227,6 +227,13 @@ def _veto(d: Decision, code: str) -> Decision:
     )
 
 
+def quote_spread_points(ctx: DecisionContext, state: MarketState) -> float | None:
+    """The spread of the EXECUTABLE quote when the context has one (spec: execution_timing), else the state's."""
+    if ctx.bid is not None and ctx.ask is not None and ctx.ask >= ctx.bid:
+        return (ctx.ask - ctx.bid) / POINT
+    return state.spread
+
+
 def cost_r(d: Decision, spread_points: float | None) -> float | None:
     """(spread + 2 x slippage) / |entry quote - stop|, all in price units; None when it cannot be known."""
     if spread_points is None or d.entry_price is None or d.stop_loss is None:
@@ -292,13 +299,22 @@ def candidate_step(
         if cfg.c3b and obs.shock:
             guard = SHOCK_CODE
         elif cfg.c2:
-            ratio = cost_r(d, state.spread)
+            ratio = cost_r(d, quote_spread_points(ctx, state))
             if ratio is None or ratio > cfg.cost_r_cap:
                 guard = COST_CODE
         if guard is not None:
             d = _veto(d, guard)
-    elif cfg.c3b and obs.shock and d.readiness_level >= 3:
-        guard = SHOCK_CODE
+    # the decision must carry the RAW state (what the market said), never the labels C1 substituted
+    d = replace(d, state=state)
+    if substituted:
+        d = replace(
+            d,
+            reasons=(
+                *d.reasons,
+                f"C1: setup remembered (armed at bar {new_mem.arm_bar}, last armed at bar "
+                f"{new_mem.last_armed_bar}); M15 labels substituted, raw M15 {state.m15_structure}/{state.m15_pullback}",
+            ),
+        )
     if not cfg.c1:
         new_mem = Memory()  # no memory is carried when C1 is off (the control's same-bar rule)
     return d, new_mem, StepInfo(lifecycle, now, substituted, guard, ratio, invalid)

@@ -86,6 +86,41 @@
       "effect": "identifies 119 invalid XAUUSD months (2004-06..2005-08, 2006-03, 2012-06..2021-01, 2021-08)"
     },
     {
+      "date": "2026-10-13",
+      "window": "all months 2004-2026 (including Test-H 2022-01..2025-04 and Holdout 2026-05..10)",
+      "kind": "Gate B data forensics: price-data integrity reads (autocorrelation, bar structure, re-fetch comparison, tick comparison)",
+      "outcome_class": "NONE (no strategy, no signal, no outcome; prices only)",
+      "effect": "the PRICES of the locked windows were read to verify integrity; no strategy was evaluated on them. Found: 2022-01..03 mismatch with ticks, to be investigated before any Test-H request"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "modern terminal",
+      "kind": "read-only terminal re-fetch of H1/H4/D1 (copy_rates_range), dump kept in reports/evidence/data_forensics",
+      "outcome_class": "NONE",
+      "effect": "independent (same broker) evidence; no order function, no account information"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Dev 2011-2018",
+      "kind": "state comparison raw versus cleaned frames in 2016-05 and 2019-05 (no strategy outcome)",
+      "outcome_class": "NONE",
+      "effect": "quantifies how many states change when the pseudo-bar is removed (82-87%)"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "n/a",
+      "kind": "candidate code fixes after the freeze commit 130277d (F1 raw state in Decision.state, F2 executable-quote spread in the cost screen, F5 guard naming, F8 data guard)",
+      "outcome_class": "NONE (no outcome run after the fixes)",
+      "effect": "the code sha recorded in the Stage B summary (130277d) predates the fixes; any rerun records the new sha. The spec hash is unchanged"
+    },
+    {
+      "date": "2026-10-13",
+      "window": "Dev 2011-2018",
+      "kind": "diagnosis of the Stage B artefact by splitting CORE trades into clean and defective months (and placebos)",
+      "outcome_class": "STRATEGY OUTCOMES on Dev (already burned)",
+      "effect": "disclosed; the explanation turned out to be the pseudo-bar, and the earlier 'noise' diagnosis was wrong"
+    },
+    {
       "window": "Test-H 2022-01..2025-04",
       "kind": "not opened",
       "effect": "LOCKED, no authority"

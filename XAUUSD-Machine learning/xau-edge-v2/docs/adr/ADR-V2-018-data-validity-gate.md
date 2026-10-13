@@ -1,6 +1,6 @@
 # ADR-V2-018: data validity gate (PROPOSED, awaiting owner approval)
 
-Status: proposed 2026-10-13. Not applied to any frozen spec yet.
+Status: **WITHDRAWN by its author on 2026-10-13 (Gate B).** The diagnosis below is wrong: the negative autocorrelation is a symptom, not the cause, and an |autocorrelation| <= 0.10 rule is NOT a validity test. Kept for the record. Replaced by ADR-V2-019 (proposed). Never applied to any spec.
 
 ## Context
 Stage B of the candidate evaluation (Dev 2011-2018) showed CORE at +0.68R per trade, 57% wins on a 2R/1R geometry, positive in every year. Placebos showed the signal times carried direction (opposite side 13% wins). The edge was too good, so the data was checked before any claim.

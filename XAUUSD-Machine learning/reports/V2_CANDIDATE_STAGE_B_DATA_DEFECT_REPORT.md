@@ -1,5 +1,8 @@
 # V2 Candidate: triển khai, ablation trên Dev, và phát hiện lỗi dữ liệu làm KẾT QUẢ DEV VÔ HIỆU
 
+> **ERRATA (Gate B, 2026-10-13):** the diagnosis in this report (a feed with noise, rule |autocorrelation| <= 0.10, ADR-V2-018) is WRONG and withdrawn. The cause is a daily pseudo-bar carrying the next session's OHLC (look-ahead), 2012-06-26..2021-01-20. See `V2_DATA_PROVENANCE_FORENSIC_REPORT.md`. The conclusion that the Stage B results are invalid stands; the proposed windows and the validity rule do not.
+
+
 Ngày: 2026-10-13 · Spec đóng băng `cand-v2-core 1.0.0` (sha256 `f9bb929e…`, commit `130277d`) · Chế độ PAPER only
 **Kết luận ngắn: DỪNG TẠI CỔNG. Không chọn, không đóng băng candidate. Chưa mở Validation, Confirm-C, Test-H, Holdout.**
 

@@ -1,0 +1,270 @@
+month,class,recoverable,pseudo_bars_m1,h1_exact,m1_to_h1_agreement,h4_exact,m1_to_h4_agreement,tick_within_10c,ac1_session,spread_median,why
+2004-06,SUSPECT,False,0,,,1.0,1.0,,-0.279,0.0,session-only lag-1 autocorrelation -0.28: mean reversion of unknown origin
+2004-07,SUSPECT,False,0,,,1.0,1.0,,-0.26,0.0,session-only lag-1 autocorrelation -0.26: mean reversion of unknown origin
+2004-08,SUSPECT,False,0,,,1.0,0.9925,,-0.279,0.0,session-only lag-1 autocorrelation -0.28: mean reversion of unknown origin
+2004-09,SUSPECT,False,0,,,1.0,0.9919,,-0.318,0.0,session-only lag-1 autocorrelation -0.32: mean reversion of unknown origin
+2004-10,VERIFIED_VALID,False,0,,,1.0,0.9918,,-0.056,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2004-11,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.095,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2004-12,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.091,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-01,VERIFIED_VALID,False,0,,,1.0,0.9917,,-0.121,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-02,VERIFIED_VALID,False,0,,,1.0,0.991,,-0.115,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-03,SUSPECT,False,0,,,1.0,0.9924,,-0.183,0.0,session-only lag-1 autocorrelation -0.18: mean reversion of unknown origin
+2005-04,SUSPECT,False,0,,,1.0,1.0,,-0.346,0.0,session-only lag-1 autocorrelation -0.35: mean reversion of unknown origin
+2005-05,SUSPECT,False,0,,,1.0,0.9919,,-0.365,0.0,session-only lag-1 autocorrelation -0.36: mean reversion of unknown origin
+2005-06,VERIFIED_VALID,False,0,,,1.0,0.9924,,-0.045,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-07,VERIFIED_VALID,False,0,,,1.0,0.9916,,-0.109,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-08,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.074,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-09,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.059,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-10,VERIFIED_VALID,False,0,,,1.0,0.9921,,-0.014,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-11,VERIFIED_VALID,False,0,,,1.0,0.9909,,-0.061,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2005-12,VERIFIED_VALID,False,0,,,1.0,1.0,,0.029,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-01,VERIFIED_VALID,False,0,,,1.0,0.9915,,-0.003,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-02,VERIFIED_VALID,False,0,,,1.0,0.9909,,-0.051,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-03,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.072,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-04,VERIFIED_VALID,False,0,,,1.0,0.9911,,0.05,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-05,VERIFIED_VALID,False,0,,,1.0,1.0,,0.054,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-06,VERIFIED_VALID,False,0,,,1.0,1.0,,0.048,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-07,VERIFIED_VALID,False,0,,,1.0,0.9916,,0.02,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-08,VERIFIED_VALID,False,0,,,1.0,0.9928,,-0.042,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-09,VERIFIED_VALID,False,0,,,1.0,1.0,,0.007,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-10,VERIFIED_VALID,False,0,,,1.0,0.9925,,-0.005,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-11,VERIFIED_VALID,False,0,,,1.0,0.9916,,-0.031,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2006-12,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.047,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-01,VERIFIED_VALID,False,0,,,1.0,0.9924,,-0.023,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-02,VERIFIED_VALID,False,0,,,1.0,0.9917,,-0.019,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-03,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.044,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-04,VERIFIED_VALID,False,0,,,1.0,0.9921,,-0.038,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-05,VERIFIED_VALID,False,0,,,1.0,0.9924,,-0.001,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-06,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.018,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-07,VERIFIED_VALID,False,0,,,1.0,0.9925,,-0.029,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-08,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.037,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-09,VERIFIED_VALID,False,0,,,1.0,0.9917,,-0.003,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-10,VERIFIED_VALID,False,0,,,1.0,0.9928,,-0.024,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-11,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.02,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2007-12,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.03,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-01,VERIFIED_VALID,False,0,,,1.0,0.9924,,0.006,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-02,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.01,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-03,VERIFIED_VALID,False,0,,,1.0,0.9921,,0.022,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-04,VERIFIED_VALID,False,0,,,1.0,0.9924,,-0.022,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-05,VERIFIED_VALID,False,0,,,1.0,1.0,,0.023,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-06,VERIFIED_VALID,False,0,,,1.0,0.9917,,0.046,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-07,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.015,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-08,VERIFIED_VALID,False,0,,,1.0,0.9921,,-0.007,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-09,VERIFIED_VALID,False,0,,,1.0,0.9924,,0.003,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-10,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.01,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-11,VERIFIED_VALID,False,0,,,1.0,0.9913,,-0.008,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2008-12,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.023,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-01,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.009,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-02,VERIFIED_VALID,False,0,,,1.0,1.0,,-0.006,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-03,VERIFIED_VALID,False,0,,,1.0,0.9925,,0.035,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-04,VERIFIED_VALID,False,0,,,1.0,0.9924,,-0.018,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-05,VERIFIED_VALID,False,0,,,1.0,0.9917,,-0.024,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-06,VERIFIED_VALID,False,0,,,1.0,0.9924,,-0.028,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-07,VERIFIED_VALID,False,0,,,1.0,1.0,,0.004,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-08,VERIFIED_VALID,False,0,,,1.0,0.9921,,0.011,0.0,identical to a fresh broker re-fetch (H4); stored M1 consistent; hygiene clean
+2009-09,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9924,,-0.028,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2009-10,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,-0.007,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2009-11,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9917,,-0.005,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2009-12,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,0.014,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-01,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9917,,-0.024,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-02,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9917,,-0.028,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-03,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9928,,0.003,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-04,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,-0.051,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-05,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9921,,-0.004,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-06,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9924,,0.005,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-07,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,0.011,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-08,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,0.023,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-09,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9924,,-0.007,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-10,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9917,,0.017,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-11,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9919,,-0.017,60.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2010-12,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,-0.017,60.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-01,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9921,,0.021,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-02,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9917,,-0.025,62.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-03,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9928,,-0.015,61.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-04,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,-0.045,60.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-05,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9921,,0.002,60.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-06,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9924,,-0.012,56.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-07,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9917,,-0.033,50.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-08,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9926,,0.027,76.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-09,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,-0.019,70.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-10,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9921,,-0.04,70.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-11,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9924,,-0.01,70.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2011-12,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,-0.021,50.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2012-01,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9921,,-0.03,40.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2012-02,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,0.01,40.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2012-03,VERIFIED_VALID,False,0,1.0,1.0,1.0,1.0,,-0.034,0.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2012-04,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9917,,0.025,39.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2012-05,VERIFIED_VALID,False,0,1.0,1.0,1.0,0.9928,,0.016,40.0,identical to a fresh broker re-fetch (H1); stored M1 consistent; hygiene clean
+2012-06,SUSPECT,False,3,1.0,1.0,0.976,1.0,,0.022,40.0,3 isolated pseudo-bar(s)
+2012-07,INVALID,True,23,1.0,1.0,0.8271,0.9925,,-0.021,40.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2012-08,INVALID,True,22,1.0,1.0,0.8394,1.0,,-0.033,40.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2012-09,INVALID,True,21,1.0,1.0,0.825,0.9917,,-0.074,40.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2012-10,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.018,38.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2012-11,INVALID,True,21,1.0,1.0,0.8397,1.0,,-0.046,37.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2012-12,INVALID,True,20,1.0,1.0,0.8362,1.0,,0.002,41.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-01,INVALID,True,23,1.0,1.0,0.8271,0.9925,,0.014,47.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-02,INVALID,True,20,1.0,1.0,0.8333,0.9917,,-0.004,27.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-03,INVALID,True,20,1.0,1.0,0.8333,0.9917,,-0.07,26.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-04,INVALID,True,22,1.0,1.0,0.8333,0.9924,,0.025,34.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-05,INVALID,True,22,1.0,1.0,0.8394,1.0,,-0.021,31.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-06,INVALID,True,21,1.0,1.0,0.8264,0.9917,,-0.004,34.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-07,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.018,30.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-08,INVALID,True,21,1.0,1.0,0.8397,1.0,,-0.019,30.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-09,INVALID,True,22,1.0,1.0,0.8268,0.9921,,-0.018,30.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-10,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.042,21.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-11,INVALID,True,20,1.0,1.0,0.84,1.0,,-0.031,39.5,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2013-12,INVALID,True,18,1.0,1.0,0.8361,0.9836,,0.02,41.0,"18 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-01,INVALID,True,22,1.0,1.0,0.8385,1.0,,-0.088,41.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-02,INVALID,True,20,1.0,1.0,0.8333,1.0,,-0.053,39.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-03,INVALID,True,22,1.0,1.0,0.8268,0.9921,,-0.055,35.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-04,INVALID,True,21,1.0,1.0,0.8333,0.9921,,-0.055,38.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-05,INVALID,True,21,1.0,1.0,0.8397,1.0,,0.009,39.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-06,INVALID,True,22,1.0,1.0,0.8268,0.9921,,-0.028,38.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-07,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.046,47.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-08,INVALID,True,21,1.0,1.0,0.8333,0.9921,,-0.03,56.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-09,INVALID,True,22,1.0,1.0,0.8333,0.9924,,-0.035,54.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-10,INVALID,True,22,1.0,1.0,0.8394,1.0,,-0.025,51.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-11,INVALID,True,21,1.0,1.0,0.825,0.9917,,-0.047,54.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2014-12,INVALID,True,21,1.0,1.0,0.848,1.0,,-0.006,48.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-01,INVALID,True,21,1.0,1.0,0.8376,1.0,,-0.041,50.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-02,INVALID,True,20,1.0,1.0,0.8319,1.0,,-0.018,49.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-03,INVALID,True,23,1.0,1.0,0.8333,0.9924,,0.028,47.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-04,INVALID,True,21,1.0,1.0,0.8346,0.9921,,0.042,47.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-05,INVALID,True,21,1.0,1.0,0.8333,0.9921,,-0.025,42.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-06,INVALID,True,22,1.0,1.0,0.8333,0.9924,,-0.002,40.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-07,INVALID,True,22,1.0,1.0,0.8382,1.0,,-0.11,39.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-08,INVALID,True,22,1.0,1.0,0.8268,0.9921,,-0.03,40.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-09,INVALID,True,22,1.0,1.0,0.8321,0.9924,,-0.065,39.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-10,INVALID,True,21,1.0,1.0,0.8397,1.0,,0.05,26.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-11,INVALID,True,22,1.0,1.0,0.824,0.992,,0.002,27.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2015-12,INVALID,True,21,1.0,1.0,0.8372,1.0,,0.001,29.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-01,INVALID,True,21,1.0,1.0,0.825,0.9917,,-0.005,30.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-02,INVALID,True,21,1.0,1.0,0.832,0.992,,-0.012,29.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-03,INVALID,True,22,1.0,1.0,0.8333,0.9924,,0.008,27.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-04,INVALID,True,20,1.0,1.0,0.84,1.0,,-0.004,27.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-05,INVALID,True,22,1.0,1.0,0.8333,0.9924,,-0.032,27.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-06,INVALID,True,22,1.0,1.0,0.8333,0.9924,,-0.03,27.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-07,INVALID,True,21,1.0,1.0,0.832,0.992,,-0.063,35.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-08,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.014,33.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-09,INVALID,True,21,1.0,1.0,0.8385,1.0,,-0.157,31.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-10,INVALID,True,22,1.0,1.0,0.8268,0.9921,,-0.016,31.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-11,INVALID,True,22,1.0,1.0,0.8321,0.9924,,-0.056,28.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2016-12,INVALID,True,20,1.0,1.0,0.84,1.0,,-0.054,29.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-01,INVALID,True,22,1.0,1.0,0.8254,0.9921,,-0.027,25.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-02,INVALID,True,20,1.0,1.0,0.8319,0.9916,,-0.003,25.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-03,INVALID,True,22,1.0,1.0,0.8394,1.0,,-0.034,24.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-04,INVALID,True,20,1.0,1.0,0.8261,0.9913,,-0.064,24.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-05,INVALID,True,23,1.0,1.0,0.8321,0.9927,,-0.029,24.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-06,INVALID,True,21,1.0,1.0,0.8397,1.0,,-0.004,24.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-07,INVALID,True,22,1.0,1.0,0.8254,0.9921,,-0.007,24.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-08,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.014,24.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-09,INVALID,True,20,1.0,1.0,0.8387,1.0,,-0.03,24.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-10,INVALID,True,23,1.0,1.0,0.8271,0.9925,,-0.027,36.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-11,INVALID,True,21,1.0,1.0,0.8321,0.9847,,-0.036,36.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2017-12,INVALID,True,19,1.0,1.0,0.8462,1.0,,0.002,36.0,"19 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-01,INVALID,True,23,1.0,1.0,0.8308,0.9923,,-0.021,36.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-02,INVALID,True,20,1.0,1.0,0.8319,0.9916,,-0.036,14.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-03,INVALID,True,20,1.0,1.0,0.84,1.0,,-0.021,15.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-04,INVALID,True,22,1.0,1.0,0.8268,0.9921,,-0.032,15.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-05,INVALID,True,23,1.0,1.0,0.8321,0.9927,,-0.052,15.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-06,INVALID,True,20,1.0,1.0,0.84,1.0,,-0.071,19.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-07,INVALID,True,23,1.0,1.0,0.8258,0.9924,,-0.012,20.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-08,INVALID,True,22,1.0,1.0,0.8394,1.0,,-0.005,20.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-09,INVALID,True,21,1.0,1.0,0.825,0.9917,,-0.043,20.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-10,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.009,20.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-11,INVALID,True,21,1.0,1.0,0.8385,1.0,,0.003,21.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2018-12,INVALID,True,20,1.0,1.0,0.8403,1.0,,-0.046,21.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-01,INVALID,True,23,1.0,1.0,0.8321,0.9924,,-0.008,21.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-02,INVALID,True,20,1.0,1.0,0.8319,0.9916,,-0.029,21.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-03,INVALID,True,21,1.0,1.0,0.8333,0.9921,,-0.027,21.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-04,INVALID,True,21,1.0,1.0,0.8333,0.9921,,-0.032,21.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-05,INVALID,True,22,1.0,1.0,0.8382,1.0,,-0.01,20.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-06,INVALID,True,21,1.0,1.0,0.8264,0.9917,,0.007,17.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-07,INVALID,True,23,1.0,1.0,0.8321,0.9927,,-0.037,20.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-08,INVALID,True,21,1.0,1.0,0.8397,1.0,,-0.05,20.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-09,INVALID,True,22,1.0,1.0,0.8254,0.9921,,0.031,21.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-10,INVALID,True,23,1.0,1.0,0.8333,0.9928,,-0.023,21.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-11,INVALID,True,20,1.0,1.0,0.8387,1.0,,-0.015,21.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2019-12,INVALID,True,21,1.0,1.0,0.84,1.0,,-0.043,22.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-01,INVALID,True,22,1.0,1.0,0.8385,1.0,,-0.018,15.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-02,INVALID,True,20,1.0,1.0,0.8319,1.0,,-0.004,15.0,"20 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-03,INVALID,True,23,1.0,1.0,0.8271,0.9925,,-0.073,16.0,"23 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-04,INVALID,True,21,1.0,1.0,0.8333,0.9921,,-0.112,18.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-05,INVALID,True,21,1.0,1.0,0.832,0.992,,-0.083,23.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-06,INVALID,True,22,1.0,1.0,0.8333,0.9924,,-0.054,5.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-07,INVALID,True,22,1.0,1.0,0.8382,1.0,,-0.034,5.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-08,INVALID,True,22,1.0,1.0,0.8268,0.9921,,-0.018,7.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-09,INVALID,True,22,1.0,1.0,0.8321,0.9924,,-0.027,5.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-10,INVALID,False,21,0.9901,1.0,0.8397,1.0,,-0.031,5.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-11,INVALID,True,22,1.0,1.0,0.8254,0.9921,,-0.02,5.0,"22 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2020-12,INVALID,True,21,1.0,1.0,0.8397,1.0,,-0.036,8.0,"21 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2021-01,INVALID,False,13,0.663,0.9344,0.55,0.9083,,0.002,5.0,"13 daily pseudo-bars (next-day OHLC at the rollover, spread 0, day-sized volume)"
+2021-02,INSUFFICIENT_EVIDENCE,False,0,0.0242,0.811,0.0084,0.7479,,-0.046,5.0,after the re-fetch era and before the tick era: no independent source
+2021-03,INSUFFICIENT_EVIDENCE,False,0,0.0246,0.5038,0.0362,0.558,,-0.051,5.0,after the re-fetch era and before the tick era: no independent source
+2021-04,INSUFFICIENT_EVIDENCE,False,0,0.0146,0.9148,0.008,0.816,,-0.057,5.0,after the re-fetch era and before the tick era: no independent source
+2021-05,INSUFFICIENT_EVIDENCE,False,0,0.0083,0.8771,0.0079,0.8016,,-0.06,0.0,after the re-fetch era and before the tick era: no independent source
+2021-06,INSUFFICIENT_EVIDENCE,False,0,0.0139,0.8827,0.0,0.7424,,-0.024,1.0,after the re-fetch era and before the tick era: no independent source
+2021-07,INSUFFICIENT_EVIDENCE,False,0,0.006,0.944,0.0077,0.8923,,-0.009,7.0,after the re-fetch era and before the tick era: no independent source
+2021-08,INSUFFICIENT_EVIDENCE,False,0,0.0138,0.931,0.015,0.9248,,0.001,8.0,after the re-fetch era and before the tick era: no independent source
+2021-09,INSUFFICIENT_EVIDENCE,False,0,0.012,0.9138,0.0,0.8626,,-0.028,0.0,after the re-fetch era and before the tick era: no independent source
+2021-10,VERIFIED_VALID,False,0,0.0,0.9358,0.0,0.881,1.0,0.025,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2021-11,VERIFIED_VALID,False,0,0.0,0.8893,0.0,0.7786,1.0,-0.025,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2021-12,VERIFIED_VALID,False,0,0.0,0.8862,0.0,0.8244,1.0,-0.06,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-01,SUSPECT,False,0,0.0,0.8921,0.0,0.811,0.8563,-0.044,7.0,ticks agree with stored M1 in only 85.6% of bars
+2022-02,SUSPECT,False,0,0.0,0.8534,0.0,0.7583,0.5394,-0.003,7.0,ticks agree with stored M1 in only 53.9% of bars
+2022-03,SUSPECT,False,0,0.0,0.6193,0.0,0.471,0.5827,-0.046,7.0,ticks agree with stored M1 in only 58.3% of bars
+2022-04,VERIFIED_VALID,False,0,0.0,0.7183,0.0,0.6387,0.9933,-0.023,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-05,VERIFIED_VALID,False,0,0.0,0.8119,0.0,0.6992,0.9866,-0.038,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-06,VERIFIED_VALID,False,0,0.0,0.7475,0.0,0.6364,0.9892,-0.018,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-07,VERIFIED_VALID,False,0,0.0,0.7646,0.0,0.619,0.9866,-0.026,8.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-08,VERIFIED_VALID,False,0,0.0,0.8346,0.0,0.6594,0.9915,-0.027,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-09,VERIFIED_VALID,False,0,0.0,0.8124,0.0,0.6641,0.9894,-0.039,9.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-10,VERIFIED_VALID,False,0,0.0,0.8227,0.0,0.6772,0.995,-0.033,9.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-11,VERIFIED_VALID,False,0,0.0,0.8357,0.0,0.6667,0.9939,0.021,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2022-12,VERIFIED_VALID,False,0,0.0,0.842,0.0,0.672,0.9965,0.039,8.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-01,VERIFIED_VALID,False,0,0.0,0.8776,0.0,0.6929,0.9954,0.014,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-02,VERIFIED_VALID,False,0,0.0,0.8534,0.0,0.675,0.9858,-0.013,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-03,VERIFIED_VALID,False,0,0.0,0.8349,0.0,0.6715,0.9912,-0.0,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-04,VERIFIED_VALID,False,0,0.0,0.8425,0.0,0.6522,0.9884,0.029,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-05,VERIFIED_VALID,False,0,0.0,0.8705,0.0,0.6957,0.9871,0.048,8.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-06,VERIFIED_VALID,False,0,0.0,0.8506,0.0,0.6489,0.9844,-0.011,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-07,VERIFIED_VALID,False,0,0.0,0.89,0.0,0.8031,0.9799,0.043,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-08,VERIFIED_VALID,False,0,0.0,0.8883,0.0,0.7029,0.9902,-0.045,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-09,VERIFIED_VALID,False,0,0.0,0.9123,0.0,0.776,0.9877,-0.006,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-10,SUSPECT,False,0,0.0,0.8681,0.0,0.6617,0.9698,-0.031,7.0,ticks agree with stored M1 in only 97.0% of bars
+2023-11,VERIFIED_VALID,False,0,0.0,0.8557,0.0,0.6667,0.9722,-0.027,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2023-12,VERIFIED_VALID,False,0,0.0,0.7424,0.0,0.5966,0.9729,-0.009,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-01,SUSPECT,False,0,0.0,0.5861,0.0,0.3609,0.963,0.008,7.0,ticks agree with stored M1 in only 96.3% of bars
+2024-02,VERIFIED_VALID,False,0,0.0,0.6479,0.0,0.5159,0.9794,0.007,7.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-03,VERIFIED_VALID,False,0,0.0,0.8083,0.0,0.5667,0.9862,-0.001,9.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-04,VERIFIED_VALID,False,0,0.0,0.7386,0.0,0.5455,0.9717,-0.009,13.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-05,VERIFIED_VALID,False,0,0.0,0.7257,0.0,0.5328,0.9738,-0.055,13.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-06,VERIFIED_VALID,False,0,0.0,0.7211,0.0,0.5372,0.9826,0.011,19.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-07,SUSPECT,False,0,0.0,0.7928,0.0,0.6159,0.966,-0.015,18.0,ticks agree with stored M1 in only 96.6% of bars
+2024-08,SUSPECT,False,0,0.0,0.8214,0.0,0.626,0.96,0.014,17.0,ticks agree with stored M1 in only 96.0% of bars
+2024-09,VERIFIED_VALID,False,0,0.0,0.8025,0.0,0.6142,0.9856,-0.009,17.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-10,VERIFIED_VALID,False,0,0.0,0.7637,0.0,0.6014,0.9836,-0.019,18.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-11,VERIFIED_VALID,False,0,0.0,0.6597,0.0,0.488,0.9864,0.025,22.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2024-12,VERIFIED_VALID,False,0,0.0,0.4042,0.0,0.3095,0.9894,0.005,29.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-01,VERIFIED_VALID,False,0,0.0,0.2809,0.0,0.2121,0.985,-0.003,28.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-02,VERIFIED_VALID,False,0,0.0,0.4017,0.0,0.2167,0.9779,0.015,23.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-03,VERIFIED_VALID,False,0,0.0,0.405,0.0,0.2441,0.985,0.031,23.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-04,VERIFIED_VALID,False,0,0.0,0.3278,0.0,0.2143,0.9766,0.018,23.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-05,VERIFIED_VALID,False,0,0.0,0.4283,0.0,0.2519,0.9789,0.02,24.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-06,VERIFIED_VALID,False,0,0.0,0.4336,0.0,0.2756,0.99,0.025,23.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-07,VERIFIED_VALID,False,0,0.0,0.5264,0.0,0.3481,0.9922,0.017,21.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-08,VERIFIED_VALID,False,0,0.0,0.5643,0.0,0.4365,0.9927,0.009,21.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-09,VERIFIED_VALID,False,0,0.0,0.4334,0.0,0.2273,0.9861,0.009,21.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-10,SUSPECT,False,0,0.0,0.2167,0.0,0.1241,0.9696,-0.028,19.0,ticks agree with stored M1 in only 97.0% of bars
+2025-11,VERIFIED_VALID,False,0,0.0,0.1812,0.0,0.0909,0.9939,-0.014,19.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2025-12,VERIFIED_VALID,False,0,0.0,0.3613,0.0,0.2443,1.0,0.043,23.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-01,VERIFIED_VALID,False,0,0.0,0.316,0.0,0.2143,1.0,0.009,27.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-02,VERIFIED_VALID,False,0,0.0,0.022,0.0,0.0,1.0,-0.0,39.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-03,VERIFIED_VALID,False,0,0.0,0.0119,0.0,0.0,1.0,0.035,58.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-04,VERIFIED_VALID,False,0,0.0,0.0499,0.0,0.0,1.0,0.001,50.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-05,VERIFIED_VALID,False,0,0.0,0.0696,0.0,0.0159,1.0,-0.022,43.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-06,VERIFIED_VALID,False,0,0.0,0.0792,0.0,0.0611,1.0,0.007,41.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-07,VERIFIED_VALID,False,0,0.0,0.2475,0.0,0.125,1.0,-0.011,41.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-08,VERIFIED_VALID,False,0,0.0,0.3888,0.0,0.2677,1.0,-0.011,40.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-09,VERIFIED_VALID,False,0,0.0,0.4274,0.0,0.2727,1.0,-0.048,40.0,stored M1 agrees with the independently collected ticks; hygiene clean
+2026-10,VERIFIED_VALID,False,0,0.0,0.5676,0.0,0.42,1.0,0.008,36.0,stored M1 agrees with the independently collected ticks; hygiene clean

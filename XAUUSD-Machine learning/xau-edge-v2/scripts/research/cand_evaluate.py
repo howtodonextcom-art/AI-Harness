@@ -41,6 +41,7 @@ from xau_edge_v2.core.candidate import CORE_TIER, VARIANTS  # noqa: E402
 from xau_edge_v2.data.bar_store import BarStore  # noqa: E402
 from xau_edge_v2.domain.contract import Timeframe  # noqa: E402
 from xau_edge_v2.research.backtest import HORIZON, M1Series, Trade, run_variant  # noqa: E402
+from xau_edge_v2.research.clean_view import require_clean  # noqa: E402
 from xau_edge_v2.research.stats import (  # noqa: E402
     DEFF,
     N_MIN,
@@ -106,6 +107,10 @@ def load_m1(months: list[tuple[int, int]]) -> M1Series:
             break
         cursor = df["timestamp"][-1] + timedelta(seconds=1)
     full = pl.concat(parts, how="vertical_relaxed")
+    if (
+        os.environ.get("XAU_ALLOW_DEFECTIVE") != "1"
+    ):  # outcomes on pseudo-bar months look 24 hours ahead
+        require_clean(full, "M1 window")
     return M1Series(
         open_us=full["timestamp"].dt.epoch("us").to_numpy().astype(np.int64),
         open=full["open"].to_numpy(),
