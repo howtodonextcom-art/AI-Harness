@@ -12,3 +12,4 @@ apps/web/playwright-report/
 *.log
 logs/
 data/
+test-results/

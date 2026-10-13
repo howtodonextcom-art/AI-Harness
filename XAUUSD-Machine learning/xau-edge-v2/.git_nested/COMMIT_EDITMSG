@@ -1,7 +1,0 @@
-feat(ui): G9 human decision panels, AUTO PAPER strip, journal human log; e2e matrix
-
-System card (bias/setup/M5/M1/blocker/plan), human card (accept/wait/reject), separate
-AUTO PAPER strip, human decisions in the journal drawer; testids and layout tests updated;
-7 new human e2e tests (state matrix, axe, persistence).
-
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
